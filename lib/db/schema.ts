@@ -1,46 +1,63 @@
-import { pgTable, uuid, varchar, decimal, date, timestamp, boolean, text, integer } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, decimal, date, timestamp, boolean, text } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 // Menu Categories Table
 export const menuCategories = pgTable('menu_categories', {
   id: uuid('id').primaryKey().defaultRandom(),
-  name: varchar('name', { length: 100 }).notNull().unique(),
-  displayOrder: integer('display_order').notNull().default(0),
+  menuName: varchar('menu_name', { length: 100 }).notNull(),
+  description: varchar('description', { length: 500 }),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
 })
 
 // Ingredients Table
 export const ingredients = pgTable('ingredients', {
   id: uuid('id').primaryKey().defaultRandom(),
-  name: varchar('name', { length: 200 }).notNull().unique(),
-  category: varchar('category', { length: 50 }),
+  ingredientName: varchar('ingredient_name', { length: 100 }).notNull(),
+  unit: varchar('unit', { length: 20 }).notNull(),
+  description: varchar('description', { length: 500 }),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
+})
+
+// SKUs (Stock Keeping Units) Table
+export const skus = pgTable('skus', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  skuName: varchar('sku_name', { length: 100 }).notNull(),
+  menuId: uuid('menu_id').notNull().references(() => menuCategories.id),
+  unitPrice: decimal('unit_price', { precision: 10, scale: 2 }).notNull(),
+  description: varchar('description', { length: 500 }),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
 })
 
 // Menu-Ingredient Junction Table
 export const menuIngredients = pgTable('menu_ingredients', {
   id: uuid('id').primaryKey().defaultRandom(),
-  menuId: uuid('menu_id').notNull().references(() => menuCategories.id, { onDelete: 'cascade' }),
-  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id, { onDelete: 'cascade' }),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-})
-
-// SKUs (Sales Units) Table
-export const skus = pgTable('skus', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  skuCode: varchar('sku_code', { length: 100 }).notNull().unique(),
   menuId: uuid('menu_id').notNull().references(() => menuCategories.id),
-  salesUnitName: varchar('sales_unit_name', { length: 100 }).notNull(),
-  conversionFactor: decimal('conversion_factor', { precision: 8, scale: 4 }).notNull(),
-  sellingPrice: decimal('selling_price', { precision: 10, scale: 2 }).notNull(),
-  description: varchar('description', { length: 200 }),
-  isActive: boolean('is_active').notNull().default(true),
+  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id),
+  requiredQuantity: decimal('required_quantity', { precision: 10, scale: 2 }).notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
 })
 
 // Purchase Transactions Table
@@ -52,7 +69,6 @@ export const purchaseTransactions = pgTable('purchase_transactions', {
   supplierName: varchar('supplier_name', { length: 200 }).notNull(),
   quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(),
   unitPrice: decimal('unit_price', { precision: 12, scale: 2 }).notNull(),
-  unitDescription: varchar('unit_description', { length: 100 }),
   totalAmount: decimal('total_amount', { precision: 14, scale: 2 }).generatedAlwaysAs(
     sql`quantity * unit_price`
   ),
@@ -60,26 +76,43 @@ export const purchaseTransactions = pgTable('purchase_transactions', {
   notes: text('notes'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
 })
 
 // Sales Records Table
 export const salesRecords = pgTable('sales_records', {
   id: uuid('id').primaryKey().defaultRandom(),
-  salesDate: date('sales_date').notNull(),
+  saleDate: date('sale_date').notNull(),
   skuId: uuid('sku_id').notNull().references(() => skus.id),
-  quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(),
-  notes: text('notes'),
+  quantitySold: decimal('quantity_sold', { precision: 10, scale: 2 }).notNull(),
+  totalRevenue: decimal('total_revenue', { precision: 14, scale: 2 }).generatedAlwaysAs(
+    sql`quantity_sold * (SELECT unit_price FROM skus WHERE id = sku_id)`
+  ),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
 })
 
 // Cost Distribution Rules Table
 export const costDistributionRules = pgTable('cost_distribution_rules', {
   id: uuid('id').primaryKey().defaultRandom(),
-  menuId: uuid('menu_id').notNull().unique().references(() => menuCategories.id),
-  distributionPercentage: decimal('distribution_percentage', { precision: 5, scale: 2 }).notNull(),
+  menuId: uuid('menu_id').notNull().references(() => menuCategories.id),
+  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id),
+  distributionPercent: decimal('distribution_percent', { precision: 5, scale: 2 }).notNull(),
+  effectiveFrom: date('effective_from').notNull(),
+  effectiveTo: date('effective_to'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
 })
 
 // TypeScript Types
@@ -89,11 +122,11 @@ export type NewMenuCategory = typeof menuCategories.$inferInsert
 export type Ingredient = typeof ingredients.$inferSelect
 export type NewIngredient = typeof ingredients.$inferInsert
 
-export type MenuIngredient = typeof menuIngredients.$inferSelect
-export type NewMenuIngredient = typeof menuIngredients.$inferInsert
-
 export type SKU = typeof skus.$inferSelect
 export type NewSKU = typeof skus.$inferInsert
+
+export type MenuIngredient = typeof menuIngredients.$inferSelect
+export type NewMenuIngredient = typeof menuIngredients.$inferInsert
 
 export type PurchaseTransaction = typeof purchaseTransactions.$inferSelect
 export type NewPurchaseTransaction = typeof purchaseTransactions.$inferInsert
