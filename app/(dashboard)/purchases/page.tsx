@@ -61,7 +61,7 @@ export default async function PurchasesPage() {
                   {purchases.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="py-8 text-center text-sm text-gray-500">
-                        매입 데이터가 없습니다. "새 매입 등록" 버튼을 클릭하여 시작하세요.
+                        매입 데이터가 없습니다. &ldquo;새 매입 등록&rdquo; 버튼을 클릭하여 시작하세요.
                       </td>
                     </tr>
                   ) : (

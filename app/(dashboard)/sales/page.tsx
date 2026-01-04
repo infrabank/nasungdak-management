@@ -54,7 +54,7 @@ export default async function SalesPage() {
                 {sales.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-10 text-center text-sm text-gray-500">
-                      판매 데이터가 없습니다. "일일 판매 입력" 버튼을 클릭하여 시작하세요.
+                      판매 데이터가 없습니다. &ldquo;일일 판매 입력&rdquo; 버튼을 클릭하여 시작하세요.
                     </td>
                   </tr>
                 ) : (
