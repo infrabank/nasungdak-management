@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd:*)",
+      "Bash(.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireTasks -IncludeTasks)",
+      "Bash(powershell -ExecutionPolicy Bypass -File:*)",
+      "Skill(document-skills:xlsx)",
+      "Skill(document-skills:xlsx:*)",
+      "Bash(python:*)",
+      "Bash(git fetch:*)",
+      "Bash(npx create-next-app:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}
