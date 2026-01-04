@@ -9,7 +9,9 @@ import { z } from 'zod'
 const salesRecordSchema = z.object({
   saleDate: z.string().min(1, '날짜를 선택해주세요'),
   skuId: z.string().uuid('SKU를 선택해주세요'),
-  quantitySold: z.coerce.number().int().positive('판매량은 1 이상이어야 합니다'),
+  quantitySold: z.coerce.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0 && Number(val) === Math.floor(Number(val)), {
+    message: '판매량은 1 이상의 정수여야 합니다',
+  }),
 })
 
 export async function createSalesRecord(formData: FormData) {
