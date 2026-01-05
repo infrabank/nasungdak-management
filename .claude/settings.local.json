@@ -20,7 +20,10 @@
       "Bash(test:*)",
       "Bash(node -e:*)",
       "Bash(node test-hash.mjs:*)",
-      "Bash(del test-hash.mjs)"
+      "Bash(del test-hash.mjs)",
+      "Bash(cat:*)",
+      "Bash(node scripts/generate-password-hash.mjs:*)",
+      "Bash(npm run dev:*)"
     ]
   }
 }
