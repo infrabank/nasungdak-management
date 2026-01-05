@@ -8,17 +8,20 @@ import { z } from 'zod'
 
 const menuSchema = z.object({
   menuName: z.string().min(1, '메뉴명을 입력해주세요').max(100),
-  description: z.string().max(500).optional(),
+  description: z.string().max(500).optional().or(z.literal('')),
   isActive: z.boolean().default(true),
 })
 
 export async function createMenu(formData: FormData) {
   try {
+    const description = formData.get('description')
     const rawData = {
       menuName: formData.get('menuName'),
-      description: formData.get('description') || '',
+      description: description ? String(description) : undefined,
       isActive: formData.get('isActive') === 'true',
     }
+
+    console.log('Creating menu with data:', rawData)
 
     const validatedData = menuSchema.parse(rawData)
 
@@ -30,6 +33,8 @@ export async function createMenu(formData: FormData) {
       })
       .returning()
 
+    console.log('Menu created successfully:', menu)
+
     revalidatePath('/dashboard/master-data/menus')
 
     return {
@@ -40,6 +45,7 @@ export async function createMenu(formData: FormData) {
     console.error('Failed to create menu:', error)
 
     if (error instanceof z.ZodError) {
+      console.error('Validation errors:', error.errors)
       return {
         success: false,
         error: error.errors[0].message,
@@ -48,7 +54,7 @@ export async function createMenu(formData: FormData) {
 
     return {
       success: false,
-      error: '메뉴 등록에 실패했습니다',
+      error: error instanceof Error ? error.message : '메뉴 등록에 실패했습니다',
     }
   }
 }
