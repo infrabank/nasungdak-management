@@ -10,7 +10,15 @@ const SESSION_SECRET = new TextEncoder().encode(
 )
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
 
-export async function login(formData: FormData) {
+type LoginState = {
+  success: boolean
+  error?: string
+} | null
+
+export async function login(
+  prevState: LoginState,
+  formData: FormData
+): Promise<LoginState> {
   try {
     const password = formData.get('password') as string
 
