@@ -45,17 +45,24 @@ npm run test:e2e         # Run Playwright E2E tests
 
 ### Route Structure
 
-The app uses Next.js route groups for layout organization:
-
 ```
 app/
-├── (auth)/login/              # Unauthenticated login page
-└── (dashboard)/               # Protected routes (JWT middleware)
-    ├── purchases/             # Purchase management
-    ├── sales/                 # Sales management
-    ├── analysis/              # Period analysis (placeholder)
-    └── master-data/           # Base data (menus, ingredients, SKUs, etc.)
+├── (auth)/login/              # Unauthenticated login page → /login
+└── dashboard/                 # Protected routes (JWT middleware)
+    ├── page.tsx               # Dashboard home → /dashboard
+    ├── purchases/             # Purchase management → /dashboard/purchases
+    ├── sales/                 # Sales management → /dashboard/sales
+    ├── analysis/              # Period analysis → /dashboard/analysis
+    └── master-data/           # Base data → /dashboard/master-data
 ```
+
+**URL Paths:**
+- `/login` - Login page (public)
+- `/dashboard` - Dashboard home (protected)
+- `/dashboard/purchases` - Purchase management (protected)
+- `/dashboard/sales` - Sales management (protected)
+- `/dashboard/analysis` - Period analysis (protected)
+- `/dashboard/master-data` - Master data management (protected)
 
 All routes except `/login` and static assets are protected by middleware (middleware.ts) which validates JWT session tokens.
 
@@ -82,7 +89,7 @@ Key tables:
 
 Each feature area has an `actions.ts` file with CRUD operations following this standard pattern:
 
-**Location**: `app/(dashboard)/[feature]/actions.ts`
+**Location**: `app/dashboard/[feature]/actions.ts`
 
 **Standard Structure**:
 ```typescript
@@ -120,7 +127,7 @@ export async function create[Entity](formData: FormData) {
 **Key Files**:
 - `app/(auth)/login/actions.ts` - Login/logout server actions
 - `middleware.ts` - JWT verification and redirect logic
-- `app/(dashboard)/logout-button.tsx` - Logout client component
+- `app/dashboard/logout-button.tsx` - Logout client component
 
 ### Form Implementation Pattern
 
