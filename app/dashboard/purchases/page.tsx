@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { getPurchases } from './actions'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 
+export const dynamic = 'force-dynamic'
+
 export default async function PurchasesPage() {
   const purchases = await getPurchases()
 

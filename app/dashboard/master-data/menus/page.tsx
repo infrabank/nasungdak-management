@@ -1,6 +1,8 @@
 import { getMenus, deleteMenu } from './actions'
 import MenuForm from './menu-form'
 
+export const dynamic = 'force-dynamic'
+
 export default async function MenusPage() {
   const menus = await getMenus()
 

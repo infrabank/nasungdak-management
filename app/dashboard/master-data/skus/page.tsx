@@ -2,6 +2,8 @@ import { getSkus } from './actions'
 import SkuForm from './sku-form'
 import { formatCurrency } from '@/lib/utils/format'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SkusPage() {
   const skus = await getSkus()
 

@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { getSalesRecords } from './actions'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 
+export const dynamic = 'force-dynamic'
+
 export default async function SalesPage() {
   const sales = await getSalesRecords()
 
