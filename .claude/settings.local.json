@@ -24,7 +24,15 @@
       "Bash(cat:*)",
       "Bash(node scripts/generate-password-hash.mjs:*)",
       "Bash(npm run dev:*)",
-      "Bash(vercel env:*)"
+      "Bash(vercel env:*)",
+      "Bash(npm run lint:*)",
+      "Bash(if [ -d \"node_modules\" ])",
+      "Bash(then echo \"node_modules exists\")",
+      "Bash(else echo \"node_modules not found\")",
+      "Bash(fi)",
+      "Bash(npx next lint:*)",
+      "Bash(npx eslint:*)",
+      "Bash(git restore:*)"
     ]
   }
 }

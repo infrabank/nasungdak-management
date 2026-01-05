@@ -68,7 +68,7 @@ export default function SalesForm() {
       const result = await createDailySales(saleDate, salesData)
 
       if (result.success) {
-        if (result.failedCount > 0) {
+        if (result.failedCount && result.failedCount > 0) {
           alert(
             `완료: ${result.successCount}건 등록, ${result.failedCount}건 실패\n\n오류:\n${result.errors?.join('\n')}`
           )

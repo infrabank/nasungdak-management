@@ -107,7 +107,12 @@ export default function CSVUpload() {
   }
 
   const downloadTemplate = () => {
-    const template = '날짜,SKU,판매수량,비고\n2024-01-01,닭강정-대-001,50,테스트 데이터'
+    const template = `날짜,SKU,판매수량,비고
+2024-01-01,닭강정-대-001,50,
+2024-01-01,닭강정-중-001,30,
+2024-01-01,닭강정-소-001,20,할인 판매
+2024-01-02,닭강정-대-001,45,
+2024-01-02,닭강정-중-001,35,`
     const blob = new Blob(['\uFEFF' + template], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
