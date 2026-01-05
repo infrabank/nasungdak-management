@@ -9,6 +9,7 @@ import { z } from 'zod'
 
 export async function createPurchase(formData: FormData) {
   try {
+    const notes = formData.get('notes')
     const rawData = {
       transactionDate: formData.get('transactionDate'),
       menuId: formData.get('menuId'),
@@ -16,7 +17,7 @@ export async function createPurchase(formData: FormData) {
       supplierName: formData.get('supplierName'),
       quantity: formData.get('quantity'),
       unitPrice: formData.get('unitPrice'),
-      notes: formData.get('notes'),
+      notes: notes && typeof notes === 'string' && notes.trim() ? notes.trim() : null,
     }
 
     const validatedData = purchaseSchema.parse(rawData)
@@ -70,6 +71,7 @@ export async function createPurchase(formData: FormData) {
 
 export async function updatePurchase(id: string, formData: FormData) {
   try {
+    const notes = formData.get('notes')
     const rawData = {
       transactionDate: formData.get('transactionDate'),
       menuId: formData.get('menuId'),
@@ -77,7 +79,7 @@ export async function updatePurchase(id: string, formData: FormData) {
       supplierName: formData.get('supplierName'),
       quantity: formData.get('quantity'),
       unitPrice: formData.get('unitPrice'),
-      notes: formData.get('notes'),
+      notes: notes && typeof notes === 'string' && notes.trim() ? notes.trim() : null,
     }
 
     const validatedData = purchaseSchema.parse(rawData)
@@ -290,7 +292,7 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
           supplierName: row.공급업체,
           quantity: row.수량,
           unitPrice: row.단가,
-          notes: row.비고 || null,
+          notes: row.비고 && row.비고.trim() ? row.비고.trim() : null,
         })
 
         // Check if menu-ingredient mapping exists

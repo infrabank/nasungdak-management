@@ -33,8 +33,8 @@ export const purchaseSchema = z.object({
     }
     return val
   }),
-  unitDescription: z.string().max(100).optional(),
-  notes: z.string().optional(),
+  unitDescription: z.string().max(100).optional().nullable(),
+  notes: z.string().optional().nullable(),
 })
 
 export type PurchaseFormData = z.infer<typeof purchaseSchema>
