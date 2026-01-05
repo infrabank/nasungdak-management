@@ -1,5 +1,6 @@
 import { getIngredients } from './actions'
 import IngredientForm from './ingredient-form'
+import CSVUpload from './csv-upload'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,7 +16,8 @@ export default async function IngredientsPage() {
             재료 등록 및 관리
           </p>
         </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none sm:flex sm:gap-3">
+          <CSVUpload />
           <IngredientForm />
         </div>
       </div>

@@ -140,3 +140,72 @@ export async function getMenus() {
     return []
   }
 }
+
+interface CSVRow {
+  메뉴명: string
+  설명?: string
+  활성?: string
+}
+
+export async function bulkCreateMenus(rows: CSVRow[]) {
+  let successCount = 0
+  let failedCount = 0
+  const errors: string[] = []
+
+  try {
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i]
+      const rowNum = i + 1
+
+      try {
+        // Parse isActive (default to true)
+        let isActive = true
+        if (row.활성 !== undefined && row.활성 !== '') {
+          const activeStr = String(row.활성).toLowerCase().trim()
+          isActive = activeStr === 'true' || activeStr === '1' || activeStr === 'yes'
+        }
+
+        // Validate data
+        const validatedData = menuSchema.parse({
+          menuName: row.메뉴명,
+          description: row.설명 || '',
+          isActive,
+        })
+
+        // Insert menu
+        await db
+          .insert(menuCategories)
+          .values({
+            ...validatedData,
+            createdBy: 'system',
+          })
+
+        successCount++
+      } catch (error) {
+        failedCount++
+        if (error instanceof z.ZodError) {
+          errors.push(`${rowNum}행: ${error.errors[0].message}`)
+        } else {
+          errors.push(`${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+        }
+      }
+    }
+
+    revalidatePath('/dashboard/master-data/menus')
+
+    return {
+      success: true,
+      successCount,
+      failedCount,
+      errors: errors.slice(0, 20), // Return first 20 errors
+    }
+  } catch (error) {
+    console.error('Failed to bulk create menus:', error)
+    return {
+      success: false,
+      successCount,
+      failedCount,
+      error: error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
+    }
+  }
+}

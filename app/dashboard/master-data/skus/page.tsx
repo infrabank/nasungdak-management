@@ -1,5 +1,6 @@
 import { getSkus } from './actions'
 import SkuForm from './sku-form'
+import CSVUpload from './csv-upload'
 import { formatCurrency } from '@/lib/utils/format'
 
 export const dynamic = 'force-dynamic'
