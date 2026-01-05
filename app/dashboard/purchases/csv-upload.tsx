@@ -84,10 +84,11 @@ export default function CSVUpload() {
       skipEmptyLines: true,
       complete: async (results) => {
         try {
-          const result = await bulkCreatePurchases(results.data)
+          // Server Action에 직렬화 가능한 데이터로 전달
+          const result = await bulkCreatePurchases(JSON.parse(JSON.stringify(results.data)))
 
           if (result.success) {
-            alert(`성공: ${result.successCount}건 등록, 실패: ${result.failedCount}건`)
+            alert(`성공: ${result.successCount}건 등록, 실패: ${result.failedCount}건${result.errors && result.errors.length > 0 ? '\n\n오류:\n' + result.errors.join('\n') : ''}`)
             setIsOpen(false)
             setFile(null)
             setPreview([])
