@@ -168,3 +168,91 @@ export async function getSalesRecords() {
     return []
   }
 }
+
+interface CSVRow {
+  날짜: string
+  SKU: string
+  판매수량: string
+  비고?: string
+}
+
+export async function bulkCreateSales(rows: CSVRow[]) {
+  'use server'
+
+  let successCount = 0
+  let failedCount = 0
+  const errors: string[] = []
+
+  try {
+    // Fetch all SKUs for name-to-ID mapping
+    const skuList = await db
+      .select({
+        id: skus.id,
+        skuName: skus.skuName,
+        unitPrice: skus.unitPrice,
+      })
+      .from(skus)
+      .where(isNull(skus.deletedAt))
+
+    // Create lookup map
+    const skuMap = new Map(skuList.map(s => [s.skuName, { id: s.id, unitPrice: s.unitPrice }]))
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i]
+      const rowNum = i + 1
+
+      try {
+        // Find SKU ID
+        const skuInfo = skuMap.get(row.SKU)
+
+        if (!skuInfo) {
+          errors.push(`${rowNum}행: SKU '${row.SKU}'를 찾을 수 없습니다`)
+          failedCount++
+          continue
+        }
+
+        // Validate data
+        const validatedData = salesRecordSchema.parse({
+          saleDate: row.날짜,
+          skuId: skuInfo.id,
+          quantitySold: row.판매수량,
+        })
+
+        // Insert sales record
+        await db
+          .insert(salesRecords)
+          .values({
+            ...validatedData,
+            unitPrice: skuInfo.unitPrice,
+            createdBy: 'system',
+          })
+
+        successCount++
+      } catch (error) {
+        failedCount++
+        if (error instanceof z.ZodError) {
+          errors.push(`${rowNum}행: ${error.errors[0].message}`)
+        } else {
+          errors.push(`${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+        }
+      }
+    }
+
+    revalidatePath('/dashboard/sales')
+
+    return {
+      success: true,
+      successCount,
+      failedCount,
+      errors: errors.slice(0, 20), // Return first 20 errors
+    }
+  } catch (error) {
+    console.error('Failed to bulk create sales:', error)
+    return {
+      success: false,
+      successCount,
+      failedCount,
+      error: error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
+    }
+  }
+}

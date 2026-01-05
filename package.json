@@ -30,7 +30,8 @@
     "date-fns": "^4.1.0",
     "clsx": "^2.1.1",
     "bcryptjs": "^2.4.3",
-    "jose": "^5.9.6"
+    "jose": "^5.9.6",
+    "papaparse": "^5.4.1"
   },
   "devDependencies": {
     "typescript": "^5.7.2",
@@ -38,6 +39,7 @@
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.2",
     "@types/bcryptjs": "^2.4.6",
+    "@types/papaparse": "^5.3.15",
     "drizzle-kit": "^0.29.1",
     "tailwindcss": "^3.4.17",
     "postcss": "^8.4.49",

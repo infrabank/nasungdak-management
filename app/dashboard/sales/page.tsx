@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { getSalesRecords } from './actions'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+import CSVUpload from './csv-upload'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,8 @@ export default async function SalesPage() {
             일일 판매 기록 조회 및 관리
           </p>
         </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none sm:flex sm:gap-3">
+          <CSVUpload />
           <Link
             href="/dashboard/sales/daily"
             className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
