@@ -169,6 +169,121 @@ export async function getSalesRecords() {
   }
 }
 
+export async function getActiveSKUs() {
+  try {
+    const skuList = await db
+      .select({
+        id: skus.id,
+        skuName: skus.skuName,
+        menuName: menuCategories.menuName,
+        unitPrice: skus.unitPrice,
+      })
+      .from(skus)
+      .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
+      .where(isNull(skus.deletedAt))
+      .orderBy(menuCategories.menuName, skus.skuName)
+
+    return skuList
+  } catch (error) {
+    console.error('Failed to fetch SKUs:', error)
+    return []
+  }
+}
+
+interface DailySaleInput {
+  skuId: string
+  quantitySold: string
+}
+
+export async function createDailySales(saleDate: string, sales: DailySaleInput[]) {
+  'use server'
+
+  let successCount = 0
+  let failedCount = 0
+  const errors: string[] = []
+
+  try {
+    // Filter out entries with no quantity
+    const validSales = sales.filter(s => s.quantitySold && s.quantitySold.trim() !== '' && Number(s.quantitySold) > 0)
+
+    if (validSales.length === 0) {
+      return {
+        success: false,
+        error: '판매량을 입력해주세요',
+      }
+    }
+
+    // Get SKU prices
+    const skuIds = validSales.map(s => s.skuId)
+    const skuList = await db
+      .select({
+        id: skus.id,
+        skuName: skus.skuName,
+        unitPrice: skus.unitPrice,
+      })
+      .from(skus)
+      .where(isNull(skus.deletedAt))
+
+    const skuMap = new Map(skuList.map(s => [s.id, s]))
+
+    for (let i = 0; i < validSales.length; i++) {
+      const sale = validSales[i]
+
+      try {
+        const sku = skuMap.get(sale.skuId)
+
+        if (!sku) {
+          errors.push(`SKU를 찾을 수 없습니다`)
+          failedCount++
+          continue
+        }
+
+        // Validate data
+        const validatedData = salesRecordSchema.parse({
+          saleDate,
+          skuId: sale.skuId,
+          quantitySold: sale.quantitySold,
+        })
+
+        // Insert sales record
+        await db
+          .insert(salesRecords)
+          .values({
+            ...validatedData,
+            unitPrice: sku.unitPrice,
+            createdBy: 'system',
+          })
+
+        successCount++
+      } catch (error) {
+        failedCount++
+        if (error instanceof z.ZodError) {
+          errors.push(`${error.errors[0].message}`)
+        } else {
+          errors.push(`${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+        }
+      }
+    }
+
+    revalidatePath('/dashboard/sales')
+
+    return {
+      success: true,
+      successCount,
+      failedCount,
+      errors,
+    }
+  } catch (error) {
+    console.error('Failed to create daily sales:', error)
+    return {
+      success: false,
+      successCount,
+      failedCount,
+      error: error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
+    }
+  }
+}
+
 interface CSVRow {
   날짜: string
   SKU: string

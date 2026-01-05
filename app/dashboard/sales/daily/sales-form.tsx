@@ -2,114 +2,228 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { createSalesRecord } from '../actions'
-import { getSkus } from '../../master-data/skus/actions'
+import { getActiveSKUs, createDailySales } from '../actions'
+import { formatCurrency } from '@/lib/utils/format'
 import { Button } from '@/components/ui/button'
+
+interface SKU {
+  id: string
+  skuName: string | null
+  menuName: string | null
+  unitPrice: string
+}
 
 export default function SalesForm() {
   const router = useRouter()
+  const [saleDate, setSaleDate] = useState(() => {
+    const today = new Date()
+    return today.toISOString().split('T')[0]
+  })
+  const [skus, setSKUs] = useState<SKU[]>([])
+  const [quantities, setQuantities] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [skus, setSkus] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    getSkus().then(setSkus)
+    getActiveSKUs().then((data) => {
+      setSKUs(data)
+      setIsLoading(false)
+    })
   }, [])
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleQuantityChange = (skuId: string, value: string) => {
+    // Only allow positive integers or empty string
+    if (value === '' || /^\d+$/.test(value)) {
+      setQuantities(prev => ({
+        ...prev,
+        [skuId]: value
+      }))
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!saleDate) {
+      alert('날짜를 선택해주세요')
+      return
+    }
+
+    // Prepare sales data
+    const salesData = Object.entries(quantities)
+      .filter(([_, qty]) => qty && Number(qty) > 0)
+      .map(([skuId, quantitySold]) => ({
+        skuId,
+        quantitySold,
+      }))
+
+    if (salesData.length === 0) {
+      alert('최소 1개 이상의 SKU에 판매량을 입력해주세요')
+      return
+    }
+
     setIsSubmitting(true)
 
-    const formData = new FormData(e.currentTarget)
-
     try {
-      const result = await createSalesRecord(formData)
+      const result = await createDailySales(saleDate, salesData)
 
       if (result.success) {
-        alert('판매가 등록되었습니다.')
+        if (result.failedCount > 0) {
+          alert(
+            `완료: ${result.successCount}건 등록, ${result.failedCount}건 실패\n\n오류:\n${result.errors?.join('\n')}`
+          )
+        } else {
+          alert(`${result.successCount}건의 판매 기록이 등록되었습니다`)
+        }
         router.push('/dashboard/sales')
       } else {
-        alert(result.error)
+        alert(`등록 실패: ${result.error}`)
       }
+    } catch (error) {
+      alert(`오류 발생: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  const getTotalRevenue = () => {
+    return skus.reduce((total, sku) => {
+      const qty = Number(quantities[sku.id] || 0)
+      return total + qty * Number(sku.unitPrice)
+    }, 0)
+  }
+
+  const getEnteredCount = () => {
+    return Object.values(quantities).filter(q => q && Number(q) > 0).length
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-gray-500">로딩 중...</div>
+      </div>
+    )
+  }
+
   return (
-    <form onSubmit={handleSubmit}>
-      <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-        <div className="px-4 py-6 sm:p-8">
-          <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div className="sm:col-span-6">
-              <label htmlFor="saleDate" className="block text-sm font-medium text-gray-900">
-                판매 날짜 *
-              </label>
-              <div className="mt-2">
-                <input
-                  type="date"
-                  name="saleDate"
-                  id="saleDate"
-                  required
-                  defaultValue={new Date().toISOString().split('T')[0]}
-                  className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
-                />
-              </div>
-            </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Date selection */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <label htmlFor="saleDate" className="block text-sm font-medium text-gray-700 mb-2">
+          판매 날짜
+        </label>
+        <input
+          type="date"
+          id="saleDate"
+          value={saleDate}
+          onChange={(e) => setSaleDate(e.target.value)}
+          required
+          className="block w-full max-w-xs rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
+        />
+      </div>
 
-            <div className="sm:col-span-4">
-              <label htmlFor="skuId" className="block text-sm font-medium text-gray-900">
-                SKU *
-              </label>
-              <div className="mt-2">
-                <select
-                  id="skuId"
-                  name="skuId"
-                  required
-                  className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+      {/* SKU list */}
+      <div className="bg-white shadow rounded-lg overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <h2 className="text-lg font-semibold text-gray-900">
+            SKU별 판매량 입력
+            {getEnteredCount() > 0 && (
+              <span className="ml-2 text-sm font-normal text-gray-600">
+                ({getEnteredCount()}개 입력됨)
+              </span>
+            )}
+          </h2>
+        </div>
+
+        <div className="divide-y divide-gray-200">
+          {skus.length === 0 ? (
+            <div className="px-6 py-12 text-center text-sm text-gray-500">
+              등록된 SKU가 없습니다. 먼저 기초 데이터에서 SKU를 등록해주세요.
+            </div>
+          ) : (
+            skus.map((sku) => {
+              const quantity = Number(quantities[sku.id] || 0)
+              const revenue = quantity * Number(sku.unitPrice)
+
+              return (
+                <div
+                  key={sku.id}
+                  className="px-6 py-4 hover:bg-gray-50 transition-colors"
                 >
-                  <option value="">선택하세요</option>
-                  {skus.filter(s => s.isActive).map((sku) => (
-                    <option key={sku.id} value={sku.id}>
-                      {sku.skuName} - {sku.menuName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2">
+                        <h3 className="text-sm font-medium text-gray-900">
+                          {sku.skuName}
+                        </h3>
+                        <span className="text-xs text-gray-500">
+                          ({sku.menuName})
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-gray-600">
+                        단가: {formatCurrency(Number(sku.unitPrice))}
+                      </p>
+                    </div>
 
-            <div className="sm:col-span-2">
-              <label htmlFor="quantitySold" className="block text-sm font-medium text-gray-900">
-                판매량 *
-              </label>
-              <div className="mt-2">
-                <input
-                  type="number"
-                  name="quantitySold"
-                  id="quantitySold"
-                  required
-                  step="1"
-                  min="1"
-                  placeholder="0"
-                  className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
-                />
+                    <div className="flex items-center gap-4 ml-4">
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          value={quantities[sku.id] || ''}
+                          onChange={(e) => handleQuantityChange(sku.id, e.target.value)}
+                          placeholder="0"
+                          className="block w-20 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border text-right"
+                        />
+                        <span className="text-sm text-gray-500">개</span>
+                      </div>
+
+                      {quantity > 0 && (
+                        <div className="text-right min-w-[100px]">
+                          <div className="text-sm font-medium text-blue-600">
+                            {formatCurrency(revenue)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        {/* Total */}
+        {getEnteredCount() > 0 && (
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium text-gray-900">
+                총 매출액
+              </div>
+              <div className="text-lg font-bold text-blue-600">
+                {formatCurrency(getTotalRevenue())}
               </div>
             </div>
           </div>
-        </div>
+        )}
+      </div>
 
-        <div className="flex items-center justify-end gap-x-6 border-t border-gray-900/10 px-4 py-4 sm:px-8">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => router.back()}
-            disabled={isSubmitting}
-          >
-            취소
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? '저장 중...' : '저장'}
-          </Button>
-        </div>
+      {/* Actions */}
+      <div className="flex items-center justify-end gap-3">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => router.push('/dashboard/sales')}
+          disabled={isSubmitting}
+        >
+          취소
+        </Button>
+        <Button
+          type="submit"
+          disabled={isSubmitting || getEnteredCount() === 0}
+        >
+          {isSubmitting ? '등록 중...' : '판매 등록'}
+        </Button>
       </div>
     </form>
   )
