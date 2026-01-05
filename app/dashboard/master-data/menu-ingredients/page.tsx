@@ -1,4 +1,11 @@
-export default function MenuIngredientsPage() {
+import { getMenuIngredients } from './actions'
+import MenuIngredientForm from './menu-ingredient-form'
+
+export const dynamic = 'force-dynamic'
+
+export default async function MenuIngredientsPage() {
+  const mappings = await getMenuIngredients()
+
   return (
     <div>
       <div className="sm:flex sm:items-center">
@@ -9,12 +16,7 @@ export default function MenuIngredientsPage() {
           </p>
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-          <button
-            type="button"
-            className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
-          >
-            매핑 추가
-          </button>
+          <MenuIngredientForm />
         </div>
       </div>
 
@@ -42,20 +44,38 @@ export default function MenuIngredientsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {/* TODO: Implement menu_ingredients query with menu and ingredient joins */}
-                <tr>
-                  <td colSpan={5} className="py-10 text-center text-sm text-gray-500">
-                    등록된 매핑이 없습니다
-                  </td>
-                </tr>
+                {mappings.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="py-10 text-center text-sm text-gray-500">
+                      등록된 매핑이 없습니다
+                    </td>
+                  </tr>
+                ) : (
+                  mappings.map((mapping) => (
+                    <tr key={mapping.id}>
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+                        {mapping.menuName}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {mapping.ingredientName}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right">
+                        {Number(mapping.requiredQuantity).toFixed(2)}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {mapping.unit}
+                      </td>
+                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                        <MenuIngredientForm mapping={mapping} />
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
       </div>
-
-      {/* TODO: Add modal/drawer for create/edit menu-ingredient mapping */}
-      {/* Fields: menuId, ingredientId, requiredQuantity */}
     </div>
   )
 }
