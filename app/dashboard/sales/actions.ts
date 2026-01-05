@@ -32,10 +32,23 @@ export async function createSalesRecord(formData: FormData) {
 
     const validatedData = salesRecordSchema.parse(rawData)
 
+    // Get SKU unit price
+    const sku = await db.query.skus.findFirst({
+      where: eq(skus.id, validatedData.skuId),
+    })
+
+    if (!sku) {
+      return {
+        success: false,
+        error: 'SKU를 찾을 수 없습니다',
+      }
+    }
+
     const [record] = await db
       .insert(salesRecords)
       .values({
         ...validatedData,
+        unitPrice: sku.unitPrice,
         createdBy: 'system',
       })
       .returning()

@@ -23,7 +23,8 @@
       "Bash(del test-hash.mjs)",
       "Bash(cat:*)",
       "Bash(node scripts/generate-password-hash.mjs:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(vercel env:*)"
     ]
   }
 }

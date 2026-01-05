@@ -88,8 +88,9 @@ export const salesRecords = pgTable('sales_records', {
   saleDate: date('sale_date').notNull(),
   skuId: uuid('sku_id').notNull().references(() => skus.id),
   quantitySold: decimal('quantity_sold', { precision: 10, scale: 2 }).notNull(),
+  unitPrice: decimal('unit_price', { precision: 10, scale: 2 }).notNull(),
   totalRevenue: decimal('total_revenue', { precision: 14, scale: 2 }).generatedAlwaysAs(
-    sql`quantity_sold * (SELECT unit_price FROM skus WHERE id = sku_id)`
+    sql`quantity_sold * unit_price`
   ),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
