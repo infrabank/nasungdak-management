@@ -16,7 +16,11 @@
       "Bash(git push:*)",
       "Bash(npm run build:*)",
       "Bash(npm cache clean:*)",
-      "Bash(if exist node_modules rmdir /s /q node_modules)"
+      "Bash(if exist node_modules rmdir /s /q node_modules)",
+      "Bash(test:*)",
+      "Bash(node -e:*)",
+      "Bash(node test-hash.mjs:*)",
+      "Bash(del test-hash.mjs)"
     ]
   }
 }
