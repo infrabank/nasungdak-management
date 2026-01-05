@@ -9,8 +9,16 @@ import { z } from 'zod'
 const skuSchema = z.object({
   skuName: z.string().min(1, 'SKU명을 입력해주세요').max(100),
   menuId: z.string().uuid('메뉴를 선택해주세요'),
-  unitPrice: z.coerce.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
-    message: '단가는 0 이상이어야 합니다',
+  unitPrice: z.coerce.string().transform((val, ctx) => {
+    const num = Number(val)
+    if (isNaN(num) || num < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '단가는 0 이상이어야 합니다',
+      })
+      return z.NEVER
+    }
+    return val
   }),
   description: z.string().max(500).optional(),
   isActive: z.boolean().default(true),
