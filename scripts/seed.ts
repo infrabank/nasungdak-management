@@ -31,7 +31,7 @@ async function seed() {
       ])
       .returning()
 
-    console.log(`✅ 메뉴 ${menuCategories.length}개 생성 완료`)
+    console.log(`✅ 메뉴 3개 생성 완료`)
 
     // 2. 재료 생성
     console.log('🥬 재료 생성 중...')
@@ -86,7 +86,7 @@ async function seed() {
         {
           skuName: '닭강정 (소)',
           menuId: menu1.id,
-          unitPrice: 12000,
+          unitPrice: '12000',
           description: '1인분 (500g)',
           isActive: true,
           createdBy: 'system',
@@ -94,7 +94,7 @@ async function seed() {
         {
           skuName: '닭강정 (중)',
           menuId: menu1.id,
-          unitPrice: 15000,
+          unitPrice: '15000',
           description: '2인분 (800g)',
           isActive: true,
           createdBy: 'system',
@@ -102,7 +102,7 @@ async function seed() {
         {
           skuName: '닭강정 (대)',
           menuId: menu1.id,
-          unitPrice: 18000,
+          unitPrice: '18000',
           description: '3인분 (1.2kg)',
           isActive: true,
           createdBy: 'system',
@@ -110,7 +110,7 @@ async function seed() {
         {
           skuName: '순살치킨 (중)',
           menuId: menu2.id,
-          unitPrice: 16000,
+          unitPrice: '16000',
           description: '2인분',
           isActive: true,
           createdBy: 'system',
@@ -118,7 +118,7 @@ async function seed() {
         {
           skuName: '순살치킨 (대)',
           menuId: menu2.id,
-          unitPrice: 20000,
+          unitPrice: '20000',
           description: '3인분',
           isActive: true,
           createdBy: 'system',
@@ -126,7 +126,7 @@ async function seed() {
         {
           skuName: '양념치킨 (중)',
           menuId: menu3.id,
-          unitPrice: 17000,
+          unitPrice: '17000',
           description: '2인분',
           isActive: true,
           createdBy: 'system',
@@ -143,75 +143,75 @@ async function seed() {
       {
         menuId: menu1.id,
         ingredientId: chicken.id,
-        requiredQuantity: 1.0,
+        requiredQuantity: '1.0',
         createdBy: 'system',
       },
       {
         menuId: menu1.id,
         ingredientId: flour.id,
-        requiredQuantity: 0.2,
+        requiredQuantity: '0.2',
         createdBy: 'system',
       },
       {
         menuId: menu1.id,
         ingredientId: sauce.id,
-        requiredQuantity: 0.15,
+        requiredQuantity: '0.15',
         createdBy: 'system',
       },
       {
         menuId: menu1.id,
         ingredientId: oil.id,
-        requiredQuantity: 0.5,
+        requiredQuantity: '0.5',
         createdBy: 'system',
       },
       // 순살치킨
       {
         menuId: menu2.id,
         ingredientId: chicken.id,
-        requiredQuantity: 1.0,
+        requiredQuantity: '1.0',
         createdBy: 'system',
       },
       {
         menuId: menu2.id,
         ingredientId: flour.id,
-        requiredQuantity: 0.25,
+        requiredQuantity: '0.25',
         createdBy: 'system',
       },
       {
         menuId: menu2.id,
         ingredientId: oil.id,
-        requiredQuantity: 0.5,
+        requiredQuantity: '0.5',
         createdBy: 'system',
       },
       // 양념치킨
       {
         menuId: menu3.id,
         ingredientId: chicken.id,
-        requiredQuantity: 1.0,
+        requiredQuantity: '1.0',
         createdBy: 'system',
       },
       {
         menuId: menu3.id,
         ingredientId: flour.id,
-        requiredQuantity: 0.2,
+        requiredQuantity: '0.2',
         createdBy: 'system',
       },
       {
         menuId: menu3.id,
         ingredientId: sauce.id,
-        requiredQuantity: 0.2,
+        requiredQuantity: '0.2',
         createdBy: 'system',
         },
       {
         menuId: menu3.id,
         ingredientId: oil.id,
-        requiredQuantity: 0.5,
+        requiredQuantity: '0.5',
         createdBy: 'system',
       },
       {
         menuId: menu3.id,
         ingredientId: garlic.id,
-        requiredQuantity: 0.05,
+        requiredQuantity: '0.05',
         createdBy: 'system',
       },
     ])
