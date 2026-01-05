@@ -43,7 +43,9 @@ export async function createMenuIngredient(formData: FormData) {
     const [mapping] = await db
       .insert(menuIngredients)
       .values({
-        ...validatedData,
+        menuId: validatedData.menuId,
+        ingredientId: validatedData.ingredientId,
+        requiredQuantity: validatedData.requiredQuantity.toString(),
         createdBy: 'system',
       })
       .returning()
@@ -87,7 +89,9 @@ export async function updateMenuIngredient(id: string, formData: FormData) {
     const [mapping] = await db
       .update(menuIngredients)
       .set({
-        ...validatedData,
+        menuId: validatedData.menuId,
+        ingredientId: validatedData.ingredientId,
+        requiredQuantity: validatedData.requiredQuantity.toString(),
         updatedAt: new Date(),
         updatedBy: 'system',
       })
