@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import LogoutButton from './logout-button'
 
 export default function DashboardLayout({
   children,
@@ -41,6 +42,9 @@ export default function DashboardLayout({
                   기초 데이터
                 </Link>
               </div>
+            </div>
+            <div className="flex items-center">
+              <LogoutButton />
             </div>
           </div>
         </div>
