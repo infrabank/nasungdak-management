@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { purchaseSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { purchaseTransactions, menuCategories, ingredients, menuIngredients } from '@/lib/db/schema'
-import { eq, and, isNull, desc } from 'drizzle-orm'
+import { eq, and, isNull, desc, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 export async function createPurchase(formData: FormData) {
@@ -189,7 +189,7 @@ export async function togglePurchaseValidation(id: string) {
   }
 }
 
-export async function getPurchases() {
+export async function getPurchases(startDate?: string, endDate?: string) {
   try {
     const purchases = await db
       .select({
@@ -207,9 +207,13 @@ export async function getPurchases() {
       .from(purchaseTransactions)
       .leftJoin(menuCategories, eq(purchaseTransactions.menuId, menuCategories.id))
       .leftJoin(ingredients, eq(purchaseTransactions.ingredientId, ingredients.id))
-      .where(isNull(purchaseTransactions.deletedAt))
+      .where(
+        startDate && endDate
+          ? sql`${purchaseTransactions.deletedAt} IS NULL AND ${purchaseTransactions.transactionDate} BETWEEN ${startDate}::date AND ${endDate}::date`
+          : isNull(purchaseTransactions.deletedAt)
+      )
       .orderBy(desc(purchaseTransactions.transactionDate))
-      .limit(100)
+      .limit(1000)
 
     return purchases
   } catch (error) {

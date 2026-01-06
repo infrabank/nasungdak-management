@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import { salesRecords, skus, menuCategories } from '@/lib/db/schema'
-import { eq, isNull, desc } from 'drizzle-orm'
+import { eq, isNull, desc, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
 const salesRecordSchema = z.object({
@@ -143,7 +143,7 @@ export async function deleteSalesRecord(id: string) {
   }
 }
 
-export async function getSalesRecords() {
+export async function getSalesRecords(startDate?: string, endDate?: string) {
   try {
     const records = await db
       .select({
@@ -158,9 +158,13 @@ export async function getSalesRecords() {
       .from(salesRecords)
       .leftJoin(skus, eq(salesRecords.skuId, skus.id))
       .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-      .where(isNull(salesRecords.deletedAt))
+      .where(
+        startDate && endDate
+          ? sql`${salesRecords.deletedAt} IS NULL AND ${salesRecords.saleDate} BETWEEN ${startDate}::date AND ${endDate}::date`
+          : isNull(salesRecords.deletedAt)
+      )
       .orderBy(desc(salesRecords.saleDate))
-      .limit(100)
+      .limit(1000)
 
     return records
   } catch (error) {
