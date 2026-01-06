@@ -60,7 +60,9 @@ export async function getAnalysis(
           AND s.deleted_at IS NULL
           AND mc.deleted_at IS NULL
           AND cdr.deleted_at IS NULL
-          AND ${startDate}::date BETWEEN cdr.effective_from AND COALESCE(cdr.effective_to, '9999-12-31'::date)
+          -- Check if cost rule date range overlaps with query date range
+          AND cdr.effective_from <= ${endDate}::date
+          AND COALESCE(cdr.effective_to, '9999-12-31'::date) >= ${startDate}::date
         GROUP BY s.id
       )
       SELECT
