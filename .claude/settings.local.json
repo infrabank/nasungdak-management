@@ -36,7 +36,8 @@
       "Bash(npm run type-check:*)",
       "Bash(git rm:*)",
       "Bash(npm run db:generate:*)",
-      "Bash(npx drizzle-kit:*)"
+      "Bash(npx drizzle-kit:*)",
+      "Bash(gh pr list:*)"
     ]
   }
 }

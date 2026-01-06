@@ -107,7 +107,7 @@ export default async function DashboardPage() {
       {/* Quick Actions */}
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">빠른 작업</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <Link
             href="/dashboard/purchases/new"
             className="bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg p-4 transition-colors"
@@ -122,6 +122,14 @@ export default async function DashboardPage() {
           >
             <h3 className="font-semibold text-green-900">일일 판매 입력</h3>
             <p className="text-sm text-green-700 mt-1">오늘 판매 기록</p>
+          </Link>
+
+          <Link
+            href="/dashboard/fixed-costs/new"
+            className="bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg p-4 transition-colors"
+          >
+            <h3 className="font-semibold text-amber-900">고정비 등록</h3>
+            <p className="text-sm text-amber-700 mt-1">인건비, 임대료 등</p>
           </Link>
 
           <Link
