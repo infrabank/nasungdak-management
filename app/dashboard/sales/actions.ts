@@ -143,6 +143,39 @@ export async function deleteSalesRecord(id: string) {
   }
 }
 
+export async function bulkDeleteSalesRecords(ids: string[]) {
+  try {
+    if (ids.length === 0) {
+      return {
+        success: false,
+        error: '삭제할 항목을 선택해주세요',
+      }
+    }
+
+    // Perform bulk soft delete using SQL for efficiency
+    await db.execute(sql`
+      UPDATE sales_records
+      SET deleted_at = NOW(),
+          deleted_by = 'system'
+      WHERE id = ANY(${ids}::uuid[])
+        AND deleted_at IS NULL
+    `)
+
+    revalidatePath('/dashboard/sales')
+
+    return {
+      success: true,
+      deletedCount: ids.length,
+    }
+  } catch (error) {
+    console.error('Failed to bulk delete sales records:', error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : '일괄 삭제에 실패했습니다',
+    }
+  }
+}
+
 export async function getSalesRecords(startDate?: string, endDate?: string) {
   try {
     const records = await db

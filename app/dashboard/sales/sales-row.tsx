@@ -14,7 +14,13 @@ interface SalesRecord {
   totalRevenue: string | null
 }
 
-export default function SalesRow({ sale }: { sale: SalesRecord }) {
+interface SalesRowProps {
+  sale: SalesRecord
+  isSelected: boolean
+  onToggleSelect: () => void
+}
+
+export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowProps) {
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = async () => {
@@ -31,7 +37,15 @@ export default function SalesRow({ sale }: { sale: SalesRecord }) {
 
   return (
     <tr className={isDeleting ? 'opacity-50' : ''}>
-      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
+      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-0">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={onToggleSelect}
+          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+        />
+      </td>
+      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
         {formatDate(sale.saleDate, 'yyyy-MM-dd')}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
