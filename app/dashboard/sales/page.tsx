@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { getSalesRecords } from './actions'
-import { formatCurrency, formatDate } from '@/lib/utils/format'
 import CSVUpload from './csv-upload'
 import CSVUploadTranspose from './csv-upload-transpose'
+import SalesRow from './sales-row'
 
 export const dynamic = 'force-dynamic'
 
@@ -54,37 +54,21 @@ export default async function SalesPage() {
                   <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
                     매출액
                   </th>
+                  <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0">
+                    <span className="sr-only">삭제</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {sales.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-10 text-center text-sm text-gray-500">
+                    <td colSpan={7} className="py-10 text-center text-sm text-gray-500">
                       판매 데이터가 없습니다. &ldquo;일일 판매 입력&rdquo; 버튼을 클릭하여 시작하세요.
                     </td>
                   </tr>
                 ) : (
                   sales.map((sale) => (
-                    <tr key={sale.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                        {formatDate(sale.saleDate, 'yyyy-MM-dd')}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {sale.menuName}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {sale.skuName}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right">
-                        {sale.quantitySold}개
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right">
-                        {formatCurrency(Number(sale.unitPrice))}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right font-medium">
-                        {formatCurrency(Number(sale.totalRevenue))}
-                      </td>
-                    </tr>
+                    <SalesRow key={sale.id} sale={sale} />
                   ))
                 )}
               </tbody>
