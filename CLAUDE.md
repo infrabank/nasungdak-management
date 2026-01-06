@@ -52,6 +52,7 @@ app/
     ├── page.tsx               # Dashboard home → /dashboard
     ├── purchases/             # Purchase management → /dashboard/purchases
     ├── sales/                 # Sales management → /dashboard/sales
+    ├── fixed-costs/           # Fixed costs management → /dashboard/fixed-costs
     ├── analysis/              # Period analysis → /dashboard/analysis
     └── master-data/           # Base data → /dashboard/master-data
 ```
@@ -61,6 +62,7 @@ app/
 - `/dashboard` - Dashboard home (protected)
 - `/dashboard/purchases` - Purchase management (protected)
 - `/dashboard/sales` - Sales management (protected)
+- `/dashboard/fixed-costs` - Fixed costs management (protected)
 - `/dashboard/analysis` - Period analysis (protected)
 - `/dashboard/master-data` - Master data management (protected)
 
@@ -81,6 +83,7 @@ Key tables:
 - `menu_ingredients` - Junction table for menu-ingredient mapping
 - `purchase_transactions` - Purchase records with auto-validation
 - `sales_records` - Sales records
+- `fixed_costs` - Fixed cost records (labor, rent, management fees, etc.)
 - `cost_distribution_rules` - Cost allocation rules with date ranges
 
 **Important**: `purchaseTransactions.totalAmount` and `salesRecords.totalRevenue` are **generated columns** computed by the database. Do not try to insert/update these fields directly.
@@ -226,6 +229,39 @@ Cost distribution rules define how to allocate purchase costs to menus:
 - Must have `effective_from` and optional `effective_to` dates
 - Sum of `distribution_percent` for same menu + date range must equal 100%
 - Used in period analysis queries to calculate cost of goods sold
+
+### Fixed Costs Management
+
+Fixed costs (고정비) track recurring expenses that don't vary with production:
+- **Cost Types**: Labor costs (인건비), Rent (임대료), Management fees (관리비), Other (기타)
+- **Date-Based**: Each cost record is associated with a specific date for period-based analysis
+- **Margin Calculation**: Fixed costs are added to variable costs (ingredient costs) when calculating net profit
+- **Formula**: Net Profit = Revenue - (Variable Costs + Fixed Costs)
+- **Margin %**: (Net Profit / Revenue) × 100
+
+Fixed costs are accessible via quick action button on the dashboard and have their own management page at `/dashboard/fixed-costs`.
+
+### Sales Bulk Operations
+
+Sales management includes bulk operations for efficiency:
+- **Bulk Selection**: Checkbox-based selection with "Select All" functionality
+- **Bulk Delete**: Soft-delete multiple sales records at once
+- **Client-side State**: Selection state managed in client component (`SalesList`)
+- **Server Action**: `bulkDeleteSalesRecords()` processes multiple IDs with loop-based approach
+- **User Feedback**: Confirmation dialogs and success/error messages
+
+### CSV Import Auto-Pricing
+
+When uploading sales data via CSV:
+- CSV files contain only: date, SKU name, and quantity (no prices)
+- Unit prices are automatically fetched from SKU master data during import
+- System creates a Map of `SKU name → {id, unitPrice}` for fast lookup
+- Each sales record is saved with the current unit price from master data
+- This approach:
+  - Eliminates repetitive price entry
+  - Maintains price history (records prices at time of sale)
+  - Prevents manual entry errors
+  - Centralizes price management in SKU master data
 
 ### Database-Computed Fields
 
