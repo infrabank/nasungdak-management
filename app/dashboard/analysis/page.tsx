@@ -1,6 +1,7 @@
-import { getAnalysis } from './actions'
+import { getAnalysis, getMonthlyAnalysis } from './actions'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 import Link from 'next/link'
+import AnalysisTabs from './analysis-tabs'
 
 interface SearchParams {
   startDate?: string
@@ -23,7 +24,10 @@ export default async function AnalysisPage({
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
 
   // Fetch analysis data
-  const result = await getAnalysis(startDate, endDate)
+  const [result, monthlyResult] = await Promise.all([
+    getAnalysis(startDate, endDate),
+    getMonthlyAnalysis(startDate, endDate)
+  ])
 
   return (
     <div>
@@ -78,7 +82,7 @@ export default async function AnalysisPage({
         </div>
       </form>
 
-      {result.success && result.data ? (
+      {result.success && result.data && monthlyResult.success ? (
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-6">
@@ -118,91 +122,21 @@ export default async function AnalysisPage({
             </div>
           </div>
 
-          {/* SKU Analysis Table */}
-          <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-            <div className="px-4 py-5 sm:p-6">
-              <h3 className="text-base font-semibold text-gray-900 mb-4">SKU별 분석</h3>
-
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-300">
-                  <thead>
-                    <tr>
-                      <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
-                        SKU
-                      </th>
-                      <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
-                        판매량
-                      </th>
-                      <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
-                        매출액
-                      </th>
-                      <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
-                        원가
-                      </th>
-                      <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
-                        순이익
-                      </th>
-                      <th scope="col" className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
-                        마진율
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {result.data.skuAnalysis.length > 0 ? (
-                      result.data.skuAnalysis.map((sku, index) => (
-                        <tr key={index}>
-                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                            {sku.skuName}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right">
-                            {sku.quantitySold.toFixed(0)}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right font-semibold">
-                            {formatCurrency(sku.revenue)}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right">
-                            {formatCurrency(sku.cost)}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right font-semibold">
-                            {formatCurrency(sku.profit)}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
-                            <span
-                              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                                sku.marginPercent >= 40
-                                  ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20'
-                                  : sku.marginPercent >= 20
-                                  ? 'bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20'
-                                  : 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20'
-                              }`}
-                            >
-                              {sku.marginPercent.toFixed(1)}%
-                            </span>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={6} className="py-10 text-center text-sm text-gray-500">
-                          해당 기간에 데이터가 없습니다
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
+          {/* Tabs for Period vs Monthly Analysis */}
+          <AnalysisTabs
+            skuAnalysis={result.data.skuAnalysis}
+            monthlyData={monthlyResult.data || []}
+          />
         </>
       ) : (
         <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
           <div className="text-center text-sm text-red-600">
-            {result.error || '데이터를 불러오는데 실패했습니다'}
+            {result.error || monthlyResult.error || '데이터를 불러오는데 실패했습니다'}
           </div>
         </div>
       )}
 
-      {/* Help Text */}
+      {/* Help Text - Keep old one but update condition */}
       {result.success && result.data && result.data.skuAnalysis.length === 0 && (
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <p className="text-sm text-blue-800">

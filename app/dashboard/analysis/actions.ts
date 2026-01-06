@@ -26,6 +26,133 @@ export interface AnalysisResult {
   error?: string
 }
 
+export interface MonthlyAnalysisResult {
+  success: boolean
+  data?: Array<{
+    month: string // YYYY-MM format
+    totalRevenue: number
+    totalVariableCost: number
+    totalFixedCost: number
+    totalCost: number
+    netProfit: number
+    marginPercent: number
+  }>
+  error?: string
+}
+
+export async function getMonthlyAnalysis(
+  startDate: string,
+  endDate: string
+): Promise<MonthlyAnalysisResult> {
+  try {
+    console.log('=== Monthly Analysis Query ===')
+    console.log('Date range:', startDate, 'to', endDate)
+
+    // Get monthly revenue from sales
+    const monthlyRevenueResult = await db.execute(sql`
+      SELECT
+        TO_CHAR(sr.sale_date, 'YYYY-MM') AS month,
+        SUM(sr.total_revenue) AS total_revenue
+      FROM sales_records sr
+      WHERE sr.sale_date BETWEEN ${startDate}::date AND ${endDate}::date
+        AND sr.deleted_at IS NULL
+      GROUP BY TO_CHAR(sr.sale_date, 'YYYY-MM')
+      ORDER BY month
+    `)
+
+    // Get monthly variable costs (ingredient costs)
+    const monthlyVariableCostResult = await db.execute(sql`
+      SELECT
+        TO_CHAR(pt.transaction_date, 'YYYY-MM') AS month,
+        SUM(pt.total_amount) AS total_variable_cost
+      FROM purchase_transactions pt
+      WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
+        AND pt.deleted_at IS NULL
+        AND pt.is_valid = true
+      GROUP BY TO_CHAR(pt.transaction_date, 'YYYY-MM')
+      ORDER BY month
+    `)
+
+    // Get monthly fixed costs
+    const monthlyFixedCostResult = await db.execute(sql`
+      SELECT
+        TO_CHAR(fc.cost_date, 'YYYY-MM') AS month,
+        SUM(fc.amount) AS total_fixed_cost
+      FROM fixed_costs fc
+      WHERE fc.cost_date BETWEEN ${startDate}::date AND ${endDate}::date
+        AND fc.deleted_at IS NULL
+      GROUP BY TO_CHAR(fc.cost_date, 'YYYY-MM')
+      ORDER BY month
+    `)
+
+    // Combine all months
+    const monthsMap = new Map<string, {
+      revenue: number
+      variableCost: number
+      fixedCost: number
+    }>()
+
+    // Add revenue data
+    monthlyRevenueResult.rows.forEach((row: any) => {
+      const month = row.month
+      if (!monthsMap.has(month)) {
+        monthsMap.set(month, { revenue: 0, variableCost: 0, fixedCost: 0 })
+      }
+      monthsMap.get(month)!.revenue = Number(row.total_revenue)
+    })
+
+    // Add variable cost data
+    monthlyVariableCostResult.rows.forEach((row: any) => {
+      const month = row.month
+      if (!monthsMap.has(month)) {
+        monthsMap.set(month, { revenue: 0, variableCost: 0, fixedCost: 0 })
+      }
+      monthsMap.get(month)!.variableCost = Number(row.total_variable_cost)
+    })
+
+    // Add fixed cost data
+    monthlyFixedCostResult.rows.forEach((row: any) => {
+      const month = row.month
+      if (!monthsMap.has(month)) {
+        monthsMap.set(month, { revenue: 0, variableCost: 0, fixedCost: 0 })
+      }
+      monthsMap.get(month)!.fixedCost = Number(row.total_fixed_cost)
+    })
+
+    // Sort months and calculate metrics
+    const monthlyData = Array.from(monthsMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, data]) => {
+        const totalCost = data.variableCost + data.fixedCost
+        const netProfit = data.revenue - totalCost
+        const marginPercent = data.revenue > 0 ? (netProfit / data.revenue) * 100 : 0
+
+        return {
+          month,
+          totalRevenue: data.revenue,
+          totalVariableCost: data.variableCost,
+          totalFixedCost: data.fixedCost,
+          totalCost,
+          netProfit,
+          marginPercent,
+        }
+      })
+
+    console.log('Monthly analysis data:', monthlyData)
+
+    return {
+      success: true,
+      data: monthlyData,
+    }
+  } catch (error) {
+    console.error('Failed to get monthly analysis:', error)
+    return {
+      success: false,
+      error: '월별 분석 데이터를 가져오는데 실패했습니다',
+    }
+  }
+}
+
 export async function getAnalysis(
   startDate: string,
   endDate: string
