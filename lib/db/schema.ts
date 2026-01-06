@@ -116,6 +116,22 @@ export const costDistributionRules = pgTable('cost_distribution_rules', {
   deletedBy: varchar('deleted_by', { length: 100 }),
 })
 
+// Fixed Costs Table
+export const fixedCosts = pgTable('fixed_costs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  costDate: date('cost_date').notNull(),
+  costType: varchar('cost_type', { length: 50 }).notNull(), // 인건비, 임대료, 관리비, 기타
+  costName: varchar('cost_name', { length: 200 }).notNull(),
+  amount: decimal('amount', { precision: 14, scale: 2 }).notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
+})
+
 // TypeScript Types
 export type MenuCategory = typeof menuCategories.$inferSelect
 export type NewMenuCategory = typeof menuCategories.$inferInsert
@@ -137,3 +153,6 @@ export type NewSalesRecord = typeof salesRecords.$inferInsert
 
 export type CostDistributionRule = typeof costDistributionRules.$inferSelect
 export type NewCostDistributionRule = typeof costDistributionRules.$inferInsert
+
+export type FixedCost = typeof fixedCosts.$inferSelect
+export type NewFixedCost = typeof fixedCosts.$inferInsert

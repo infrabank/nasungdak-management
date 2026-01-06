@@ -8,6 +8,8 @@ export interface AnalysisResult {
   data?: {
     summary: {
       totalRevenue: number
+      totalVariableCost: number
+      totalFixedCost: number
       totalCost: number
       netProfit: number
       marginPercent: number
@@ -100,9 +102,23 @@ export async function getAnalysis(
 
     console.log('SKU Analysis:', JSON.stringify(skuAnalysis, null, 2))
 
-    // Calculate summary totals
+    // Calculate variable costs (ingredient costs from purchases)
     const totalRevenue = skuAnalysis.reduce((sum, item) => sum + item.revenue, 0)
-    const totalCost = skuAnalysis.reduce((sum, item) => sum + item.cost, 0)
+    const totalVariableCost = skuAnalysis.reduce((sum, item) => sum + item.cost, 0)
+
+    // Get fixed costs for the period
+    const fixedCostsResult = await db.execute(sql`
+      SELECT COALESCE(SUM(amount), 0) AS total_fixed_cost
+      FROM fixed_costs
+      WHERE cost_date BETWEEN ${startDate}::date AND ${endDate}::date
+        AND deleted_at IS NULL
+    `)
+
+    const totalFixedCost = Number(fixedCostsResult.rows[0]?.total_fixed_cost || 0)
+    console.log('Fixed costs:', totalFixedCost)
+
+    // Calculate total costs and profit
+    const totalCost = totalVariableCost + totalFixedCost
     const netProfit = totalRevenue - totalCost
     const marginPercent = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0
 
@@ -111,6 +127,8 @@ export async function getAnalysis(
       data: {
         summary: {
           totalRevenue,
+          totalVariableCost,
+          totalFixedCost,
           totalCost,
           netProfit,
           marginPercent,
