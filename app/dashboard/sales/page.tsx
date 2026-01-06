@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getSalesRecords } from './actions'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 import CSVUpload from './csv-upload'
+import CSVUploadTranspose from './csv-upload-transpose'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +19,7 @@ export default async function SalesPage() {
           </p>
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none sm:flex sm:gap-3">
+          <CSVUploadTranspose />
           <CSVUpload />
           <Link
             href="/dashboard/sales/daily"
