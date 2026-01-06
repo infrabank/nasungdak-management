@@ -13,16 +13,16 @@ export async function debugCostCalculation(startDate: string, endDate: string) {
     SELECT
       cdr.id,
       mc.menu_name,
-      i.ingredient_name,
+      ing.ingredient_name,
       cdr.distribution_percent,
       cdr.effective_from,
       cdr.effective_to,
       cdr.deleted_at
     FROM cost_distribution_rules cdr
     JOIN menu_categories mc ON cdr.menu_id = mc.id
-    JOIN ingredients i ON cdr.ingredient_id = i.id
+    JOIN ingredients ing ON cdr.ingredient_id = ing.id
     WHERE cdr.deleted_at IS NULL
-    ORDER BY mc.menu_name, i.ingredient_name
+    ORDER BY mc.menu_name, ing.ingredient_name
   `)
   console.log('\n1. Cost Distribution Rules:', rules.rows.length, 'rules found')
   console.log(JSON.stringify(rules.rows, null, 2))
@@ -33,7 +33,7 @@ export async function debugCostCalculation(startDate: string, endDate: string) {
       pt.id,
       pt.transaction_date,
       mc.menu_name,
-      i.ingredient_name,
+      ing.ingredient_name,
       pt.quantity,
       pt.unit_price,
       pt.total_amount,
@@ -41,7 +41,7 @@ export async function debugCostCalculation(startDate: string, endDate: string) {
       pt.deleted_at
     FROM purchase_transactions pt
     JOIN menu_categories mc ON pt.menu_id = mc.id
-    JOIN ingredients i ON pt.ingredient_id = i.id
+    JOIN ingredients ing ON pt.ingredient_id = ing.id
     WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
       AND pt.deleted_at IS NULL
     ORDER BY pt.transaction_date DESC
@@ -72,7 +72,7 @@ export async function debugCostCalculation(startDate: string, endDate: string) {
       s.sku_name,
       mc.menu_name,
       pt.transaction_date,
-      i.ingredient_name,
+      ing.ingredient_name,
       pt.total_amount,
       cdr.distribution_percent,
       cdr.effective_from,
@@ -82,6 +82,7 @@ export async function debugCostCalculation(startDate: string, endDate: string) {
     JOIN menu_categories mc ON s.menu_id = mc.id
     JOIN cost_distribution_rules cdr ON mc.id = cdr.menu_id
     JOIN purchase_transactions pt ON cdr.ingredient_id = pt.ingredient_id
+    JOIN ingredients ing ON pt.ingredient_id = ing.id
     WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
       AND pt.deleted_at IS NULL
       AND pt.is_valid = true
