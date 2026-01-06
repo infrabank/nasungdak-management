@@ -124,7 +124,7 @@ export default function AnalysisTabs({ skuAnalysis, monthlyData }: AnalysisTabsP
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="py-10 text-center text-sm text-gray-700">
+                      <td colSpan={6} className="py-10 text-center text-sm text-gray-800">
                         해당 기간에 데이터가 없습니다
                       </td>
                     </tr>
@@ -207,7 +207,7 @@ export default function AnalysisTabs({ skuAnalysis, monthlyData }: AnalysisTabsP
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="py-10 text-center text-sm text-gray-700">
+                      <td colSpan={7} className="py-10 text-center text-sm text-gray-800">
                         해당 기간에 데이터가 없습니다
                       </td>
                     </tr>

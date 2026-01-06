@@ -32,8 +32,8 @@ export default async function AnalysisPage({
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">기간 분석</h1>
-        <p className="mt-2 text-sm text-gray-700">
+        <h1 className="text-3xl font-bold text-gray-900">기간 분석</h1>
+        <p className="mt-2 text-sm text-gray-800">
           판매 원가 및 마진율 분석
         </p>
       </div>
@@ -87,35 +87,35 @@ export default async function AnalysisPage({
           {/* Summary Cards */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-6">
             <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-              <div className="text-sm font-medium text-gray-500">총 매출</div>
+              <div className="text-sm font-medium text-gray-700">총 매출</div>
               <div className="mt-2 text-3xl font-bold text-gray-900">
                 {formatCurrency(result.data.summary.totalRevenue)}
               </div>
             </div>
 
             <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-              <div className="text-sm font-medium text-gray-500">변동비 (원가)</div>
+              <div className="text-sm font-medium text-gray-700">변동비 (원가)</div>
               <div className="mt-2 text-3xl font-bold text-gray-900">
                 {formatCurrency(result.data.summary.totalVariableCost)}
               </div>
             </div>
 
             <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-              <div className="text-sm font-medium text-gray-500">고정비</div>
+              <div className="text-sm font-medium text-gray-700">고정비</div>
               <div className="mt-2 text-3xl font-bold text-orange-600">
                 {formatCurrency(result.data.summary.totalFixedCost)}
               </div>
             </div>
 
             <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-              <div className="text-sm font-medium text-gray-500">순이익</div>
+              <div className="text-sm font-medium text-gray-700">순이익</div>
               <div className={`mt-2 text-3xl font-bold ${result.data.summary.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(result.data.summary.netProfit)}
               </div>
             </div>
 
             <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
-              <div className="text-sm font-medium text-gray-500">마진율</div>
+              <div className="text-sm font-medium text-gray-700">마진율</div>
               <div className={`mt-2 text-3xl font-bold ${result.data.summary.marginPercent >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
                 {result.data.summary.marginPercent.toFixed(1)}%
               </div>
