@@ -38,8 +38,8 @@ export default async function SalesPage({
     <div>
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-3xl font-bold">판매 관리</h1>
-          <p className="mt-2 text-sm text-gray-700">
+          <h1 className="text-3xl font-bold text-gray-900">판매 관리</h1>
+          <p className="mt-2 text-sm text-gray-800">
             일일 판매 기록 조회 및 관리
           </p>
         </div>
@@ -59,7 +59,7 @@ export default async function SalesPage({
       <form method="GET" className="mt-6 bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-lg p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div>
-            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="startDate" className="block text-sm font-medium text-gray-800 mb-1">
               시작일
             </label>
             <input
@@ -71,7 +71,7 @@ export default async function SalesPage({
             />
           </div>
           <div>
-            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="endDate" className="block text-sm font-medium text-gray-800 mb-1">
               종료일
             </label>
             <input
@@ -83,7 +83,7 @@ export default async function SalesPage({
             />
           </div>
           <div>
-            <label htmlFor="skuId" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="skuId" className="block text-sm font-medium text-gray-800 mb-1">
               SKU
             </label>
             <select
@@ -102,7 +102,7 @@ export default async function SalesPage({
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-800">
             {sales.length}건의 판매 기록
             {skuId ? ' (필터 적용됨)' : ''}
           </p>

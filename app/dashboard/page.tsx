@@ -23,8 +23,8 @@ export default async function DashboardPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">대시보드</h1>
-        <p className="mt-2 text-sm text-gray-700">
+        <h1 className="text-3xl font-bold text-gray-900">대시보드</h1>
+        <p className="mt-2 text-sm text-gray-800">
           이번 달 요약 ({formatDate(new Date(), 'yyyy년 MM월')})
         </p>
       </div>
@@ -35,13 +35,13 @@ export default async function DashboardPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-1">
-                <dt className="text-sm font-medium text-gray-500 truncate">
+                <dt className="text-sm font-medium text-gray-700 truncate">
                   총 매입액 (이번달)
                 </dt>
                 <dd className="mt-1 text-3xl font-semibold text-gray-900">
                   {formatCurrency(data.monthlyPurchases)}
                 </dd>
-                <dd className="mt-1 text-xs text-gray-500">
+                <dd className="mt-1 text-xs text-gray-700">
                   {data.purchaseCount}건
                 </dd>
               </div>
@@ -53,13 +53,13 @@ export default async function DashboardPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-1">
-                <dt className="text-sm font-medium text-gray-500 truncate">
+                <dt className="text-sm font-medium text-gray-700 truncate">
                   총 판매액 (이번달)
                 </dt>
                 <dd className="mt-1 text-3xl font-semibold text-gray-900">
                   {formatCurrency(data.monthlySales)}
                 </dd>
-                <dd className="mt-1 text-xs text-gray-500">
+                <dd className="mt-1 text-xs text-gray-700">
                   {data.salesCount}건
                 </dd>
               </div>
@@ -71,13 +71,13 @@ export default async function DashboardPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-1">
-                <dt className="text-sm font-medium text-gray-500 truncate">
+                <dt className="text-sm font-medium text-gray-700 truncate">
                   이번달 마진율
                 </dt>
                 <dd className="mt-1 text-3xl font-semibold text-gray-900">
                   {data.marginPercent.toFixed(1)}%
                 </dd>
-                <dd className="mt-1 text-xs text-gray-500">
+                <dd className="mt-1 text-xs text-gray-700">
                   순이익: {formatCurrency(data.monthlySales - data.monthlyPurchases)}
                 </dd>
               </div>
@@ -89,13 +89,13 @@ export default async function DashboardPage() {
           <div className="p-5">
             <div className="flex items-center">
               <div className="flex-1">
-                <dt className="text-sm font-medium text-gray-500 truncate">
+                <dt className="text-sm font-medium text-gray-700 truncate">
                   매입 검증 상태
                 </dt>
                 <dd className="mt-1 text-3xl font-semibold text-gray-900">
                   {data.validPurchases}
                 </dd>
-                <dd className="mt-1 text-xs text-gray-500">
+                <dd className="mt-1 text-xs text-gray-700">
                   유효: {data.validPurchases} / 무효: {data.invalidPurchases}
                 </dd>
               </div>
@@ -169,7 +169,7 @@ export default async function DashboardPage() {
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {purchase.menuName} - {purchase.ingredientName}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-700">
                         {formatDate(new Date(purchase.date), 'yyyy-MM-dd')}
                       </p>
                     </div>
@@ -191,7 +191,7 @@ export default async function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500">최근 매입 기록이 없습니다</p>
+              <p className="text-sm text-gray-700">최근 매입 기록이 없습니다</p>
             )}
             <div className="mt-4">
               <Link
@@ -219,7 +219,7 @@ export default async function DashboardPage() {
                       <p className="text-sm font-medium text-gray-900 truncate">
                         {sale.skuName}
                       </p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-700">
                         {formatDate(new Date(sale.date), 'yyyy-MM-dd')} · {sale.quantity}개
                       </p>
                     </div>
@@ -232,7 +232,7 @@ export default async function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500">최근 판매 기록이 없습니다</p>
+              <p className="text-sm text-gray-700">최근 판매 기록이 없습니다</p>
             )}
             <div className="mt-4">
               <Link
