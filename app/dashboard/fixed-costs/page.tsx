@@ -40,8 +40,8 @@ export default async function FixedCostsPage({
     <div>
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-3xl font-bold">고정비 관리</h1>
-          <p className="mt-2 text-sm text-gray-700">
+          <h1 className="text-3xl font-bold text-gray-900">고정비 관리</h1>
+          <p className="mt-2 text-sm text-gray-800">
             인건비, 임대료, 관리비 등 고정비용 관리
           </p>
         </div>
@@ -59,7 +59,7 @@ export default async function FixedCostsPage({
       <form method="GET" className="mt-6 bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-lg p-4">
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex-1 min-w-[200px]">
-            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="startDate" className="block text-sm font-medium text-gray-800 mb-1">
               시작일
             </label>
             <input
@@ -71,7 +71,7 @@ export default async function FixedCostsPage({
             />
           </div>
           <div className="flex-1 min-w-[200px]">
-            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="endDate" className="block text-sm font-medium text-gray-800 mb-1">
               종료일
             </label>
             <input
@@ -91,7 +91,7 @@ export default async function FixedCostsPage({
             </button>
           </div>
         </div>
-        <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-600">
+        <div className="mt-3 flex flex-wrap gap-4 text-xs text-gray-800">
           <span>{costs.length}건의 고정비 기록 ({startDate} ~ {endDate})</span>
           <span className="font-semibold">총계: ₩{grandTotal.toLocaleString('ko-KR')}</span>
           {Object.entries(totalsByType).map(([type, amount]) => (
@@ -132,7 +132,7 @@ export default async function FixedCostsPage({
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {costs.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-sm text-gray-500">
+                      <td colSpan={6} className="py-8 text-center text-sm text-gray-800">
                         고정비 데이터가 없습니다. &ldquo;새 고정비 등록&rdquo; 버튼을 클릭하여 시작하세요.
                       </td>
                     </tr>

@@ -48,19 +48,19 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
       <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
         {formatDate(sale.saleDate, 'yyyy-MM-dd')}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
         {sale.menuName}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
         {sale.skuName}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
         {sale.quantitySold}개
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
         {formatCurrency(Number(sale.unitPrice))}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right font-medium">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right font-medium">
         {formatCurrency(Number(sale.totalRevenue))}
       </td>
       <td className="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm sm:pr-0">
