@@ -189,8 +189,30 @@ export async function togglePurchaseValidation(id: string) {
   }
 }
 
-export async function getPurchases(startDate?: string, endDate?: string) {
+export async function getPurchases(
+  startDate?: string,
+  endDate?: string,
+  menuId?: string,
+  ingredientId?: string
+) {
   try {
+    // Build WHERE conditions
+    const conditions = [isNull(purchaseTransactions.deletedAt)]
+
+    if (startDate && endDate) {
+      conditions.push(
+        sql`${purchaseTransactions.transactionDate} BETWEEN ${startDate}::date AND ${endDate}::date`
+      )
+    }
+
+    if (menuId) {
+      conditions.push(eq(purchaseTransactions.menuId, menuId))
+    }
+
+    if (ingredientId) {
+      conditions.push(eq(purchaseTransactions.ingredientId, ingredientId))
+    }
+
     const purchases = await db
       .select({
         id: purchaseTransactions.id,
@@ -207,17 +229,49 @@ export async function getPurchases(startDate?: string, endDate?: string) {
       .from(purchaseTransactions)
       .leftJoin(menuCategories, eq(purchaseTransactions.menuId, menuCategories.id))
       .leftJoin(ingredients, eq(purchaseTransactions.ingredientId, ingredients.id))
-      .where(
-        startDate && endDate
-          ? sql`${purchaseTransactions.deletedAt} IS NULL AND ${purchaseTransactions.transactionDate} BETWEEN ${startDate}::date AND ${endDate}::date`
-          : isNull(purchaseTransactions.deletedAt)
-      )
+      .where(and(...conditions))
       .orderBy(desc(purchaseTransactions.transactionDate))
       .limit(1000)
 
     return purchases
   } catch (error) {
     console.error('Failed to fetch purchases:', error)
+    return []
+  }
+}
+
+export async function getMenusForFilter() {
+  try {
+    const menus = await db
+      .select({
+        id: menuCategories.id,
+        menuName: menuCategories.menuName,
+      })
+      .from(menuCategories)
+      .where(and(isNull(menuCategories.deletedAt), eq(menuCategories.isActive, true)))
+      .orderBy(menuCategories.menuName)
+
+    return menus
+  } catch (error) {
+    console.error('Failed to fetch menus:', error)
+    return []
+  }
+}
+
+export async function getIngredientsForFilter() {
+  try {
+    const ingredientsList = await db
+      .select({
+        id: ingredients.id,
+        ingredientName: ingredients.ingredientName,
+      })
+      .from(ingredients)
+      .where(and(isNull(ingredients.deletedAt), eq(ingredients.isActive, true)))
+      .orderBy(ingredients.ingredientName)
+
+    return ingredientsList
+  } catch (error) {
+    console.error('Failed to fetch ingredients:', error)
     return []
   }
 }

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getPurchases } from './actions'
+import { getPurchases, getMenusForFilter, getIngredientsForFilter } from './actions'
 import CSVUpload from './csv-upload'
 import PurchaseRow from './purchase-row'
 import { formatDate } from '@/lib/utils/format'
@@ -9,6 +9,8 @@ export const dynamic = 'force-dynamic'
 interface SearchParams {
   startDate?: string
   endDate?: string
+  menuId?: string
+  ingredientId?: string
 }
 
 export default async function PurchasesPage({
@@ -25,8 +27,14 @@ export default async function PurchasesPage({
 
   const startDate = params.startDate || formatDate(thirtyDaysAgo, 'yyyy-MM-dd')
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
+  const menuId = params.menuId || ''
+  const ingredientId = params.ingredientId || ''
 
-  const purchases = await getPurchases(startDate, endDate)
+  const [purchases, menus, ingredientsList] = await Promise.all([
+    getPurchases(startDate, endDate, menuId, ingredientId),
+    getMenusForFilter(),
+    getIngredientsForFilter(),
+  ])
 
   return (
     <div>
@@ -48,10 +56,10 @@ export default async function PurchasesPage({
         </div>
       </div>
 
-      {/* Date Filter */}
+      {/* Filters */}
       <form method="GET" className="mt-6 bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-lg p-4">
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="flex-1 min-w-[200px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div>
             <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
               시작일
             </label>
@@ -63,7 +71,7 @@ export default async function PurchasesPage({
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
             />
           </div>
-          <div className="flex-1 min-w-[200px]">
+          <div>
             <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
               종료일
             </label>
@@ -76,6 +84,54 @@ export default async function PurchasesPage({
             />
           </div>
           <div>
+            <label htmlFor="menuId" className="block text-sm font-medium text-gray-700 mb-1">
+              메뉴
+            </label>
+            <select
+              id="menuId"
+              name="menuId"
+              defaultValue={menuId}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value="">전체</option>
+              {menus.map((menu) => (
+                <option key={menu.id} value={menu.id}>
+                  {menu.menuName}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="ingredientId" className="block text-sm font-medium text-gray-700 mb-1">
+              재료
+            </label>
+            <select
+              id="ingredientId"
+              name="ingredientId"
+              defaultValue={ingredientId}
+              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+            >
+              <option value="">전체</option>
+              {ingredientsList.map((ingredient) => (
+                <option key={ingredient.id} value={ingredient.id}>
+                  {ingredient.ingredientName}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-gray-500">
+            {purchases.length}건의 매입 기록
+            {menuId || ingredientId ? ' (필터 적용됨)' : ''}
+          </p>
+          <div className="flex gap-2">
+            <a
+              href="/dashboard/purchases"
+              className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            >
+              초기화
+            </a>
             <button
               type="submit"
               className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
@@ -84,9 +140,6 @@ export default async function PurchasesPage({
             </button>
           </div>
         </div>
-        <p className="mt-2 text-xs text-gray-500">
-          {purchases.length}건의 매입 기록 ({startDate} ~ {endDate})
-        </p>
       </form>
 
       <div className="mt-8 flow-root">

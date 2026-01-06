@@ -180,8 +180,25 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
   }
 }
 
-export async function getSalesRecords(startDate?: string, endDate?: string) {
+export async function getSalesRecords(
+  startDate?: string,
+  endDate?: string,
+  skuId?: string
+) {
   try {
+    // Build WHERE conditions
+    const conditions = [isNull(salesRecords.deletedAt)]
+
+    if (startDate && endDate) {
+      conditions.push(
+        sql`${salesRecords.saleDate} BETWEEN ${startDate}::date AND ${endDate}::date`
+      )
+    }
+
+    if (skuId) {
+      conditions.push(eq(salesRecords.skuId, skuId))
+    }
+
     const records = await db
       .select({
         id: salesRecords.id,
@@ -195,11 +212,7 @@ export async function getSalesRecords(startDate?: string, endDate?: string) {
       .from(salesRecords)
       .leftJoin(skus, eq(salesRecords.skuId, skus.id))
       .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-      .where(
-        startDate && endDate
-          ? sql`${salesRecords.deletedAt} IS NULL AND ${salesRecords.saleDate} BETWEEN ${startDate}::date AND ${endDate}::date`
-          : isNull(salesRecords.deletedAt)
-      )
+      .where(sql`${sql.join(conditions, sql` AND `)}`)
       .orderBy(desc(salesRecords.saleDate))
       .limit(1000)
 
@@ -227,6 +240,26 @@ export async function getActiveSKUs() {
     return skuList
   } catch (error) {
     console.error('Failed to fetch SKUs:', error)
+    return []
+  }
+}
+
+export async function getSKUsForFilter() {
+  try {
+    const skuList = await db
+      .select({
+        id: skus.id,
+        skuName: skus.skuName,
+        menuName: menuCategories.menuName,
+      })
+      .from(skus)
+      .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
+      .where(isNull(skus.deletedAt))
+      .orderBy(menuCategories.menuName, skus.skuName)
+
+    return skuList
+  } catch (error) {
+    console.error('Failed to fetch SKUs for filter:', error)
     return []
   }
 }
