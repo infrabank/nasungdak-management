@@ -6,14 +6,15 @@ import { formatCurrency, formatDate } from '@/lib/utils/format'
 
 interface Purchase {
   id: string
-  transactionDate: Date
-  menuName: string
-  ingredientName: string
+  transactionDate: string
+  menuName: string | null
+  ingredientName: string | null
   supplierName: string
   quantity: string
   unitPrice: string
-  totalAmount: string
+  totalAmount: string | null
   isValid: boolean
+  notes: string | null
 }
 
 export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
@@ -64,13 +65,13 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
   return (
     <tr className={isDeleting ? 'opacity-50' : ''}>
       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-        {formatDate(purchase.transactionDate, 'yyyy-MM-dd')}
+        {formatDate(new Date(purchase.transactionDate), 'yyyy-MM-dd')}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-        {purchase.menuName}
+        {purchase.menuName || '-'}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-        {purchase.ingredientName}
+        {purchase.ingredientName || '-'}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
         {purchase.supplierName}
