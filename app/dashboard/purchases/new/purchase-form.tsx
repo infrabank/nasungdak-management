@@ -5,22 +5,37 @@ import { useRouter } from 'next/navigation'
 import { createPurchase } from '../actions'
 import { getMenus } from '../../master-data/menus/actions'
 import { getIngredients } from '../../master-data/ingredients/actions'
+import { getMenuIngredients } from '../../master-data/menu-ingredients/actions'
 import { Button } from '@/components/ui/button'
 import type { MenuCategory, Ingredient } from '@/lib/db/schema'
+
+type MenuIngredientMapping = {
+  id: string
+  menuId: string
+  menuName: string | null
+  ingredientId: string
+  ingredientName: string | null
+  unit: string | null
+  requiredQuantity: string
+}
 
 export default function PurchaseForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [menus, setMenus] = useState<MenuCategory[]>([])
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
+  const [menuIngredients, setMenuIngredients] = useState<MenuIngredientMapping[]>([])
+  const [selectedMenuId, setSelectedMenuId] = useState<string>('')
 
   useEffect(() => {
     Promise.all([
       getMenus(),
       getIngredients(),
-    ]).then(([menusData, ingredientsData]) => {
+      getMenuIngredients(),
+    ]).then(([menusData, ingredientsData, mappingsData]) => {
       setMenus(menusData)
       setIngredients(ingredientsData)
+      setMenuIngredients(mappingsData)
     })
   }, [])
 
@@ -74,6 +89,8 @@ export default function PurchaseForm() {
                   id="menuId"
                   name="menuId"
                   required
+                  value={selectedMenuId}
+                  onChange={(e) => setSelectedMenuId(e.target.value)}
                   className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
                 >
                   <option value="">선택하세요</option>
@@ -95,16 +112,27 @@ export default function PurchaseForm() {
                   id="ingredientId"
                   name="ingredientId"
                   required
-                  className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                  disabled={!selectedMenuId}
+                  className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
-                  <option value="">선택하세요</option>
-                  {ingredients.filter(i => i.isActive).map((ingredient) => (
-                    <option key={ingredient.id} value={ingredient.id}>
-                      {ingredient.ingredientName} ({ingredient.unit})
-                    </option>
-                  ))}
+                  <option value="">{selectedMenuId ? '재료를 선택하세요' : '먼저 메뉴를 선택하세요'}</option>
+                  {selectedMenuId && menuIngredients
+                    .filter(mi => mi.menuId === selectedMenuId)
+                    .map((mapping) => {
+                      const ingredient = ingredients.find(i => i.id === mapping.ingredientId)
+                      return ingredient ? (
+                        <option key={ingredient.id} value={ingredient.id}>
+                          {ingredient.ingredientName} ({ingredient.unit})
+                        </option>
+                      ) : null
+                    })}
                 </select>
               </div>
+              {selectedMenuId && menuIngredients.filter(mi => mi.menuId === selectedMenuId).length === 0 && (
+                <p className="mt-2 text-sm text-amber-600">
+                  ⚠ 이 메뉴에 매핑된 재료가 없습니다. 기초 데이터에서 메뉴-재료 매핑을 먼저 설정해주세요.
+                </p>
+              )}
             </div>
 
             <div className="sm:col-span-3">
