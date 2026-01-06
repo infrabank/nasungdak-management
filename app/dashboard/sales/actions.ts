@@ -152,22 +152,24 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
       }
     }
 
-    // Perform bulk soft delete
-    const placeholders = ids.map((_, i) => `$${i + 1}::uuid`).join(', ')
-
-    await db.execute(sql.raw(`
-      UPDATE sales_records
-      SET deleted_at = NOW(),
-          deleted_by = 'system'
-      WHERE id IN (${placeholders})
-        AND deleted_at IS NULL
-    `, ...ids))
+    // Perform bulk soft delete using loop for simplicity
+    let deletedCount = 0
+    for (const id of ids) {
+      await db
+        .update(salesRecords)
+        .set({
+          deletedAt: new Date(),
+          deletedBy: 'system',
+        })
+        .where(eq(salesRecords.id, id))
+      deletedCount++
+    }
 
     revalidatePath('/dashboard/sales')
 
     return {
       success: true,
-      deletedCount: ids.length,
+      deletedCount,
     }
   } catch (error) {
     console.error('Failed to bulk delete sales records:', error)
