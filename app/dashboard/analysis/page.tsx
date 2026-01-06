@@ -10,14 +10,17 @@ interface SearchParams {
 export default async function AnalysisPage({
   searchParams,
 }: {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }) {
+  // Await searchParams (Next.js 15 requirement)
+  const params = await searchParams
+
   // Get date range from search params or use defaults
   const today = new Date()
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
 
-  const startDate = searchParams.startDate || formatDate(firstDayOfMonth, 'yyyy-MM-dd')
-  const endDate = searchParams.endDate || formatDate(today, 'yyyy-MM-dd')
+  const startDate = params.startDate || formatDate(firstDayOfMonth, 'yyyy-MM-dd')
+  const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
 
   // Fetch analysis data
   const result = await getAnalysis(startDate, endDate)
