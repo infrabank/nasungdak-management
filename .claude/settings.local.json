@@ -32,7 +32,9 @@
       "Bash(fi)",
       "Bash(npx next lint:*)",
       "Bash(npx eslint:*)",
-      "Bash(git restore:*)"
+      "Bash(git restore:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(git rm:*)"
     ]
   }
 }
