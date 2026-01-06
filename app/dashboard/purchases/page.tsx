@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { getPurchases } from './actions'
-import { formatCurrency, formatDate } from '@/lib/utils/format'
 import CSVUpload from './csv-upload'
+import PurchaseRow from './purchase-row'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,51 +59,21 @@ export default async function PurchasesPage() {
                     <th className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900">
                       검증
                     </th>
+                    <th className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                      작업
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {purchases.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-8 text-center text-sm text-gray-500">
+                      <td colSpan={9} className="py-8 text-center text-sm text-gray-500">
                         매입 데이터가 없습니다. &ldquo;새 매입 등록&rdquo; 버튼을 클릭하여 시작하세요.
                       </td>
                     </tr>
                   ) : (
                     purchases.map((purchase) => (
-                      <tr key={purchase.id}>
-                        <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                          {formatDate(purchase.transactionDate, 'yyyy-MM-dd')}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {purchase.menuName}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {purchase.ingredientName}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {purchase.supplierName}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right">
-                          {Number(purchase.quantity).toFixed(2)}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right">
-                          {formatCurrency(Number(purchase.unitPrice))}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right font-medium">
-                          {formatCurrency(Number(purchase.totalAmount))}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-center">
-                          <span
-                            className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                              purchase.isValid
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {purchase.isValid ? '유효' : '무효'}
-                          </span>
-                        </td>
-                      </tr>
+                      <PurchaseRow key={purchase.id} purchase={purchase} />
                     ))
                   )}
                 </tbody>
