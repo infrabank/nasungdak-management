@@ -29,6 +29,9 @@ export async function getAnalysis(
   endDate: string
 ): Promise<AnalysisResult> {
   try {
+    console.log('=== Analysis Query ===')
+    console.log('Date range:', startDate, 'to', endDate)
+
     // Complex SQL query combining sales, purchases, and cost distribution
     const result = await db.execute(sql`
       WITH sales_summary AS (
@@ -83,6 +86,9 @@ export async function getAnalysis(
     `)
 
     // Process results
+    console.log('Query returned', result.rows.length, 'rows')
+    console.log('Sample row:', result.rows[0])
+
     const skuAnalysis = result.rows.map((row: any) => ({
       skuName: row.sku_name,
       quantitySold: Number(row.quantity_sold),
@@ -91,6 +97,8 @@ export async function getAnalysis(
       profit: Number(row.profit),
       marginPercent: Number(row.margin_percent),
     }))
+
+    console.log('SKU Analysis:', JSON.stringify(skuAnalysis, null, 2))
 
     // Calculate summary totals
     const totalRevenue = skuAnalysis.reduce((sum, item) => sum + item.revenue, 0)
