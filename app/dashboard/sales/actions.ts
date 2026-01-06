@@ -152,14 +152,16 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
       }
     }
 
-    // Perform bulk soft delete using SQL for efficiency
-    await db.execute(sql`
+    // Perform bulk soft delete
+    const placeholders = ids.map((_, i) => `$${i + 1}::uuid`).join(', ')
+
+    await db.execute(sql.raw(`
       UPDATE sales_records
       SET deleted_at = NOW(),
           deleted_by = 'system'
-      WHERE id = ANY(${ids}::uuid[])
+      WHERE id IN (${placeholders})
         AND deleted_at IS NULL
-    `)
+    `, ...ids))
 
     revalidatePath('/dashboard/sales')
 
