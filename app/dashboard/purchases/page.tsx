@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { getPurchases, getMenusForFilter, getIngredientsForFilter } from './actions'
 import CSVUpload from './csv-upload'
 import PurchaseRow from './purchase-row'
-import { formatDate } from '@/lib/utils/format'
+import { formatDate, formatCurrency } from '@/lib/utils/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,6 +35,10 @@ export default async function PurchasesPage({
     getMenusForFilter(),
     getIngredientsForFilter(),
   ])
+
+  // Calculate totals
+  const totalQuantity = purchases.reduce((sum, p) => sum + Number(p.quantity), 0)
+  const totalAmount = purchases.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0)
 
   return (
     <div>
@@ -186,9 +190,26 @@ export default async function PurchasesPage({
                       </td>
                     </tr>
                   ) : (
-                    purchases.map((purchase) => (
-                      <PurchaseRow key={purchase.id} purchase={purchase} />
-                    ))
+                    <>
+                      {purchases.map((purchase) => (
+                        <PurchaseRow key={purchase.id} purchase={purchase} />
+                      ))}
+                      <tr className="bg-gray-50 font-semibold">
+                        <td colSpan={4} className="py-4 pl-4 pr-3 text-sm text-right text-gray-900 sm:pl-6">
+                          합계
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                          {totalQuantity.toFixed(2)}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                          -
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                          {formatCurrency(totalAmount)}
+                        </td>
+                        <td colSpan={2}></td>
+                      </tr>
+                    </>
                   )}
                 </tbody>
               </table>

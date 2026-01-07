@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import SalesRow from './sales-row'
 import { bulkDeleteSalesRecords } from './actions'
+import { formatCurrency } from '@/lib/utils/format'
 
 interface Sale {
   id: string
@@ -16,9 +17,11 @@ interface Sale {
 
 interface SalesListProps {
   sales: Sale[]
+  totalQuantity: number
+  totalRevenue: number
 }
 
-export default function SalesList({ sales }: SalesListProps) {
+export default function SalesList({ sales, totalQuantity, totalRevenue }: SalesListProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -131,14 +134,32 @@ export default function SalesList({ sales }: SalesListProps) {
                   </td>
                 </tr>
               ) : (
-                sales.map((sale) => (
-                  <SalesRow
-                    key={sale.id}
-                    sale={sale}
-                    isSelected={selectedIds.has(sale.id)}
-                    onToggleSelect={() => handleSelectOne(sale.id)}
-                  />
-                ))
+                <>
+                  {sales.map((sale) => (
+                    <SalesRow
+                      key={sale.id}
+                      sale={sale}
+                      isSelected={selectedIds.has(sale.id)}
+                      onToggleSelect={() => handleSelectOne(sale.id)}
+                    />
+                  ))}
+                  <tr className="bg-gray-50 font-semibold">
+                    <td className="py-4 pl-4 pr-3 text-sm sm:pl-0"></td>
+                    <td colSpan={3} className="px-3 py-4 text-sm text-right text-gray-900">
+                      합계
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                      {totalQuantity}개
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                      -
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                      {formatCurrency(totalRevenue)}
+                    </td>
+                    <td></td>
+                  </tr>
+                </>
               )}
             </tbody>
           </table>

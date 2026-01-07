@@ -34,6 +34,10 @@ export default async function SalesPage({
     getSKUsForFilter(),
   ])
 
+  // Calculate totals
+  const totalQuantity = sales.reduce((sum, s) => sum + Number(s.quantitySold), 0)
+  const totalRevenue = sales.reduce((sum, s) => sum + Number(s.totalRevenue || 0), 0)
+
   return (
     <div>
       <div className="sm:flex sm:items-center">
@@ -123,7 +127,7 @@ export default async function SalesPage({
         </div>
       </form>
 
-      <SalesList sales={sales} />
+      <SalesList sales={sales} totalQuantity={totalQuantity} totalRevenue={totalRevenue} />
     </div>
   )
 }
