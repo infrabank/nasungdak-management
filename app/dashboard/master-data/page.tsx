@@ -32,7 +32,7 @@ export default function MasterDataPage() {
               />
             </svg>
           </div>
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-gray-900">
             메뉴 카테고리 등록 및 관리
           </p>
         </Link>
@@ -58,7 +58,7 @@ export default function MasterDataPage() {
               />
             </svg>
           </div>
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-gray-900">
             재료 등록 및 관리
           </p>
         </Link>
@@ -84,7 +84,7 @@ export default function MasterDataPage() {
               />
             </svg>
           </div>
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-gray-900">
             SKU(판매 단위) 등록 및 관리
           </p>
         </Link>
@@ -110,7 +110,7 @@ export default function MasterDataPage() {
               />
             </svg>
           </div>
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-gray-900">
             메뉴별 필요 재료 및 수량 설정
           </p>
         </Link>
@@ -136,7 +136,7 @@ export default function MasterDataPage() {
               />
             </svg>
           </div>
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-gray-900">
             재료별 원가 배분 비율 설정
           </p>
         </Link>

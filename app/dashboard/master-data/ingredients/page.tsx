@@ -11,8 +11,8 @@ export default async function IngredientsPage() {
     <div>
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-3xl font-bold">재료 관리</h1>
-          <p className="mt-2 text-sm text-gray-700">
+          <h1 className="text-3xl font-bold text-gray-900">재료 관리</h1>
+          <p className="mt-2 text-sm text-gray-900">
             재료 등록 및 관리
           </p>
         </div>
@@ -58,10 +58,10 @@ export default async function IngredientsPage() {
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
                         {ingredient.ingredientName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                         {ingredient.unit}
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-700">
+                      <td className="px-3 py-4 text-sm text-gray-900">
                         {ingredient.description}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-center">

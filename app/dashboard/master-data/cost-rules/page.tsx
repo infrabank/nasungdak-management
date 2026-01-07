@@ -57,13 +57,13 @@ export default async function CostRulesPage() {
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
                         {rule.menuName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                         {rule.ingredientName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
                         {Number(rule.distributionPercent).toFixed(2)}%
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                         {formatDate(rule.effectiveFrom, 'yyyy-MM-dd')}
                         {rule.effectiveTo && ` ~ ${formatDate(rule.effectiveTo, 'yyyy-MM-dd')}`}
                         {!rule.effectiveTo && ' ~ '}

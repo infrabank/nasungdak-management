@@ -57,7 +57,7 @@ export default function FixedCostRow({ cost }: FixedCostRowProps) {
       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right font-semibold">
         {formatCurrency(Number(cost.amount))}
       </td>
-      <td className="px-3 py-4 text-sm text-gray-700 max-w-xs truncate">
+      <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate">
         {cost.notes || '-'}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-right">

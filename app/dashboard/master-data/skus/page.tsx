@@ -12,8 +12,8 @@ export default async function SkusPage() {
     <div>
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-3xl font-bold">SKU 관리</h1>
-          <p className="mt-2 text-sm text-gray-700">
+          <h1 className="text-3xl font-bold text-gray-900">SKU 관리</h1>
+          <p className="mt-2 text-sm text-gray-900">
             SKU(판매 단위) 등록 및 관리
           </p>
         </div>
@@ -61,13 +61,13 @@ export default async function SkusPage() {
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
                         {sku.skuName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                         {sku.menuName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
                         {formatCurrency(Number(sku.unitPrice))}
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-700">
+                      <td className="px-3 py-4 text-sm text-gray-900">
                         {sku.description}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-center">

@@ -10,8 +10,8 @@ export default async function MenuIngredientsPage() {
     <div>
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-3xl font-bold">메뉴-재료 매핑</h1>
-          <p className="mt-2 text-sm text-gray-700">
+          <h1 className="text-3xl font-bold text-gray-900">메뉴-재료 매핑</h1>
+          <p className="mt-2 text-sm text-gray-900">
             메뉴별 필요 재료 및 수량 설정
           </p>
         </div>
@@ -56,13 +56,13 @@ export default async function MenuIngredientsPage() {
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
                         {mapping.menuName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                         {mapping.ingredientName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
                         {Number(mapping.requiredQuantity).toFixed(2)}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
                         {mapping.unit}
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">

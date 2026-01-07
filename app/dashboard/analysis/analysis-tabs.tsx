@@ -95,13 +95,13 @@ export default function AnalysisTabs({ skuAnalysis, monthlyData }: AnalysisTabsP
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
                           {sku.skuName}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
                           {sku.quantitySold.toFixed(0)}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right font-semibold">
                           {formatCurrency(sku.revenue)}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
                           {formatCurrency(sku.cost)}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right font-semibold">
@@ -176,13 +176,13 @@ export default function AnalysisTabs({ skuAnalysis, monthlyData }: AnalysisTabsP
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right font-semibold">
                           {formatCurrency(month.totalRevenue)}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
                           {formatCurrency(month.totalVariableCost)}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-orange-600 text-right">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-orange-700 text-right font-medium">
                           {formatCurrency(month.totalFixedCost)}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
                           {formatCurrency(month.totalCost)}
                         </td>
                         <td className={`whitespace-nowrap px-3 py-4 text-sm text-right font-semibold ${

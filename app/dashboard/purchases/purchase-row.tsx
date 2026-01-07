@@ -67,19 +67,19 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
         {formatDate(new Date(purchase.transactionDate), 'yyyy-MM-dd')}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
         {purchase.menuName || '-'}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
         {purchase.ingredientName || '-'}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
         {purchase.supplierName}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
         {Number(purchase.quantity).toFixed(2)}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
         {formatCurrency(Number(purchase.unitPrice))}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right font-medium">
