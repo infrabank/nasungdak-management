@@ -126,7 +126,7 @@ export default function SalesList({ sales }: SalesListProps) {
             <tbody className="divide-y divide-gray-200">
               {sales.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-10 text-center text-sm text-gray-500">
+                  <td colSpan={8} className="py-10 text-center text-sm text-gray-800">
                     판매 데이터가 없습니다. &ldquo;일일 판매 입력&rdquo; 버튼을 클릭하여 시작하세요.
                   </td>
                 </tr>

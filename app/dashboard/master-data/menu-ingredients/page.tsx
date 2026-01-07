@@ -46,7 +46,7 @@ export default async function MenuIngredientsPage() {
               <tbody className="divide-y divide-gray-200">
                 {mappings.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-10 text-center text-sm text-gray-500">
+                    <td colSpan={5} className="py-10 text-center text-sm text-gray-800">
                       등록된 매핑이 없습니다
                     </td>
                   </tr>
@@ -56,13 +56,13 @@ export default async function MenuIngredientsPage() {
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
                         {mapping.menuName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
                         {mapping.ingredientName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
                         {Number(mapping.requiredQuantity).toFixed(2)}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
                         {mapping.unit}
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">

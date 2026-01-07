@@ -45,7 +45,7 @@ export default async function MenusPage() {
               <tbody className="divide-y divide-gray-200">
                 {menus.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-10 text-center text-sm text-gray-500">
+                    <td colSpan={4} className="py-10 text-center text-sm text-gray-800">
                       등록된 메뉴가 없습니다
                     </td>
                   </tr>
@@ -55,7 +55,7 @@ export default async function MenusPage() {
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
                         {menu.menuName}
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-500">
+                      <td className="px-3 py-4 text-sm text-gray-700">
                         {menu.description}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-center">

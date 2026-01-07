@@ -181,7 +181,7 @@ export default async function PurchasesPage({
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {purchases.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="py-8 text-center text-sm text-gray-500">
+                      <td colSpan={9} className="py-8 text-center text-sm text-gray-800">
                         매입 데이터가 없습니다. &ldquo;새 매입 등록&rdquo; 버튼을 클릭하여 시작하세요.
                       </td>
                     </tr>

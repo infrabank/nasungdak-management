@@ -51,7 +51,7 @@ export default async function SkusPage() {
               <tbody className="divide-y divide-gray-200">
                 {skus.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-10 text-center text-sm text-gray-500">
+                    <td colSpan={6} className="py-10 text-center text-sm text-gray-800">
                       등록된 SKU가 없습니다
                     </td>
                   </tr>
@@ -61,13 +61,13 @@ export default async function SkusPage() {
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
                         {sku.skuName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
                         {sku.menuName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500 text-right">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 text-right">
                         {formatCurrency(Number(sku.unitPrice))}
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-500">
+                      <td className="px-3 py-4 text-sm text-gray-700">
                         {sku.description}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-center">

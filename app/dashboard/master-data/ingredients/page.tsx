@@ -48,7 +48,7 @@ export default async function IngredientsPage() {
               <tbody className="divide-y divide-gray-200">
                 {ingredients.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-10 text-center text-sm text-gray-500">
+                    <td colSpan={5} className="py-10 text-center text-sm text-gray-800">
                       등록된 재료가 없습니다
                     </td>
                   </tr>
@@ -58,10 +58,10 @@ export default async function IngredientsPage() {
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
                         {ingredient.ingredientName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
                         {ingredient.unit}
                       </td>
-                      <td className="px-3 py-4 text-sm text-gray-500">
+                      <td className="px-3 py-4 text-sm text-gray-700">
                         {ingredient.description}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-center">
