@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { getOilChanges, getOilChangeStats } from './actions'
 import OilChangeRow from './oil-change-row'
-import { formatDate, formatCurrency } from '@/lib/utils/format'
+import { formatDate } from '@/lib/utils/format'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,17 +48,11 @@ export default async function OilChangesPage({
         </Link>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+       {/* Stats Cards */}
+       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <h3 className="text-sm font-medium text-gray-500">최근 30일 교체 횟수</h3>
           <p className="text-2xl font-bold text-gray-900 mt-2">{stats.recentChanges.count}회</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h3 className="text-sm font-medium text-gray-500">최근 30일 총 비용</h3>
-          <p className="text-2xl font-bold text-gray-900 mt-2">
-            {formatCurrency(stats.recentChanges.totalCost)}
-          </p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <h3 className="text-sm font-medium text-gray-500">초벌용 마지막 교체일</h3>
@@ -138,7 +132,7 @@ export default async function OilChangesPage({
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50">
+               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     교체일
@@ -147,22 +141,7 @@ export default async function OilChangesPage({
                     튀김기
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    기름 종류
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    수량 (L)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    단가 (원/L)
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    총비용
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     사용 기간
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    공급업체
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     비고

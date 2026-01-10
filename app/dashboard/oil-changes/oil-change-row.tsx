@@ -1,6 +1,6 @@
 'use client'
 
-import { formatDate, formatCurrency } from '@/lib/utils/format'
+import { formatDate } from '@/lib/utils/format'
 import type { OilChangeHistory } from '@/lib/db/schema'
 
 interface OilChangeRowProps {
@@ -21,24 +21,9 @@ export default function OilChangeRow({ oilChange }: OilChangeRowProps) {
         </span>
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {oilChange.oilType}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {Number(oilChange.quantity).toLocaleString()}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {formatCurrency(Number(oilChange.unitPrice))}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-        {formatCurrency(Number(oilChange.totalCost))}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
         {oilChange.usageDays ? `${oilChange.usageDays}일` : '-'}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        {oilChange.supplierName}
-      </td>
-      <td className="px-6 py-4 text-sm text-gray-900">
         <div className="max-w-xs truncate">
           {oilChange.notes || '-'}
         </div>

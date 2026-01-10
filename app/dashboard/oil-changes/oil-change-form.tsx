@@ -62,92 +62,12 @@ export default function OilChangeForm() {
                 <option value="재벌">재벌</option>
               </select>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                기름 종류 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="oilType"
-                defaultValue="해바라기씨유"
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                수량 (L) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="quantity"
-                step="0.1"
-                min="0.1"
-                required
-                placeholder="예: 20"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                공급업체명 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="supplierName"
-                required
-                placeholder="예: (주)대한식용유"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                단가 (원/L) <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="unitPrice"
-                step="10"
-                min="0"
-                required
-                placeholder="예: 2500"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                이전 기름 사용량 (L)
-              </label>
-              <input
-                type="number"
-                name="previousOilUsage"
-                step="0.1"
-                min="0"
-                placeholder="예: 18.5"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                사용 기간 (일)
-              </label>
-              <input
-                type="number"
-                name="usageDays"
-                min="0"
-                placeholder="예: 7"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                미입력 시 자동으로 계산됩니다
-              </p>
-            </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
+            <p className="text-sm text-blue-800">
+              사용 기간은 이전 기름 교체 이력을 참조하여 자동으로 계산됩니다.
+            </p>
           </div>
 
           <div>

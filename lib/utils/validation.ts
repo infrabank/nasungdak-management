@@ -43,42 +43,6 @@ export type PurchaseFormData = z.infer<typeof purchaseSchema>
 export const oilChangeSchema = z.object({
   changeDate: z.string().min(1, '날짜를 선택해주세요'),
   fryerType: z.enum(['초벌', '재벌'], { required_error: '튀김기 종류를 선택해주세요' }),
-  oilType: z.string().min(1, '기름 종류를 입력해주세요').max(50).default('해바라기씨유'),
-  quantity: z.coerce.string().transform((val, ctx) => {
-    const num = Number(val)
-    if (isNaN(num) || num <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: '수량은 0보다 커야 합니다',
-      })
-      return z.NEVER
-    }
-    return val
-  }),
-  supplierName: z.string().min(1, '공급업체명을 입력해주세요').max(200),
-  unitPrice: z.coerce.string().transform((val, ctx) => {
-    const num = Number(val)
-    if (isNaN(num) || num < 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: '단가는 0 이상이어야 합니다',
-      })
-      return z.NEVER
-    }
-    return val
-  }),
-  previousOilUsage: z.coerce.string().transform((val, ctx) => {
-    const num = Number(val)
-    if (isNaN(num) || num < 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: '이전 사용량은 0 이상이어야 합니다',
-      })
-      return z.NEVER
-    }
-    return val
-  }).optional(),
-  usageDays: z.coerce.number().int().min(0, '사용 기간은 0 이상이어야 합니다').optional(),
   notes: z.string().optional().nullable(),
 })
 
