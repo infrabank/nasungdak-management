@@ -1,16 +1,18 @@
 'use client'
 
 import { useActionState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createOilChange } from './actions'
 import Link from 'next/link'
 
-const initialState = {
-  success: false,
-  error: '',
-} as const
-
 export default function OilChangeForm() {
-  const [state, formAction] = useActionState(createOilChange, initialState)
+  const router = useRouter()
+  const [state, formAction, isPending] = useActionState(createOilChange, null)
+
+  // Redirect on success
+  if (state?.success) {
+    router.push('/dashboard/oil-changes')
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -26,18 +28,10 @@ export default function OilChangeForm() {
 
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <form action={formAction} className="space-y-6">
-          {state.error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-              {state.error}
-            </div>
-          )}
-
-          {state.success && (
-            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-              기름 교체 이력이 성공적으로 등록되었습니다.
-              <Link href="/dashboard/oil-changes" className="ml-2 text-green-600 hover:text-green-700">
-                목록으로 이동 →
-              </Link>
+          {/* Error Message */}
+          {state?.error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <p className="text-sm text-red-800">{state.error}</p>
             </div>
           )}
 
@@ -177,9 +171,10 @@ export default function OilChangeForm() {
             </Link>
             <button
               type="submit"
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+              disabled={isPending}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              등록
+              {isPending ? '등록 중...' : '등록'}
             </button>
           </div>
         </form>

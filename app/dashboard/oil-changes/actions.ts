@@ -7,7 +7,10 @@ import { oilChangeHistory } from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql } from 'drizzle-orm'
 import { z } from 'zod'
 
-export async function createOilChange(formData: FormData) {
+export async function createOilChange(
+  prevState: any,
+  formData: FormData
+) {
   try {
     const notes = formData.get('notes')
     const rawData = {
@@ -59,7 +62,7 @@ export async function createOilChange(formData: FormData) {
     })
 
     revalidatePath('/dashboard/oil-changes')
-    return { success: true }
+    return { success: true, error: undefined }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return { success: false, error: error.errors[0].message }
@@ -115,7 +118,11 @@ export async function getOilChangeById(id: string) {
   }
 }
 
-export async function updateOilChange(id: string, formData: FormData) {
+export async function updateOilChange(
+  prevState: any,
+  formData: FormData,
+  id: string
+) {
   try {
     const notes = formData.get('notes')
     const rawData = {
@@ -149,7 +156,7 @@ export async function updateOilChange(id: string, formData: FormData) {
       .where(and(eq(oilChangeHistory.id, id), isNull(oilChangeHistory.deletedAt)))
 
     revalidatePath('/dashboard/oil-changes')
-    return { success: true }
+    return { success: true, error: undefined }
   } catch (error) {
     if (error instanceof z.ZodError) {
       return { success: false, error: error.errors[0].message }
@@ -170,7 +177,7 @@ export async function deleteOilChange(id: string) {
       .where(eq(oilChangeHistory.id, id))
 
     revalidatePath('/dashboard/oil-changes')
-    return { success: true }
+    return { success: true, error: undefined }
   } catch (error) {
     console.error('Error deleting oil change:', error)
     return { success: false, error: '기름 교체 이력 삭제 중 오류가 발생했습니다' }
