@@ -4,27 +4,23 @@ This file provides guidance to agentic coding agents working in this repository.
 
 ## Build & Development Commands
 
-### Core Development
 ```bash
+# Core Development
 npm run dev              # Start dev server (localhost:3000)
 npm run build            # Production build
 npm start                # Start production server
 npm run type-check       # TypeScript type checking
 npm run lint             # ESLint
 npm run format           # Prettier formatting
-```
 
-### Database Operations
-```bash
+# Database Operations
 npm run db:generate      # Generate migration files from schema
 npm run db:migrate       # Apply migrations to database
 npm run db:studio        # Open Drizzle Studio (DB GUI)
 npm run db:seed          # Seed database with sample data
 npm run import:excel     # Import data from Excel (scripts/import-excel.ts)
-```
 
-### Testing
-```bash
+# Testing
 npm run test             # Run Vitest unit tests
 npm run test:e2e         # Run Playwright E2E tests
 npm run test -- <file>   # Run specific test file (e.g., npm run test -- user.test.ts)
@@ -33,28 +29,21 @@ npm run test -- <file>   # Run specific test file (e.g., npm run test -- user.te
 ## Code Style Guidelines
 
 ### Import Patterns
-- Use `@/*` path alias for internal imports (configured in tsconfig.json)
+- Use `@/*` path alias for internal imports
 - Group imports: external libraries first, then internal modules
-- Check relative paths carefully: `./` for same folder, `../` for parent folder
-- Example:
-```typescript
-import { revalidatePath } from 'next/cache'
-import { z } from 'zod'
-import { db } from '@/lib/db'
-import { purchaseSchema } from '@/lib/utils/validation'
-```
+- Use `import type` for type-only imports to avoid side effects
 
 ### File Naming Conventions
 - Database columns: `snake_case`
 - TypeScript variables/functions: `camelCase`
 - File names: `kebab-case.tsx` for React components, `kebab-case.ts` for utilities
 - Server actions: `actions.ts` in feature directories
+- Form components: `*-form.tsx` (client components with 'use client')
+- Row components: `*-row.tsx` (for table rows)
 
 ### Server Actions Pattern
-All server actions must follow this structure:
 ```typescript
 'use server'
-
 import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import { [table] } from '@/lib/db/schema'
@@ -62,71 +51,48 @@ import { [schema] } from '@/lib/utils/validation'
 
 export async function create[Entity](formData: FormData) {
   try {
-    // 1. Parse and validate with Zod
-    const rawData = { /* extract from formData */ }
     const validatedData = [schema].parse(rawData)
-    
-    // 2. Business logic/validation checks
-    // 3. Database insert/update
-    // 4. revalidatePath() to clear cache
-    // 5. Return { success: boolean, data?: T, error?: string }
+    await db.insert(table).values(validatedData)
+    revalidatePath('/dashboard/[feature]')
+    return { success: boolean, data?: T, error?: string }
   } catch (error) {
     return { success: false, error: error.message }
   }
 }
 ```
 
+### Soft Delete Pattern
+Never hard delete - use soft delete:
+```typescript
+await db.update(table).set({ deletedAt: new Date(), deletedBy: 'system' }).where(eq(table.id, id))
+// Query: always filter out .where(isNull(table.deletedAt))
+```
+
 ### Database Query Patterns
-- Always filter out soft-deleted records: `where(isNull(table.deletedAt))`
+- Always filter soft-deleted: `where(isNull(table.deletedAt))`
 - Use explicit joins with Drizzle query builder
-- Limit queries to 100 records (no pagination yet)
+- Limit to 100 records (1000 for CSV imports)
 - Order chronologically: `orderBy(desc(table.createdAt))`
-- Never hard delete - use soft delete pattern
+- Use `Promise.all()` for parallel data fetching
 
 ### Validation with Zod
 - All schemas in `lib/utils/validation.ts`
-- Use custom transforms for decimal fields:
-```typescript
-quantity: z.coerce.string().transform((val, ctx) => {
-  const num = Number(val)
-  if (isNaN(num) || num <= 0) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: '수량은 0보다 커야 합니다',
-    })
-    return z.NEVER
-  }
-  return val
-})
-```
+- Use custom transforms for decimal fields
+- Return Korean error messages for user-facing text
 
 ### React Component Patterns
 - Server components by default (no 'use client')
-- Client components only when needed for interactivity
 - Use React 19's `useActionState` hook for forms
 - Forms submit to server actions with FormData
-- Add `as const` to initialState for better type inference:
-```typescript
-const initialState = {
-  success: false,
-  error: '',
-} as const
-```
+- Add `as const` to initialState for better type inference
+- Use `export const dynamic = 'force-dynamic'` for real-time data pages
 
-### Error Handling
+### Error Handling & Type Safety
 - Server actions: wrap in try/catch, return { success: false, error: string }
-- Client components: display validation errors from server action response
 - Never suppress type errors with `as any` or `@ts-ignore`
-
-### Type Safety
 - Use Drizzle type inference: `typeof table.$inferSelect` and `typeof table.$inferInsert`
-- Database decimal columns return as strings - convert with `Number()` for calculations
+- Database decimal columns return as strings - convert with `Number()`
 - All server actions use FormData as input, not JSON
-- Use `import type` for type-only imports to avoid side effects:
-```typescript
-import type { OilChangeHistory } from '@/lib/db/schema'
-```
-- Add `as const` assertion to frozen object literals for better type inference
 
 ### UI/UX Guidelines
 - Use Tailwind CSS for all styling
@@ -134,11 +100,28 @@ import type { OilChangeHistory } from '@/lib/db/schema'
 - Responsive design required
 - Use HTML5 form validation (required, type, min, max, step)
 
-### Generated Columns
-Never insert/update these database-generated columns:
+### Generated Columns (Never insert/update)
 - `purchase_transactions.total_amount` (computed: quantity * unit_price)
 - `sales_records.total_revenue` (computed from SKU unit price)
 - `oil_change_history.total_cost` (computed: quantity * unit_price)
+
+### Bulk Import Pattern
+```typescript
+export async function bulkCreate[Entity](rows: CSVRow[]) {
+  let successCount = 0, failedCount = 0, errors: string[] = []
+  for (let i = 0; i < rows.length; i++) {
+    try {
+      await db.insert(table).values(schema.parse(rowData))
+      successCount++
+    } catch (error) {
+      failedCount++
+      errors.push(`${i + 1}행: ${error.message}`)
+    }
+  }
+  revalidatePath('/dashboard/[feature]')
+  return { success: true, successCount, failedCount, errors }
+}
+```
 
 ### Authentication
 - Single-password system (not multi-user)
@@ -159,8 +142,7 @@ revalidatePath('/dashboard/[feature]')
 - Test files: `*.test.ts` for unit, `*.spec.ts` for E2E
 
 ## Linting & Formatting
-- ESLint with Next.js config
-- Prettier with Tailwind plugin
+- ESLint with Next.js config, Prettier with Tailwind plugin
 - Run `npm run lint` and `npm run format` before commits
 - Use `npm run type-check` to verify TypeScript types
 
