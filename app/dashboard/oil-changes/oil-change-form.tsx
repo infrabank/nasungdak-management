@@ -7,7 +7,7 @@ import Link from 'next/link'
 const initialState = {
   success: false,
   error: '',
-}
+} as const
 
 export default function OilChangeForm() {
   const [state, formAction] = useActionState(createOilChange, initialState)

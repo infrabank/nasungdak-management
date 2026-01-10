@@ -1,4 +1,4 @@
-import OilChangeForm from './oil-change-form'
+import OilChangeForm from '../oil-change-form'
 
 export default function NewOilChangePage() {
   return <OilChangeForm />

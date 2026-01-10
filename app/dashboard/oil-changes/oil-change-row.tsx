@@ -1,7 +1,7 @@
 'use client'
 
 import { formatDate, formatCurrency } from '@/lib/utils/format'
-import { OilChangeHistory } from '@/lib/db/schema'
+import type { OilChangeHistory } from '@/lib/db/schema'
 
 interface OilChangeRowProps {
   oilChange: OilChangeHistory
