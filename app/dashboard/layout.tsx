@@ -30,6 +30,12 @@ export default function DashboardLayout({
                   판매 관리
                 </Link>
                 <Link
+                  href="/dashboard/oil-changes"
+                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                >
+                  기름 교체
+                </Link>
+                <Link
                   href="/dashboard/fixed-costs"
                   className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
                 >

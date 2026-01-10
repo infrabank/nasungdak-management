@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, decimal, date, timestamp, boolean, text } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, decimal, date, timestamp, boolean, text, integer } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 // Menu Categories Table
@@ -132,6 +132,29 @@ export const fixedCosts = pgTable('fixed_costs', {
   deletedBy: varchar('deleted_by', { length: 100 }),
 })
 
+// Oil Change History Table
+export const oilChangeHistory = pgTable('oil_change_history', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  changeDate: date('change_date').notNull(),
+  fryerType: varchar('fryer_type', { length: 20 }).notNull(), // '초벌', '재벌'
+  oilType: varchar('oil_type', { length: 50 }).notNull().default('해바라기씨유'),
+  quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(), // 교체된 기름 양 (L)
+  supplierName: varchar('supplier_name', { length: 200 }).notNull(),
+  unitPrice: decimal('unit_price', { precision: 12, scale: 2 }).notNull(), // 단가 (원/L)
+  totalCost: decimal('total_cost', { precision: 14, scale: 2 }).generatedAlwaysAs(
+    sql`quantity * unit_price`
+  ),
+  previousOilUsage: decimal('previous_oil_usage', { precision: 10, scale: 2 }), // 이전 기름 사용량 (L)
+  usageDays: integer('usage_days'), // 사용 기간 (일)
+  notes: text('notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
+})
+
 // TypeScript Types
 export type MenuCategory = typeof menuCategories.$inferSelect
 export type NewMenuCategory = typeof menuCategories.$inferInsert
@@ -156,3 +179,6 @@ export type NewCostDistributionRule = typeof costDistributionRules.$inferInsert
 
 export type FixedCost = typeof fixedCosts.$inferSelect
 export type NewFixedCost = typeof fixedCosts.$inferInsert
+
+export type OilChangeHistory = typeof oilChangeHistory.$inferSelect
+export type NewOilChangeHistory = typeof oilChangeHistory.$inferInsert
