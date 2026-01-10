@@ -75,36 +75,27 @@ export async function getOilChanges(filters?: {
   fryerType?: string
 }) {
   try {
-    let query = db.query.oilChangeHistory.findMany({
-      where: isNull(oilChangeHistory.deletedAt),
-      orderBy: [desc(oilChangeHistory.changeDate)],
-      limit: 100,
-    })
+    const conditions = [isNull(oilChangeHistory.deletedAt)]
 
-    // Apply filters if provided
-    if (filters?.startDate || filters?.endDate || filters?.fryerType) {
-      query = db
-        .select()
-        .from(oilChangeHistory)
-        .where(
-          and(
-            isNull(oilChangeHistory.deletedAt),
-            filters?.startDate
-              ? sql`oil_change_history.change_date >= ${filters.startDate}`
-              : undefined,
-            filters?.endDate
-              ? sql`oil_change_history.change_date <= ${filters.endDate}`
-              : undefined,
-            filters?.fryerType
-              ? eq(oilChangeHistory.fryerType, filters.fryerType)
-              : undefined
-          )
-        )
-        .orderBy(desc(oilChangeHistory.changeDate))
-        .limit(100)
+    if (filters?.startDate) {
+      conditions.push(sql`oil_change_history.change_date >= ${filters.startDate}`)
     }
 
-    const results = await query
+    if (filters?.endDate) {
+      conditions.push(sql`oil_change_history.change_date <= ${filters.endDate}`)
+    }
+
+    if (filters?.fryerType) {
+      conditions.push(eq(oilChangeHistory.fryerType, filters.fryerType))
+    }
+
+    const results = await db
+      .select()
+      .from(oilChangeHistory)
+      .where(and(...conditions))
+      .orderBy(desc(oilChangeHistory.changeDate))
+      .limit(100)
+
     return results
   } catch (error) {
     console.error('Error fetching oil changes:', error)
