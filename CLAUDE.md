@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-나성닭강정 매입·판매·원가 관리 시스템 - A Next.js 15 purchase, sales, and cost management web application using App Router, Drizzle ORM, and Vercel Postgres.
+나성닭강정 관리 시스템 - A Next.js 15 management web application using App Router, Drizzle ORM, and Vercel Postgres.
 
 ## Development Commands
 

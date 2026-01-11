@@ -20,7 +20,7 @@ export default function LoginPage() {
         <div>
           <h2 className="text-center text-3xl font-bold">로그인</h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            매입/판매/원가 관리 시스템
+            나성닭강정 관리 시스템
           </p>
         </div>
         <form action={formAction} className="mt-8 space-y-6">
