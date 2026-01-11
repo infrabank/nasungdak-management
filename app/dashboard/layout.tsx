@@ -4,6 +4,8 @@ import LogoutButton from './logout-button'
 import StoreSelector from './store-selector'
 import { getActiveStores } from './stores/actions'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardLayout({
   children,
 }: {
@@ -65,17 +67,16 @@ export default async function DashboardLayout({
                   매장 관리
                 </Link>
                 <Link
-                  href="/dashboard/toss-mappings"
-                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                >
-                  토스 매핑
-                </Link>
-              </div>
-                <Link
                   href="/dashboard/inventory"
                   className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
                 >
                   재고 관리
+                </Link>
+                <Link
+                  href="/dashboard/toss-mappings"
+                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                >
+                  토스 매핑
                 </Link>
               </div>
             </div>
