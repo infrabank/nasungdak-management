@@ -63,53 +63,6 @@ export async function createOilChange(
   }
 }
 
-    const validatedData = oilChangeSchema.parse(rawData)
-
-    // Calculate previous usage days if not provided
-    let usageDays = validatedData.usageDays
-    if (!usageDays && validatedData.previousOilUsage) {
-      // Get the most recent oil change for the same fryer type
-      const lastChange = await db.query.oilChangeHistory.findFirst({
-        where: and(
-          eq(oilChangeHistory.fryerType, validatedData.fryerType),
-          isNull(oilChangeHistory.deletedAt)
-        ),
-        orderBy: [desc(oilChangeHistory.changeDate)],
-      })
-
-      if (lastChange && lastChange.changeDate) {
-        const daysDiff = Math.floor(
-          (new Date(validatedData.changeDate).getTime() - new Date(lastChange.changeDate).getTime()) /
-          (1000 * 60 * 60 * 24)
-        )
-        usageDays = Math.max(0, daysDiff)
-      }
-    }
-
-    // Insert oil change record
-    await db.insert(oilChangeHistory).values({
-      changeDate: validatedData.changeDate,
-      fryerType: validatedData.fryerType,
-      oilType: validatedData.oilType,
-      quantity: validatedData.quantity,
-      supplierName: validatedData.supplierName,
-      unitPrice: validatedData.unitPrice,
-      previousOilUsage: validatedData.previousOilUsage,
-      usageDays: usageDays || null,
-      notes: validatedData.notes,
-    })
-
-    revalidatePath('/dashboard/oil-changes')
-    return { success: true, error: undefined }
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors[0].message }
-    }
-    console.error('Error creating oil change:', error)
-    return { success: false, error: '기름 교체 이력 등록 중 오류가 발생했습니다' }
-  }
-}
-
 export async function getOilChanges(filters?: {
   startDate?: string
   endDate?: string
@@ -270,21 +223,6 @@ export async function getOilChangeStats() {
     console.error('Error fetching oil change stats:', error)
     return {
       recentChanges: { count: 0 },
-      lastChangeByFryer: {},
-    }
-  }
-}
-      return acc
-    }, {} as Record<string, any>)
-
-    return {
-      recentChanges: recentChanges[0] || { count: 0, totalCost: 0 },
-      lastChangeByFryer,
-    }
-  } catch (error) {
-    console.error('Error fetching oil change stats:', error)
-    return {
-      recentChanges: { count: 0, totalCost: 0 },
       lastChangeByFryer: {},
     }
   }
