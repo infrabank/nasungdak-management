@@ -18,12 +18,12 @@ npm run db:generate      # Generate migration files from schema
 npm run db:migrate       # Apply migrations to database
 npm run db:studio        # Open Drizzle Studio (DB GUI)
 npm run db:seed          # Seed database with sample data
-npm run import:excel     # Import data from Excel (scripts/import-excel.ts)
+npm run import:excel     # Import data from Excel
 
 # Testing
 npm run test             # Run Vitest unit tests
 npm run test:e2e         # Run Playwright E2E tests
-npm run test -- <file>   # Run specific test file (e.g., npm run test -- user.test.ts)
+npm run test -- <file>   # Run specific test (e.g., npm run test -- user.test.ts)
 ```
 
 ## Code Style Guidelines
@@ -128,6 +128,12 @@ export async function bulkCreate[Entity](rows: CSVRow[]) {
 - JWT tokens with HTTP-only cookies
 - All routes except `/login` protected by middleware
 - Use `jose` library for token operations
+
+### Multi-Store Support (Phase 1+)
+- All entity tables have `storeId` FK referencing `stores`
+- Default store filter: `storeId` URL parameter
+- Use `getActiveStores()` for dropdown options
+- Apply `storeId` filter to all queries where applicable
 
 ### Revalidation
 Always call `revalidatePath()` after database mutations:

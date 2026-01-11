@@ -62,6 +62,77 @@ export const storeSchema = z.object({
 
 export type StoreFormData = z.infer<typeof storeSchema>
 
+// Toss SKU Mapping validation
+export const tossSkuMappingSchema = z.object({
+  storeId: z.string().uuid('유효한 매장을 선택해주세요'),
+  tossItemCode: z.string().min(1, '토스 품목 코드를 입력해주세요').max(50),
+  tossItemName: z.string().max(100).optional().nullable(),
+  skuId: z.string().uuid('유효한 SKU를 선택해주세요').nullable().optional(),
+  isActive: z.boolean().default(true),
+})
+
+export type TossSkuMappingFormData = z.infer<typeof tossSkuMappingSchema>
+
+// Inventory Alert Rule validation
+export const inventoryAlertRuleSchema = z.object({
+  storeId: z.string().uuid().nullable().optional(),
+  ingredientId: z.string().uuid('유효한 재료를 선택해주세요'),
+  alertThresholdDays: z.coerce.number().int().min(1, '알림 임계값은 1일 이상이어야 합니다').default(3),
+  predictionPeriodDays: z.coerce.number().int().min(7, '예측 기간은 7일 이상이어야 합니다').max(90, '예측 기간은 90일 이하여야 합니다').default(30),
+  isActive: z.boolean().default(true),
+})
+
+export type InventoryAlertRuleFormData = z.infer<typeof inventoryAlertRuleSchema>
+
+// Inventory validation
+export const inventorySchema = z.object({
+  storeId: z.string().uuid('유효한 매장을 선택해주세요'),
+  ingredientId: z.string().uuid('유효한 재료를 선택해주세요'),
+  currentQuantity: z.coerce.string().transform((val, ctx) => {
+    const num = parseFloat(val)
+    if (isNaN(num) || num < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '재고량은 0 이상이어야 합니다',
+      })
+      return z.NEVER
+    }
+    return val
+  }),
+  unit: z.string().max(20).optional(),
+})
+
+export type InventoryFormData = z.infer<typeof inventorySchema>
+
+// Inventory Event validation
+export const inventoryEventSchema = z.object({
+  storeId: z.string().uuid('유효한 매장을 선택해주세요'),
+  ingredientId: z.string().uuid('유효한 재료를 선택해주세요'),
+  eventType: z.enum(['purchase', 'sale', 'waste', 'audit', 'adjustment'], { required_error: '이벤트 유형을 선택해주세요' }),
+  quantityChange: z.coerce.string().transform((val, ctx) => {
+    const num = parseFloat(val)
+    if (isNaN(num)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '유효한 수량을 입력해주세요',
+      })
+      return z.NEVER
+    }
+    if (num === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '수량 변동은 0이 아니어야 합니다',
+      })
+      return z.NEVER
+    }
+    return val
+  }),
+  reason: z.string().optional().nullable(),
+  eventDate: z.string().min(1, '날짜를 선택해주세요'),
+})
+
+export type InventoryEventData = z.infer<typeof inventoryEventSchema>
+
 // Add more schemas here:
 // - salesSchema
 // - menuSchema
