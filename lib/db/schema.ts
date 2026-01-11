@@ -242,6 +242,8 @@ export const inventoryAlertRules = pgTable('inventory_alert_rules', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   createdBy: varchar('created_by', { length: 100 }),
   updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
 })
 
 // 재고 이벤트 테이블 (폐기/실사/조정)
