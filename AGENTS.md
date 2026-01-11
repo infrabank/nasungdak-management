@@ -30,16 +30,18 @@ npm run test -- <file>   # Run specific test (e.g., npm run test -- user.test.ts
 
 ### Import Patterns
 - Use `@/*` path alias for internal imports
-- Group imports: external libraries first, then internal modules
-- Use `import type` for type-only imports to avoid side effects
+- Group: external libs first, then internal modules
+- Use `import type` for type-only imports:
+  ```typescript
+  import type { MenuCategory } from '@/lib/db/schema'
+  ```
 
-### File Naming Conventions
-- Database columns: `snake_case`
-- TypeScript variables/functions: `camelCase`
-- File names: `kebab-case.tsx` for React components, `kebab-case.ts` for utilities
-- Server actions: `actions.ts` in feature directories
-- Form components: `*-form.tsx` (client components with 'use client')
-- Row components: `*-row.tsx` (for table rows)
+### File Naming
+- DB columns: `snake_case`, TS variables: `camelCase`
+- Files: `kebab-case.tsx` (components), `kebab-case.ts` (utilities)
+- Server actions: `actions.ts` in feature dirs
+- Forms: `*-form.tsx` (client components with 'use client')
+- Table rows: `*-row.tsx`
 
 ### Server Actions Pattern
 ```typescript
@@ -51,72 +53,73 @@ import { [schema] } from '@/lib/utils/validation'
 
 export async function create[Entity](formData: FormData) {
   try {
+    const rawData = { field1: formData.get('field1'), /* ... */ }
     const validatedData = [schema].parse(rawData)
     await db.insert(table).values(validatedData)
     revalidatePath('/dashboard/[feature]')
-    return { success: boolean, data?: T, error?: string }
+    return { success: true, data?: T, error?: string }
   } catch (error) {
     return { success: false, error: error.message }
   }
 }
 ```
+**Key:** FormData input, try/catch, revalidatePath(), Zod validation
 
 ### Soft Delete Pattern
-Never hard delete - use soft delete:
 ```typescript
-await db.update(table).set({ deletedAt: new Date(), deletedBy: 'system' }).where(eq(table.id, id))
-// Query: always filter out .where(isNull(table.deletedAt))
+await db.update(table).set({ deletedAt: new Date(), deletedBy: 'user-id' }).where(eq(table.id, id))
+// Query: .where(isNull(table.deletedAt))
 ```
 
-### Database Query Patterns
+### Database Queries
 - Always filter soft-deleted: `where(isNull(table.deletedAt))`
 - Use explicit joins with Drizzle query builder
 - Limit to 100 records (1000 for CSV imports)
 - Order chronologically: `orderBy(desc(table.createdAt))`
-- Use `Promise.all()` for parallel data fetching
+- Use `Promise.all()` for parallel fetching
 
 ### Validation with Zod
-- All schemas in `lib/utils/validation.ts`
-- Use custom transforms for decimal fields
-- Return Korean error messages for user-facing text
+```typescript
+quantity: z.coerce.string().transform((val, ctx) => {
+  const num = Number(val)
+  if (isNaN(num) || num <= 0) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: '수량은 0보다 커야 합니다' })
+    return z.NEVER
+  }
+  return val
+})
+```
+Use `z.coerce.string()` for form inputs, return Korean errors
 
-### React Component Patterns
-- Server components by default (no 'use client')
-- Use React 19's `useActionState` hook for forms
-- Forms submit to server actions with FormData
-- Add `as const` to initialState for better type inference
-- Use `export const dynamic = 'force-dynamic'` for real-time data pages
+### React Components
+- Server components by default, add `'use client'` for interactivity
+- Use React 19's `useActionState`: `const [state, formAction, isPending] = useActionState(createEntity, null)`
+- Add `as const` to initialState
+- Real-time data: `export const dynamic = 'force-dynamic'`
 
-### Error Handling & Type Safety
-- Server actions: wrap in try/catch, return { success: false, error: string }
-- Never suppress type errors with `as any` or `@ts-ignore`
-- Use Drizzle type inference: `typeof table.$inferSelect` and `typeof table.$inferInsert`
-- Database decimal columns return as strings - convert with `Number()`
-- All server actions use FormData as input, not JSON
+### Type Safety
+- Never suppress errors with `as any` or `@ts-ignore`
+- Use Drizzle inference: `typeof table.$inferSelect` / `typeof table.$inferInsert`
+- Decimal columns return strings - convert with `Number()`
 
-### UI/UX Guidelines
-- Use Tailwind CSS for all styling
-- Korean language for all user-facing text
+### UI/UX
+- Tailwind CSS for all styling
+- Korean language for all UI text
 - Responsive design required
-- Use HTML5 form validation (required, type, min, max, step)
+- HTML5 form validation (required, type, min, max, step)
 
 ### Generated Columns (Never insert/update)
-- `purchase_transactions.total_amount` (computed: quantity * unit_price)
-- `sales_records.total_revenue` (computed from SKU unit price)
-- `oil_change_history.total_cost` (computed: quantity * unit_price)
+- `purchase_transactions.total_amount` = `quantity * unit_price`
+- `sales_records.total_revenue` = `quantity_sold * unit_price`
+- `oil_change_history.total_cost` = `quantity * unit_price`
 
-### Bulk Import Pattern
+### Bulk Import
 ```typescript
 export async function bulkCreate[Entity](rows: CSVRow[]) {
   let successCount = 0, failedCount = 0, errors: string[] = []
   for (let i = 0; i < rows.length; i++) {
-    try {
-      await db.insert(table).values(schema.parse(rowData))
-      successCount++
-    } catch (error) {
-      failedCount++
-      errors.push(`${i + 1}행: ${error.message}`)
-    }
+    try { await db.insert(table).values(schema.parse(rowData)); successCount++ }
+    catch (error) { failedCount++; errors.push(`${i + 1}행: ${error.message}`) }
   }
   revalidatePath('/dashboard/[feature]')
   return { success: true, successCount, failedCount, errors }
@@ -124,38 +127,31 @@ export async function bulkCreate[Entity](rows: CSVRow[]) {
 ```
 
 ### Authentication
-- Single-password system (not multi-user)
-- JWT tokens with HTTP-only cookies
-- All routes except `/login` protected by middleware
-- Use `jose` library for token operations
+- Single-password JWT system (jose library)
+- HTTP-only cookies (7-day expiration)
+- Middleware protects all routes except `/login`
 
-### Multi-Store Support (Phase 1+)
-- All entity tables have `storeId` FK referencing `stores`
-- Default store filter: `storeId` URL parameter
-- Use `getActiveStores()` for dropdown options
-- Apply `storeId` filter to all queries where applicable
+### Multi-Store Support
+- All entities have `storeId` FK to `stores` table
+- Filter: `storeId` URL parameter
+- Apply `storeId` filter to queries where applicable
 
 ### Revalidation
-Always call `revalidatePath()` after database mutations:
-```typescript
-await db.insert(table).values(data)
-revalidatePath('/dashboard/[feature]')
-```
+Always `revalidatePath()` after DB mutations
 
 ## Testing
-- Unit tests with Vitest (no test files exist yet - create when needed)
-- E2E tests with Playwright
-- Test files: `*.test.ts` for unit, `*.spec.ts` for E2E
+- Vitest unit tests, Playwright E2E
+- `*.test.ts` for unit, `*.spec.ts` for E2E
+- No test config files exist yet
 
 ## Linting & Formatting
-- ESLint with Next.js config, Prettier with Tailwind plugin
+- ESLint + Next.js config, Prettier + Tailwind plugin
 - Run `npm run lint` and `npm run format` before commits
-- Use `npm run type-check` to verify TypeScript types
+- Use `npm run type-check` to verify types
 
-## Key Files to Understand
-- `lib/db/schema.ts` - Database schema
-- `lib/utils/validation.ts` - Form validation schemas
+## Key Files
+- `lib/db/schema.ts` - Database schema (Drizzle ORM)
+- `lib/utils/validation.ts` - Form validation schemas (Zod)
 - `lib/utils/format.ts` - Formatting utilities (Korean locale)
 - `middleware.ts` - JWT authentication
-- `app/dashboard/oil-changes/` - Oil change history management
 - `CLAUDE.md` - Detailed project documentation

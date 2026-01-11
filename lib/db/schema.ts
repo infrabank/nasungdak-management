@@ -185,16 +185,20 @@ export const oilChangeHistory = pgTable('oil_change_history', {
 // 토스 SKU 매핑 테이블
 export const tossSkuMappings = pgTable('toss_sku_mappings', {
   id: uuid('id').primaryKey().defaultRandom(),
-  storeId: uuid('store_id').notNull().references(() => stores.id),
+  storeId: uuid('store_id').notNull().references(() => stores.id, { onDelete: 'cascade' }),
   tossItemCode: varchar('toss_item_code', { length: 50 }).notNull(),
   tossItemName: varchar('toss_item_name', { length: 100 }),
-  skuId: uuid('sku_id').references(() => skus.id), // NULL이면 미매핑
+  skuId: uuid('sku_id').references(() => skus.id, { onDelete: 'set null' }), // NULL이면 미매핑
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   createdBy: varchar('created_by', { length: 100 }),
   updatedBy: varchar('updated_by', { length: 100 }),
-})
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
+}, (table) => ({
+  uniqueStoreTossCode: unique('unique_store_toss_code').on(table.storeId, table.tossItemCode),
+}))
 
 // 토스 동기화 로그 테이블
 export const tossSyncLogs = pgTable('toss_sync_logs', {

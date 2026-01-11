@@ -102,14 +102,12 @@ export async function sendInventoryLowAlert(params: {
 재료: ${params.ingredientName}
 현재 재고: ${params.currentQuantity}${params.unit}
 예상 소진일: ${params.daysRemaining}일
-
-발주를 검토해 주세요.`
-
 예측 기간: 30일
-평균 일판매량: ${params.avgDailySales.toFixed(2)}${params.unit}`
+평균 일판매량: ${params.avgDailySales.toFixed(2)}${params.unit}
 
-참고: 이 알림은 30일 예측 기준입니다.`
+발주를 검토해 주세요.
 
+참고: 이 알림은 30일 예측 기준입니다.
 (이 알림은 로깅만 수행됩니다. 카카오 비즈메시지 센터에서 템플릿 등록 후 실제 발송 기능을 활성화하세요.)`
 
   const templateParams = {
