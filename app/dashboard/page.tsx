@@ -36,7 +36,7 @@ export default async function DashboardPage() {
             <div className="flex items-center">
               <div className="flex-1">
                 <dt className="text-sm font-medium text-gray-700 truncate">
-                  총 매입액 (이번달)
+                  실제 원가 (이번달)
                 </dt>
                 <dd className="mt-1 text-3xl font-semibold text-gray-900">
                   {formatCurrency(data.monthlyPurchases)}
@@ -72,13 +72,13 @@ export default async function DashboardPage() {
             <div className="flex items-center">
               <div className="flex-1">
                 <dt className="text-sm font-medium text-gray-700 truncate">
-                  이번달 마진율
+                  이번달 마진율 (변동비 기준)
                 </dt>
                 <dd className="mt-1 text-3xl font-semibold text-gray-900">
                   {data.marginPercent.toFixed(1)}%
                 </dd>
                 <dd className="mt-1 text-xs text-gray-700">
-                  순이익: {formatCurrency(data.monthlySales - data.monthlyPurchases)}
+                  순이익: {formatCurrency(data.monthlySales - data.monthlyPurchases)} (고정비 제외)
                 </dd>
               </div>
             </div>
