@@ -110,7 +110,7 @@ export async function getDashboardStats() {
     return {
       success: true,
       data: {
-        monthlyPurchases: Number(stats.total_purchases),
+        monthlyPurchases: Number(stats.total_actual_cost),
         monthlySales: Number(stats.total_sales),
         purchaseCount: Number(stats.purchase_count),
         salesCount: Number(stats.sales_count),
