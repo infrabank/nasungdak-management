@@ -159,7 +159,7 @@ export async function getTossMappings(storeId?: string) {
       conditions.push(eq(tossSkuMappings.storeId, storeId))
     }
 
-    const mappings = await db
+     const mappings = await db
       .select({
         id: tossSkuMappings.id,
         storeId: tossSkuMappings.storeId,
@@ -170,6 +170,12 @@ export async function getTossMappings(storeId?: string) {
         skuId: tossSkuMappings.skuId,
         skuName: skus.skuName,
         isActive: tossSkuMappings.isActive,
+        createdAt: tossSkuMappings.createdAt,
+        updatedAt: tossSkuMappings.updatedAt,
+        createdBy: tossSkuMappings.createdBy,
+        updatedBy: tossSkuMappings.updatedBy,
+        deletedAt: tossSkuMappings.deletedAt,
+        deletedBy: tossSkuMappings.deletedBy,
       })
       .from(tossSkuMappings)
       .innerJoin(stores, eq(tossSkuMappings.storeId, stores.id))
