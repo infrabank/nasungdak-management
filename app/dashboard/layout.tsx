@@ -14,7 +14,7 @@ export default function DashboardLayout({
           <div className="flex h-16 justify-between">
             <div className="flex">
               <Link href="/dashboard" className="flex items-center">
-                <span className="text-xl font-bold">나성닭강정</span>
+                <span className="text-xl font-bold text-red-600">나성닭강정</span>
               </Link>
               <div className="ml-10 flex space-x-8">
                 <Link
