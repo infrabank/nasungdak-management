@@ -10,18 +10,12 @@ export default function HomePage() {
         <p className="mb-8 text-lg text-gray-600">
           나성닭강정 비즈니스 관리 시스템
         </p>
-        <div className="flex gap-4 justify-center">
+        <div className="flex justify-center">
           <Link
             href="/login"
             className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
           >
             로그인
-          </Link>
-          <Link
-            href="/dashboard"
-            className="rounded-lg border border-gray-300 px-6 py-3 hover:bg-gray-50"
-          >
-            대시보드 (개발중)
           </Link>
         </div>
       </div>
