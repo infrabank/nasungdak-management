@@ -39,7 +39,6 @@ export async function createInventory(formData: FormData) {
           currentQuantity: validatedData.currentQuantity,
           unit: validatedData.unit,
           lastUpdated: new Date(),
-          updatedBy: 'system',
         })
         .where(eq(inventory.id, existingInventory.id))
         .returning()
@@ -56,7 +55,6 @@ export async function createInventory(formData: FormData) {
       .insert(inventory)
       .values({
         ...validatedData,
-        createdBy: 'system',
       })
       .returning()
 
@@ -99,7 +97,6 @@ export async function updateInventory(id: string, formData: FormData) {
       .set({
         ...validatedData,
         lastUpdated: new Date(),
-        updatedBy: 'system',
       })
       .where(eq(inventory.id, id))
       .returning()
@@ -223,7 +220,6 @@ export async function createInventoryEvent(formData: FormData) {
         .set({
           currentQuantity: String(newQuantity),
           lastUpdated: new Date(),
-          updatedBy: 'system',
         })
         .where(eq(inventory.id, currentInventory.id))
     }
