@@ -1,34 +1,34 @@
-00:06:23.131 Running build in Washington, D.C., USA (East) – iad1
-00:06:23.136 Build machine configuration: 2 cores, 8 GB
-00:06:23.457 Cloning github.com/infrabank/nasungdak-management (Branch: 1-purchase-sales-management, Commit: 6adf566)
-00:06:24.544 Cloning completed: 1.086s
-00:06:25.634 Restored build cache from previous deployment (9AwP12z8kiUh1ipphHcYUao9VD7t)
-00:06:26.416 Running "vercel build"
-00:06:27.256 Vercel CLI 50.1.6
-00:06:27.622 Installing dependencies...
-00:06:36.076 
-00:06:36.076 up to date in 7s
-00:06:36.077 
-00:06:36.077 158 packages are looking for funding
-00:06:36.077   run `npm fund` for details
-00:06:36.111 Detected Next.js version: 15.5.9
-00:06:36.118 Running "npm run build"
-00:06:36.219 
-00:06:36.219 > nasungdak-management@0.1.0 build
-00:06:36.220 > next build
-00:06:36.220 
-00:06:36.947    ▲ Next.js 15.5.9
-00:06:36.949    - Experiments (use with caution):
-00:06:36.949      · serverActions
-00:06:36.950 
-00:06:36.985    Creating an optimized production build ...
-00:06:48.312  ✓ Compiled successfully in 8.7s
-00:06:48.315    Linting and checking validity of types ...
-00:06:54.142 
-00:06:54.144 Failed to compile.
-00:06:54.144 
-00:06:54.144 ./lib/kakao/alimtalk.ts
-00:06:54.144 Error: Parsing error: Unexpected keyword or identifier.
-00:06:54.151 
-00:06:54.152 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
-00:06:54.183 Error: Command "npm run build" exited with 1
+00:09:29.317 Running build in Washington, D.C., USA (East) – iad1
+00:09:29.318 Build machine configuration: 2 cores, 8 GB
+00:09:29.452 Cloning github.com/infrabank/nasungdak-management (Branch: 1-purchase-sales-management, Commit: c452577)
+00:09:29.967 Cloning completed: 515.000ms
+00:09:30.804 Restored build cache from previous deployment (9AwP12z8kiUh1ipphHcYUao9VD7t)
+00:09:31.399 Running "vercel build"
+00:09:31.879 Vercel CLI 50.1.6
+00:09:32.218 Installing dependencies...
+00:09:39.527 
+00:09:39.528 up to date in 7s
+00:09:39.529 
+00:09:39.530 158 packages are looking for funding
+00:09:39.530   run `npm fund` for details
+00:09:39.562 Detected Next.js version: 15.5.9
+00:09:39.569 Running "npm run build"
+00:09:39.772 
+00:09:39.772 > nasungdak-management@0.1.0 build
+00:09:39.773 > next build
+00:09:39.773 
+00:09:40.597    ▲ Next.js 15.5.9
+00:09:40.598    - Experiments (use with caution):
+00:09:40.598      · serverActions
+00:09:40.599 
+00:09:40.637    Creating an optimized production build ...
+00:09:52.529  ✓ Compiled successfully in 9.3s
+00:09:52.535    Linting and checking validity of types ...
+00:09:58.397 
+00:09:58.402 Failed to compile.
+00:09:58.402 
+00:09:58.402 ./lib/kakao/alimtalk.ts
+00:09:58.402 Error: Parsing error: Unexpected keyword or identifier.
+00:09:58.402 
+00:09:58.402 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+00:09:58.442 Error: Command "npm run build" exited with 1

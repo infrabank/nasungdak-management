@@ -27,11 +27,11 @@ export class KakaoAlimtalkClient {
   // TODO: 카카오 비즈메시지 API 키 설정 필요
   // .env: KAKAO_REST_API_KEY, KAKAO_SENDER_KEY
   // 카카오 비즈메시지 센터: https://business.kakao.com/
-  // 템플릿 등록:
-  //   - INVENTORY_LOW_ALERT: 재고 부족 알림
-  //   - SYNC_FAILED_ALERT: 동기화 실패 알림
+   // 템플릿 등록:
+   //   - INVENTORY_LOW_ALERT: 재고 부족 알림
+   //   - SYNC_FAILED_ALERT: 동기화 실패 알림
 
-  async sendAlimtalk(params: AlimtalkParams): Promise<AlimtalkResult> {
+  async sendAlimtalk(params: AlimtalkParams): Promise<any> {
     try {
       // TODO: 실제 카카오 API 호출 구현
       // const response = await fetch('https://api.kakaowork.com/v1/send', {
