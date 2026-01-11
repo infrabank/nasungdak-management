@@ -489,7 +489,7 @@ export async function calculateDaysRemaining(
       )
     `)
 
-    const totalSold = Number(salesResult[0]?.total_sold || 0)
+    const totalSold = Number(salesResult.rows[0]?.total_sold || 0)
     const avgDailySales = totalSold / predictionPeriodDays
 
     if (avgDailySales <= 0) {
