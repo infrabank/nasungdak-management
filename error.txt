@@ -1,49 +1,34 @@
-23:59:33.810 Running build in Washington, D.C., USA (East) – iad1
-23:59:33.811 Build machine configuration: 2 cores, 8 GB
-23:59:34.146 Cloning github.com/infrabank/nasungdak-management (Branch: 1-purchase-sales-management, Commit: a744217)
-23:59:34.737 Cloning completed: 591.000ms
-23:59:36.147 Restored build cache from previous deployment (9AwP12z8kiUh1ipphHcYUao9VD7t)
-23:59:36.979 Running "vercel build"
-23:59:37.723 Vercel CLI 50.1.6
-23:59:38.086 Installing dependencies...
-23:59:45.167 
-23:59:45.168 up to date in 7s
-23:59:45.169 
-23:59:45.169 158 packages are looking for funding
-23:59:45.169   run `npm fund` for details
-23:59:45.200 Detected Next.js version: 15.5.9
-23:59:45.207 Running "npm run build"
-23:59:45.317 
-23:59:45.317 > nasungdak-management@0.1.0 build
-23:59:45.318 > next build
-23:59:45.318 
-23:59:46.033    ▲ Next.js 15.5.9
-23:59:46.034    - Experiments (use with caution):
-23:59:46.034      · serverActions
-23:59:46.034 
-23:59:46.106    Creating an optimized production build ...
-23:59:53.470 Failed to compile.
-23:59:53.471 
-23:59:53.472 ./app/dashboard/layout.tsx
-23:59:53.472 Error:   [31mx[0m Expected '</', got 'jsx text (
-23:59:53.472   [31m|[0m       )'
-23:59:53.472     ,-[[36;1;4m/vercel/path0/app/dashboard/layout.tsx[0m:89:1]
-23:59:53.472  [2m86[0m |                   <LogoutButton />
-23:59:53.472  [2m87[0m |                 </div>
-23:59:53.472  [2m88[0m |               </div>
-23:59:53.473  [2m89[0m | [35;1m,[0m[35;1m-[0m[35;1m>[0m         </div>
-23:59:53.473  [2m90[0m | [35;1m`[0m[35;1m-[0m[35;1m>[0m       </nav>
-23:59:53.473  [2m91[0m |     
-23:59:53.473  [2m92[0m |           {/* Main Content */}
-23:59:53.473  [2m93[0m |           <main className="py-10">
-23:59:53.473     `----
-23:59:53.473 
-23:59:53.473 Caused by:
-23:59:53.473     Syntax Error
-23:59:53.473 
-23:59:53.473 Import trace for requested module:
-23:59:53.473 ./app/dashboard/layout.tsx
-23:59:53.473 
-23:59:53.487 
-23:59:53.487 > Build failed because of webpack errors
-23:59:53.513 Error: Command "npm run build" exited with 1
+00:06:23.131 Running build in Washington, D.C., USA (East) – iad1
+00:06:23.136 Build machine configuration: 2 cores, 8 GB
+00:06:23.457 Cloning github.com/infrabank/nasungdak-management (Branch: 1-purchase-sales-management, Commit: 6adf566)
+00:06:24.544 Cloning completed: 1.086s
+00:06:25.634 Restored build cache from previous deployment (9AwP12z8kiUh1ipphHcYUao9VD7t)
+00:06:26.416 Running "vercel build"
+00:06:27.256 Vercel CLI 50.1.6
+00:06:27.622 Installing dependencies...
+00:06:36.076 
+00:06:36.076 up to date in 7s
+00:06:36.077 
+00:06:36.077 158 packages are looking for funding
+00:06:36.077   run `npm fund` for details
+00:06:36.111 Detected Next.js version: 15.5.9
+00:06:36.118 Running "npm run build"
+00:06:36.219 
+00:06:36.219 > nasungdak-management@0.1.0 build
+00:06:36.220 > next build
+00:06:36.220 
+00:06:36.947    ▲ Next.js 15.5.9
+00:06:36.949    - Experiments (use with caution):
+00:06:36.949      · serverActions
+00:06:36.950 
+00:06:36.985    Creating an optimized production build ...
+00:06:48.312  ✓ Compiled successfully in 8.7s
+00:06:48.315    Linting and checking validity of types ...
+00:06:54.142 
+00:06:54.144 Failed to compile.
+00:06:54.144 
+00:06:54.144 ./lib/kakao/alimtalk.ts
+00:06:54.144 Error: Parsing error: Unexpected keyword or identifier.
+00:06:54.151 
+00:06:54.152 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+00:06:54.183 Error: Command "npm run build" exited with 1

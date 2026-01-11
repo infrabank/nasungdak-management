@@ -478,18 +478,19 @@ export async function calculateDaysRemaining(
     // Get sales history for the prediction period
     const startDate = format(subDays(new Date(), predictionPeriodDays), 'yyyy-MM-dd')
 
-    // Calculate total quantity sold in the period
+    // Calculate total quantity sold in the month period (30-day default)
     const salesResult = await db.execute(sql`
-      SELECT COALESCE(SUM(quantity_sold), 0) as total_sold
-      FROM sales_records
-      WHERE store_id = ${storeId}
-        AND sale_date >= ${startDate}::date
-        AND deleted_at IS NULL
-        AND sku_id IN (
-          SELECT sku_id FROM skus WHERE menu_id IN (
-            SELECT menu_id FROM menu_ingredients WHERE ingredient_id = ${ingredientId}
-          )
+      SELECT COALESCE(SUM(sr.quantity_sold), 0) as total_sold
+      FROM sales_records sr
+      WHERE sr.store_id = ${storeId}
+        AND sr.sale_date >= ${startDate}::date
+        AND sr.deleted_at IS NULL
+        AND sr.sku_id IN (
+          SELECT sku.id FROM skus s 
+          INNER JOIN menu_ingredients mi ON s.menu_id = mi.menu_id 
+          WHERE mi.ingredient_id = ${ingredientId}
         )
+      )
     `)
 
     const totalSold = Number(salesResult[0]?.total_sold || 0)
