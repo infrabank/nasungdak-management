@@ -1,11 +1,16 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import LogoutButton from './logout-button'
+import StoreSelector from './store-selector'
+import { getActiveStores } from './stores/actions'
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const stores = await getActiveStores()
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
@@ -53,9 +58,18 @@ export default function DashboardLayout({
                 >
                   기초 데이터
                 </Link>
+                <Link
+                  href="/dashboard/stores"
+                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                >
+                  매장 관리
+                </Link>
               </div>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center gap-4">
+              <Suspense fallback={<div className="h-8 w-32 animate-pulse bg-gray-200 rounded" />}>
+                <StoreSelector stores={stores} />
+              </Suspense>
               <LogoutButton />
             </div>
           </div>

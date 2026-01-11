@@ -1,5 +1,23 @@
-import { pgTable, uuid, varchar, decimal, date, timestamp, boolean, text, integer } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, decimal, date, timestamp, boolean, text, integer, unique } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
+
+// Stores Table (다매장 지원)
+export const stores = pgTable('stores', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  storeName: varchar('store_name', { length: 100 }).notNull(),
+  storeCode: varchar('store_code', { length: 20 }).notNull().unique(),
+  address: text('address'),
+  phone: varchar('phone', { length: 20 }),
+  managerPhone: varchar('manager_phone', { length: 20 }),
+  tossStoreId: varchar('toss_store_id', { length: 50 }), // 토스 POS 연동용
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
+})
 
 // Menu Categories Table
 export const menuCategories = pgTable('menu_categories', {
@@ -63,6 +81,7 @@ export const menuIngredients = pgTable('menu_ingredients', {
 // Purchase Transactions Table
 export const purchaseTransactions = pgTable('purchase_transactions', {
   id: uuid('id').primaryKey().defaultRandom(),
+  storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
   transactionDate: date('transaction_date').notNull(),
   menuId: uuid('menu_id').notNull().references(() => menuCategories.id),
   ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id),
@@ -85,6 +104,7 @@ export const purchaseTransactions = pgTable('purchase_transactions', {
 // Sales Records Table
 export const salesRecords = pgTable('sales_records', {
   id: uuid('id').primaryKey().defaultRandom(),
+  storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
   saleDate: date('sale_date').notNull(),
   skuId: uuid('sku_id').notNull().references(() => skus.id),
   quantitySold: decimal('quantity_sold', { precision: 10, scale: 2 }).notNull(),
@@ -92,6 +112,7 @@ export const salesRecords = pgTable('sales_records', {
   totalRevenue: decimal('total_revenue', { precision: 14, scale: 2 }).generatedAlwaysAs(
     sql`quantity_sold * unit_price`
   ),
+  tossSyncId: uuid('toss_sync_id'), // 토스 동기화 추적용 (Phase 2)
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   createdBy: varchar('created_by', { length: 100 }),
@@ -119,6 +140,7 @@ export const costDistributionRules = pgTable('cost_distribution_rules', {
 // Fixed Costs Table
 export const fixedCosts = pgTable('fixed_costs', {
   id: uuid('id').primaryKey().defaultRandom(),
+  storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
   costDate: date('cost_date').notNull(),
   costType: varchar('cost_type', { length: 50 }).notNull(), // 인건비, 임대료, 관리비, 기타
   costName: varchar('cost_name', { length: 200 }).notNull(),
@@ -135,6 +157,7 @@ export const fixedCosts = pgTable('fixed_costs', {
 // Oil Change History Table
 export const oilChangeHistory = pgTable('oil_change_history', {
   id: uuid('id').primaryKey().defaultRandom(),
+  storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
   changeDate: date('change_date').notNull(),
   fryerType: varchar('fryer_type', { length: 20 }).notNull(), // '초벌', '재벌'
   oilType: varchar('oil_type', { length: 50 }).notNull().default('해바라기씨유'),
@@ -156,6 +179,9 @@ export const oilChangeHistory = pgTable('oil_change_history', {
 })
 
 // TypeScript Types
+export type Store = typeof stores.$inferSelect
+export type NewStore = typeof stores.$inferInsert
+
 export type MenuCategory = typeof menuCategories.$inferSelect
 export type NewMenuCategory = typeof menuCategories.$inferInsert
 

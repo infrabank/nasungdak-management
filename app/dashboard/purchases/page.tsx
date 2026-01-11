@@ -11,6 +11,7 @@ interface SearchParams {
   endDate?: string
   menuId?: string
   ingredientId?: string
+  storeId?: string
 }
 
 export default async function PurchasesPage({
@@ -29,9 +30,10 @@ export default async function PurchasesPage({
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
   const menuId = params.menuId || ''
   const ingredientId = params.ingredientId || ''
+  const storeId = params.storeId || ''
 
   const [purchases, menus, ingredientsList] = await Promise.all([
-    getPurchases(startDate, endDate, menuId, ingredientId),
+    getPurchases(startDate, endDate, menuId, ingredientId, storeId),
     getMenusForFilter(),
     getIngredientsForFilter(),
   ])
@@ -62,6 +64,8 @@ export default async function PurchasesPage({
 
       {/* Filters */}
       <form method="GET" className="mt-6 bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-lg p-4">
+        {/* Preserve storeId from URL */}
+        {storeId && <input type="hidden" name="storeId" value={storeId} />}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           <div>
             <label htmlFor="startDate" className="block text-sm font-medium text-gray-800 mb-1">
@@ -131,7 +135,7 @@ export default async function PurchasesPage({
           </p>
           <div className="flex gap-2">
             <a
-              href="/dashboard/purchases"
+              href={storeId ? `/dashboard/purchases?storeId=${storeId}` : '/dashboard/purchases'}
               className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
             >
               초기화

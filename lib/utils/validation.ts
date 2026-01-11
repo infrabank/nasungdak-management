@@ -48,6 +48,20 @@ export const oilChangeSchema = z.object({
 
 export type OilChangeFormData = z.infer<typeof oilChangeSchema>
 
+// Store validation
+export const storeSchema = z.object({
+  storeName: z.string().min(1, '매장명을 입력해주세요').max(100, '매장명은 100자 이내로 입력해주세요'),
+  storeCode: z.string().min(1, '매장 코드를 입력해주세요').max(20, '매장 코드는 20자 이내로 입력해주세요')
+    .regex(/^[A-Z0-9_-]+$/i, '매장 코드는 영문, 숫자, 하이픈, 언더스코어만 사용할 수 있습니다'),
+  address: z.string().max(500).optional().nullable(),
+  phone: z.string().max(20).optional().nullable(),
+  managerPhone: z.string().max(20).optional().nullable(),
+  tossStoreId: z.string().max(50).optional().nullable(),
+  isActive: z.boolean().default(true),
+})
+
+export type StoreFormData = z.infer<typeof storeSchema>
+
 // Add more schemas here:
 // - salesSchema
 // - menuSchema

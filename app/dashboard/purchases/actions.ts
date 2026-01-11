@@ -193,7 +193,8 @@ export async function getPurchases(
   startDate?: string,
   endDate?: string,
   menuId?: string,
-  ingredientId?: string
+  ingredientId?: string,
+  storeId?: string
 ) {
   try {
     // Build WHERE conditions
@@ -213,9 +214,14 @@ export async function getPurchases(
       conditions.push(eq(purchaseTransactions.ingredientId, ingredientId))
     }
 
+    if (storeId) {
+      conditions.push(eq(purchaseTransactions.storeId, storeId))
+    }
+
     const purchases = await db
       .select({
         id: purchaseTransactions.id,
+        storeId: purchaseTransactions.storeId,
         transactionDate: purchaseTransactions.transactionDate,
         menuName: menuCategories.menuName,
         ingredientName: ingredients.ingredientName,
