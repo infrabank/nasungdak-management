@@ -130,7 +130,7 @@ import { createEntity } from './actions'
 
 export function EntityForm() {
   const [state, formAction, isPending] = useActionState(createEntity, null)
-  
+
   return (
     <form action={formAction}>
       <input name="field" required />
