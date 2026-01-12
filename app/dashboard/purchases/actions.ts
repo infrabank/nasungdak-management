@@ -292,6 +292,107 @@ interface CSVRow {
   비고?: string
 }
 
+export interface PurchaseEntry {
+  menuId: string
+  ingredientId: string
+  quantity: string
+  unitPrice: string
+  notes?: string | null
+}
+
+export async function createMultiplePurchases(
+  transactionDate: string,
+  supplierName: string,
+  entries: PurchaseEntry[]
+) {
+  let successCount = 0
+  let failedCount = 0
+  const errors: string[] = []
+  const results: Array<{
+    index: number
+    id: string
+    totalAmount: number
+    isValid: boolean
+  }> = []
+
+  try {
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i]
+      const rowNum = i + 1
+
+      try {
+        const rawData = {
+          transactionDate,
+          menuId: entry.menuId,
+          ingredientId: entry.ingredientId,
+          supplierName,
+          quantity: entry.quantity,
+          unitPrice: entry.unitPrice,
+          notes: entry.notes?.trim() || null,
+        }
+
+        const validatedData = purchaseSchema.parse(rawData)
+
+        // Check if menu-ingredient mapping exists for auto-validation
+        const menuIngredient = await db.query.menuIngredients.findFirst({
+          where: and(
+            eq(menuIngredients.menuId, validatedData.menuId),
+            eq(menuIngredients.ingredientId, validatedData.ingredientId),
+            isNull(menuIngredients.deletedAt)
+          ),
+        })
+
+        const isValid = !!menuIngredient
+
+        const [transaction] = await db
+          .insert(purchaseTransactions)
+          .values({
+            ...validatedData,
+            isValid,
+            createdBy: 'system',
+          })
+          .returning()
+
+        successCount++
+        results.push({
+          index: i,
+          id: transaction.id,
+          totalAmount: Number(transaction.totalAmount),
+          isValid: transaction.isValid,
+        })
+      } catch (error) {
+        failedCount++
+        if (error instanceof z.ZodError) {
+          errors.push(`${rowNum}번 항목: ${error.errors[0].message}`)
+        } else {
+          errors.push(
+            `${rowNum}번 항목: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+          )
+        }
+      }
+    }
+
+    revalidatePath('/dashboard/purchases')
+
+    return {
+      success: failedCount === 0,
+      successCount,
+      failedCount,
+      results,
+      errors: errors.slice(0, 20),
+    }
+  } catch (error) {
+    console.error('Failed to create multiple purchases:', error)
+    return {
+      success: false,
+      successCount,
+      failedCount,
+      results,
+      error: error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
+    }
+  }
+}
+
 export async function bulkCreatePurchases(rows: CSVRow[]) {
   'use server'
 

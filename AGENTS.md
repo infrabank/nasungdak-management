@@ -8,7 +8,7 @@ Guidance for AI coding agents working in this Next.js 15 + Drizzle ORM project.
 # Development
 npm run dev              # Dev server at localhost:3000
 npm run build            # Production build
-npm run type-check       # TypeScript check (run before commits)
+npm run type-check       # TypeScript check (MUST run before commits)
 npm run lint             # ESLint (next/core-web-vitals)
 npm run format           # Prettier formatting
 
@@ -20,25 +20,26 @@ npm run db:seed          # Seed sample data
 
 # Testing
 npm run test             # Run all Vitest tests
-npm run test <pattern>   # Run specific test (e.g., npm run test user)
+npm run test purchases   # Run tests matching "purchases"
+npm run test -- --watch  # Watch mode
 npm run test:e2e         # Playwright E2E tests
 ```
 
 ## Code Style
 
-### Formatting (Prettier)
+### Prettier Config
 - No semicolons, single quotes, 2-space indent
 - Trailing commas (ES5), 80 char width
 - Tailwind class sorting via plugin
 
-### Imports
+### Import Order
 ```typescript
-// 1. External libraries first
+// 1. External libraries
 import { z } from 'zod'
 import { eq, isNull, desc } from 'drizzle-orm'
-// 2. Internal modules with @/* alias
+// 2. Internal modules (@/* alias)
 import { db } from '@/lib/db'
-import type { MenuCategory } from '@/lib/db/schema'  // Use 'import type' for types
+import type { MenuCategory } from '@/lib/db/schema'  // 'import type' for types only
 ```
 
 ### Naming Conventions
@@ -58,7 +59,7 @@ app/dashboard/[feature]/
   *-row.tsx       # Table row components
 ```
 
-## Server Actions Pattern
+## Server Actions
 
 ```typescript
 'use server'
@@ -78,7 +79,10 @@ export async function createEntity(formData: FormData) {
     revalidatePath('/dashboard/feature')
     return { success: true }
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
+    if (error instanceof z.ZodError) {
+      return { success: false, error: error.errors[0].message }
+    }
+    return { success: false, error: '처리 중 오류가 발생했습니다' }
   }
 }
 ```
@@ -86,20 +90,20 @@ export async function createEntity(formData: FormData) {
 **Rules:**
 - Input: always `FormData` (not JSON)
 - Validation: Zod schemas from `lib/utils/validation.ts`
-- After mutation: always call `revalidatePath()`
-- Return shape: `{ success: boolean, data?: T, error?: string }`
+- After mutation: always `revalidatePath()`
+- Return: `{ success: boolean, data?: T, error?: string }`
 
 ## Database Patterns
 
 ### Soft Delete (NEVER hard delete)
 ```typescript
-// Delete
+// Delete = set deletedAt
 await db.update(table).set({ deletedAt: new Date() }).where(eq(table.id, id))
-// Query (always filter deleted)
+// Query = always filter deleted
 .where(isNull(table.deletedAt))
 ```
 
-### Generated Columns (NEVER insert/update these)
+### Generated Columns (NEVER insert/update)
 - `purchase_transactions.total_amount` = quantity * unit_price
 - `sales_records.total_revenue` = quantity_sold * unit_price
 - `oil_change_history.total_cost` = quantity * unit_price
@@ -110,7 +114,7 @@ await db.select().from(table)
   .leftJoin(related, eq(table.relatedId, related.id))
   .where(isNull(table.deletedAt))
   .orderBy(desc(table.createdAt))
-  .limit(100)  // Always limit
+  .limit(100)  // Always limit queries
 ```
 
 ### Type Inference
@@ -119,7 +123,7 @@ type Entity = typeof table.$inferSelect    // For reads
 type NewEntity = typeof table.$inferInsert // For inserts
 ```
 
-**Note:** Decimal columns return strings from Postgres - convert with `Number()`.
+**Note:** Decimal columns return strings - convert with `Number()`.
 
 ## Form Components (React 19)
 
@@ -130,13 +134,10 @@ import { createEntity } from './actions'
 
 export function EntityForm() {
   const [state, formAction, isPending] = useActionState(createEntity, null)
-
   return (
     <form action={formAction}>
       <input name="field" required />
-      <button disabled={isPending}>
-        {isPending ? '처리중...' : '저장'}
-      </button>
+      <button disabled={isPending}>{isPending ? '처리중...' : '저장'}</button>
       {state?.error && <p className="text-red-500">{state.error}</p>}
     </form>
   )
@@ -146,7 +147,7 @@ export function EntityForm() {
 ## Validation (Zod)
 
 ```typescript
-// For form number inputs - use coerce.string() then transform
+// Decimal fields: coerce.string() then transform
 quantity: z.coerce.string().transform((val, ctx) => {
   const num = Number(val)
   if (isNaN(num) || num <= 0) {
@@ -159,44 +160,37 @@ quantity: z.coerce.string().transform((val, ctx) => {
 
 **All error messages in Korean.**
 
-## Type Safety Rules
+## Type Safety (STRICT)
 
 - **NEVER** use `as any`, `@ts-ignore`, `@ts-expect-error`
-- **NEVER** suppress type errors - fix them properly
-- Use explicit types, leverage Drizzle inference
+- **NEVER** suppress type errors - fix root cause
+- Use explicit types, leverage Drizzle type inference
 
-## Multi-Store Support
-
-All transactional entities have `storeId` FK:
-- Filter by `storeId` URL parameter
-- Apply filter in queries where applicable
-
-## Authentication
-
-- Single-password JWT system (jose library)
-- HTTP-only cookies, 7-day expiration
-- Middleware protects all routes except `/login`
-- Key files: `middleware.ts`, `app/(auth)/login/actions.ts`
-
-## Key Files Reference
+## Key Files
 
 | File | Purpose |
 |------|---------|
-| `lib/db/schema.ts` | Drizzle ORM schema definitions |
-| `lib/db/index.ts` | Database client |
+| `lib/db/schema.ts` | Drizzle ORM schema (all tables) |
 | `lib/utils/validation.ts` | Zod validation schemas |
 | `lib/utils/format.ts` | Korean locale formatters |
 | `middleware.ts` | JWT auth middleware |
-| `drizzle.config.ts` | Drizzle Kit config |
 
 ## UI Guidelines
 
 - Tailwind CSS only (no CSS modules)
 - Korean language for all user-facing text
 - Responsive design required
-- Use HTML5 validation (required, type, min, max, step)
+- HTML5 validation: `required`, `type`, `min`, `max`, `step`
 
-## Before Committing
+## Multi-Store Support
+
+All transactional tables have `storeId` FK. Filter by `storeId` URL param where applicable.
+
+## Auth
+
+Single-password JWT (jose), HTTP-only cookies, 7-day expiry. Middleware protects all routes except `/login`.
+
+## Pre-Commit Checklist
 
 ```bash
 npm run type-check && npm run lint && npm run format
