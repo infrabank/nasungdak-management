@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Suspense } from 'react'
+import AccordionMenu from './accordion-menu'
 import LogoutButton from './logout-button'
 import StoreSelector from './store-selector'
 import { getActiveStores } from './stores/actions'
@@ -23,61 +24,8 @@ export default async function DashboardLayout({
               <Link href="/dashboard" className="flex items-center">
                 <span className="text-xl font-bold text-red-600">나성닭강정</span>
               </Link>
-              <div className="ml-10 flex space-x-8">
-                <Link
-                  href="/dashboard/purchases"
-                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-900 hover:border-gray-300"
-                >
-                  매입 관리
-                </Link>
-                <Link
-                  href="/dashboard/sales"
-                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                >
-                  판매 관리
-                </Link>
-                <Link
-                  href="/dashboard/oil-changes"
-                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                >
-                  기름 교체
-                </Link>
-                <Link
-                  href="/dashboard/fixed-costs"
-                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                >
-                  고정비 관리
-                </Link>
-                <Link
-                  href="/dashboard/analysis"
-                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                >
-                  기간 분석
-                </Link>
-                <Link
-                  href="/dashboard/master-data"
-                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                >
-                  기초 데이터
-                </Link>
-                <Link
-                  href="/dashboard/stores"
-                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                >
-                  매장 관리
-                </Link>
-                <Link
-                  href="/dashboard/inventory"
-                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                >
-                  재고 관리
-                </Link>
-                <Link
-                  href="/dashboard/toss-mappings"
-                  className="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700"
-                >
-                  토스 매핑
-                </Link>
+              <div className="ml-10 flex items-center">
+                <AccordionMenu />
               </div>
             </div>
             <div className="flex items-center gap-4">
