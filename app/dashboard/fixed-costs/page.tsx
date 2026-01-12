@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic'
 interface SearchParams {
   startDate?: string
   endDate?: string
+  storeId?: string
 }
 
 export default async function FixedCostsPage({
@@ -23,8 +24,9 @@ export default async function FixedCostsPage({
 
   const startDate = params.startDate || formatDate(firstDayOfMonth, 'yyyy-MM-dd')
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
+  const storeId = params.storeId || ''
 
-  const costs = await getFixedCosts(startDate, endDate)
+  const costs = await getFixedCosts(startDate, endDate, storeId)
 
   // Calculate totals by type
   const totalsByType = costs.reduce((acc, cost) => {
@@ -47,7 +49,7 @@ export default async function FixedCostsPage({
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
           <Link
-            href="/dashboard/fixed-costs/new"
+            href={storeId ? `/dashboard/fixed-costs/new?storeId=${storeId}` : '/dashboard/fixed-costs/new'}
             className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
           >
             새 고정비 등록
@@ -57,6 +59,8 @@ export default async function FixedCostsPage({
 
       {/* Date Filter */}
       <form method="GET" className="mt-6 bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-lg p-4">
+        {/* Preserve storeId from URL */}
+        {storeId && <input type="hidden" name="storeId" value={storeId} />}
         <div className="flex flex-wrap items-end gap-4">
           <div className="flex-1 min-w-[200px]">
             <label htmlFor="startDate" className="block text-sm font-medium text-gray-800 mb-1">

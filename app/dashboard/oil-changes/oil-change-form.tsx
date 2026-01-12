@@ -5,13 +5,17 @@ import { useRouter } from 'next/navigation'
 import { createOilChange } from './actions'
 import Link from 'next/link'
 
-export default function OilChangeForm() {
+interface OilChangeFormProps {
+  storeId?: string
+}
+
+export default function OilChangeForm({ storeId }: OilChangeFormProps) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(createOilChange, null)
 
   // Redirect on success
   if (state?.success) {
-    router.push('/dashboard/oil-changes')
+    router.push(storeId ? `/dashboard/oil-changes?storeId=${storeId}` : '/dashboard/oil-changes')
   }
 
   return (
@@ -19,7 +23,7 @@ export default function OilChangeForm() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">새 기름 교체 이력 등록</h1>
         <Link
-          href="/dashboard/oil-changes"
+          href={storeId ? `/dashboard/oil-changes?storeId=${storeId}` : '/dashboard/oil-changes'}
           className="text-gray-600 hover:text-gray-900"
         >
           목록으로 돌아가기
@@ -28,6 +32,9 @@ export default function OilChangeForm() {
 
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <form action={formAction} className="space-y-6">
+          {/* Hidden storeId */}
+          {storeId && <input type="hidden" name="storeId" value={storeId} />}
+
           {/* Error Message */}
           {state?.error && (
             <div className="rounded-md bg-red-50 p-4">
@@ -84,7 +91,7 @@ export default function OilChangeForm() {
 
           <div className="flex justify-end space-x-4">
             <Link
-              href="/dashboard/oil-changes"
+              href={storeId ? `/dashboard/oil-changes?storeId=${storeId}` : '/dashboard/oil-changes'}
               className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
             >
               취소

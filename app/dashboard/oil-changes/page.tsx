@@ -9,6 +9,7 @@ interface SearchParams {
   startDate?: string
   endDate?: string
   fryerType?: string
+  storeId?: string
 }
 
 export default async function OilChangesPage({
@@ -26,10 +27,11 @@ export default async function OilChangesPage({
   const startDate = params.startDate || formatDate(thirtyDaysAgo, 'yyyy-MM-dd')
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
   const fryerType = params.fryerType || ''
+  const storeId = params.storeId || ''
 
   const [oilChanges, stats] = await Promise.all([
-    getOilChanges({ startDate, endDate, fryerType }),
-    getOilChangeStats(),
+    getOilChanges({ startDate, endDate, fryerType, storeId }),
+    getOilChangeStats(storeId),
   ])
 
   return (
@@ -41,7 +43,7 @@ export default async function OilChangesPage({
           <p className="text-gray-600 mt-2">초벌용 및 재벌용 튀김기 기름 교체 기록을 관리합니다</p>
         </div>
         <Link
-          href="/dashboard/oil-changes/new"
+          href={storeId ? `/dashboard/oil-changes/new?storeId=${storeId}` : '/dashboard/oil-changes/new'}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
         >
           새 교체 이력 등록
@@ -67,6 +69,8 @@ export default async function OilChangesPage({
       {/* Filters */}
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <form className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* Preserve storeId from URL */}
+          {storeId && <input type="hidden" name="storeId" value={storeId} />}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               시작일

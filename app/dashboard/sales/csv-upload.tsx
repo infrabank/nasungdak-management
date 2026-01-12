@@ -12,7 +12,11 @@ interface CSVRow {
   비고?: string
 }
 
-export default function CSVUpload() {
+interface CSVUploadProps {
+  storeId?: string
+}
+
+export default function CSVUpload({ storeId }: CSVUploadProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -79,7 +83,7 @@ export default function CSVUpload() {
       complete: async (results) => {
         try {
           // Server Action에 직렬화 가능한 데이터로 전달
-          const result = await bulkCreateSales(JSON.parse(JSON.stringify(results.data)))
+          const result = await bulkCreateSales(JSON.parse(JSON.stringify(results.data)), storeId)
 
           if (result.success) {
             alert(`성공: ${result.successCount}건 등록, 실패: ${result.failedCount}건${result.errors && result.errors.length > 0 ? '\n\n오류:\n' + result.errors.join('\n') : ''}`)

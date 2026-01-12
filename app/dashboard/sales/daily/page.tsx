@@ -1,12 +1,23 @@
 import Link from 'next/link'
 import SalesForm from './sales-form'
 
-export default function DailySalesPage() {
+interface SearchParams {
+  storeId?: string
+}
+
+export default async function DailySalesPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const params = await searchParams
+  const storeId = params.storeId || ''
+
   return (
     <div>
       <div className="mb-6">
         <Link
-          href="/dashboard/sales"
+          href={storeId ? `/dashboard/sales?storeId=${storeId}` : '/dashboard/sales'}
           className="text-sm font-medium text-blue-600 hover:text-blue-500"
         >
           ← 목록으로 돌아가기
@@ -19,7 +30,7 @@ export default function DailySalesPage() {
         </div>
       </div>
 
-      <SalesForm />
+      <SalesForm storeId={storeId} />
     </div>
   )
 }

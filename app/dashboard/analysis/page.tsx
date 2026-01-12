@@ -6,6 +6,7 @@ import AnalysisTabs from './analysis-tabs'
 interface SearchParams {
   startDate?: string
   endDate?: string
+  storeId?: string
 }
 
 export default async function AnalysisPage({
@@ -22,11 +23,12 @@ export default async function AnalysisPage({
 
   const startDate = params.startDate || formatDate(firstDayOfMonth, 'yyyy-MM-dd')
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
+  const storeId = params.storeId || ''
 
   // Fetch analysis data
   const [result, monthlyResult] = await Promise.all([
-    getAnalysis(startDate, endDate),
-    getMonthlyAnalysis(startDate, endDate)
+    getAnalysis(startDate, endDate, storeId),
+    getMonthlyAnalysis(startDate, endDate, storeId)
   ])
 
   return (
@@ -40,6 +42,8 @@ export default async function AnalysisPage({
 
       {/* Date Range Filter */}
       <form method="GET" className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mb-6">
+        {/* Preserve storeId from URL */}
+        {storeId && <input type="hidden" name="storeId" value={storeId} />}
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
           <div className="sm:col-span-2">
             <label htmlFor="startDate" className="block text-sm font-medium text-gray-900">

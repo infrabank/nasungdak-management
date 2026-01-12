@@ -24,6 +24,7 @@ const salesRecordSchema = z.object({
 
 export async function createSalesRecord(formData: FormData) {
   try {
+    const storeId = formData.get('storeId') as string | null
     const rawData = {
       saleDate: formData.get('saleDate'),
       skuId: formData.get('skuId'),
@@ -48,6 +49,7 @@ export async function createSalesRecord(formData: FormData) {
       .insert(salesRecords)
       .values({
         ...validatedData,
+        storeId: storeId || null,
         unitPrice: sku.unitPrice,
         createdBy: 'system',
       })
@@ -183,7 +185,8 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
 export async function getSalesRecords(
   startDate?: string,
   endDate?: string,
-  skuId?: string
+  skuId?: string,
+  storeId?: string
 ) {
   try {
     // Build WHERE conditions
@@ -197,6 +200,10 @@ export async function getSalesRecords(
 
     if (skuId) {
       conditions.push(eq(salesRecords.skuId, skuId))
+    }
+
+    if (storeId) {
+      conditions.push(eq(salesRecords.storeId, storeId))
     }
 
     const records = await db
@@ -269,7 +276,7 @@ interface DailySaleInput {
   quantitySold: string
 }
 
-export async function createDailySales(saleDate: string, sales: DailySaleInput[]) {
+export async function createDailySales(saleDate: string, sales: DailySaleInput[], storeId?: string) {
   'use server'
 
   let successCount = 0
@@ -324,6 +331,7 @@ export async function createDailySales(saleDate: string, sales: DailySaleInput[]
           .insert(salesRecords)
           .values({
             ...validatedData,
+            storeId: storeId || null,
             unitPrice: sku.unitPrice,
             createdBy: 'system',
           })
@@ -365,7 +373,7 @@ interface CSVRow {
   비고?: string
 }
 
-export async function bulkCreateSales(rows: CSVRow[]) {
+export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
   'use server'
 
   let successCount = 0
@@ -412,6 +420,7 @@ export async function bulkCreateSales(rows: CSVRow[]) {
           .insert(salesRecords)
           .values({
             ...validatedData,
+            storeId: storeId || null,
             unitPrice: skuInfo.unitPrice,
             createdBy: 'system',
           })

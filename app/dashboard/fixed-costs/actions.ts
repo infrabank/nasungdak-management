@@ -21,6 +21,7 @@ export async function createFixedCost(
   formData: FormData
 ) {
   try {
+    const storeId = formData.get('storeId') as string | null
     const rawData = {
       costDate: formData.get('costDate'),
       costType: formData.get('costType'),
@@ -35,6 +36,7 @@ export async function createFixedCost(
       .insert(fixedCosts)
       .values({
         ...validatedData,
+        storeId: storeId || null,
         amount: validatedData.amount.toString(),
         createdBy: 'system',
       })
@@ -133,16 +135,22 @@ export async function deleteFixedCost(id: string) {
   }
 }
 
-export async function getFixedCosts(startDate?: string, endDate?: string) {
+export async function getFixedCosts(startDate?: string, endDate?: string, storeId?: string) {
   try {
+    const conditions = [isNull(fixedCosts.deletedAt)]
+
+    if (startDate && endDate) {
+      conditions.push(sql`${fixedCosts.costDate} BETWEEN ${startDate}::date AND ${endDate}::date`)
+    }
+
+    if (storeId) {
+      conditions.push(eq(fixedCosts.storeId, storeId))
+    }
+
     const records = await db
       .select()
       .from(fixedCosts)
-      .where(
-        startDate && endDate
-          ? sql`${fixedCosts.deletedAt} IS NULL AND ${fixedCosts.costDate} BETWEEN ${startDate}::date AND ${endDate}::date`
-          : isNull(fixedCosts.deletedAt)
-      )
+      .where(sql`${sql.join(conditions, sql` AND `)}`)
       .orderBy(desc(fixedCosts.costDate))
       .limit(1000)
 

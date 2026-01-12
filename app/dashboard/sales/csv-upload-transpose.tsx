@@ -5,7 +5,11 @@ import Papa from 'papaparse'
 import { bulkCreateSales } from './actions'
 import { Button } from '@/components/ui/button'
 
-export default function CSVUploadTranspose() {
+interface CSVUploadTransposeProps {
+  storeId?: string
+}
+
+export default function CSVUploadTranspose({ storeId }: CSVUploadTransposeProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isUploading, setIsUploading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -121,7 +125,7 @@ export default function CSVUploadTranspose() {
 
       console.log(`변환된 데이터: ${salesData.length}건`)
 
-      const result = await bulkCreateSales(salesData)
+      const result = await bulkCreateSales(salesData, storeId)
 
       if (result.success) {
         alert(

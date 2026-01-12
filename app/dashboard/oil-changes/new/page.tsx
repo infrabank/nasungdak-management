@@ -1,5 +1,16 @@
 import OilChangeForm from '../oil-change-form'
 
-export default function NewOilChangePage() {
-  return <OilChangeForm />
+interface SearchParams {
+  storeId?: string
+}
+
+export default async function NewOilChangePage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const params = await searchParams
+  const storeId = params.storeId || ''
+
+  return <OilChangeForm storeId={storeId} />
 }

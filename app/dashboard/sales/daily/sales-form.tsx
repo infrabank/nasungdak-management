@@ -13,7 +13,11 @@ interface SKU {
   unitPrice: string
 }
 
-export default function SalesForm() {
+interface SalesFormProps {
+  storeId?: string
+}
+
+export default function SalesForm({ storeId }: SalesFormProps) {
   const router = useRouter()
   const [saleDate, setSaleDate] = useState(() => {
     const today = new Date()
@@ -65,7 +69,7 @@ export default function SalesForm() {
     setIsSubmitting(true)
 
     try {
-      const result = await createDailySales(saleDate, salesData)
+      const result = await createDailySales(saleDate, salesData, storeId)
 
       if (result.success) {
         if (result.failedCount && result.failedCount > 0) {
@@ -75,7 +79,7 @@ export default function SalesForm() {
         } else {
           alert(`${result.successCount}건의 판매 기록이 등록되었습니다`)
         }
-        router.push('/dashboard/sales')
+        router.push(storeId ? `/dashboard/sales?storeId=${storeId}` : '/dashboard/sales')
       } else {
         alert(`등록 실패: ${result.error}`)
       }
@@ -213,7 +217,7 @@ export default function SalesForm() {
         <Button
           type="button"
           variant="secondary"
-          onClick={() => router.push('/dashboard/sales')}
+          onClick={() => router.push(storeId ? `/dashboard/sales?storeId=${storeId}` : '/dashboard/sales')}
           disabled={isSubmitting}
         >
           취소

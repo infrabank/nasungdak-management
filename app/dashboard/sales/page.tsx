@@ -11,6 +11,7 @@ interface SearchParams {
   startDate?: string
   endDate?: string
   skuId?: string
+  storeId?: string
 }
 
 export default async function SalesPage({
@@ -28,9 +29,10 @@ export default async function SalesPage({
   const startDate = params.startDate || formatDate(thirtyDaysAgo, 'yyyy-MM-dd')
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
   const skuId = params.skuId || ''
+  const storeId = params.storeId || ''
 
   const [sales, skuList] = await Promise.all([
-    getSalesRecords(startDate, endDate, skuId),
+    getSalesRecords(startDate, endDate, skuId, storeId),
     getSKUsForFilter(),
   ])
 
@@ -48,10 +50,10 @@ export default async function SalesPage({
           </p>
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none sm:flex sm:gap-3">
-          <CSVUploadTranspose />
-          <CSVUpload />
+          <CSVUploadTranspose storeId={storeId} />
+          <CSVUpload storeId={storeId} />
           <Link
-            href="/dashboard/sales/daily"
+            href={storeId ? `/dashboard/sales/daily?storeId=${storeId}` : '/dashboard/sales/daily'}
             className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
           >
             일일 판매 입력
@@ -61,6 +63,8 @@ export default async function SalesPage({
 
       {/* Filters */}
       <form method="GET" className="mt-6 bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-lg p-4">
+        {/* Preserve storeId from URL */}
+        {storeId && <input type="hidden" name="storeId" value={storeId} />}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div>
             <label htmlFor="startDate" className="block text-sm font-medium text-gray-800 mb-1">
@@ -112,7 +116,7 @@ export default async function SalesPage({
           </p>
           <div className="flex gap-2">
             <a
-              href="/dashboard/sales"
+              href={storeId ? `/dashboard/sales?storeId=${storeId}` : '/dashboard/sales'}
               className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
             >
               초기화

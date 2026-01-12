@@ -5,13 +5,17 @@ import { useRouter } from 'next/navigation'
 import { createFixedCost } from './actions'
 import { formatDate } from '@/lib/utils/format'
 
-export default function FixedCostForm() {
+interface FixedCostFormProps {
+  storeId?: string
+}
+
+export default function FixedCostForm({ storeId }: FixedCostFormProps) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(createFixedCost, null)
 
   // Redirect on success
   if (state?.success) {
-    router.push('/dashboard/fixed-costs')
+    router.push(storeId ? `/dashboard/fixed-costs?storeId=${storeId}` : '/dashboard/fixed-costs')
   }
 
   const today = formatDate(new Date(), 'yyyy-MM-dd')
@@ -19,6 +23,9 @@ export default function FixedCostForm() {
   return (
     <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
       <form action={formAction} className="px-4 py-6 sm:p-8">
+        {/* Hidden storeId */}
+        {storeId && <input type="hidden" name="storeId" value={storeId} />}
+
         <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
           {/* Error Message */}
           {state?.error && (
@@ -130,7 +137,7 @@ export default function FixedCostForm() {
           </button>
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() => router.push(storeId ? `/dashboard/fixed-costs?storeId=${storeId}` : '/dashboard/fixed-costs')}
             className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
           >
             취소

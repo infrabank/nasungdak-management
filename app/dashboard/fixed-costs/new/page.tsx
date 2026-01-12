@@ -1,6 +1,17 @@
 import FixedCostForm from '../fixed-cost-form'
 
-export default function NewFixedCostPage() {
+interface SearchParams {
+  storeId?: string
+}
+
+export default async function NewFixedCostPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const params = await searchParams
+  const storeId = params.storeId || ''
+
   return (
     <div>
       <div className="mb-6">
@@ -10,7 +21,7 @@ export default function NewFixedCostPage() {
         </p>
       </div>
 
-      <FixedCostForm />
+      <FixedCostForm storeId={storeId} />
     </div>
   )
 }

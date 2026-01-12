@@ -12,6 +12,7 @@ export async function createOilChange(
   formData: FormData
 ) {
   try {
+    const storeId = formData.get('storeId') as string | null
     const notes = formData.get('notes')
     const rawData = {
       changeDate: formData.get('changeDate'),
@@ -21,12 +22,18 @@ export async function createOilChange(
 
     const validatedData = oilChangeSchema.parse(rawData)
 
+    // Build conditions for finding last change
+    const lastChangeConditions = [
+      eq(oilChangeHistory.fryerType, validatedData.fryerType),
+      isNull(oilChangeHistory.deletedAt)
+    ]
+    if (storeId) {
+      lastChangeConditions.push(eq(oilChangeHistory.storeId, storeId))
+    }
+
     // Calculate usage days automatically based on previous oil change history
     const lastChange = await db.query.oilChangeHistory.findFirst({
-      where: and(
-        eq(oilChangeHistory.fryerType, validatedData.fryerType),
-        isNull(oilChangeHistory.deletedAt)
-      ),
+      where: and(...lastChangeConditions),
       orderBy: [desc(oilChangeHistory.changeDate)],
     })
 
@@ -41,6 +48,7 @@ export async function createOilChange(
 
     // Insert oil change record
     await db.insert(oilChangeHistory).values({
+      storeId: storeId || null,
       changeDate: validatedData.changeDate,
       fryerType: validatedData.fryerType,
       oilType: '해바라기씨유',
@@ -67,6 +75,7 @@ export async function getOilChanges(filters?: {
   startDate?: string
   endDate?: string
   fryerType?: string
+  storeId?: string
 }) {
   try {
     const conditions = [isNull(oilChangeHistory.deletedAt)]
@@ -81,6 +90,10 @@ export async function getOilChanges(filters?: {
 
     if (filters?.fryerType) {
       conditions.push(eq(oilChangeHistory.fryerType, filters.fryerType))
+    }
+
+    if (filters?.storeId) {
+      conditions.push(eq(oilChangeHistory.storeId, filters.storeId))
     }
 
     const results = await db
@@ -183,27 +196,36 @@ export async function deleteOilChange(id: string) {
   }
 }
 
-export async function getOilChangeStats() {
+export async function getOilChangeStats(storeId?: string) {
   try {
     // Get total oil changes in last 30 days
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    const recentConditions = [
+      isNull(oilChangeHistory.deletedAt),
+      sql`oil_change_history.change_date >= ${thirtyDaysAgo.toISOString().split('T')[0]}`
+    ]
+
+    if (storeId) {
+      recentConditions.push(eq(oilChangeHistory.storeId, storeId))
+    }
 
     const recentChanges = await db
       .select({
         count: sql`COUNT(*)`.mapWith(Number),
       })
       .from(oilChangeHistory)
-      .where(
-        and(
-          isNull(oilChangeHistory.deletedAt),
-          sql`oil_change_history.change_date >= ${thirtyDaysAgo.toISOString().split('T')[0]}`
-        )
-      )
+      .where(and(...recentConditions))
 
     // Get last change date for each fryer type
+    const lastChangeConditions = [isNull(oilChangeHistory.deletedAt)]
+    if (storeId) {
+      lastChangeConditions.push(eq(oilChangeHistory.storeId, storeId))
+    }
+
     const lastChanges = await db.query.oilChangeHistory.findMany({
-      where: isNull(oilChangeHistory.deletedAt),
+      where: and(...lastChangeConditions),
       orderBy: [desc(oilChangeHistory.changeDate)],
       limit: 10,
     })

@@ -42,11 +42,18 @@ export interface MonthlyAnalysisResult {
 
 export async function getMonthlyAnalysis(
   startDate: string,
-  endDate: string
+  endDate: string,
+  storeId?: string
 ): Promise<MonthlyAnalysisResult> {
   try {
     console.log('=== Monthly Analysis Query ===')
     console.log('Date range:', startDate, 'to', endDate)
+    console.log('Store ID:', storeId || 'all stores')
+
+    // Build store filter condition
+    const salesStoreFilter = storeId ? sql`AND sr.store_id = ${storeId}` : sql``
+    const purchaseStoreFilter = storeId ? sql`AND pt.store_id = ${storeId}` : sql``
+    const fixedCostStoreFilter = storeId ? sql`AND fc.store_id = ${storeId}` : sql``
 
     // Get monthly revenue from sales
     const monthlyRevenueResult = await db.execute(sql`
@@ -56,6 +63,7 @@ export async function getMonthlyAnalysis(
       FROM sales_records sr
       WHERE sr.sale_date BETWEEN ${startDate}::date AND ${endDate}::date
         AND sr.deleted_at IS NULL
+        ${salesStoreFilter}
       GROUP BY TO_CHAR(sr.sale_date, 'YYYY-MM')
       ORDER BY month
     `)
@@ -69,6 +77,7 @@ export async function getMonthlyAnalysis(
       WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
         AND pt.deleted_at IS NULL
         AND pt.is_valid = true
+        ${purchaseStoreFilter}
       GROUP BY TO_CHAR(pt.transaction_date, 'YYYY-MM')
       ORDER BY month
     `)
@@ -81,6 +90,7 @@ export async function getMonthlyAnalysis(
       FROM fixed_costs fc
       WHERE fc.cost_date BETWEEN ${startDate}::date AND ${endDate}::date
         AND fc.deleted_at IS NULL
+        ${fixedCostStoreFilter}
       GROUP BY TO_CHAR(fc.cost_date, 'YYYY-MM')
       ORDER BY month
     `)
@@ -155,11 +165,17 @@ export async function getMonthlyAnalysis(
 
 export async function getAnalysis(
   startDate: string,
-  endDate: string
+  endDate: string,
+  storeId?: string
 ): Promise<AnalysisResult> {
   try {
     console.log('=== Analysis Query ===')
     console.log('Date range:', startDate, 'to', endDate)
+    console.log('Store ID:', storeId || 'all stores')
+
+    // Build store filter conditions
+    const salesStoreFilter = storeId ? sql`AND sr.store_id = ${storeId}` : sql``
+    const purchaseStoreFilter = storeId ? sql`AND pt.store_id = ${storeId}` : sql``
 
     // Complex SQL query combining sales, purchases, and cost distribution
     const result = await db.execute(sql`
@@ -174,6 +190,7 @@ export async function getAnalysis(
         WHERE sr.sale_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND sr.deleted_at IS NULL
           AND s.deleted_at IS NULL
+          ${salesStoreFilter}
         GROUP BY sr.sku_id, s.sku_name
       ),
       cost_summary AS (
@@ -195,6 +212,7 @@ export async function getAnalysis(
           -- Check if cost rule date range overlaps with query date range
           AND cdr.effective_from <= ${endDate}::date
           AND COALESCE(cdr.effective_to, '9999-12-31'::date) >= ${startDate}::date
+          ${purchaseStoreFilter}
         GROUP BY s.id
       )
       SELECT
@@ -233,12 +251,16 @@ export async function getAnalysis(
     const totalRevenue = skuAnalysis.reduce((sum, item) => sum + item.revenue, 0)
     const totalVariableCost = skuAnalysis.reduce((sum, item) => sum + item.cost, 0)
 
+    // Build store filter for fixed costs
+    const fixedCostStoreFilter = storeId ? sql`AND store_id = ${storeId}` : sql``
+
     // Get fixed costs for the period
     const fixedCostsResult = await db.execute(sql`
       SELECT COALESCE(SUM(amount), 0) AS total_fixed_cost
       FROM fixed_costs
       WHERE cost_date BETWEEN ${startDate}::date AND ${endDate}::date
         AND deleted_at IS NULL
+        ${fixedCostStoreFilter}
     `)
 
     const totalFixedCost = Number(fixedCostsResult.rows[0]?.total_fixed_cost || 0)
