@@ -160,7 +160,7 @@ export default function PurchaseForm() {
         router.push('/dashboard/purchases')
       } else {
         const errorMsg =
-          result.errors?.length > 0
+          result.errors && result.errors.length > 0
             ? result.errors.join('\n')
             : result.error || '등록에 실패했습니다'
         alert(
