@@ -2,6 +2,29 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Core Principles
+
+- Never use emojis.
+
+## Commit Authorship
+
+When committing code changes:
+- Never add Claude as a commit author.
+- Always commit as using the default git settings
+
+## Documentation Style
+
+When creating or updating markdown documentation files:
+- **Never create .md files unless explicitly instructed.**
+- **Be extremely concise** - engineers scan, they don't read novels
+- **Only include essential information** - what they need to know, not what's possible to explain
+- **Prefer examples over prose** - show the pattern, not the theory
+- **Assume technical competence** - skip obvious explanations
+- **Front-load critical info** - put warnings and key concepts first
+- **Delete verbose explanations** - if it takes more than 3 sentences, it's probably too long
+
+Default to 1-2 sentence explanations. Only expand when complexity absolutely requires it.
+
 ## Overview
 
 나성닭강정 관리 시스템 - A Next.js 15 management web application using App Router, Drizzle ORM, and Vercel Postgres.
