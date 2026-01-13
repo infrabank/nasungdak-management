@@ -37,24 +37,45 @@ export default async function SalesPage({
   ])
 
   // Calculate totals
-  const totalQuantity = sales.reduce((sum, s) => sum + Number(s.quantitySold), 0)
-  const totalRevenue = sales.reduce((sum, s) => sum + Number(s.totalRevenue || 0), 0)
+  const totalQuantity = sales.reduce(
+    (sum, s) => sum + Number(s.quantitySold),
+    0
+  )
+  const totalRevenue = sales.reduce(
+    (sum, s) => sum + Number(s.totalRevenue || 0),
+    0
+  )
+
+  const dailySalesUrl = storeId
+    ? `/dashboard/sales/daily?storeId=${storeId}`
+    : '/dashboard/sales/daily'
+
+  // Mobile-friendly input classes
+  const inputClass =
+    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+  const selectClass =
+    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 appearance-none bg-white'
+  const labelClass = 'block text-sm font-medium text-gray-700 mb-2'
 
   return (
-    <div>
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-3xl font-bold text-gray-900">판매 관리</h1>
-          <p className="mt-2 text-sm text-gray-800">
+    <div className="pb-24 md:pb-0">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            판매 관리
+          </h1>
+          <p className="mt-1 text-sm text-gray-600">
             일일 판매 기록 조회 및 관리
           </p>
         </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none sm:flex sm:gap-3">
+        {/* Desktop buttons */}
+        <div className="hidden sm:flex sm:gap-3">
           <CSVUploadTranspose storeId={storeId} />
           <CSVUpload storeId={storeId} />
           <Link
-            href={storeId ? `/dashboard/sales/daily?storeId=${storeId}` : '/dashboard/sales/daily'}
-            className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            href={dailySalesUrl}
+            className="block rounded-md bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
           >
             일일 판매 입력
           </Link>
@@ -62,68 +83,96 @@ export default async function SalesPage({
       </div>
 
       {/* Filters */}
-      <form method="GET" className="mt-6 bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-lg p-4">
-        {/* Preserve storeId from URL */}
+      <form
+        method="GET"
+        className="mt-4 bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4"
+      >
         {storeId && <input type="hidden" name="storeId" value={storeId} />}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+
+        <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-4">
+          {/* Start Date */}
           <div>
-            <label htmlFor="startDate" className="block text-sm font-medium text-gray-800 mb-1">
-              시작일
+            <label htmlFor="startDate" className={labelClass}>
+              📅 시작일
             </label>
             <input
               type="date"
               id="startDate"
               name="startDate"
               defaultValue={startDate}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className={inputClass}
             />
           </div>
+
+          {/* End Date */}
           <div>
-            <label htmlFor="endDate" className="block text-sm font-medium text-gray-800 mb-1">
-              종료일
+            <label htmlFor="endDate" className={labelClass}>
+              📅 종료일
             </label>
             <input
               type="date"
               id="endDate"
               name="endDate"
               defaultValue={endDate}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className={inputClass}
             />
           </div>
+
+          {/* SKU Filter */}
           <div>
-            <label htmlFor="skuId" className="block text-sm font-medium text-gray-800 mb-1">
-              SKU
+            <label htmlFor="skuId" className={labelClass}>
+              🏷️ SKU
             </label>
-            <select
-              id="skuId"
-              name="skuId"
-              defaultValue={skuId}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-            >
-              <option value="">전체</option>
-              {skuList.map((sku) => (
-                <option key={sku.id} value={sku.id}>
-                  {sku.menuName} - {sku.skuName}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                id="skuId"
+                name="skuId"
+                defaultValue={skuId}
+                className={selectClass}
+              >
+                <option value="">전체</option>
+                {skuList.map((sku) => (
+                  <option key={sku.id} value={sku.id}>
+                    {sku.menuName} - {sku.skuName}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-gray-800">
-            {sales.length}건의 판매 기록
-            {skuId ? ' (필터 적용됨)' : ''}
+
+        {/* Filter Actions */}
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
+          <p className="text-sm text-gray-600">
+            {sales.length}건{skuId ? ' (필터 적용됨)' : ''}
           </p>
           <div className="flex gap-2">
             <a
-              href={storeId ? `/dashboard/sales?storeId=${storeId}` : '/dashboard/sales'}
-              className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              href={
+                storeId
+                  ? `/dashboard/sales?storeId=${storeId}`
+                  : '/dashboard/sales'
+              }
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
             >
               초기화
             </a>
             <button
               type="submit"
-              className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500"
             >
               조회
             </button>
@@ -131,7 +180,25 @@ export default async function SalesPage({
         </div>
       </form>
 
-      <SalesList sales={sales} totalQuantity={totalQuantity} totalRevenue={totalRevenue} />
+      {/* Sales List */}
+      <SalesList
+        sales={sales}
+        totalQuantity={totalQuantity}
+        totalRevenue={totalRevenue}
+      />
+
+      {/* Mobile: Fixed Bottom Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-20 md:hidden">
+        <div className="flex gap-3">
+          <CSVUploadTranspose storeId={storeId} />
+          <Link
+            href={dailySalesUrl}
+            className="flex-1 rounded-xl bg-blue-600 py-3 text-center text-base font-semibold text-white shadow-sm hover:bg-blue-500"
+          >
+            + 일일 판매 입력
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

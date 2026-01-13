@@ -1,6 +1,7 @@
 import { getIngredients } from './actions'
 import IngredientForm from './ingredient-form'
 import CSVUpload from './csv-upload'
+import IngredientCard from './ingredient-card'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,14 +17,28 @@ export default async function IngredientsPage() {
             재료 등록 및 관리
           </p>
         </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none sm:flex sm:gap-3">
+        <div className="mt-4 flex flex-col gap-2 sm:ml-16 sm:mt-0 sm:flex-none sm:flex-row sm:gap-3">
           <CSVUpload />
           <IngredientForm />
         </div>
       </div>
 
       <div className="mt-8 flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        {/* Mobile View - Cards */}
+        <div className="md:hidden space-y-4">
+          {ingredients.length === 0 ? (
+            <div className="text-center py-10 bg-white rounded-lg border border-gray-200">
+              <p className="text-gray-500">등록된 재료가 없습니다</p>
+            </div>
+          ) : (
+            ingredients.map((ingredient) => (
+              <IngredientCard key={ingredient.id} ingredient={ingredient} />
+            ))
+          )}
+        </div>
+
+        {/* Desktop View - Table */}
+        <div className="hidden md:block -mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
             <table className="min-w-full divide-y divide-gray-300">
               <thead>

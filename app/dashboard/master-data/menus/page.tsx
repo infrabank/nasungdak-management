@@ -1,6 +1,7 @@
 import { getMenus, deleteMenu } from './actions'
 import MenuForm from './menu-form'
 import CSVUpload from './csv-upload'
+import MenuCard from './menu-card'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,23 +10,36 @@ export default async function MenusPage() {
 
   return (
     <div>
-      <div className="sm:flex sm:items-center">
-        <div className="sm:flex-auto">
-          <h1 className="text-3xl font-bold text-gray-900">메뉴 카테고리</h1>
-          <p className="mt-2 text-sm text-gray-900">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-4 sm:mb-0">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">메뉴 카테고리</h1>
+          <p className="mt-1 text-sm text-gray-600">
             메뉴 카테고리 등록 및 관리
           </p>
         </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none sm:flex sm:gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <CSVUpload />
           <MenuForm />
         </div>
       </div>
 
-      <div className="mt-8 flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <table className="min-w-full divide-y divide-gray-300">
+      <div className="mt-6 sm:mt-8">
+        {/* Mobile View */}
+        <div className="md:hidden space-y-4">
+          {menus.length === 0 ? (
+            <div className="text-center py-10 text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
+              등록된 메뉴가 없습니다
+            </div>
+          ) : (
+            menus.map((menu) => <MenuCard key={menu.id} menu={menu} />)
+          )}
+        </div>
+
+        {/* Desktop View */}
+        <div className="hidden md:block flow-root">
+          <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+              <table className="min-w-full divide-y divide-gray-300">
               <thead>
                 <tr>
                   <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
@@ -77,6 +91,7 @@ export default async function MenusPage() {
                 )}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { getCostRules } from './actions'
 import CostRuleForm from './cost-rule-form'
+import CostRuleCard from './cost-rule-card'
 import { formatDate } from '@/lib/utils/format'
 
 export const dynamic = 'force-dynamic'
@@ -22,7 +23,21 @@ export default async function CostRulesPage() {
       </div>
 
       <div className="mt-8 flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        {/* Mobile View - Cards */}
+        <div className="md:hidden space-y-4">
+          {rules.length === 0 ? (
+            <div className="text-center py-10 text-sm text-gray-800 bg-gray-50 rounded-lg">
+              등록된 원가 배분 규칙이 없습니다
+            </div>
+          ) : (
+            rules.map((rule) => (
+              <CostRuleCard key={rule.id} rule={rule} />
+            ))
+          )}
+        </div>
+
+        {/* Desktop View - Table */}
+        <div className="hidden md:block -mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
             <table className="min-w-full divide-y divide-gray-300">
               <thead>

@@ -34,14 +34,14 @@ export default async function AnalysisPage({
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">기간 분석</h1>
-        <p className="mt-2 text-sm text-gray-800">
+        <h1 className="text-2xl font-bold text-gray-900">기간 분석</h1>
+        <p className="mt-2 text-sm text-gray-600">
           판매 원가 및 마진율 분석
         </p>
       </div>
 
       {/* Date Range Filter */}
-      <form method="GET" className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 mb-6">
+      <form method="GET" className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl p-6 mb-6">
         {/* Preserve storeId from URL */}
         {storeId && <input type="hidden" name="storeId" value={storeId} />}
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
@@ -55,7 +55,7 @@ export default async function AnalysisPage({
                 name="startDate"
                 id="startDate"
                 defaultValue={startDate}
-                className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                className="block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
               />
             </div>
           </div>
@@ -70,7 +70,7 @@ export default async function AnalysisPage({
                 name="endDate"
                 id="endDate"
                 defaultValue={endDate}
-                className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                className="block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
               />
             </div>
           </div>
@@ -78,7 +78,7 @@ export default async function AnalysisPage({
           <div className="sm:col-span-2 flex items-end">
             <button
               type="submit"
-              className="w-full rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
             >
               조회
             </button>
@@ -89,36 +89,36 @@ export default async function AnalysisPage({
       {result.success && result.data && monthlyResult.success ? (
         <>
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5 mb-6">
-            <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
+          <div className="grid grid-cols-2 gap-6 lg:grid-cols-5 mb-6">
+            <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4">
               <div className="text-sm font-medium text-gray-700">총 매출</div>
               <div className="mt-2 text-3xl font-bold text-gray-900">
                 {formatCurrency(result.data.summary.totalRevenue)}
               </div>
             </div>
 
-            <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
+            <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4">
               <div className="text-sm font-medium text-gray-700">변동비 (원가)</div>
               <div className="mt-2 text-3xl font-bold text-gray-900">
                 {formatCurrency(result.data.summary.totalVariableCost)}
               </div>
             </div>
 
-            <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
+            <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4">
               <div className="text-sm font-medium text-gray-700">고정비</div>
               <div className="mt-2 text-3xl font-bold text-orange-600">
                 {formatCurrency(result.data.summary.totalFixedCost)}
               </div>
             </div>
 
-            <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
+            <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4">
               <div className="text-sm font-medium text-gray-700">순이익</div>
               <div className={`mt-2 text-3xl font-bold ${result.data.summary.netProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {formatCurrency(result.data.summary.netProfit)}
               </div>
             </div>
 
-            <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
+            <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4">
               <div className="text-sm font-medium text-gray-700">마진율</div>
               <div className={`mt-2 text-3xl font-bold ${result.data.summary.marginPercent >= 0 ? 'text-gray-900' : 'text-red-600'}`}>
                 {result.data.summary.marginPercent.toFixed(1)}%
@@ -133,7 +133,7 @@ export default async function AnalysisPage({
           />
         </>
       ) : (
-        <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6">
+        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4">
           <div className="text-center text-sm text-red-600">
             {result.error || monthlyResult.error || '데이터를 불러오는데 실패했습니다'}
           </div>

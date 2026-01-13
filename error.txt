@@ -1,34 +1,40 @@
-00:09:29.317 Running build in Washington, D.C., USA (East) – iad1
-00:09:29.318 Build machine configuration: 2 cores, 8 GB
-00:09:29.452 Cloning github.com/infrabank/nasungdak-management (Branch: 1-purchase-sales-management, Commit: c452577)
-00:09:29.967 Cloning completed: 515.000ms
-00:09:30.804 Restored build cache from previous deployment (9AwP12z8kiUh1ipphHcYUao9VD7t)
-00:09:31.399 Running "vercel build"
-00:09:31.879 Vercel CLI 50.1.6
-00:09:32.218 Installing dependencies...
-00:09:39.527 
-00:09:39.528 up to date in 7s
-00:09:39.529 
-00:09:39.530 158 packages are looking for funding
-00:09:39.530   run `npm fund` for details
-00:09:39.562 Detected Next.js version: 15.5.9
-00:09:39.569 Running "npm run build"
-00:09:39.772 
-00:09:39.772 > nasungdak-management@0.1.0 build
-00:09:39.773 > next build
-00:09:39.773 
-00:09:40.597    ▲ Next.js 15.5.9
-00:09:40.598    - Experiments (use with caution):
-00:09:40.598      · serverActions
-00:09:40.599 
-00:09:40.637    Creating an optimized production build ...
-00:09:52.529  ✓ Compiled successfully in 9.3s
-00:09:52.535    Linting and checking validity of types ...
-00:09:58.397 
-00:09:58.402 Failed to compile.
-00:09:58.402 
-00:09:58.402 ./lib/kakao/alimtalk.ts
-00:09:58.402 Error: Parsing error: Unexpected keyword or identifier.
-00:09:58.402 
-00:09:58.402 info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
-00:09:58.442 Error: Command "npm run build" exited with 1
+01:11:24.477 Running build in Washington, D.C., USA (East) – iad1
+01:11:24.487 Build machine configuration: 2 cores, 8 GB
+01:11:24.962 Cloning github.com/infrabank/nasungdak-management (Branch: 1-purchase-sales-management, Commit: 86f1cd5)
+01:11:25.395 Cloning completed: 432.000ms
+01:11:26.578 Restored build cache from previous deployment (9AwP12z8kiUh1ipphHcYUao9VD7t)
+01:11:27.231 Running "vercel build"
+01:11:27.648 Vercel CLI 50.1.6
+01:11:27.981 Installing dependencies...
+01:11:34.543 
+01:11:34.543 up to date in 6s
+01:11:34.544 
+01:11:34.544 158 packages are looking for funding
+01:11:34.544   run `npm fund` for details
+01:11:34.578 Detected Next.js version: 15.5.9
+01:11:34.585 Running "npm run build"
+01:11:34.686 
+01:11:34.687 > nasungdak-management@0.1.0 build
+01:11:34.687 > next build
+01:11:34.687 
+01:11:35.471    ▲ Next.js 15.5.9
+01:11:35.472    - Experiments (use with caution):
+01:11:35.473      · serverActions
+01:11:35.473 
+01:11:35.511    Creating an optimized production build ...
+01:11:48.180  ✓ Compiled successfully in 10.0s
+01:11:48.186    Linting and checking validity of types ...
+01:11:58.086 Failed to compile.
+01:11:58.086 
+01:11:58.087 ./app/dashboard/toss-mappings/page.tsx:112:42
+01:11:58.088 Type error: Type '{ id: string; storeId: string; storeName: string; storeCode: string; tossItemCode: string; tossItemName: string | null; skuId: string | null; skuName: string | null; isActive: boolean; }' is missing the following properties from type '{ id: string; isActive: boolean; createdAt: Date; updatedAt: Date; createdBy: string | null; updatedBy: string | null; deletedAt: Date | null; deletedBy: string | null; storeId: string; skuId: string | null; tossItemCode: string; tossItemName: string | null; }': createdAt, updatedAt, createdBy, updatedBy, and 2 more.
+01:11:58.088 
+01:11:58.088 [0m [90m 110 |[39m                       [33m<[39m[33m/[39m[33mtd[39m[33m>[39m
+01:11:58.088  [90m 111 |[39m                       [33m<[39m[33mtd[39m className[33m=[39m[32m"relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0"[39m[33m>[39m
+01:11:58.088 [31m[1m>[22m[39m[90m 112 |[39m                         [33m<[39m[33mTossMappingForm[39m mapping[33m=[39m{mapping} stores[33m=[39m{stores} skus[33m=[39m{skus} [33m/[39m[33m>[39m
+01:11:58.088  [90m     |[39m                                          [31m[1m^[22m[39m
+01:11:58.088  [90m 113 |[39m                       [33m<[39m[33m/[39m[33mtd[39m[33m>[39m
+01:11:58.088  [90m 114 |[39m                     [33m<[39m[33m/[39m[33mtr[39m[33m>[39m
+01:11:58.088  [90m 115 |[39m                   ))[0m
+01:11:58.117 Next.js build worker exited with code: 1 and signal: null
+01:11:58.139 Error: Command "npm run build" exited with 1

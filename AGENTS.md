@@ -174,6 +174,7 @@ quantity: z.coerce.string().transform((val, ctx) => {
 | `lib/utils/validation.ts` | Zod validation schemas |
 | `lib/utils/format.ts` | Korean locale formatters |
 | `middleware.ts` | JWT auth middleware |
+| `.work-state.md` | AI 작업 상태 추적 파일 |
 
 ## UI Guidelines
 
@@ -195,3 +196,29 @@ Single-password JWT (jose), HTTP-only cookies, 7-day expiry. Middleware protects
 ```bash
 npm run type-check && npm run lint && npm run format
 ```
+
+## Work State Tracking (MANDATORY)
+
+AI 에이전트는 **모든 작업 완료 후** `.work-state.md` 파일을 업데이트해야 합니다.
+
+### 업데이트 시점
+- 작업이 완료되었을 때
+- 중요한 진행 상황이 있을 때
+- 오류가 발생했을 때
+
+### 업데이트 내용
+| 섹션 | 내용 |
+|------|------|
+| 현재 상태 | 대기 중 / 진행 중 / 완료 / 오류 |
+| 최근 작업 이력 | 날짜, 작업 내용, 결과 (✅/❌/⚠️) |
+| 진행 중인 작업 | 현재 수행 중인 태스크 |
+| 대기 중인 작업 | 예정된 후속 작업 |
+| 메모 | 특이사항, 주의점 |
+
+### 상태 아이콘
+- ✅ 완료 (성공)
+- ❌ 실패
+- ⚠️ 부분 완료 / 주의 필요
+- 🔄 진행 중
+
+**이 규칙은 필수이며, 작업 추적 및 연속성을 위해 반드시 준수해야 합니다.**

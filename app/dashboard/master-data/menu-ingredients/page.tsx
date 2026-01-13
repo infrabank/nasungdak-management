@@ -1,5 +1,6 @@
 import { getMenuIngredients } from './actions'
 import MenuIngredientForm from './menu-ingredient-form'
+import { MenuIngredientCard } from './menu-ingredient-card'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +22,21 @@ export default async function MenuIngredientsPage() {
       </div>
 
       <div className="mt-8 flow-root">
-        <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        {/* Mobile View */}
+        <div className="md:hidden space-y-4 mb-6">
+          {mappings.length === 0 ? (
+            <div className="text-center py-10 bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5">
+              <p className="text-sm text-gray-500">등록된 매핑이 없습니다</p>
+            </div>
+          ) : (
+            mappings.map((mapping) => (
+              <MenuIngredientCard key={mapping.id} mapping={mapping} />
+            ))
+          )}
+        </div>
+
+        {/* Desktop View */}
+        <div className="hidden md:block -mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
             <table className="min-w-full divide-y divide-gray-300">
               <thead>

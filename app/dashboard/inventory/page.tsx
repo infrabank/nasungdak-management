@@ -2,6 +2,7 @@ import { getInventory, getAlertRules, checkInventoryAlerts } from './actions'
 import InventoryForm from './inventory-form'
 import EventForm from './event-form'
 import AlertRuleForm from './alert-rule-form'
+import InventoryCard from './inventory-card'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,15 +28,36 @@ export default async function InventoryPage({
             매장별 현재 재고 현황 및 이벤트 기록
           </p>
         </div>
-        <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none sm:flex sm:gap-3">
+        <div className="mt-4 flex flex-col gap-2 sm:ml-16 sm:mt-0 sm:flex-none sm:flex-row sm:gap-3">
           <EventForm />
           <InventoryForm />
           <AlertRuleForm />
         </div>
       </div>
 
-      {/* Inventory Table */}
-      <div className="mt-8 flow-root">
+      {/* Mobile View - Cards */}
+      <div className="mt-6 space-y-4 md:hidden">
+        {inventoryList.length === 0 ? (
+          <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
+            <p className="text-sm text-gray-500">재고 데이터가 없습니다</p>
+          </div>
+        ) : (
+          inventoryList.map((item) => (
+            <InventoryCard
+              key={item.id}
+              item={{
+                ...item,
+                lastUpdated: item.lastUpdated
+                  ? item.lastUpdated.toISOString()
+                  : null,
+              }}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Desktop View - Table */}
+      <div className="hidden mt-8 flow-root md:block">
         <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
             <table className="min-w-full divide-y divide-gray-300">

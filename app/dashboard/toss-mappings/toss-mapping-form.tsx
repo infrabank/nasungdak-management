@@ -11,6 +11,10 @@ interface TossMappingData {
   tossItemName: string | null
   skuId: string | null
   isActive: boolean
+  // Optional fields from joined queries
+  storeName?: string
+  storeCode?: string
+  skuName?: string | null
 }
 
 interface TossMappingFormProps {
