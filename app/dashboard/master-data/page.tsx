@@ -140,6 +140,32 @@ export default function MasterDataPage() {
             재료별 원가 배분 비율 설정
           </p>
         </Link>
+
+        {/* Suppliers Card */}
+        <Link
+          href="/dashboard/master-data/suppliers"
+          className="block bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl p-6 hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">공급업체</h3>
+            <svg
+              className="h-6 w-6 text-gray-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="1.5"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
+              />
+            </svg>
+          </div>
+          <p className="text-sm text-gray-900">
+            거래처 정보 등록 및 관리
+          </p>
+        </Link>
       </div>
     </div>
   )

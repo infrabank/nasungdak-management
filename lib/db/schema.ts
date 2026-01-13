@@ -19,6 +19,25 @@ export const stores = pgTable('stores', {
   deletedBy: varchar('deleted_by', { length: 100 }),
 })
 
+// Suppliers Table (공급업체)
+export const suppliers = pgTable('suppliers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  supplierName: varchar('supplier_name', { length: 200 }).notNull(),
+  contactName: varchar('contact_name', { length: 100 }),
+  phone: varchar('phone', { length: 20 }),
+  email: varchar('email', { length: 100 }),
+  address: text('address'),
+  businessNumber: varchar('business_number', { length: 20 }), // 사업자등록번호
+  notes: text('notes'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
+})
+
 // Menu Categories Table
 export const menuCategories = pgTable('menu_categories', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -289,6 +308,9 @@ export type InventoryEvent = typeof inventoryEvents.$inferSelect
 export type NewInventoryEvent = typeof inventoryEvents.$inferInsert
 export type AlertHistory = typeof alertHistory.$inferSelect
 export type NewAlertHistory = typeof alertHistory.$inferInsert
+
+export type Supplier = typeof suppliers.$inferSelect
+export type NewSupplier = typeof suppliers.$inferInsert
 
 export type MenuCategory = typeof menuCategories.$inferSelect
 export type NewMenuCategory = typeof menuCategories.$inferInsert
