@@ -375,7 +375,6 @@ export default function PurchaseForm() {
                           required
                           inputMode="numeric"
                           step="1"
-                          min="0"
                           value={entry.unitPrice}
                           onChange={(e) => updateEntry(entry.id, 'unitPrice', e.target.value)}
                           placeholder="0"

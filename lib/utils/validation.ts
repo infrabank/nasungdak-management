@@ -24,10 +24,10 @@ export const purchaseSchema = z.object({
   }),
   unitPrice: z.coerce.string().transform((val, ctx) => {
     const num = Number(val)
-    if (isNaN(num) || num < 0) {
+    if (isNaN(num)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: '단가는 0 이상이어야 합니다',
+        message: '유효한 단가를 입력해주세요',
       })
       return z.NEVER
     }
