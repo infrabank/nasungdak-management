@@ -210,6 +210,7 @@ export async function getSalesRecords(
       .select({
         id: salesRecords.id,
         saleDate: salesRecords.saleDate,
+        skuId: salesRecords.skuId,
         skuName: skus.skuName,
         menuName: menuCategories.menuName,
         quantitySold: salesRecords.quantitySold,
