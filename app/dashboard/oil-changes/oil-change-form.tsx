@@ -3,7 +3,7 @@
 import { useActionState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createOilChange } from './actions'
-import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 interface OilChangeFormProps {
   storeId?: string
@@ -18,94 +18,119 @@ export default function OilChangeForm({ storeId }: OilChangeFormProps) {
     router.push(storeId ? `/dashboard/oil-changes?storeId=${storeId}` : '/dashboard/oil-changes')
   }
 
+  const inputClass =
+    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+  const selectClass =
+    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 appearance-none bg-white'
+  const labelClass = 'block text-sm font-medium text-gray-700 mb-2'
+
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">새 기름 교체 이력 등록</h1>
-        <Link
-          href={storeId ? `/dashboard/oil-changes?storeId=${storeId}` : '/dashboard/oil-changes'}
-          className="text-gray-600 hover:text-gray-900"
-        >
-          목록으로 돌아가기
-        </Link>
-      </div>
+    <form action={formAction} className="pb-32 max-w-2xl mx-auto">
+      {/* Hidden storeId */}
+      {storeId && <input type="hidden" name="storeId" value={storeId} />}
 
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <form action={formAction} className="space-y-6">
-          {/* Hidden storeId */}
-          {storeId && <input type="hidden" name="storeId" value={storeId} />}
+      {/* Error Message */}
+      {state?.error && (
+        <div className="rounded-md bg-red-50 p-4 mb-4">
+          <p className="text-sm text-red-800">{state.error}</p>
+        </div>
+      )}
 
-          {/* Error Message */}
-          {state?.error && (
-            <div className="rounded-md bg-red-50 p-4">
-              <p className="text-sm text-red-800">{state.error}</p>
-            </div>
-          )}
+      {/* Form Fields Card */}
+      <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4 mb-4">
+        <div className="space-y-4">
+          <div>
+            <label className={labelClass}>
+              📅 교체일 <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              name="changeDate"
+              required
+              className={inputClass}
+            />
+          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                교체일 <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                name="changeDate"
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                튀김기 종류 <span className="text-red-500">*</span>
-              </label>
+          <div>
+            <label className={labelClass}>
+              🛢️ 튀김기 종류 <span className="text-red-500">*</span>
+            </label>
+            <div className="relative">
               <select
                 name="fryerType"
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={selectClass}
+                defaultValue=""
               >
                 <option value="">선택하세요</option>
                 <option value="초벌">초벌</option>
                 <option value="재벌">재벌</option>
               </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                <svg
+                  className="h-5 w-5 text-gray-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-6">
-            <p className="text-sm text-blue-800">
-              사용 기간은 이전 기름 교체 이력을 참조하여 자동으로 계산됩니다.
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              비고
-            </label>
-            <textarea
-              name="notes"
-              rows={3}
-              placeholder="특이사항을 입력하세요"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="flex justify-end space-x-4">
-            <Link
-              href={storeId ? `/dashboard/oil-changes?storeId=${storeId}` : '/dashboard/oil-changes'}
-              className="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
-            >
-              취소
-            </Link>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isPending ? '등록 중...' : '등록'}
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
-    </div>
+
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
+        <p className="text-sm text-blue-800">
+          사용 기간은 이전 기름 교체 이력을 참조하여 자동으로 계산됩니다.
+        </p>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4 mb-4">
+        <div>
+          <label className={labelClass}>
+            📝 비고
+          </label>
+          <textarea
+            name="notes"
+            rows={3}
+            placeholder="특이사항을 입력하세요"
+            className={inputClass}
+          />
+        </div>
+      </div>
+
+      {/* Fixed Bottom Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-20">
+        <div className="flex gap-3 max-w-lg mx-auto">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() =>
+              router.push(
+                storeId
+                  ? `/dashboard/oil-changes?storeId=${storeId}`
+                  : '/dashboard/oil-changes'
+              )
+            }
+            disabled={isPending}
+            className="flex-1 py-3 text-base"
+          >
+            취소
+          </Button>
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="flex-1 py-3 text-base"
+          >
+            {isPending ? '등록 중...' : '등록'}
+          </Button>
+        </div>
+      </div>
+    </form>
   )
 }

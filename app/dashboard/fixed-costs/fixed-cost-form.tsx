@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createFixedCost } from './actions'
 import { formatDate } from '@/lib/utils/format'
+import { Button } from '@/components/ui/button'
 
 interface FixedCostFormProps {
   storeId?: string
@@ -20,50 +21,56 @@ export default function FixedCostForm({ storeId }: FixedCostFormProps) {
 
   const today = formatDate(new Date(), 'yyyy-MM-dd')
 
+  const inputClass =
+    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+  const selectClass =
+    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 appearance-none bg-white'
+  const labelClass = 'block text-sm font-medium text-gray-700 mb-2'
+
   return (
-    <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
-      <form action={formAction} className="px-4 py-6 sm:p-8">
-        {/* Hidden storeId */}
-        {storeId && <input type="hidden" name="storeId" value={storeId} />}
+    <form action={formAction} className="pb-32">
+      {/* Hidden storeId */}
+      {storeId && <input type="hidden" name="storeId" value={storeId} />}
 
-        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-          {/* Error Message */}
-          {state?.error && (
-            <div className="sm:col-span-6">
-              <div className="rounded-md bg-red-50 p-4">
-                <p className="text-sm text-red-800">{state.error}</p>
-              </div>
-            </div>
-          )}
+      {/* Error Message */}
+      {state?.error && (
+        <div className="mb-4 rounded-md bg-red-50 p-4">
+          <p className="text-sm text-red-800">{state.error}</p>
+        </div>
+      )}
 
+      <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4 mb-4">
+        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+          고정비용 등록
+        </h3>
+
+        <div className="space-y-4">
           {/* Cost Date */}
-          <div className="sm:col-span-3">
-            <label htmlFor="costDate" className="block text-sm font-medium text-gray-900">
-              날짜 *
+          <div>
+            <label htmlFor="costDate" className={labelClass}>
+              📅 날짜 *
             </label>
-            <div className="mt-2">
-              <input
-                type="date"
-                name="costDate"
-                id="costDate"
-                required
-                defaultValue={today}
-                className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
-              />
-            </div>
+            <input
+              type="date"
+              name="costDate"
+              id="costDate"
+              required
+              defaultValue={today}
+              className={inputClass}
+            />
           </div>
 
           {/* Cost Type */}
-          <div className="sm:col-span-3">
-            <label htmlFor="costType" className="block text-sm font-medium text-gray-900">
-              비용 유형 *
+          <div>
+            <label htmlFor="costType" className={labelClass}>
+              📁 비용 유형 *
             </label>
-            <div className="mt-2">
+            <div className="relative">
               <select
                 id="costType"
                 name="costType"
                 required
-                className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                className={selectClass}
               >
                 <option value="">선택하세요</option>
                 <option value="인건비">인건비</option>
@@ -71,79 +78,87 @@ export default function FixedCostForm({ storeId }: FixedCostFormProps) {
                 <option value="관리비">관리비</option>
                 <option value="기타">기타</option>
               </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
             </div>
           </div>
 
           {/* Cost Name */}
-          <div className="sm:col-span-4">
-            <label htmlFor="costName" className="block text-sm font-medium text-gray-900">
-              항목명 *
+          <div>
+            <label htmlFor="costName" className={labelClass}>
+              📋 항목명 *
             </label>
-            <div className="mt-2">
-              <input
-                type="text"
-                name="costName"
-                id="costName"
-                required
-                placeholder="예: 직원 급여, 월세, 전기요금 등"
-                className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
-              />
-            </div>
+            <input
+              type="text"
+              name="costName"
+              id="costName"
+              required
+              placeholder="예: 직원 급여, 월세, 전기요금 등"
+              className={inputClass}
+            />
           </div>
 
           {/* Amount */}
-          <div className="sm:col-span-2">
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-900">
-              금액 (원) *
+          <div>
+            <label htmlFor="amount" className={labelClass}>
+              💰 금액 (원) *
             </label>
-            <div className="mt-2">
-              <input
-                type="number"
-                name="amount"
-                id="amount"
-                required
-                min="0"
-                step="1"
-                placeholder="0"
-                className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
-              />
-            </div>
+            <input
+              type="number"
+              name="amount"
+              id="amount"
+              required
+              min="0"
+              step="1"
+              placeholder="0"
+              className={inputClass}
+            />
           </div>
 
           {/* Notes */}
-          <div className="sm:col-span-6">
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-900">
-              비고
+          <div>
+            <label htmlFor="notes" className={labelClass}>
+              📝 비고
             </label>
-            <div className="mt-2">
-              <textarea
-                id="notes"
-                name="notes"
-                rows={3}
-                placeholder="추가 정보를 입력하세요 (선택사항)"
-                className="block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
-              />
-            </div>
+            <textarea
+              id="notes"
+              name="notes"
+              rows={3}
+              placeholder="추가 정보를 입력하세요 (선택사항)"
+              className={inputClass}
+            />
           </div>
         </div>
+      </div>
 
-        <div className="mt-8 flex gap-3">
-          <button
-            type="submit"
-            disabled={isPending}
-            className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50"
-          >
-            {isPending ? '등록 중...' : '등록'}
-          </button>
-          <button
+      {/* Fixed Bottom Action Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-20">
+        <div className="flex gap-3 max-w-lg mx-auto">
+          <Button
             type="button"
-            onClick={() => router.push(storeId ? `/dashboard/fixed-costs?storeId=${storeId}` : '/dashboard/fixed-costs')}
-            className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            variant="secondary"
+            onClick={() => router.back()}
+            disabled={isPending}
+            className="flex-1 py-3 text-base"
           >
             취소
-          </button>
+          </Button>
+          <Button
+            type="submit"
+            disabled={isPending}
+            className="flex-1 py-3 text-base"
+          >
+            {isPending ? '등록 중...' : '등록'}
+          </Button>
         </div>
-      </form>
-    </div>
+      </div>
+    </form>
   )
 }

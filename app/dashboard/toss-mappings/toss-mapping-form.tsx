@@ -3,10 +3,18 @@
 import { useState } from 'react'
 import { createTossMapping, updateTossMapping, deleteTossMapping } from './actions'
 import { Button } from '@/components/ui/button'
-import type { TossSkuMapping } from '@/lib/db/schema'
+
+interface TossMappingData {
+  id: string
+  storeId: string
+  tossItemCode: string
+  tossItemName: string | null
+  skuId: string | null
+  isActive: boolean
+}
 
 interface TossMappingFormProps {
-  mapping?: TossSkuMapping
+  mapping?: TossMappingData
   stores: { id: string; storeName: string; storeCode: string }[]
   skus: { id: string; skuName: string }[]
 }
