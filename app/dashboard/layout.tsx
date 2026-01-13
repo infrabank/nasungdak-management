@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { Suspense } from 'react'
 import AccordionMenu from './accordion-menu'
 import LogoutButton from './logout-button'
@@ -22,7 +23,13 @@ export default async function DashboardLayout({
           <div className="flex h-16 justify-between">
             <div className="flex">
               <Link href="/dashboard" className="flex items-center">
-                <span className="text-xl font-bold text-red-600">나성닭강정</span>
+                <Image
+                  src="/images/logo.png"
+                  alt="나성닭강정"
+                  width={40}
+                  height={40}
+                  className="h-10 w-auto"
+                />
               </Link>
               <div className="ml-10 flex items-center">
                 <AccordionMenu />
