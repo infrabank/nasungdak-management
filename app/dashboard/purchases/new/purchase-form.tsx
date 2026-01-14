@@ -7,6 +7,7 @@ import type { PurchaseEntry } from '../actions'
 import { getMenus } from '../../master-data/menus/actions'
 import { getIngredients } from '../../master-data/ingredients/actions'
 import { getMenuIngredients } from '../../master-data/menu-ingredients/actions'
+import { getActiveSuppliers } from '../../master-data/suppliers/actions'
 import { Button } from '@/components/ui/button'
 import type { MenuCategory, Ingredient } from '@/lib/db/schema'
 
@@ -46,12 +47,18 @@ function createEmptyRow(): EntryRow {
   }
 }
 
+type SupplierOption = {
+  id: string
+  supplierName: string
+}
+
 export default function PurchaseForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [menus, setMenus] = useState<MenuCategory[]>([])
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [menuIngredients, setMenuIngredients] = useState<MenuIngredientMapping[]>([])
+  const [suppliers, setSuppliers] = useState<SupplierOption[]>([])
 
   const [transactionDate, setTransactionDate] = useState(
     new Date().toISOString().split('T')[0]
@@ -60,11 +67,12 @@ export default function PurchaseForm() {
   const [entries, setEntries] = useState<EntryRow[]>([createEmptyRow()])
 
   useEffect(() => {
-    Promise.all([getMenus(), getIngredients(), getMenuIngredients()]).then(
-      ([menusData, ingredientsData, mappingsData]) => {
+    Promise.all([getMenus(), getIngredients(), getMenuIngredients(), getActiveSuppliers()]).then(
+      ([menusData, ingredientsData, mappingsData, suppliersData]) => {
         setMenus(menusData)
         setIngredients(ingredientsData)
         setMenuIngredients(mappingsData)
+        setSuppliers(suppliersData)
       }
     )
   }, [])
@@ -200,15 +208,31 @@ export default function PurchaseForm() {
             <label htmlFor="supplierName" className={labelClass}>
               🏢 공급업체
             </label>
-            <input
-              type="text"
-              id="supplierName"
-              required
-              value={supplierName}
-              onChange={(e) => setSupplierName(e.target.value)}
-              placeholder="공급업체명 입력"
-              className={inputClass}
-            />
+            <div className="relative">
+              <select
+                id="supplierName"
+                required
+                value={supplierName}
+                onChange={(e) => setSupplierName(e.target.value)}
+                className={selectClass}
+              >
+                <option value="">공급업체를 선택하세요</option>
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.supplierName}>
+                    {supplier.supplierName}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
+                <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path
+                    fillRule="evenodd"
+                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+            </div>
           </div>
         </div>
       </div>
