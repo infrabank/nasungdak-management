@@ -9,6 +9,7 @@ import { formatCurrency } from '@/lib/utils/format'
 interface Sale {
   id: string
   saleDate: string
+  skuId?: string
   skuName: string | null
   menuName: string | null
   quantitySold: string
