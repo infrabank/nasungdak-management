@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for AI agents working in this Next.js 15 + Drizzle ORM project (Korean restaurant management system).
+Guidance for AI agents in this Next.js 15 + Drizzle ORM project (Korean restaurant management system).
 
 ## Commands
 
@@ -21,7 +21,7 @@ npm run import:excel     # Import data from Excel files
 
 # Testing
 npm run test             # Run all Vitest tests
-npm run test purchases   # Run tests matching "purchases"
+npm run test -- <file>   # Run specific test file
 npm run test -- --watch  # Watch mode
 npm run test:e2e         # Playwright E2E tests
 ```
@@ -32,13 +32,6 @@ npm run test:e2e         # Playwright E2E tests
 - **80 char width**, Tailwind class auto-sorting via prettier plugin
 - **Import order**: External libs first, then `@/*` internal modules
 - Use `import type` for type-only imports
-
-```typescript
-import { z } from 'zod'
-import { eq, isNull, desc } from 'drizzle-orm'
-import { db } from '@/lib/db'
-import type { MenuCategory } from '@/lib/db/schema'
-```
 
 ### Naming Conventions
 | Context | Convention | Example |
@@ -77,10 +70,7 @@ import { z } from 'zod'
 
 export async function createEntity(formData: FormData) {
   try {
-    const rawData = {
-      field1: formData.get('field1'),
-      field2: formData.get('field2'),
-    }
+    const rawData = { field1: formData.get('field1') }
     const validated = schema.parse(rawData)
     await db.insert(tableName).values(validated)
     revalidatePath('/dashboard/feature')
@@ -95,12 +85,7 @@ export async function createEntity(formData: FormData) {
 }
 ```
 
-**Rules:**
-- Input: always `FormData`
-- Validation: Zod schemas from `lib/utils/validation.ts`
-- After mutation: always `revalidatePath()`
-- Return: `{ success: boolean, data?: T, error?: string }`
-- Error messages: Korean
+**Rules:** Input: always `FormData` | Validation: Zod schemas from `lib/utils/validation.ts` | After mutation: always `revalidatePath()` | Return: `{ success: boolean, data?: T, error?: string }` | Error messages: Korean
 
 ## Database Patterns
 
@@ -131,44 +116,7 @@ await db.select().from(table)
 type Entity = typeof table.$inferSelect    // For reads
 type NewEntity = typeof table.$inferInsert // For inserts
 ```
-
 **Note:** Decimal columns return strings - convert with `Number()`.
-
-## Form Components
-
-```typescript
-'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createEntity } from './actions'
-
-export function EntityForm() {
-  const router = useRouter()
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setIsSubmitting(true)
-    const formData = new FormData(e.currentTarget)
-    const result = await createEntity(formData)
-    if (result.success) {
-      router.push('/dashboard/feature')
-    } else {
-      setError(result.error ?? '오류가 발생했습니다')
-    }
-    setIsSubmitting(false)
-  }
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <input name="field" required />
-      <button disabled={isSubmitting}>{isSubmitting ? '처리중...' : '저장'}</button>
-      {error && <p className="text-red-500">{error}</p>}
-    </form>
-  )
-}
-```
 
 ## Validation (Zod)
 
