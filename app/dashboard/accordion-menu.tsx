@@ -4,17 +4,17 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 
-type MenuItem = {
+export type MenuItem = {
   label: string
   href: string
 }
 
-type MenuGroup = {
+export type MenuGroup = {
   label: string
   items: MenuItem[]
 }
 
-const menuGroups: MenuGroup[] = [
+export const menuGroups: MenuGroup[] = [
   {
     label: '운영 관리',
     items: [
