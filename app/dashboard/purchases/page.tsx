@@ -27,9 +27,9 @@ export default async function PurchasesPage({
 
   const startDate = params.startDate || formatDate(thirtyDaysAgo, 'yyyy-MM-dd')
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
-  const menuId = params.menuId || ''
-  const ingredientId = params.ingredientId || ''
-  const storeId = params.storeId || ''
+  const menuId = params.menuId || undefined
+  const ingredientId = params.ingredientId || undefined
+  const storeId = params.storeId || undefined
 
   const [purchases, menus, ingredientsList] = await Promise.all([
     getPurchases(startDate, endDate, menuId, ingredientId, storeId),

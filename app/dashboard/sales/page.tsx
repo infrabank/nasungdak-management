@@ -26,8 +26,8 @@ export default async function SalesPage({
 
   const startDate = params.startDate || formatDate(thirtyDaysAgo, 'yyyy-MM-dd')
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
-  const skuId = params.skuId || ''
-  const storeId = params.storeId || ''
+  const skuId = params.skuId || undefined
+  const storeId = params.storeId || undefined
 
   const [sales, skuList] = await Promise.all([
     getSalesRecords(startDate, endDate, skuId, storeId),
