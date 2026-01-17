@@ -46,9 +46,6 @@ export async function getMonthlyAnalysis(
   storeId?: string
 ): Promise<MonthlyAnalysisResult> {
   try {
-    console.log('=== Monthly Analysis Query ===')
-    console.log('Date range:', startDate, 'to', endDate)
-    console.log('Store ID:', storeId || 'all stores')
 
     // Build store filter condition
     const salesStoreFilter = storeId ? sql`AND sr.store_id = ${storeId}` : sql``
@@ -148,8 +145,6 @@ export async function getMonthlyAnalysis(
         }
       })
 
-    console.log('Monthly analysis data:', monthlyData)
-
     return {
       success: true,
       data: monthlyData,
@@ -169,9 +164,6 @@ export async function getAnalysis(
   storeId?: string
 ): Promise<AnalysisResult> {
   try {
-    console.log('=== Analysis Query ===')
-    console.log('Date range:', startDate, 'to', endDate)
-    console.log('Store ID:', storeId || 'all stores')
 
     // Build store filter conditions
     const salesStoreFilter = storeId ? sql`AND sr.store_id = ${storeId}` : sql``
@@ -233,9 +225,6 @@ export async function getAnalysis(
     `)
 
     // Process results
-    console.log('Query returned', result.rows.length, 'rows')
-    console.log('Sample row:', result.rows[0])
-
     const skuAnalysis = result.rows.map((row: any) => ({
       skuName: row.sku_name,
       quantitySold: Number(row.quantity_sold),
@@ -244,8 +233,6 @@ export async function getAnalysis(
       profit: Number(row.profit),
       marginPercent: Number(row.margin_percent),
     }))
-
-    console.log('SKU Analysis:', JSON.stringify(skuAnalysis, null, 2))
 
     // Calculate variable costs (ingredient costs from purchases)
     const totalRevenue = skuAnalysis.reduce((sum, item) => sum + item.revenue, 0)
@@ -264,8 +251,6 @@ export async function getAnalysis(
     `)
 
     const totalFixedCost = Number(fixedCostsResult.rows[0]?.total_fixed_cost || 0)
-    console.log('Fixed costs:', totalFixedCost)
-
     // Calculate total costs and profit
     const totalCost = totalVariableCost + totalFixedCost
     const netProfit = totalRevenue - totalCost

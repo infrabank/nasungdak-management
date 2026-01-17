@@ -25,7 +25,6 @@ export async function createCostRule(formData: FormData) {
       effectiveTo: effectiveTo && effectiveTo !== '' ? effectiveTo : null,
     }
 
-    console.log('Creating cost distribution rule with data:', rawData)
 
     const validatedData = costRuleSchema.parse(rawData)
 
@@ -91,8 +90,6 @@ export async function createCostRule(formData: FormData) {
       })
       .returning()
 
-    console.log('Cost distribution rule created successfully:', rule)
-
     revalidatePath('/dashboard/master-data/cost-rules')
 
     return {
@@ -103,7 +100,6 @@ export async function createCostRule(formData: FormData) {
     console.error('Failed to create cost distribution rule:', error)
 
     if (error instanceof z.ZodError) {
-      console.error('Validation errors:', error.errors)
       return {
         success: false,
         error: error.errors[0].message,

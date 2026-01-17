@@ -28,28 +28,6 @@ export default function OilChangeRow({ oilChange }: OilChangeRowProps) {
           {oilChange.notes || '-'}
         </div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        <div className="flex space-x-2">
-          <button
-            className="text-blue-600 hover:text-blue-900"
-            onClick={() => {
-              // TODO: Implement edit functionality
-              console.log('Edit oil change:', oilChange.id)
-            }}
-          >
-            수정
-          </button>
-          <button
-            className="text-red-600 hover:text-red-900"
-            onClick={() => {
-              // TODO: Implement delete functionality
-              console.log('Delete oil change:', oilChange.id)
-            }}
-          >
-            삭제
-          </button>
-        </div>
-      </td>
     </tr>
   )
 }

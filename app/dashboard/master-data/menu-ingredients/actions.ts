@@ -20,7 +20,6 @@ export async function createMenuIngredient(formData: FormData) {
       requiredQuantity: formData.get('requiredQuantity'),
     }
 
-    console.log('Creating menu-ingredient mapping with data:', rawData)
 
     const validatedData = menuIngredientSchema.parse(rawData)
 
@@ -50,8 +49,6 @@ export async function createMenuIngredient(formData: FormData) {
       })
       .returning()
 
-    console.log('Menu-ingredient mapping created successfully:', mapping)
-
     revalidatePath('/dashboard/master-data/menu-ingredients')
 
     return {
@@ -62,7 +59,6 @@ export async function createMenuIngredient(formData: FormData) {
     console.error('Failed to create menu-ingredient mapping:', error)
 
     if (error instanceof z.ZodError) {
-      console.error('Validation errors:', error.errors)
       return {
         success: false,
         error: error.errors[0].message,

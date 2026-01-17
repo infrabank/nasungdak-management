@@ -62,15 +62,14 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
                     <label htmlFor="storeId" className="block text-sm font-medium text-gray-700">
                       매장
                     </label>
-                    <select
+                    <input
+                      type="text"
                       name="storeId"
                       id="storeId"
                       defaultValue={rule?.storeId || ''}
+                      placeholder="매장 ID"
                       className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
-                    >
-                      <option value="">전체 매장</option>
-                      {/* TODO: Load stores dynamically */}
-                    </select>
+                    />
                     <p className="mt-1 text-xs text-gray-500">빈 값이면 전체 매장에 적용됩니다</p>
                   </div>
 

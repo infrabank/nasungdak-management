@@ -5,9 +5,6 @@ import { sql } from 'drizzle-orm'
 
 // Debug function to check each step of the cost calculation
 export async function debugCostCalculation(startDate: string, endDate: string) {
-  console.log('=== DEBUG: Cost Calculation ===')
-  console.log('Date range:', startDate, 'to', endDate)
-
   // Step 1: Check cost distribution rules
   const rules = await db.execute(sql`
     SELECT
@@ -24,9 +21,6 @@ export async function debugCostCalculation(startDate: string, endDate: string) {
     WHERE cdr.deleted_at IS NULL
     ORDER BY mc.menu_name, ing.ingredient_name
   `)
-  console.log('\n1. Cost Distribution Rules:', rules.rows.length, 'rules found')
-  console.log(JSON.stringify(rules.rows, null, 2))
-
   // Step 2: Check purchases in date range
   const purchases = await db.execute(sql`
     SELECT
@@ -46,9 +40,6 @@ export async function debugCostCalculation(startDate: string, endDate: string) {
       AND pt.deleted_at IS NULL
     ORDER BY pt.transaction_date DESC
   `)
-  console.log('\n2. Purchases in date range:', purchases.rows.length, 'purchases found')
-  console.log(JSON.stringify(purchases.rows, null, 2))
-
   // Step 3: Check SKUs linked to menus
   const skus = await db.execute(sql`
     SELECT
@@ -62,9 +53,6 @@ export async function debugCostCalculation(startDate: string, endDate: string) {
       AND mc.deleted_at IS NULL
     ORDER BY mc.menu_name, s.sku_name
   `)
-  console.log('\n3. SKUs:', skus.rows.length, 'SKUs found')
-  console.log(JSON.stringify(skus.rows, null, 2))
-
   // Step 4: Test the cost_summary CTE in isolation
   const costTest = await db.execute(sql`
     SELECT
@@ -93,9 +81,6 @@ export async function debugCostCalculation(startDate: string, endDate: string) {
       AND COALESCE(cdr.effective_to, '9999-12-31'::date) >= ${startDate}::date
     ORDER BY s.sku_name, pt.transaction_date
   `)
-  console.log('\n4. Cost Allocation Test:', costTest.rows.length, 'rows')
-  console.log(JSON.stringify(costTest.rows, null, 2))
-
   // Step 5: Check sales
   const sales = await db.execute(sql`
     SELECT
@@ -109,9 +94,6 @@ export async function debugCostCalculation(startDate: string, endDate: string) {
       AND sr.deleted_at IS NULL
     ORDER BY sr.sale_date DESC
   `)
-  console.log('\n5. Sales in date range:', sales.rows.length, 'sales found')
-  console.log(JSON.stringify(sales.rows, null, 2))
-
   return {
     rules: rules.rows,
     purchases: purchases.rows,

@@ -21,7 +21,6 @@ export async function createMenu(formData: FormData) {
       isActive: formData.get('isActive') === 'true',
     }
 
-    console.log('Creating menu with data:', rawData)
 
     const validatedData = menuSchema.parse(rawData)
 
@@ -32,8 +31,6 @@ export async function createMenu(formData: FormData) {
         createdBy: 'system',
       })
       .returning()
-
-    console.log('Menu created successfully:', menu)
 
     revalidatePath('/dashboard/master-data/menus')
 

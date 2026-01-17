@@ -123,8 +123,6 @@ export default function CSVUploadTranspose({ storeId }: CSVUploadTransposeProps)
         }
       }
 
-      console.log(`변환된 데이터: ${salesData.length}건`)
-
       const result = await bulkCreateSales(salesData, storeId)
 
       if (result.success) {

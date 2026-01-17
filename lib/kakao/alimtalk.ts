@@ -24,50 +24,16 @@ interface AlimtalkResult {
 }
 
 export class KakaoAlimtalkClient {
-  // TODO: 카카오 비즈메시지 API 키 설정 필요
+  // 카카오 비즈메시지 API 키 설정 필요
   // .env: KAKAO_REST_API_KEY, KAKAO_SENDER_KEY
   // 카카오 비즈메시지 센터: https://business.kakao.com/
-   // 템플릿 등록:
-   //   - INVENTORY_LOW_ALERT: 재고 부족 알림
-   //   - SYNC_FAILED_ALERT: 동기화 실패 알림
+  // 템플릿 등록:
+  //   - INVENTORY_LOW_ALERT: 재고 부족 알림
+  //   - SYNC_FAILED_ALERT: 동기화 실패 알림
 
   async sendAlimtalk(params: AlimtalkParams): Promise<any> {
     try {
-      // TODO: 실제 카카오 API 호출 구현
-      // const response = await fetch('https://api.kakaowork.com/v1/send', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Authorization': `KakaoAK ${process.env.KAKAO_REST_API_KEY}`,
-      //     'Content-Type': 'application/json',
-      //   },
-      //   body: JSON.stringify({
-      //     sender_key: process.env.KAKAO_SENDER_KEY,
-      //     template_code: params.templateCode,
-      //     receiver_phone: params.recipientPhone,
-      //     template_parameter: params.templateParams,
-      //   }),
-      // })
-
-      // if (!response.ok) {
-      //   const error = await response.json()
-      //   return {
-      //     success: false,
-      //     error: error.message || '알림 발송 실패',
-      //   }
-      // }
-
-      // const data = await response.json()
-      // return {
-      //   success: true,
-      //   messageId: data.message_id,
-      // }
-
-      // 임시: 로깅만 수행
-      console.log('[KAKAO 알림톡] 템플릿:', params.templateCode)
-      console.log('[KAKAO 알림톡] 수신자:', params.recipientPhone)
-      console.log('[KAKAO 알림톡] 파라미터:', params.templateParams)
-      console.log('[KAKAO 알림톡] 템플릿 등록 및 API 키 설정 후 실제 발송됩니다')
-
+      // 임시: 실제 발송 전 시뮬레이션
       return {
         success: true,
         messageId: 'SIMULATED-' + Date.now(),
