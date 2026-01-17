@@ -7,12 +7,13 @@ export const dynamic = 'force-dynamic'
 export default async function DashboardPage() {
   const result = await getDashboardStats()
 
-  if (!result.success) {
+  if (!result.success || !('data' in result)) {
+    const errorMessage = 'error' in result ? result.error : '데이터를 불러올 수 없습니다'
     return (
       <div>
         <h1 className="text-3xl font-bold mb-6">대시보드</h1>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">{result.error || '데이터를 불러올 수 없습니다'}</p>
+          <p className="text-sm text-red-800">{errorMessage}</p>
         </div>
       </div>
     )
