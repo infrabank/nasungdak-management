@@ -138,8 +138,8 @@ export default function FixedCostForm({ storeId }: FixedCostFormProps) {
         </div>
       </div>
 
-      {/* Fixed Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-20">
+      {/* Fixed Bottom Action Bar - positioned above bottom nav on mobile */}
+      <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4 z-20">
         <div className="flex gap-3 max-w-lg mx-auto">
           <Button
             type="button"

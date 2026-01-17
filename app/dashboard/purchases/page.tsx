@@ -321,8 +321,8 @@ export default async function PurchasesPage({
         </div>
       </div>
 
-      {/* Mobile: Fixed Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-20 md:hidden">
+      {/* Mobile: Fixed Bottom Action Bar - positioned above bottom nav */}
+      <div className="fixed bottom-14 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 lg:hidden">
         <div className="flex gap-3">
           <CSVUpload />
           <Link

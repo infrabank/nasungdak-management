@@ -85,7 +85,7 @@ export default function MobileBottomNav() {
 
   const navItems = [
     {
-      label: '구매',
+      label: '매입',
       href: '/dashboard/purchases',
       icon: ShoppingCartIcon,
     },
