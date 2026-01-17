@@ -2,8 +2,6 @@ import { getStores } from './actions'
 import StoreForm from './store-form'
 import StoreCard from './store-card'
 
-export const dynamic = 'force-dynamic'
-
 export default async function StoresPage() {
   const storeList = await getStores()
 

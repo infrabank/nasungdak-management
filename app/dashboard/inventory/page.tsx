@@ -4,8 +4,6 @@ import EventForm from './event-form'
 import AlertRuleForm from './alert-rule-form'
 import InventoryCard from './inventory-card'
 
-export const dynamic = 'force-dynamic'
-
 export default async function InventoryPage({
   searchParams,
 }: {

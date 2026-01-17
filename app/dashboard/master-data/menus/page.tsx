@@ -3,8 +3,6 @@ import MenuForm from './menu-form'
 import CSVUpload from './csv-upload'
 import MenuCard from './menu-card'
 
-export const dynamic = 'force-dynamic'
-
 export default async function MenusPage() {
   const menus = await getMenus()
 

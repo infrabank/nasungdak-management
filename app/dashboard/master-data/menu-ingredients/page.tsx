@@ -2,8 +2,6 @@ import { getMenuIngredients } from './actions'
 import MenuIngredientForm from './menu-ingredient-form'
 import { MenuIngredientCard } from './menu-ingredient-card'
 
-export const dynamic = 'force-dynamic'
-
 export default async function MenuIngredientsPage() {
   const mappings = await getMenuIngredients()
 

@@ -44,6 +44,9 @@ export async function createPurchase(formData: FormData) {
 
     revalidatePath('/dashboard/purchases')
     revalidateTag('purchases:all')
+    if (transaction.storeId) {
+      revalidateTag(`purchases:${transaction.storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -112,6 +115,9 @@ export async function updatePurchase(id: string, formData: FormData) {
 
     revalidatePath('/dashboard/purchases')
     revalidateTag('purchases:all')
+    if (transaction.storeId) {
+      revalidateTag(`purchases:${transaction.storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -139,6 +145,12 @@ export async function updatePurchase(id: string, formData: FormData) {
 
 export async function deletePurchase(id: string) {
   try {
+    // Fetch storeId before soft delete for cache invalidation
+    const existing = await db.query.purchaseTransactions.findFirst({
+      where: eq(purchaseTransactions.id, id),
+      columns: { storeId: true },
+    })
+
     await db
       .update(purchaseTransactions)
       .set({
@@ -149,6 +161,9 @@ export async function deletePurchase(id: string) {
 
     revalidatePath('/dashboard/purchases')
     revalidateTag('purchases:all')
+    if (existing?.storeId) {
+      revalidateTag(`purchases:${existing.storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -189,6 +204,9 @@ export async function togglePurchaseValidation(id: string) {
 
     revalidatePath('/dashboard/purchases')
     revalidateTag('purchases:all')
+    if (purchase.storeId) {
+      revalidateTag(`purchases:${purchase.storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')

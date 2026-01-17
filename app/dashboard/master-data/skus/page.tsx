@@ -4,8 +4,6 @@ import SkuCard from './sku-card'
 import CSVUpload from './csv-upload'
 import { formatCurrency } from '@/lib/utils/format'
 
-export const dynamic = 'force-dynamic'
-
 export default async function SkusPage() {
   const skus = await getSkus()
 

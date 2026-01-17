@@ -2,8 +2,6 @@ import { getTossMappings, getStoresAndSkus } from './actions'
 import TossMappingForm from './toss-mapping-form'
 import TossMappingCard from './toss-mapping-card'
 
-export const dynamic = 'force-dynamic'
-
 export default async function TossMappingsPage({
   searchParams,
 }: {

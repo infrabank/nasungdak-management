@@ -4,8 +4,6 @@ import OilChangeRow from './oil-change-row'
 import OilChangeCard from './oil-change-card'
 import { formatDate } from '@/lib/utils/format'
 
-export const dynamic = 'force-dynamic'
-
 interface SearchParams {
   startDate?: string
   endDate?: string

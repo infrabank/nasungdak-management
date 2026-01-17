@@ -3,8 +3,6 @@ import IngredientForm from './ingredient-form'
 import CSVUpload from './csv-upload'
 import IngredientCard from './ingredient-card'
 
-export const dynamic = 'force-dynamic'
-
 export default async function IngredientsPage() {
   const ingredients = await getIngredients()
 

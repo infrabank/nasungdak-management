@@ -5,8 +5,6 @@ import CSVUploadTranspose from './csv-upload-transpose'
 import SalesList from './sales-list'
 import { formatDate } from '@/lib/utils/format'
 
-export const dynamic = 'force-dynamic'
-
 interface SearchParams {
   startDate?: string
   endDate?: string

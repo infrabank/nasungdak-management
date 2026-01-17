@@ -7,8 +7,6 @@ import StoreSelector from './store-selector'
 import MobileBottomNav from './mobile-bottom-nav'
 import { getActiveStores } from './stores/actions'
 
-export const dynamic = 'force-dynamic'
-
 export default async function DashboardLayout({
   children,
 }: {

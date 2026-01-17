@@ -4,8 +4,6 @@ import FixedCostRow from './fixed-cost-row'
 import FixedCostCard from './fixed-cost-card'
 import { formatDate, formatCurrency } from '@/lib/utils/format'
 
-export const dynamic = 'force-dynamic'
-
 interface SearchParams {
   startDate?: string
   endDate?: string

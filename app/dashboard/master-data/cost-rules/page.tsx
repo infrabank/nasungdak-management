@@ -3,8 +3,6 @@ import CostRuleForm from './cost-rule-form'
 import CostRuleCard from './cost-rule-card'
 import { formatDate } from '@/lib/utils/format'
 
-export const dynamic = 'force-dynamic'
-
 export default async function CostRulesPage() {
   const rules = await getCostRules()
 

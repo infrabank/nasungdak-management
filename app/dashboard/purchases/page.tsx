@@ -5,8 +5,6 @@ import PurchaseRow from './purchase-row'
 import PurchaseCard from './purchase-card'
 import { formatDate, formatCurrency } from '@/lib/utils/format'
 
-export const dynamic = 'force-dynamic'
-
 interface SearchParams {
   startDate?: string
   endDate?: string

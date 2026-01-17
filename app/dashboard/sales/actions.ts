@@ -57,6 +57,9 @@ export async function createSalesRecord(formData: FormData) {
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')
+    if (storeId) {
+      revalidateTag(`sales:${storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -104,6 +107,9 @@ export async function updateSalesRecord(id: string, formData: FormData) {
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')
+    if (record.storeId) {
+      revalidateTag(`sales:${record.storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -131,6 +137,12 @@ export async function updateSalesRecord(id: string, formData: FormData) {
 
 export async function deleteSalesRecord(id: string) {
   try {
+    // Fetch storeId before soft delete for cache invalidation
+    const existing = await db.query.salesRecords.findFirst({
+      where: eq(salesRecords.id, id),
+      columns: { storeId: true },
+    })
+
     await db
       .update(salesRecords)
       .set({
@@ -141,6 +153,9 @@ export async function deleteSalesRecord(id: string) {
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')
+    if (existing?.storeId) {
+      revalidateTag(`sales:${existing.storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -166,6 +181,15 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
       }
     }
 
+    // Fetch storeIds before deletion for cache invalidation
+    const existingRecords = await Promise.all(
+      ids.map(id => db.query.salesRecords.findFirst({
+        where: eq(salesRecords.id, id),
+        columns: { storeId: true },
+      }))
+    )
+    const storeIds = new Set(existingRecords.map(r => r?.storeId).filter(Boolean))
+
     // Perform bulk soft delete using loop for simplicity
     let deletedCount = 0
     for (const id of ids) {
@@ -181,6 +205,9 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')
+    for (const storeId of storeIds) {
+      revalidateTag(`sales:${storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -406,6 +433,9 @@ export async function createDailySales(saleDate: string, sales: DailySaleInput[]
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')
+    if (storeId) {
+      revalidateTag(`sales:${storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -499,6 +529,9 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')
+    if (storeId) {
+      revalidateTag(`sales:${storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')

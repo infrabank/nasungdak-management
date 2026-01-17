@@ -2,8 +2,6 @@ import { getSuppliers } from './actions'
 import SupplierForm from './supplier-form'
 import SupplierCard from './supplier-card'
 
-export const dynamic = 'force-dynamic'
-
 export default async function SuppliersPage() {
   const suppliers = await getSuppliers()
 
