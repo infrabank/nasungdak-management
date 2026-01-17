@@ -23,7 +23,7 @@ export default async function AnalysisPage({
 
   const startDate = params.startDate || formatDate(firstDayOfMonth, 'yyyy-MM-dd')
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
-  const storeId = params.storeId || ''
+  const storeId = params.storeId || undefined
 
   // Fetch analysis data
   const [result, monthlyResult] = await Promise.all([
