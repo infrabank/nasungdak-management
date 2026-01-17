@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export default async function DashboardPage() {
   const result = await getDashboardStats()
 
-  if (!result.success || !result.data) {
+  if (!result.success) {
     return (
       <div>
         <h1 className="text-3xl font-bold mb-6">대시보드</h1>
