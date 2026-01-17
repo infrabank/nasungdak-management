@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
 import { ingredients } from '@/lib/db/schema'
 import { eq, isNull } from 'drizzle-orm'
@@ -33,6 +33,7 @@ export async function createIngredient(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/ingredients')
+    revalidateTag('ingredients:active')
 
     return {
       success: true,
@@ -77,6 +78,7 @@ export async function updateIngredient(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/ingredients')
+    revalidateTag('ingredients:active')
 
     return {
       success: true,
@@ -110,6 +112,7 @@ export async function deleteIngredient(id: string) {
       .where(eq(ingredients.id, id))
 
     revalidatePath('/dashboard/master-data/ingredients')
+    revalidateTag('ingredients:active')
 
     return {
       success: true,
@@ -191,6 +194,7 @@ export async function bulkCreateIngredients(rows: CSVRow[]) {
     }
 
     revalidatePath('/dashboard/master-data/ingredients')
+    revalidateTag('ingredients:active')
 
     return {
       success: true,

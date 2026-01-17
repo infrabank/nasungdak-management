@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
 import { costDistributionRules, menuCategories, ingredients } from '@/lib/db/schema'
 import { eq, isNull, and, gte, lte, or, sql } from 'drizzle-orm'
@@ -91,6 +91,10 @@ export async function createCostRule(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/cost-rules')
+    revalidateTag('cost-rules:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -149,6 +153,10 @@ export async function updateCostRule(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/cost-rules')
+    revalidateTag('cost-rules:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -182,6 +190,10 @@ export async function deleteCostRule(id: string) {
       .where(eq(costDistributionRules.id, id))
 
     revalidatePath('/dashboard/master-data/cost-rules')
+    revalidateTag('cost-rules:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,

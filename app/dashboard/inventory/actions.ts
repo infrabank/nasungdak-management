@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { inventorySchema, inventoryEventSchema, inventoryAlertRuleSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { inventory, inventoryEvents, inventoryAlertRules, ingredients, stores } from '@/lib/db/schema'
@@ -44,6 +44,8 @@ export async function createInventory(formData: FormData) {
         .returning()
 
       revalidatePath('/dashboard/inventory')
+      revalidateTag(`inventory:${validatedData.storeId}`)
+      revalidateTag('inventory:all')
       return {
         success: true,
         data: updated,
@@ -59,6 +61,8 @@ export async function createInventory(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/inventory')
+    revalidateTag(`inventory:${validatedData.storeId}`)
+    revalidateTag('inventory:all')
 
     return {
       success: true,
@@ -102,6 +106,8 @@ export async function updateInventory(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/inventory')
+    revalidateTag(`inventory:${validatedData.storeId}`)
+    revalidateTag('inventory:all')
 
     return {
       success: true,
@@ -131,6 +137,7 @@ export async function deleteInventory(id: string) {
       .where(eq(inventory.id, id))
 
     revalidatePath('/dashboard/inventory')
+    revalidateTag('inventory:all')
 
     return {
       success: true,
@@ -144,32 +151,44 @@ export async function deleteInventory(id: string) {
   }
 }
 
+async function fetchInventory(storeId: string) {
+  const conditions = []
+
+  if (storeId !== 'all') {
+    conditions.push(eq(inventory.storeId, storeId))
+  }
+
+  const inventoryList = await db
+    .select({
+      id: inventory.id,
+      storeId: inventory.storeId,
+      ingredientId: inventory.ingredientId,
+      currentQuantity: inventory.currentQuantity,
+      unit: inventory.unit,
+      lastUpdated: inventory.lastUpdated,
+      ingredientName: ingredients.ingredientName,
+      storeName: stores.storeName,
+    })
+    .from(inventory)
+    .innerJoin(ingredients, eq(inventory.ingredientId, ingredients.id))
+    .innerJoin(stores, eq(inventory.storeId, stores.id))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(ingredients.ingredientName)
+
+  return inventoryList
+}
+
 export async function getInventory(storeId?: string) {
   try {
-    const conditions = []
+    const normalizedStoreId = storeId ?? 'all'
 
-    if (storeId) {
-      conditions.push(eq(inventory.storeId, storeId))
-    }
+    const getCachedInventory = unstable_cache(
+      fetchInventory,
+      ['inventory:list', normalizedStoreId],
+      { tags: [`inventory:${normalizedStoreId}`] }
+    )
 
-    const inventoryList = await db
-      .select({
-        id: inventory.id,
-        storeId: inventory.storeId,
-        ingredientId: inventory.ingredientId,
-        currentQuantity: inventory.currentQuantity,
-        unit: inventory.unit,
-        lastUpdated: inventory.lastUpdated,
-        ingredientName: ingredients.ingredientName,
-        storeName: stores.storeName,
-      })
-      .from(inventory)
-      .innerJoin(ingredients, eq(inventory.ingredientId, ingredients.id))
-      .innerJoin(stores, eq(inventory.storeId, stores.id))
-      .where(and(...conditions))
-      .orderBy(ingredients.ingredientName)
-
-    return inventoryList
+    return await getCachedInventory(normalizedStoreId)
   } catch (error) {
     console.error('Failed to fetch inventory:', error)
     return []
@@ -225,6 +244,8 @@ export async function createInventoryEvent(formData: FormData) {
     }
 
     revalidatePath('/dashboard/inventory')
+    revalidateTag(`inventory:${validatedData.storeId}`)
+    revalidateTag('inventory:all')
 
     return {
       success: true,
@@ -323,6 +344,8 @@ export async function createAlertRule(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/inventory')
+    revalidateTag(`inventory:alerts:${validatedData.storeId ?? 'all'}`)
+    revalidateTag('inventory:alerts:all')
 
     return {
       success: true,
@@ -368,6 +391,8 @@ export async function updateAlertRule(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/inventory')
+    revalidateTag(`inventory:alerts:${validatedData.storeId ?? 'all'}`)
+    revalidateTag('inventory:alerts:all')
 
     return {
       success: true,
@@ -401,6 +426,7 @@ export async function deleteAlertRule(id: string) {
       .where(eq(inventoryAlertRules.id, id))
 
     revalidatePath('/dashboard/inventory')
+    revalidateTag('inventory:alerts:all')
 
     return {
       success: true,
@@ -414,30 +440,42 @@ export async function deleteAlertRule(id: string) {
   }
 }
 
+async function fetchAlertRules(storeId: string) {
+  const conditions = [isNull(inventoryAlertRules.deletedAt)]
+
+  if (storeId !== 'all') {
+    conditions.push(eq(inventoryAlertRules.storeId, storeId))
+  }
+
+  const rules = await db
+    .select({
+      id: inventoryAlertRules.id,
+      storeId: inventoryAlertRules.storeId,
+      ingredientId: inventoryAlertRules.ingredientId,
+      alertThresholdDays: inventoryAlertRules.alertThresholdDays,
+      predictionPeriodDays: inventoryAlertRules.predictionPeriodDays,
+      isActive: inventoryAlertRules.isActive,
+      ingredientName: ingredients.ingredientName,
+    })
+    .from(inventoryAlertRules)
+    .innerJoin(ingredients, eq(inventoryAlertRules.ingredientId, ingredients.id))
+    .where(and(...conditions))
+    .orderBy(ingredients.ingredientName)
+
+  return rules
+}
+
 export async function getAlertRules(storeId?: string) {
   try {
-    const conditions = [isNull(inventoryAlertRules.deletedAt)]
+    const normalizedStoreId = storeId ?? 'all'
 
-    if (storeId) {
-      conditions.push(eq(inventoryAlertRules.storeId, storeId))
-    }
+    const getCachedAlertRules = unstable_cache(
+      fetchAlertRules,
+      ['inventory:alerts', normalizedStoreId],
+      { tags: [`inventory:alerts:${normalizedStoreId}`] }
+    )
 
-    const rules = await db
-      .select({
-        id: inventoryAlertRules.id,
-        storeId: inventoryAlertRules.storeId,
-        ingredientId: inventoryAlertRules.ingredientId,
-        alertThresholdDays: inventoryAlertRules.alertThresholdDays,
-        predictionPeriodDays: inventoryAlertRules.predictionPeriodDays,
-        isActive: inventoryAlertRules.isActive,
-        ingredientName: ingredients.ingredientName,
-      })
-      .from(inventoryAlertRules)
-      .innerJoin(ingredients, eq(inventoryAlertRules.ingredientId, ingredients.id))
-      .where(and(...conditions))
-      .orderBy(ingredients.ingredientName)
-
-    return rules
+    return await getCachedAlertRules(normalizedStoreId)
   } catch (error) {
     console.error('Failed to fetch alert rules:', error)
     return []

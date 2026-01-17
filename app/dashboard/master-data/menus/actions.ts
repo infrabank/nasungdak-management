@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
 import { menuCategories } from '@/lib/db/schema'
 import { eq, isNull } from 'drizzle-orm'
@@ -33,6 +33,7 @@ export async function createMenu(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/menus')
+    revalidateTag('menus:active')
 
     return {
       success: true,
@@ -77,6 +78,7 @@ export async function updateMenu(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/menus')
+    revalidateTag('menus:active')
 
     return {
       success: true,
@@ -110,6 +112,7 @@ export async function deleteMenu(id: string) {
       .where(eq(menuCategories.id, id))
 
     revalidatePath('/dashboard/master-data/menus')
+    revalidateTag('menus:active')
 
     return {
       success: true,
@@ -189,6 +192,7 @@ export async function bulkCreateMenus(rows: CSVRow[]) {
     }
 
     revalidatePath('/dashboard/master-data/menus')
+    revalidateTag('menus:active')
 
     return {
       success: true,

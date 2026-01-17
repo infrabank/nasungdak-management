@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { salesRecords, skus, menuCategories } from '@/lib/db/schema'
 import { eq, isNull, desc, sql } from 'drizzle-orm'
@@ -56,6 +56,10 @@ export async function createSalesRecord(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/sales')
+    revalidateTag('sales:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -99,6 +103,10 @@ export async function updateSalesRecord(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/sales')
+    revalidateTag('sales:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -132,6 +140,10 @@ export async function deleteSalesRecord(id: string) {
       .where(eq(salesRecords.id, id))
 
     revalidatePath('/dashboard/sales')
+    revalidateTag('sales:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -168,6 +180,10 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
     }
 
     revalidatePath('/dashboard/sales')
+    revalidateTag('sales:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -182,6 +198,50 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
   }
 }
 
+async function fetchSalesRecords(
+  startDate: string,
+  endDate: string,
+  skuId: string,
+  storeId: string
+) {
+  // Build WHERE conditions
+  const conditions = [isNull(salesRecords.deletedAt)]
+
+  if (startDate !== 'all' && endDate !== 'all') {
+    conditions.push(
+      sql`${salesRecords.saleDate} BETWEEN ${startDate}::date AND ${endDate}::date`
+    )
+  }
+
+  if (skuId !== 'all') {
+    conditions.push(eq(salesRecords.skuId, skuId))
+  }
+
+  if (storeId !== 'all') {
+    conditions.push(eq(salesRecords.storeId, storeId))
+  }
+
+  const records = await db
+    .select({
+      id: salesRecords.id,
+      saleDate: salesRecords.saleDate,
+      skuId: salesRecords.skuId,
+      skuName: skus.skuName,
+      menuName: menuCategories.menuName,
+      quantitySold: salesRecords.quantitySold,
+      unitPrice: skus.unitPrice,
+      totalRevenue: salesRecords.totalRevenue,
+    })
+    .from(salesRecords)
+    .leftJoin(skus, eq(salesRecords.skuId, skus.id))
+    .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
+    .where(sql`${sql.join(conditions, sql` AND `)}`)
+    .orderBy(desc(salesRecords.saleDate))
+    .limit(1000)
+
+  return records
+}
+
 export async function getSalesRecords(
   startDate?: string,
   endDate?: string,
@@ -189,83 +249,79 @@ export async function getSalesRecords(
   storeId?: string
 ) {
   try {
-    // Build WHERE conditions
-    const conditions = [isNull(salesRecords.deletedAt)]
+    const normalizedStartDate = startDate ?? 'all'
+    const normalizedEndDate = endDate ?? 'all'
+    const normalizedSkuId = skuId ?? 'all'
+    const normalizedStoreId = storeId ?? 'all'
 
-    if (startDate && endDate) {
-      conditions.push(
-        sql`${salesRecords.saleDate} BETWEEN ${startDate}::date AND ${endDate}::date`
-      )
-    }
+    const getCachedSalesRecords = unstable_cache(
+      fetchSalesRecords,
+      ['sales:list', normalizedStartDate, normalizedEndDate, normalizedSkuId, normalizedStoreId],
+      { tags: [`sales:${normalizedStoreId}`] }
+    )
 
-    if (skuId) {
-      conditions.push(eq(salesRecords.skuId, skuId))
-    }
-
-    if (storeId) {
-      conditions.push(eq(salesRecords.storeId, storeId))
-    }
-
-    const records = await db
-      .select({
-        id: salesRecords.id,
-        saleDate: salesRecords.saleDate,
-        skuId: salesRecords.skuId,
-        skuName: skus.skuName,
-        menuName: menuCategories.menuName,
-        quantitySold: salesRecords.quantitySold,
-        unitPrice: skus.unitPrice,
-        totalRevenue: salesRecords.totalRevenue,
-      })
-      .from(salesRecords)
-      .leftJoin(skus, eq(salesRecords.skuId, skus.id))
-      .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-      .where(sql`${sql.join(conditions, sql` AND `)}`)
-      .orderBy(desc(salesRecords.saleDate))
-      .limit(1000)
-
-    return records
+    return await getCachedSalesRecords(normalizedStartDate, normalizedEndDate, normalizedSkuId, normalizedStoreId)
   } catch (error) {
     console.error('Failed to fetch sales records:', error)
     return []
   }
 }
 
+async function fetchActiveSKUs() {
+  const skuList = await db
+    .select({
+      id: skus.id,
+      skuName: skus.skuName,
+      menuName: menuCategories.menuName,
+      unitPrice: skus.unitPrice,
+    })
+    .from(skus)
+    .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
+    .where(isNull(skus.deletedAt))
+    .orderBy(menuCategories.menuName, skus.skuName)
+
+  return skuList
+}
+
 export async function getActiveSKUs() {
   try {
-    const skuList = await db
-      .select({
-        id: skus.id,
-        skuName: skus.skuName,
-        menuName: menuCategories.menuName,
-        unitPrice: skus.unitPrice,
-      })
-      .from(skus)
-      .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-      .where(isNull(skus.deletedAt))
-      .orderBy(menuCategories.menuName, skus.skuName)
+    const getCachedActiveSKUs = unstable_cache(
+      fetchActiveSKUs,
+      ['skus:active'],
+      { tags: ['skus:active'] }
+    )
 
-    return skuList
+    return await getCachedActiveSKUs()
   } catch (error) {
     console.error('Failed to fetch SKUs:', error)
     return []
   }
 }
 
+async function fetchSKUsForFilter() {
+  const skuList = await db
+    .select({
+      id: skus.id,
+      skuName: skus.skuName,
+      menuName: menuCategories.menuName,
+    })
+    .from(skus)
+    .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
+    .where(isNull(skus.deletedAt))
+    .orderBy(menuCategories.menuName, skus.skuName)
+
+  return skuList
+}
+
 export async function getSKUsForFilter() {
   try {
-    const skuList = await db
-      .select({
-        id: skus.id,
-        skuName: skus.skuName,
-        menuName: menuCategories.menuName,
-      })
-      .from(skus)
-      .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-      .where(isNull(skus.deletedAt))
-      .orderBy(menuCategories.menuName, skus.skuName)
+    const getCachedSKUsForFilter = unstable_cache(
+      fetchSKUsForFilter,
+      ['skus:filter'],
+      { tags: ['skus:filter'] }
+    )
 
-    return skuList
+    return await getCachedSKUsForFilter()
   } catch (error) {
     console.error('Failed to fetch SKUs for filter:', error)
     return []
@@ -349,6 +405,10 @@ export async function createDailySales(saleDate: string, sales: DailySaleInput[]
     }
 
     revalidatePath('/dashboard/sales')
+    revalidateTag('sales:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -438,6 +498,10 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
     }
 
     revalidatePath('/dashboard/sales')
+    revalidateTag('sales:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,

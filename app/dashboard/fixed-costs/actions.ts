@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
 import { fixedCosts } from '@/lib/db/schema'
 import { eq, isNull, desc, sql } from 'drizzle-orm'
@@ -43,6 +43,9 @@ export async function createFixedCost(
       .returning()
 
     revalidatePath('/dashboard/fixed-costs')
+    revalidateTag('fixed-costs:all')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -89,6 +92,9 @@ export async function updateFixedCost(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/fixed-costs')
+    revalidateTag('fixed-costs:all')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -122,6 +128,9 @@ export async function deleteFixedCost(id: string) {
       .where(eq(fixedCosts.id, id))
 
     revalidatePath('/dashboard/fixed-costs')
+    revalidateTag('fixed-costs:all')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,

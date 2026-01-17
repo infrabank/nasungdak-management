@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { storeSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { stores } from '@/lib/db/schema'
@@ -45,6 +45,7 @@ export async function createStore(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/stores')
+    revalidateTag('stores:active')
 
     return {
       success: true,
@@ -107,6 +108,7 @@ export async function updateStore(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/stores')
+    revalidateTag('stores:active')
 
     return {
       success: true,
@@ -140,6 +142,7 @@ export async function deleteStore(id: string) {
       .where(eq(stores.id, id))
 
     revalidatePath('/dashboard/stores')
+    revalidateTag('stores:active')
 
     return {
       success: true,
@@ -168,19 +171,29 @@ export async function getStores() {
   }
 }
 
+async function fetchActiveStores() {
+  const storeList = await db
+    .select({
+      id: stores.id,
+      storeName: stores.storeName,
+      storeCode: stores.storeCode,
+    })
+    .from(stores)
+    .where(and(isNull(stores.deletedAt), eq(stores.isActive, true)))
+    .orderBy(stores.storeName)
+
+  return storeList
+}
+
 export async function getActiveStores() {
   try {
-    const storeList = await db
-      .select({
-        id: stores.id,
-        storeName: stores.storeName,
-        storeCode: stores.storeCode,
-      })
-      .from(stores)
-      .where(and(isNull(stores.deletedAt), eq(stores.isActive, true)))
-      .orderBy(stores.storeName)
+    const getCachedActiveStores = unstable_cache(
+      fetchActiveStores,
+      ['stores:active'],
+      { tags: ['stores:active'] }
+    )
 
-    return storeList
+    return await getCachedActiveStores()
   } catch (error) {
     console.error('Failed to fetch active stores:', error)
     return []

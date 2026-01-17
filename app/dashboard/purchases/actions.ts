@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { purchaseSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { purchaseTransactions, menuCategories, ingredients, menuIngredients } from '@/lib/db/schema'
@@ -43,6 +43,10 @@ export async function createPurchase(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/purchases')
+    revalidateTag('purchases:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -107,6 +111,10 @@ export async function updatePurchase(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/purchases')
+    revalidateTag('purchases:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -140,6 +148,10 @@ export async function deletePurchase(id: string) {
       .where(eq(purchaseTransactions.id, id))
 
     revalidatePath('/dashboard/purchases')
+    revalidateTag('purchases:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -176,6 +188,10 @@ export async function togglePurchaseValidation(id: string) {
       .where(eq(purchaseTransactions.id, id))
 
     revalidatePath('/dashboard/purchases')
+    revalidateTag('purchases:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -189,6 +205,60 @@ export async function togglePurchaseValidation(id: string) {
   }
 }
 
+async function fetchPurchases(
+  startDate: string,
+  endDate: string,
+  menuId: string,
+  ingredientId: string,
+  storeId: string
+) {
+  // Build WHERE conditions
+  const conditions = [isNull(purchaseTransactions.deletedAt)]
+
+  if (startDate !== 'all' && endDate !== 'all') {
+    conditions.push(
+      sql`${purchaseTransactions.transactionDate} BETWEEN ${startDate}::date AND ${endDate}::date`
+    )
+  }
+
+  if (menuId !== 'all') {
+    conditions.push(eq(purchaseTransactions.menuId, menuId))
+  }
+
+  if (ingredientId !== 'all') {
+    conditions.push(eq(purchaseTransactions.ingredientId, ingredientId))
+  }
+
+  if (storeId !== 'all') {
+    conditions.push(eq(purchaseTransactions.storeId, storeId))
+  }
+
+  const purchases = await db
+    .select({
+      id: purchaseTransactions.id,
+      storeId: purchaseTransactions.storeId,
+      transactionDate: purchaseTransactions.transactionDate,
+      menuId: purchaseTransactions.menuId,
+      menuName: menuCategories.menuName,
+      ingredientId: purchaseTransactions.ingredientId,
+      ingredientName: ingredients.ingredientName,
+      supplierName: purchaseTransactions.supplierName,
+      quantity: purchaseTransactions.quantity,
+      unitPrice: purchaseTransactions.unitPrice,
+      totalAmount: purchaseTransactions.totalAmount,
+      isValid: purchaseTransactions.isValid,
+      notes: purchaseTransactions.notes,
+    })
+    .from(purchaseTransactions)
+    .leftJoin(menuCategories, eq(purchaseTransactions.menuId, menuCategories.id))
+    .leftJoin(ingredients, eq(purchaseTransactions.ingredientId, ingredients.id))
+    .where(and(...conditions))
+    .orderBy(desc(purchaseTransactions.transactionDate))
+    .limit(1000)
+
+  return purchases
+}
+
 export async function getPurchases(
   startDate?: string,
   endDate?: string,
@@ -197,87 +267,75 @@ export async function getPurchases(
   storeId?: string
 ) {
   try {
-    // Build WHERE conditions
-    const conditions = [isNull(purchaseTransactions.deletedAt)]
+    const normalizedStartDate = startDate ?? 'all'
+    const normalizedEndDate = endDate ?? 'all'
+    const normalizedMenuId = menuId ?? 'all'
+    const normalizedIngredientId = ingredientId ?? 'all'
+    const normalizedStoreId = storeId ?? 'all'
 
-    if (startDate && endDate) {
-      conditions.push(
-        sql`${purchaseTransactions.transactionDate} BETWEEN ${startDate}::date AND ${endDate}::date`
-      )
-    }
+    const getCachedPurchases = unstable_cache(
+      fetchPurchases,
+      ['purchases:list', normalizedStartDate, normalizedEndDate, normalizedMenuId, normalizedIngredientId, normalizedStoreId],
+      { tags: [`purchases:${normalizedStoreId}`] }
+    )
 
-    if (menuId) {
-      conditions.push(eq(purchaseTransactions.menuId, menuId))
-    }
-
-    if (ingredientId) {
-      conditions.push(eq(purchaseTransactions.ingredientId, ingredientId))
-    }
-
-    if (storeId) {
-      conditions.push(eq(purchaseTransactions.storeId, storeId))
-    }
-
-    const purchases = await db
-      .select({
-        id: purchaseTransactions.id,
-        storeId: purchaseTransactions.storeId,
-        transactionDate: purchaseTransactions.transactionDate,
-        menuId: purchaseTransactions.menuId,
-        menuName: menuCategories.menuName,
-        ingredientId: purchaseTransactions.ingredientId,
-        ingredientName: ingredients.ingredientName,
-        supplierName: purchaseTransactions.supplierName,
-        quantity: purchaseTransactions.quantity,
-        unitPrice: purchaseTransactions.unitPrice,
-        totalAmount: purchaseTransactions.totalAmount,
-        isValid: purchaseTransactions.isValid,
-        notes: purchaseTransactions.notes,
-      })
-      .from(purchaseTransactions)
-      .leftJoin(menuCategories, eq(purchaseTransactions.menuId, menuCategories.id))
-      .leftJoin(ingredients, eq(purchaseTransactions.ingredientId, ingredients.id))
-      .where(and(...conditions))
-      .orderBy(desc(purchaseTransactions.transactionDate))
-      .limit(1000)
-
-    return purchases
+    return await getCachedPurchases(normalizedStartDate, normalizedEndDate, normalizedMenuId, normalizedIngredientId, normalizedStoreId)
   } catch (error) {
     console.error('Failed to fetch purchases:', error)
     return []
   }
 }
 
+async function fetchMenusForFilter() {
+  const menus = await db
+    .select({
+      id: menuCategories.id,
+      menuName: menuCategories.menuName,
+    })
+    .from(menuCategories)
+    .where(and(isNull(menuCategories.deletedAt), eq(menuCategories.isActive, true)))
+    .orderBy(menuCategories.menuName)
+
+  return menus
+}
+
 export async function getMenusForFilter() {
   try {
-    const menus = await db
-      .select({
-        id: menuCategories.id,
-        menuName: menuCategories.menuName,
-      })
-      .from(menuCategories)
-      .where(and(isNull(menuCategories.deletedAt), eq(menuCategories.isActive, true)))
-      .orderBy(menuCategories.menuName)
+    const getCachedMenusForFilter = unstable_cache(
+      fetchMenusForFilter,
+      ['menus:active'],
+      { tags: ['menus:active'] }
+    )
 
-    return menus
+    return await getCachedMenusForFilter()
   } catch (error) {
     console.error('Failed to fetch menus:', error)
     return []
   }
 }
 
+async function fetchIngredientsForFilter() {
+  const ingredientsList = await db
+    .select({
+      id: ingredients.id,
+      ingredientName: ingredients.ingredientName,
+    })
+    .from(ingredients)
+    .where(and(isNull(ingredients.deletedAt), eq(ingredients.isActive, true)))
+    .orderBy(ingredients.ingredientName)
+
+  return ingredientsList
+}
+
 export async function getIngredientsForFilter() {
   try {
-    const ingredientsList = await db
-      .select({
-        id: ingredients.id,
-        ingredientName: ingredients.ingredientName,
-      })
-      .from(ingredients)
-      .where(and(isNull(ingredients.deletedAt), eq(ingredients.isActive, true)))
-      .orderBy(ingredients.ingredientName)
+    const getCachedIngredientsForFilter = unstable_cache(
+      fetchIngredientsForFilter,
+      ['ingredients:active'],
+      { tags: ['ingredients:active'] }
+    )
 
-    return ingredientsList
+    return await getCachedIngredientsForFilter()
   } catch (error) {
     console.error('Failed to fetch ingredients:', error)
     return []
@@ -375,6 +433,10 @@ export async function createMultiplePurchases(
     }
 
     revalidatePath('/dashboard/purchases')
+    revalidateTag('purchases:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: failedCount === 0,
@@ -494,6 +556,10 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
     }
 
     revalidatePath('/dashboard/purchases')
+    revalidateTag('purchases:all')
+    revalidateTag('dashboard:stats')
+    revalidateTag('analysis:sku')
+    revalidateTag('analysis:monthly')
 
     return {
       success: true,

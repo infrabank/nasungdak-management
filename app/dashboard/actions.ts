@@ -1,17 +1,12 @@
 'use server'
 
+import { unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { sql } from 'drizzle-orm'
 
-export async function getDashboardStats() {
-  try {
-    const today = new Date()
-    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-    const startDate = firstDayOfMonth.toISOString().split('T')[0]
-    const endDate = today.toISOString().split('T')[0]
-
-    // Get monthly summary with cost distribution rules applied
-    const summary = await db.execute(sql`
+async function fetchDashboardStats(startDate: string, endDate: string) {
+  // Get monthly summary with cost distribution rules applied
+  const summary = await db.execute(sql`
       WITH cost_summary AS (
         -- Calculate actual cost using cost distribution rules
         SELECT
@@ -107,32 +102,48 @@ export async function getDashboardStats() {
       LIMIT 5
     `)
 
-    return {
-      success: true,
-      data: {
-        monthlyPurchases: Number(stats.total_actual_cost),
-        monthlySales: Number(stats.total_sales),
-        purchaseCount: Number(stats.purchase_count),
-        salesCount: Number(stats.sales_count),
-        marginPercent: Number(stats.margin_percent),
-        validPurchases: Number(stats.valid_count),
-        invalidPurchases: Number(stats.invalid_count),
-        costRules: Number(stats.rules_count),
-        recentPurchases: recentPurchases.rows.map((row: any) => ({
-          date: row.transaction_date,
-          menuName: row.menu_name || '-',
-          ingredientName: row.ingredient_name || '-',
-          amount: Number(row.total_amount),
-          isValid: row.is_valid,
-        })),
-        recentSales: recentSales.rows.map((row: any) => ({
-          date: row.sale_date,
-          skuName: row.sku_name || '-',
-          quantity: Number(row.quantity_sold),
-          revenue: Number(row.total_revenue),
-        })),
-      },
-    }
+  return {
+    success: true,
+    data: {
+      monthlyPurchases: Number(stats.total_actual_cost),
+      monthlySales: Number(stats.total_sales),
+      purchaseCount: Number(stats.purchase_count),
+      salesCount: Number(stats.sales_count),
+      marginPercent: Number(stats.margin_percent),
+      validPurchases: Number(stats.valid_count),
+      invalidPurchases: Number(stats.invalid_count),
+      costRules: Number(stats.rules_count),
+      recentPurchases: recentPurchases.rows.map((row: any) => ({
+        date: row.transaction_date,
+        menuName: row.menu_name || '-',
+        ingredientName: row.ingredient_name || '-',
+        amount: Number(row.total_amount),
+        isValid: row.is_valid,
+      })),
+      recentSales: recentSales.rows.map((row: any) => ({
+        date: row.sale_date,
+        skuName: row.sku_name || '-',
+        quantity: Number(row.quantity_sold),
+        revenue: Number(row.total_revenue),
+      })),
+    },
+  }
+}
+
+export async function getDashboardStats() {
+  try {
+    const today = new Date()
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+    const startDate = firstDayOfMonth.toISOString().split('T')[0]
+    const endDate = today.toISOString().split('T')[0]
+
+    const getCachedDashboardStats = unstable_cache(
+      fetchDashboardStats,
+      ['dashboard:stats', startDate, endDate],
+      { tags: ['dashboard:stats'] }
+    )
+
+    return await getCachedDashboardStats(startDate, endDate)
   } catch (error) {
     console.error('Failed to fetch dashboard stats:', error)
     return {

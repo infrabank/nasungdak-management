@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
 import { skus, menuCategories } from '@/lib/db/schema'
 import { eq, isNull } from 'drizzle-orm'
@@ -45,6 +45,8 @@ export async function createSku(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/skus')
+    revalidateTag('skus:active')
+    revalidateTag('skus:filter')
 
     return {
       success: true,
@@ -90,6 +92,8 @@ export async function updateSku(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/skus')
+    revalidateTag('skus:active')
+    revalidateTag('skus:filter')
 
     return {
       success: true,
@@ -123,6 +127,8 @@ export async function deleteSku(id: string) {
       .where(eq(skus.id, id))
 
     revalidatePath('/dashboard/master-data/skus')
+    revalidateTag('skus:active')
+    revalidateTag('skus:filter')
 
     return {
       success: true,
@@ -237,6 +243,8 @@ export async function bulkCreateSkus(rows: CSVRow[]) {
     }
 
     revalidatePath('/dashboard/master-data/skus')
+    revalidateTag('skus:active')
+    revalidateTag('skus:filter')
 
     return {
       success: true,
