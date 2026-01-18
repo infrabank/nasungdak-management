@@ -1,9 +1,35 @@
+/**
+ * Purchases Page - INPUT CONTRACT
+ *
+ * Parameters passed to actions:
+ * - startDate: REQUIRED (defaults to 30 days ago if not provided)
+ * - endDate: REQUIRED (defaults to today if not provided)
+ * - menuId: OPTIONAL (undefined = no filter, never empty string)
+ * - ingredientId: OPTIONAL (undefined = no filter, never empty string)
+ * - storeId: OPTIONAL (undefined = no filter, never empty string)
+ *
+ * Empty strings from URL params are normalized to undefined before
+ * passing to actions. Actions assume valid input.
+ *
+ * RENDERING POLICY: force-dynamic
+ * - Date defaults use new Date() which must be computed at request time
+ * - List must reflect real-time data after mutations
+ * - Caching is handled at the action layer via unstable_cache
+ */
+
 import Link from 'next/link'
+
+// This page must render dynamically because:
+// 1. Date defaults (new Date()) must be fresh per request
+// 2. Data must reflect recent mutations immediately
+// 3. Caching is managed at action layer, not page layer
+export const dynamic = 'force-dynamic'
 import { getPurchases, getMenusForFilter, getIngredientsForFilter } from './actions'
 import CSVUpload from './csv-upload'
 import PurchaseRow from './purchase-row'
 import PurchaseCard from './purchase-card'
 import { formatDate, formatCurrency } from '@/lib/utils/format'
+import { normalizeOptionalParam } from '@/lib/params'
 
 interface SearchParams {
   startDate?: string
@@ -11,6 +37,7 @@ interface SearchParams {
   menuId?: string
   ingredientId?: string
   storeId?: string
+  page?: string
 }
 
 export default async function PurchasesPage({
@@ -25,21 +52,38 @@ export default async function PurchasesPage({
   const thirtyDaysAgo = new Date(today)
   thirtyDaysAgo.setDate(today.getDate() - 30)
 
+  // Normalize parameters: dates have defaults, filters use undefined for "no filter"
   const startDate = params.startDate || formatDate(thirtyDaysAgo, 'yyyy-MM-dd')
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
-  const menuId = params.menuId || undefined
-  const ingredientId = params.ingredientId || undefined
-  const storeId = params.storeId || undefined
+  const menuId = normalizeOptionalParam(params.menuId)
+  const ingredientId = normalizeOptionalParam(params.ingredientId)
+  const storeId = normalizeOptionalParam(params.storeId)
+  const page = Math.max(1, parseInt(params.page || '1', 10) || 1)
 
-  const [purchases, menus, ingredientsList] = await Promise.all([
-    getPurchases(startDate, endDate, menuId, ingredientId, storeId),
+  const [purchasesResult, menus, ingredientsList] = await Promise.all([
+    getPurchases(startDate, endDate, menuId, ingredientId, storeId, page),
     getMenusForFilter(),
     getIngredientsForFilter(),
   ])
 
-  // Calculate totals
+  const purchases = purchasesResult.items
+  const hasMore = purchasesResult.hasMore
+
+  // Calculate totals for current page
   const totalQuantity = purchases.reduce((sum, p) => sum + Number(p.quantity), 0)
   const totalAmount = purchases.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0)
+
+  // Build pagination URLs
+  const buildPageUrl = (newPage: number) => {
+    const searchParamsObj = new URLSearchParams()
+    searchParamsObj.set('startDate', startDate)
+    searchParamsObj.set('endDate', endDate)
+    if (menuId) searchParamsObj.set('menuId', menuId)
+    if (ingredientId) searchParamsObj.set('ingredientId', ingredientId)
+    if (storeId) searchParamsObj.set('storeId', storeId)
+    if (newPage > 1) searchParamsObj.set('page', String(newPage))
+    return `/dashboard/purchases?${searchParamsObj.toString()}`
+  }
 
   const newPurchaseUrl = storeId
     ? `/dashboard/purchases/new?storeId=${storeId}`
@@ -184,8 +228,9 @@ export default async function PurchasesPage({
         {/* Filter Actions */}
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
           <p className="text-sm text-gray-600">
-            {purchases.length}건
-            {menuId || ingredientId ? ' (필터 적용됨)' : ''}
+            페이지 {page} · {purchases.length}건 표시
+            {hasMore ? ' (더 있음)' : ''}
+            {menuId || ingredientId ? ' · 필터 적용됨' : ''}
           </p>
           <div className="flex gap-2">
             <a
@@ -318,6 +363,29 @@ export default async function PurchasesPage({
           </table>
         </div>
       </div>
+
+      {/* Pagination Controls */}
+      {(page > 1 || hasMore) && (
+        <div className="mt-6 flex items-center justify-center gap-4">
+          {page > 1 && (
+            <Link
+              href={buildPageUrl(page - 1)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            >
+              ← 이전
+            </Link>
+          )}
+          <span className="text-sm text-gray-600">페이지 {page}</span>
+          {hasMore && (
+            <Link
+              href={buildPageUrl(page + 1)}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+            >
+              다음 →
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Mobile: Fixed Bottom Action Bar - positioned above bottom nav */}
       <div className="fixed bottom-14 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 lg:hidden">

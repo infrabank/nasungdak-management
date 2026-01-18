@@ -225,11 +225,15 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
   }
 }
 
+// Default page size for pagination
+const SALES_PAGE_SIZE = 50
+
 async function fetchSalesRecords(
   startDate: string,
   endDate: string,
   skuId: string,
-  storeId: string
+  storeId: string,
+  page: number
 ) {
   // Build WHERE conditions
   const conditions = [isNull(salesRecords.deletedAt)]
@@ -248,6 +252,8 @@ async function fetchSalesRecords(
     conditions.push(eq(salesRecords.storeId, storeId))
   }
 
+  const offset = (page - 1) * SALES_PAGE_SIZE
+
   const records = await db
     .select({
       id: salesRecords.id,
@@ -264,33 +270,40 @@ async function fetchSalesRecords(
     .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
     .where(sql`${sql.join(conditions, sql` AND `)}`)
     .orderBy(desc(salesRecords.saleDate))
-    .limit(1000)
+    .limit(SALES_PAGE_SIZE + 1) // Fetch one extra to check if there are more
+    .offset(offset)
 
-  return records
+  // Determine if there are more pages
+  const hasMore = records.length > SALES_PAGE_SIZE
+  const items = hasMore ? records.slice(0, SALES_PAGE_SIZE) : records
+
+  return { items, hasMore, page }
 }
 
 export async function getSalesRecords(
   startDate?: string,
   endDate?: string,
   skuId?: string,
-  storeId?: string
+  storeId?: string,
+  page: number = 1
 ) {
   try {
     const normalizedStartDate = startDate ?? 'all'
     const normalizedEndDate = endDate ?? 'all'
     const normalizedSkuId = skuId ?? 'all'
     const normalizedStoreId = storeId ?? 'all'
+    const normalizedPage = Math.max(1, page)
 
     const getCachedSalesRecords = unstable_cache(
       fetchSalesRecords,
-      ['sales:list', normalizedStartDate, normalizedEndDate, normalizedSkuId, normalizedStoreId],
+      ['sales:list', normalizedStartDate, normalizedEndDate, normalizedSkuId, normalizedStoreId, String(normalizedPage)],
       { tags: [`sales:${normalizedStoreId}`] }
     )
 
-    return await getCachedSalesRecords(normalizedStartDate, normalizedEndDate, normalizedSkuId, normalizedStoreId)
+    return await getCachedSalesRecords(normalizedStartDate, normalizedEndDate, normalizedSkuId, normalizedStoreId, normalizedPage)
   } catch (error) {
     console.error('Failed to fetch sales records:', error)
-    return []
+    return { items: [], hasMore: false, page: 1 }
   }
 }
 

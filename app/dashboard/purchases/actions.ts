@@ -223,12 +223,16 @@ export async function togglePurchaseValidation(id: string) {
   }
 }
 
+// Default page size for pagination
+const PURCHASES_PAGE_SIZE = 50
+
 async function fetchPurchases(
   startDate: string,
   endDate: string,
   menuId: string,
   ingredientId: string,
-  storeId: string
+  storeId: string,
+  page: number
 ) {
   // Build WHERE conditions
   const conditions = [isNull(purchaseTransactions.deletedAt)]
@@ -251,6 +255,8 @@ async function fetchPurchases(
     conditions.push(eq(purchaseTransactions.storeId, storeId))
   }
 
+  const offset = (page - 1) * PURCHASES_PAGE_SIZE
+
   const purchases = await db
     .select({
       id: purchaseTransactions.id,
@@ -272,9 +278,14 @@ async function fetchPurchases(
     .leftJoin(ingredients, eq(purchaseTransactions.ingredientId, ingredients.id))
     .where(and(...conditions))
     .orderBy(desc(purchaseTransactions.transactionDate))
-    .limit(1000)
+    .limit(PURCHASES_PAGE_SIZE + 1) // Fetch one extra to check if there are more
+    .offset(offset)
 
-  return purchases
+  // Determine if there are more pages
+  const hasMore = purchases.length > PURCHASES_PAGE_SIZE
+  const items = hasMore ? purchases.slice(0, PURCHASES_PAGE_SIZE) : purchases
+
+  return { items, hasMore, page }
 }
 
 export async function getPurchases(
@@ -282,7 +293,8 @@ export async function getPurchases(
   endDate?: string,
   menuId?: string,
   ingredientId?: string,
-  storeId?: string
+  storeId?: string,
+  page: number = 1
 ) {
   try {
     const normalizedStartDate = startDate ?? 'all'
@@ -290,17 +302,18 @@ export async function getPurchases(
     const normalizedMenuId = menuId ?? 'all'
     const normalizedIngredientId = ingredientId ?? 'all'
     const normalizedStoreId = storeId ?? 'all'
+    const normalizedPage = Math.max(1, page)
 
     const getCachedPurchases = unstable_cache(
       fetchPurchases,
-      ['purchases:list', normalizedStartDate, normalizedEndDate, normalizedMenuId, normalizedIngredientId, normalizedStoreId],
+      ['purchases:list', normalizedStartDate, normalizedEndDate, normalizedMenuId, normalizedIngredientId, normalizedStoreId, String(normalizedPage)],
       { tags: [`purchases:${normalizedStoreId}`] }
     )
 
-    return await getCachedPurchases(normalizedStartDate, normalizedEndDate, normalizedMenuId, normalizedIngredientId, normalizedStoreId)
+    return await getCachedPurchases(normalizedStartDate, normalizedEndDate, normalizedMenuId, normalizedIngredientId, normalizedStoreId, normalizedPage)
   } catch (error) {
     console.error('Failed to fetch purchases:', error)
-    return []
+    return { items: [], hasMore: false, page: 1 }
   }
 }
 
