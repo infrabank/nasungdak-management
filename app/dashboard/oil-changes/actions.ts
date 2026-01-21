@@ -122,17 +122,16 @@ export async function getOilChangeById(id: string) {
   }
 }
 
-export async function updateOilChange(
-  prevState: any,
-  formData: FormData,
-  id: string
-) {
+export async function updateOilChange(id: string, formData: FormData) {
   try {
     const notes = formData.get('notes')
     const rawData = {
       changeDate: formData.get('changeDate'),
       fryerType: formData.get('fryerType'),
-      notes: notes && typeof notes === 'string' && notes.trim() ? notes.trim() : null,
+      notes:
+        notes && typeof notes === 'string' && notes.trim()
+          ? notes.trim()
+          : null,
     }
 
     const validatedData = oilChangeSchema.parse(rawData)
@@ -150,8 +149,9 @@ export async function updateOilChange(
     let usageDays = 0
     if (previousChange && previousChange.changeDate) {
       const daysDiff = Math.floor(
-        (new Date(validatedData.changeDate).getTime() - new Date(previousChange.changeDate).getTime()) /
-        (1000 * 60 * 60 * 24)
+        (new Date(validatedData.changeDate).getTime() -
+          new Date(previousChange.changeDate).getTime()) /
+          (1000 * 60 * 60 * 24)
       )
       usageDays = Math.max(0, daysDiff)
     }
@@ -165,7 +165,9 @@ export async function updateOilChange(
         notes: validatedData.notes,
         updatedAt: new Date(),
       })
-      .where(and(eq(oilChangeHistory.id, id), isNull(oilChangeHistory.deletedAt)))
+      .where(
+        and(eq(oilChangeHistory.id, id), isNull(oilChangeHistory.deletedAt))
+      )
 
     revalidatePath('/dashboard/oil-changes')
     return { success: true, error: undefined }
