@@ -503,10 +503,9 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
         menuName: menuCategories.menuName,
       })
       .from(menuCategories)
-      .where(and(
-        isNull(menuCategories.deletedAt),
-        eq(menuCategories.isActive, true)
-      ))
+      .where(
+        and(isNull(menuCategories.deletedAt), eq(menuCategories.isActive, true))
+      )
 
     const ingredientsList = await db
       .select({
@@ -514,14 +513,15 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
         ingredientName: ingredients.ingredientName,
       })
       .from(ingredients)
-      .where(and(
-        isNull(ingredients.deletedAt),
-        eq(ingredients.isActive, true)
-      ))
+      .where(
+        and(isNull(ingredients.deletedAt), eq(ingredients.isActive, true))
+      )
 
     // Create lookup maps
-    const menuMap = new Map(menus.map(m => [m.menuName, m.id]))
-    const ingredientMap = new Map(ingredientsList.map(i => [i.ingredientName, i.id]))
+    const menuMap = new Map(menus.map((m) => [m.menuName, m.id]))
+    const ingredientMap = new Map(
+      ingredientsList.map((i) => [i.ingredientName, i.id])
+    )
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
@@ -567,13 +567,11 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
         const isValid = !!menuIngredient
 
         // Insert purchase transaction
-        await db
-          .insert(purchaseTransactions)
-          .values({
-            ...validatedData,
-            isValid,
-            createdBy: 'system',
-          })
+        await db.insert(purchaseTransactions).values({
+          ...validatedData,
+          isValid,
+          createdBy: 'system',
+        })
 
         successCount++
       } catch (error) {
@@ -581,7 +579,9 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
         if (error instanceof z.ZodError) {
           errors.push(`${rowNum}행: ${error.errors[0].message}`)
         } else {
-          errors.push(`${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+          errors.push(
+            `${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+          )
         }
       }
     }
@@ -606,5 +606,88 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
       failedCount,
       error: error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
     }
+  }
+}
+
+async function fetchPurchasesTotals(
+  startDate: string,
+  endDate: string,
+  menuId: string,
+  ingredientId: string,
+  storeId: string
+) {
+  const conditions = [isNull(purchaseTransactions.deletedAt)]
+
+  if (startDate !== 'all' && endDate !== 'all') {
+    conditions.push(
+      sql`${purchaseTransactions.transactionDate} BETWEEN ${startDate}::date AND ${endDate}::date`
+    )
+  }
+
+  if (menuId !== 'all') {
+    conditions.push(eq(purchaseTransactions.menuId, menuId))
+  }
+
+  if (ingredientId !== 'all') {
+    conditions.push(eq(purchaseTransactions.ingredientId, ingredientId))
+  }
+
+  if (storeId !== 'all') {
+    conditions.push(eq(purchaseTransactions.storeId, storeId))
+  }
+
+  const result = await db
+    .select({
+      totalCount: sql<number>`COUNT(*)`.mapWith(Number),
+      totalQuantity: sql<string>`COALESCE(SUM(${purchaseTransactions.quantity}), 0)`,
+      totalAmount: sql<string>`COALESCE(SUM(${purchaseTransactions.totalAmount}), 0)`,
+    })
+    .from(purchaseTransactions)
+    .where(and(...conditions))
+
+  return {
+    totalCount: result[0]?.totalCount ?? 0,
+    totalQuantity: Number(result[0]?.totalQuantity ?? 0),
+    totalAmount: Number(result[0]?.totalAmount ?? 0),
+  }
+}
+
+export async function getPurchasesTotals(
+  startDate?: string,
+  endDate?: string,
+  menuId?: string,
+  ingredientId?: string,
+  storeId?: string
+) {
+  try {
+    const normalizedStartDate = startDate ?? 'all'
+    const normalizedEndDate = endDate ?? 'all'
+    const normalizedMenuId = menuId ?? 'all'
+    const normalizedIngredientId = ingredientId ?? 'all'
+    const normalizedStoreId = storeId ?? 'all'
+
+    const getCachedPurchasesTotals = unstable_cache(
+      fetchPurchasesTotals,
+      [
+        'purchases:totals',
+        normalizedStartDate,
+        normalizedEndDate,
+        normalizedMenuId,
+        normalizedIngredientId,
+        normalizedStoreId,
+      ],
+      { tags: [`purchases:${normalizedStoreId}`] }
+    )
+
+    return await getCachedPurchasesTotals(
+      normalizedStartDate,
+      normalizedEndDate,
+      normalizedMenuId,
+      normalizedIngredientId,
+      normalizedStoreId
+    )
+  } catch (error) {
+    console.error('Failed to fetch purchases totals:', error)
+    return { totalCount: 0, totalQuantity: 0, totalAmount: 0 }
   }
 }

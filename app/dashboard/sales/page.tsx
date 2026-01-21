@@ -23,7 +23,7 @@ import Link from 'next/link'
 // 2. Data must reflect recent mutations immediately
 // 3. Caching is managed at action layer, not page layer
 export const dynamic = 'force-dynamic'
-import { getSalesRecords, getSKUsForFilter } from './actions'
+import { getSalesRecords, getSalesTotals, getSKUsForFilter } from './actions'
 import CSVUpload from './csv-upload'
 import CSVUploadTranspose from './csv-upload-transpose'
 import SalesList from './sales-list'
@@ -57,23 +57,16 @@ export default async function SalesPage({
   const storeId = normalizeOptionalParam(params.storeId)
   const page = Math.max(1, parseInt(params.page || '1', 10) || 1)
 
-  const [salesResult, skuList] = await Promise.all([
+  const [salesResult, totals, skuList] = await Promise.all([
     getSalesRecords(startDate, endDate, skuId, storeId, page),
+    getSalesTotals(startDate, endDate, skuId, storeId),
     getSKUsForFilter(),
   ])
 
   const sales = salesResult.items
   const hasMore = salesResult.hasMore
 
-  // Calculate totals for current page
-  const totalQuantity = sales.reduce(
-    (sum, s) => sum + Number(s.quantitySold),
-    0
-  )
-  const totalRevenue = sales.reduce(
-    (sum, s) => sum + Number(s.totalRevenue || 0),
-    0
-  )
+  const { totalCount, totalQuantity, totalRevenue } = totals
 
   // Build pagination URLs
   const buildPageUrl = (newPage: number) => {
@@ -225,6 +218,7 @@ export default async function SalesPage({
       {/* Sales List */}
       <SalesList
         sales={sales}
+        totalCount={totalCount}
         totalQuantity={totalQuantity}
         totalRevenue={totalRevenue}
       />

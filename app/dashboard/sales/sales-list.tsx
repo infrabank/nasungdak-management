@@ -19,12 +19,14 @@ interface Sale {
 
 interface SalesListProps {
   sales: Sale[]
+  totalCount: number
   totalQuantity: number
   totalRevenue: number
 }
 
 export default function SalesList({
   sales,
+  totalCount,
   totalQuantity,
   totalRevenue,
 }: SalesListProps) {
@@ -85,7 +87,7 @@ export default function SalesList({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-green-600">
-                  총 {sales.length}건
+                  검색 기간 총 {totalCount}건
                 </p>
                 <p className="text-xs text-green-500">
                   판매량 합계: {totalQuantity}개
@@ -256,7 +258,7 @@ export default function SalesList({
                           colSpan={3}
                           className="px-3 py-4 text-sm text-right text-gray-900"
                         >
-                          합계
+                          검색 기간 합계 ({totalCount}건)
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
                           {totalQuantity}개

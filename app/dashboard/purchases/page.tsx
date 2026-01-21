@@ -24,7 +24,12 @@ import Link from 'next/link'
 // 2. Data must reflect recent mutations immediately
 // 3. Caching is managed at action layer, not page layer
 export const dynamic = 'force-dynamic'
-import { getPurchases, getMenusForFilter, getIngredientsForFilter } from './actions'
+import {
+  getPurchases,
+  getPurchasesTotals,
+  getMenusForFilter,
+  getIngredientsForFilter,
+} from './actions'
 import CSVUpload from './csv-upload'
 import PurchaseRow from './purchase-row'
 import PurchaseCard from './purchase-card'
@@ -60,18 +65,16 @@ export default async function PurchasesPage({
   const storeId = normalizeOptionalParam(params.storeId)
   const page = Math.max(1, parseInt(params.page || '1', 10) || 1)
 
-  const [purchasesResult, menus, ingredientsList] = await Promise.all([
+  const [purchasesResult, totals, menus, ingredientsList] = await Promise.all([
     getPurchases(startDate, endDate, menuId, ingredientId, storeId, page),
+    getPurchasesTotals(startDate, endDate, menuId, ingredientId, storeId),
     getMenusForFilter(),
     getIngredientsForFilter(),
   ])
 
   const purchases = purchasesResult.items
   const hasMore = purchasesResult.hasMore
-
-  // Calculate totals for current page
-  const totalQuantity = purchases.reduce((sum, p) => sum + Number(p.quantity), 0)
-  const totalAmount = purchases.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0)
+  const { totalCount, totalQuantity, totalAmount } = totals
 
   // Build pagination URLs
   const buildPageUrl = (newPage: number) => {
@@ -255,7 +258,9 @@ export default async function PurchasesPage({
           <div className="bg-blue-50 rounded-xl p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-blue-600">총 {purchases.length}건</p>
+                <p className="text-sm text-blue-600">
+                  검색 기간 총 {totalCount}건
+                </p>
                 <p className="text-xs text-blue-500">
                   수량 합계: {totalQuantity.toFixed(2)}
                 </p>
@@ -344,7 +349,7 @@ export default async function PurchasesPage({
                       colSpan={4}
                       className="py-4 pl-4 pr-3 text-sm text-right text-gray-900 sm:pl-6"
                     >
-                      합계
+                      검색 기간 합계 ({totalCount}건)
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
                       {totalQuantity.toFixed(2)}

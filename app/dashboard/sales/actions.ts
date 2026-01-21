@@ -496,7 +496,9 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
       .where(isNull(skus.deletedAt))
 
     // Create lookup map
-    const skuMap = new Map(skuList.map(s => [s.skuName, { id: s.id, unitPrice: s.unitPrice }]))
+    const skuMap = new Map(
+      skuList.map((s) => [s.skuName, { id: s.id, unitPrice: s.unitPrice }])
+    )
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
@@ -520,14 +522,12 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
         })
 
         // Insert sales record
-        await db
-          .insert(salesRecords)
-          .values({
-            ...validatedData,
-            storeId: storeId || null,
-            unitPrice: skuInfo.unitPrice,
-            createdBy: 'system',
-          })
+        await db.insert(salesRecords).values({
+          ...validatedData,
+          storeId: storeId || null,
+          unitPrice: skuInfo.unitPrice,
+          createdBy: 'system',
+        })
 
         successCount++
       } catch (error) {
@@ -535,7 +535,9 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
         if (error instanceof z.ZodError) {
           errors.push(`${rowNum}행: ${error.errors[0].message}`)
         } else {
-          errors.push(`${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+          errors.push(
+            `${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+          )
         }
       }
     }
@@ -563,5 +565,79 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
       failedCount,
       error: error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
     }
+  }
+}
+
+async function fetchSalesTotals(
+  startDate: string,
+  endDate: string,
+  skuId: string,
+  storeId: string
+) {
+  const conditions = [isNull(salesRecords.deletedAt)]
+
+  if (startDate !== 'all' && endDate !== 'all') {
+    conditions.push(
+      sql`${salesRecords.saleDate} BETWEEN ${startDate}::date AND ${endDate}::date`
+    )
+  }
+
+  if (skuId !== 'all') {
+    conditions.push(eq(salesRecords.skuId, skuId))
+  }
+
+  if (storeId !== 'all') {
+    conditions.push(eq(salesRecords.storeId, storeId))
+  }
+
+  const result = await db
+    .select({
+      totalCount: sql<number>`COUNT(*)`.mapWith(Number),
+      totalQuantity: sql<string>`COALESCE(SUM(${salesRecords.quantitySold}), 0)`,
+      totalRevenue: sql<string>`COALESCE(SUM(${salesRecords.totalRevenue}), 0)`,
+    })
+    .from(salesRecords)
+    .where(sql`${sql.join(conditions, sql` AND `)}`)
+
+  return {
+    totalCount: result[0]?.totalCount ?? 0,
+    totalQuantity: Number(result[0]?.totalQuantity ?? 0),
+    totalRevenue: Number(result[0]?.totalRevenue ?? 0),
+  }
+}
+
+export async function getSalesTotals(
+  startDate?: string,
+  endDate?: string,
+  skuId?: string,
+  storeId?: string
+) {
+  try {
+    const normalizedStartDate = startDate ?? 'all'
+    const normalizedEndDate = endDate ?? 'all'
+    const normalizedSkuId = skuId ?? 'all'
+    const normalizedStoreId = storeId ?? 'all'
+
+    const getCachedSalesTotals = unstable_cache(
+      fetchSalesTotals,
+      [
+        'sales:totals',
+        normalizedStartDate,
+        normalizedEndDate,
+        normalizedSkuId,
+        normalizedStoreId,
+      ],
+      { tags: [`sales:${normalizedStoreId}`] }
+    )
+
+    return await getCachedSalesTotals(
+      normalizedStartDate,
+      normalizedEndDate,
+      normalizedSkuId,
+      normalizedStoreId
+    )
+  } catch (error) {
+    console.error('Failed to fetch sales totals:', error)
+    return { totalCount: 0, totalQuantity: 0, totalRevenue: 0 }
   }
 }
