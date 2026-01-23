@@ -130,13 +130,13 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
   }
 
   const inputClass =
-    'w-full rounded border-0 py-1 px-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'w-full border-2 border-brutal-black py-1 px-2 text-sm font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal transition-all'
   const selectClass =
-    'w-full rounded border-0 py-1 px-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'w-full border-2 border-brutal-black py-1 px-2 text-sm font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal transition-all'
 
   if (isEditing) {
     return (
-      <tr className="bg-blue-50">
+      <tr className="bg-brutal-blue/30">
         <td className="whitespace-nowrap py-2 pl-4 pr-2 text-sm sm:pl-6">
           <input
             type="date"
@@ -195,10 +195,10 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
             className={`${inputClass} text-right w-24`}
           />
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-right">
+        <td className="whitespace-nowrap px-2 py-2 text-sm text-brutal-black/50 text-right">
           -
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm text-center text-gray-500">
+        <td className="whitespace-nowrap px-2 py-2 text-sm text-center text-brutal-black/50">
           -
         </td>
         <td className="whitespace-nowrap px-2 py-2 text-sm text-right">
@@ -206,14 +206,14 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-medium text-gray-700 bg-white hover:bg-gray-100 rounded ring-1 ring-gray-300 disabled:opacity-50"
+              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal transition-all disabled:opacity-50"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50"
+              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal transition-all disabled:opacity-50"
             >
               {isSaving ? '...' : '저장'}
             </button>
@@ -224,36 +224,36 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
   }
 
   return (
-    <tr className={isDeleting ? 'opacity-50' : ''}>
-      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
+    <tr className={`hover:bg-brutal-yellow/20 transition-colors ${isDeleting ? 'opacity-50' : ''}`}>
+      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-bold text-brutal-black sm:pl-6">
         {formatDate(new Date(purchase.transactionDate), 'yyyy-MM-dd')}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black">
         {purchase.menuName || '-'}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black">
         {purchase.ingredientName || '-'}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black">
         {purchase.supplierName}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black text-right">
         {Number(purchase.quantity).toFixed(2)}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black text-right">
         {formatCurrency(Number(purchase.unitPrice))}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right font-medium">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-bold">
         {formatCurrency(Number(purchase.totalAmount))}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-center">
         <button
           onClick={handleToggle}
           disabled={isToggling}
-          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold leading-5 transition-colors ${
+          className={`inline-flex border-2 border-brutal-black px-2 py-1 text-xs font-bold leading-5 transition-all ${
             isValid
-              ? 'bg-green-100 text-green-800 hover:bg-green-200'
-              : 'bg-red-100 text-red-800 hover:bg-red-200'
+              ? 'bg-brutal-green text-brutal-black hover:shadow-brutal-sm'
+              : 'bg-brutal-pink text-brutal-black hover:shadow-brutal-sm'
           } ${isToggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         >
           {isToggling ? '...' : isValid ? '유효' : '무효'}
@@ -264,14 +264,14 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="font-bold text-brutal-black underline underline-offset-2 hover:bg-brutal-blue px-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="font-bold text-brutal-black underline underline-offset-2 hover:bg-brutal-pink px-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

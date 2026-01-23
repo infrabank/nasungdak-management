@@ -178,16 +178,16 @@ export default function PurchaseForm() {
   }
 
   const inputClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm placeholder:text-brutal-black/50 focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
   const selectClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 appearance-none bg-white'
-  const labelClass = 'block text-sm font-medium text-gray-700 mb-2'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all appearance-none'
+  const labelClass = 'block text-sm font-bold text-brutal-black mb-2'
 
   return (
     <form onSubmit={handleSubmit} className="pb-32">
       {/* Shared Fields Section */}
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4 mb-4">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
+        <h3 className="text-sm font-black text-brutal-black uppercase tracking-wide mb-4">
           공통 정보
         </h3>
         <div className="space-y-4">
@@ -224,7 +224,7 @@ export default function PurchaseForm() {
                 ))}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                <svg className="h-5 w-5 text-brutal-black" viewBox="0 0 20 20" fill="currentColor">
                   <path
                     fillRule="evenodd"
                     d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
@@ -240,7 +240,7 @@ export default function PurchaseForm() {
       {/* Entry Rows Section */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-3 px-1">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+          <h3 className="text-sm font-black text-brutal-black uppercase tracking-wide">
             매입 항목 ({entries.length}건)
           </h3>
         </div>
@@ -255,23 +255,23 @@ export default function PurchaseForm() {
             return (
               <div
                 key={entry.id}
-                className={`bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 overflow-hidden ${
-                  isComplete ? 'ring-green-200' : ''
+                className={`bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden ${
+                  isComplete ? 'border-brutal-green' : ''
                 }`}
               >
                 {/* Card Header */}
                 <div
-                  className="flex items-center justify-between p-4 bg-gray-50 cursor-pointer"
+                  className="flex items-center justify-between p-4 bg-brutal-yellow/30 cursor-pointer border-b-2 border-brutal-black"
                   onClick={() => updateEntry(entry.id, 'isExpanded', !entry.isExpanded)}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="flex items-center justify-center w-7 h-7 rounded-full bg-blue-100 text-blue-600 text-sm font-bold">
+                    <span className="flex items-center justify-center w-7 h-7 bg-brutal-blue border-2 border-brutal-black text-brutal-black text-sm font-black">
                       {index + 1}
                     </span>
                     <div>
-                      <p className="font-medium text-gray-900">{getEntryDisplayName(entry)}</p>
+                      <p className="font-bold text-brutal-black">{getEntryDisplayName(entry)}</p>
                       {isComplete && (
-                        <p className="text-sm text-green-600 font-medium">
+                        <p className="text-sm text-brutal-black font-bold">
                           {rowTotal.toLocaleString()}원
                         </p>
                       )}
@@ -285,7 +285,7 @@ export default function PurchaseForm() {
                           e.stopPropagation()
                           removeRow(entry.id)
                         }}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                        className="p-2 text-brutal-black hover:bg-brutal-pink border-2 border-brutal-black"
                       >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path
@@ -298,7 +298,7 @@ export default function PurchaseForm() {
                       </button>
                     )}
                     <svg
-                      className={`w-5 h-5 text-gray-400 transition-transform ${
+                      className={`w-5 h-5 text-brutal-black transition-transform ${
                         entry.isExpanded ? 'rotate-180' : ''
                       }`}
                       fill="none"
@@ -332,7 +332,7 @@ export default function PurchaseForm() {
                             ))}
                         </select>
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                          <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                          <svg className="h-5 w-5 text-brutal-black" viewBox="0 0 20 20" fill="currentColor">
                             <path
                               fillRule="evenodd"
                               d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
@@ -351,7 +351,7 @@ export default function PurchaseForm() {
                           value={entry.ingredientId}
                           onChange={(e) => updateEntry(entry.id, 'ingredientId', e.target.value)}
                           disabled={!entry.menuId}
-                          className={`${selectClass} disabled:bg-gray-100 disabled:cursor-not-allowed`}
+                          className={`${selectClass} disabled:bg-brutal-black/10 disabled:cursor-not-allowed`}
                         >
                           <option value="">
                             {entry.menuId ? '재료를 선택하세요' : '먼저 메뉴를 선택하세요'}
@@ -363,7 +363,7 @@ export default function PurchaseForm() {
                           ))}
                         </select>
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                          <svg className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                          <svg className="h-5 w-5 text-brutal-black" viewBox="0 0 20 20" fill="currentColor">
                             <path
                               fillRule="evenodd"
                               d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
@@ -373,7 +373,7 @@ export default function PurchaseForm() {
                         </div>
                       </div>
                       {entry.menuId && filteredIngredients.length === 0 && (
-                        <p className="mt-2 text-sm text-amber-600">⚠️ 매핑된 재료가 없습니다</p>
+                        <p className="mt-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black p-2">⚠️ 매핑된 재료가 없습니다</p>
                       )}
                     </div>
 
@@ -408,9 +408,9 @@ export default function PurchaseForm() {
                     </div>
 
                     {(entry.quantity || entry.unitPrice) && (
-                      <div className="bg-gray-50 rounded-lg p-3 text-center">
-                        <span className="text-sm text-gray-500">소계: </span>
-                        <span className="text-lg font-bold text-gray-900">
+                      <div className="bg-brutal-green/30 border-2 border-brutal-black p-3 text-center">
+                        <span className="text-sm font-bold text-brutal-black">소계: </span>
+                        <span className="text-lg font-black text-brutal-black">
                           {rowTotal.toLocaleString()}원
                         </span>
                       </div>
@@ -436,7 +436,7 @@ export default function PurchaseForm() {
         <button
           type="button"
           onClick={addRow}
-          className="w-full mt-3 py-4 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 font-medium hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
+          className="w-full mt-3 py-4 border-3 border-dashed border-brutal-black text-brutal-black font-bold hover:border-solid hover:bg-brutal-blue transition-all"
         >
           + 항목 추가
         </button>
@@ -444,10 +444,10 @@ export default function PurchaseForm() {
 
       {/* Grand Total - Sticky */}
       <div className="sticky bottom-24 z-10">
-        <div className="bg-gradient-to-t from-gray-50 via-gray-50 to-transparent pt-4 -mx-4 px-4">
-          <div className="bg-red-50 rounded-xl p-4 text-center shadow-sm">
-            <span className="text-sm text-red-600">총 합계</span>
-            <p className="text-2xl font-bold text-red-700">
+        <div className="pt-4 -mx-4 px-4">
+          <div className="bg-brutal-pink border-3 border-brutal-black shadow-brutal p-4 text-center">
+            <span className="text-sm font-bold text-brutal-black">총 합계</span>
+            <p className="text-2xl font-black text-brutal-black">
               {calculateGrandTotal().toLocaleString()}원
             </p>
           </div>
@@ -455,7 +455,7 @@ export default function PurchaseForm() {
       </div>
 
       {/* Fixed Bottom Action Bar - positioned above bottom nav on mobile */}
-      <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4 z-20">
+      <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-brutal-yellow border-t-3 border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4 z-20">
         <div className="flex gap-3 max-w-lg mx-auto">
           <Button
             type="button"

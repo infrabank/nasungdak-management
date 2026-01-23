@@ -83,22 +83,22 @@ export default async function SalesPage({
     ? `/dashboard/sales/daily?storeId=${storeId}`
     : '/dashboard/sales/daily'
 
-  // Mobile-friendly input classes
+  // Mobile-friendly input classes - Neo-Brutalism
   const inputClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
   const selectClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 appearance-none bg-white'
-  const labelClass = 'block text-sm font-medium text-gray-700 mb-2'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all appearance-none'
+  const labelClass = 'block text-sm font-bold text-brutal-black mb-2'
 
   return (
     <div className="pb-24 md:pb-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-black text-brutal-black">
             판매 관리
           </h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm font-medium text-brutal-black">
             일일 판매 기록 조회 및 관리
           </p>
         </div>
@@ -108,7 +108,7 @@ export default async function SalesPage({
           <CSVUpload storeId={storeId} />
           <Link
             href={dailySalesUrl}
-            className="block rounded-md bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+            className="block bg-brutal-yellow border-2 border-brutal-black px-4 py-2 text-center text-sm font-bold text-brutal-black shadow-brutal hover:shadow-brutal-hover hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
           >
             일일 판매 입력
           </Link>
@@ -118,7 +118,7 @@ export default async function SalesPage({
       {/* Filters */}
       <form
         method="GET"
-        className="mt-4 bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4"
+        className="mt-4 bg-brutal-white border-3 border-brutal-black shadow-brutal p-4"
       >
         {storeId && <input type="hidden" name="storeId" value={storeId} />}
 
@@ -172,7 +172,7 @@ export default async function SalesPage({
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
                 <svg
-                  className="h-5 w-5 text-gray-400"
+                  className="h-5 w-5 text-brutal-black"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -188,8 +188,8 @@ export default async function SalesPage({
         </div>
 
         {/* Filter Actions */}
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-          <p className="text-sm text-gray-600">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t-2 border-brutal-black/20">
+          <p className="text-sm font-medium text-brutal-black">
             페이지 {page} · {sales.length}건 표시
             {hasMore ? ' (더 있음)' : ''}
             {skuId ? ' · 필터 적용됨' : ''}
@@ -201,13 +201,13 @@ export default async function SalesPage({
                   ? `/dashboard/sales?storeId=${storeId}`
                   : '/dashboard/sales'
               }
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
             >
               초기화
             </a>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500"
+              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
             >
               조회
             </button>
@@ -229,16 +229,16 @@ export default async function SalesPage({
           {page > 1 && (
             <Link
               href={buildPageUrl(page - 1)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
             >
               ← 이전
             </Link>
           )}
-          <span className="text-sm text-gray-600">페이지 {page}</span>
+          <span className="text-sm font-bold text-brutal-black">페이지 {page}</span>
           {hasMore && (
             <Link
               href={buildPageUrl(page + 1)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
             >
               다음 →
             </Link>
@@ -247,12 +247,12 @@ export default async function SalesPage({
       )}
 
       {/* Mobile: Fixed Bottom Action Bar - positioned above bottom nav */}
-      <div className="fixed bottom-14 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 lg:hidden">
+      <div className="fixed bottom-14 left-0 right-0 bg-brutal-yellow border-t-3 border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 lg:hidden">
         <div className="flex gap-3">
           <CSVUploadTranspose storeId={storeId} />
           <Link
             href={dailySalesUrl}
-            className="flex-1 rounded-xl bg-blue-600 py-3 text-center text-base font-semibold text-white shadow-sm hover:bg-blue-500"
+            className="flex-1 bg-brutal-white border-3 border-brutal-black py-3 text-center text-base font-bold text-brutal-black shadow-brutal hover:shadow-brutal-hover hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
           >
             + 일일 판매 입력
           </Link>

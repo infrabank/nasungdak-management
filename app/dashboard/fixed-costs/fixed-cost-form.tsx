@@ -22,10 +22,10 @@ export default function FixedCostForm({ storeId }: FixedCostFormProps) {
   const today = formatDate(new Date(), 'yyyy-MM-dd')
 
   const inputClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all placeholder:text-brutal-black/50'
   const selectClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 appearance-none bg-white'
-  const labelClass = 'block text-sm font-medium text-gray-700 mb-2'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all appearance-none'
+  const labelClass = 'block text-sm font-bold text-brutal-black mb-2'
 
   return (
     <form action={formAction} className="pb-32">
@@ -39,8 +39,8 @@ export default function FixedCostForm({ storeId }: FixedCostFormProps) {
         </div>
       )}
 
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4 mb-4">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
+        <h3 className="text-sm font-black text-brutal-black uppercase tracking-wide mb-4">
           고정비용 등록
         </h3>
 

@@ -15,18 +15,18 @@ interface SkuCardProps {
 
 export default function SkuCard({ sku }: SkuCardProps) {
   return (
-    <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
+    <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-100">
+      <div className="flex items-center justify-between p-4 bg-brutal-blue/30 border-b-2 border-brutal-black">
         <div className="flex items-center gap-2">
           <span className="text-xl">📦</span>
-          <span className="font-semibold text-gray-900">{sku.skuName}</span>
+          <span className="font-bold text-brutal-black">{sku.skuName}</span>
         </div>
         <span
-          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+          className={`inline-flex border-2 border-brutal-black px-2.5 py-0.5 text-xs font-bold ${
             sku.isActive
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
+              ? 'bg-brutal-green text-brutal-black'
+              : 'bg-brutal-white text-brutal-black'
           }`}
         >
           {sku.isActive ? '활성' : '비활성'}
@@ -37,22 +37,22 @@ export default function SkuCard({ sku }: SkuCardProps) {
       <div className="p-4 space-y-3">
         {/* Menu */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm font-medium text-brutal-black/70">
             <span>🍗</span>
             <span>메뉴</span>
           </div>
-          <span className="font-medium text-gray-900">
+          <span className="font-bold text-brutal-black">
             {sku.menuName || '-'}
           </span>
         </div>
 
         {/* Price */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
+          <div className="flex items-center gap-2 text-sm font-medium text-brutal-black/70">
             <span>💰</span>
             <span>판매 단가</span>
           </div>
-          <span className="font-medium text-gray-900">
+          <span className="font-bold text-brutal-black">
             {formatCurrency(Number(sku.unitPrice))}
           </span>
         </div>
@@ -60,13 +60,13 @@ export default function SkuCard({ sku }: SkuCardProps) {
         {/* Description */}
         {sku.description && (
           <>
-            <div className="border-t border-gray-100 my-2" />
+            <div className="border-t-2 border-brutal-black/20 my-2" />
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
+              <div className="flex items-center gap-2 text-sm font-medium text-brutal-black/70">
                 <span>📝</span>
                 <span>설명</span>
               </div>
-              <p className="text-sm text-gray-600 pl-6">
+              <p className="text-sm font-medium text-brutal-black pl-6">
                 {sku.description}
               </p>
             </div>
@@ -75,7 +75,7 @@ export default function SkuCard({ sku }: SkuCardProps) {
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
+      <div className="px-4 py-3 bg-brutal-yellow/30 border-t-2 border-brutal-black flex justify-end">
         <SkuForm sku={sku} />
       </div>
     </div>

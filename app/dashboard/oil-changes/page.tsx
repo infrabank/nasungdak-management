@@ -39,10 +39,10 @@ export default async function OilChangesPage({
 
   // Mobile-friendly input classes
   const inputClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
   const selectClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 appearance-none bg-white'
-  const labelClass = 'block text-sm font-medium text-gray-700 mb-2'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all appearance-none'
+  const labelClass = 'block text-sm font-bold text-brutal-black mb-2'
 
   return (
     <div className="pb-24 md:pb-0">
@@ -67,19 +67,19 @@ export default async function OilChangesPage({
 
       {/* Stats Cards */}
       <div className="mt-4 grid grid-cols-2 gap-3">
-        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">
+        <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4">
+          <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">
             최근 30일
           </p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
+          <p className="text-2xl font-black text-brutal-black mt-1">
             {stats.recentChanges.count}회
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4">
-          <p className="text-xs text-gray-500 uppercase tracking-wide">
+        <div className="bg-brutal-blue border-3 border-brutal-black shadow-brutal p-4">
+          <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">
             🔵 초벌 마지막
           </p>
-          <p className="text-lg font-bold text-gray-900 mt-1">
+          <p className="text-lg font-black text-brutal-black mt-1">
             {stats.lastChangeByFryer['초벌']
               ? formatDate(
                   new Date(stats.lastChangeByFryer['초벌'].changeDate),
@@ -93,7 +93,7 @@ export default async function OilChangesPage({
       {/* Filters */}
       <form
         method="GET"
-        className="mt-4 bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4"
+        className="mt-4 bg-brutal-white border-3 border-brutal-black shadow-brutal p-4"
       >
         {storeId && <input type="hidden" name="storeId" value={storeId} />}
 
@@ -162,7 +162,7 @@ export default async function OilChangesPage({
           <div className="flex items-end">
             <button
               type="submit"
-              className="w-full px-4 py-3 text-base font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700"
+              className="w-full px-4 py-3 text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition-all"
             >
               필터 적용
             </button>
@@ -173,11 +173,11 @@ export default async function OilChangesPage({
       {/* Mobile: Card List */}
       <div className="mt-4 md:hidden">
         {oilChanges.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-8 text-center">
-            <p className="text-gray-500">등록된 기름 교체 이력이 없습니다</p>
+          <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-8 text-center">
+            <p className="font-bold text-brutal-black">등록된 기름 교체 이력이 없습니다</p>
             <Link
               href={newOilChangeUrl}
-              className="inline-block mt-4 text-blue-600 font-medium"
+              className="inline-block mt-4 font-bold text-brutal-black underline"
             >
               첫 교체 이력 등록하기 →
             </Link>
@@ -193,18 +193,18 @@ export default async function OilChangesPage({
 
       {/* Desktop: Table */}
       <div className="mt-6 hidden md:block">
-        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900">
+        <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
+          <div className="px-6 py-4 border-b-3 border-brutal-black">
+            <h2 className="text-lg font-black text-brutal-black">
               교체 이력 ({oilChanges.length}건)
             </h2>
           </div>
           {oilChanges.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <p>등록된 기름 교체 이력이 없습니다</p>
+            <div className="p-8 text-center">
+              <p className="font-bold text-brutal-black">등록된 기름 교체 이력이 없습니다</p>
               <Link
                 href={newOilChangeUrl}
-                className="mt-4 inline-block text-blue-600 hover:text-blue-700"
+                className="mt-4 inline-block font-bold text-brutal-black underline"
               >
                 첫 교체 이력 등록하기 →
               </Link>

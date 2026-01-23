@@ -7,26 +7,26 @@ export default function AnalysisLoading() {
   return (
     <div className="animate-pulse">
       {/* Tabs skeleton */}
-      <div className="border-b border-gray-200 mb-6">
+      <div className="border-b-3 border-brutal-black mb-6">
         <div className="flex gap-4">
-          <div className="h-10 w-24 bg-gray-200 rounded" />
-          <div className="h-10 w-24 bg-gray-200 rounded" />
+          <div className="h-10 w-24 bg-brutal-black/20 border-2 border-brutal-black" />
+          <div className="h-10 w-24 bg-brutal-black/20 border-2 border-brutal-black" />
         </div>
       </div>
 
       {/* Table skeleton */}
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
-        <div className="p-4 border-b border-gray-100">
-          <div className="h-6 w-32 bg-gray-200 rounded" />
+      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
+        <div className="p-4 border-b-3 border-brutal-black">
+          <div className="h-6 w-32 bg-brutal-black/20" />
         </div>
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y-2 divide-brutal-black">
           {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} className="p-4 flex gap-4">
-              <div className="h-5 w-1/4 bg-gray-200 rounded" />
-              <div className="h-5 w-1/6 bg-gray-200 rounded" />
-              <div className="h-5 w-1/6 bg-gray-200 rounded" />
-              <div className="h-5 w-1/6 bg-gray-200 rounded" />
-              <div className="h-5 w-1/6 bg-gray-200 rounded" />
+              <div className="h-5 w-1/4 bg-brutal-black/20" />
+              <div className="h-5 w-1/6 bg-brutal-black/20" />
+              <div className="h-5 w-1/6 bg-brutal-black/20" />
+              <div className="h-5 w-1/6 bg-brutal-black/20" />
+              <div className="h-5 w-1/6 bg-brutal-black/20" />
             </div>
           ))}
         </div>

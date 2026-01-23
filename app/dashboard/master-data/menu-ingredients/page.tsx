@@ -23,8 +23,8 @@ export default async function MenuIngredientsPage() {
         {/* Mobile View */}
         <div className="md:hidden space-y-4 mb-6">
           {mappings.length === 0 ? (
-            <div className="text-center py-10 bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5">
-              <p className="text-sm text-gray-500">등록된 매핑이 없습니다</p>
+            <div className="text-center py-10 bg-brutal-white border-3 border-brutal-black shadow-brutal">
+              <p className="text-sm font-bold text-brutal-black">등록된 매핑이 없습니다</p>
             </div>
           ) : (
             mappings.map((mapping) => (

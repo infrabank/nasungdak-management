@@ -92,20 +92,20 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
   }
 
   const inputClass =
-    'w-full rounded border-0 py-1 px-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'w-full border-2 border-brutal-black py-1 px-2 text-sm font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal transition-all'
   const selectClass =
-    'w-full rounded border-0 py-1 px-2 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'w-full border-2 border-brutal-black py-1 px-2 text-sm font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal transition-all'
 
   if (isEditing) {
     return (
-      <tr className="bg-blue-50">
+      <tr className="bg-brutal-blue/30">
         <td className="whitespace-nowrap py-2 pl-4 pr-3 text-sm sm:pl-6">
           <input
             type="checkbox"
             checked={isSelected}
             onChange={onToggleSelect}
             disabled
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 opacity-50"
+            className="h-4 w-4 border-2 border-brutal-black text-brutal-black opacity-50"
           />
         </td>
         <td className="whitespace-nowrap px-2 py-2 text-sm">
@@ -116,7 +116,7 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
             className={inputClass}
           />
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+        <td className="whitespace-nowrap px-2 py-2 text-sm text-brutal-black/50">
           -
         </td>
         <td className="whitespace-nowrap px-2 py-2 text-sm">
@@ -143,10 +143,10 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
             className={`${inputClass} text-right w-20`}
           />
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-right">
+        <td className="whitespace-nowrap px-2 py-2 text-sm text-brutal-black/50 text-right">
           -
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm text-gray-500 text-right">
+        <td className="whitespace-nowrap px-2 py-2 text-sm text-brutal-black/50 text-right">
           -
         </td>
         <td className="whitespace-nowrap px-2 py-2 text-sm text-right">
@@ -154,14 +154,14 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-medium text-gray-700 bg-white hover:bg-gray-100 rounded ring-1 ring-gray-300 disabled:opacity-50"
+              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal transition-all disabled:opacity-50"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50"
+              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal transition-all disabled:opacity-50"
             >
               {isSaving ? '...' : '저장'}
             </button>
@@ -172,31 +172,31 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
   }
 
   return (
-    <tr className={isDeleting ? 'opacity-50' : ''}>
+    <tr className={`hover:bg-brutal-yellow/20 transition-colors ${isDeleting ? 'opacity-50' : ''}`}>
       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
         <input
           type="checkbox"
           checked={isSelected}
           onChange={onToggleSelect}
-          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+          className="h-4 w-4 border-2 border-brutal-black text-brutal-black focus:ring-brutal-black cursor-pointer"
         />
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-gray-900">
+      <td className="whitespace-nowrap px-3 py-4 text-sm font-bold text-brutal-black">
         {formatDate(sale.saleDate, 'yyyy-MM-dd')}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black">
         {sale.menuName}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900">
+      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black">
         {sale.skuName}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black text-right">
         {sale.quantitySold}개
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black text-right">
         {formatCurrency(Number(sale.unitPrice))}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right font-medium">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-bold">
         {formatCurrency(Number(sale.totalRevenue))}
       </td>
       <td className="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm sm:pr-6">
@@ -204,14 +204,14 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="font-bold text-brutal-black underline underline-offset-2 hover:bg-brutal-blue px-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="font-bold text-brutal-black underline underline-offset-2 hover:bg-brutal-pink px-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

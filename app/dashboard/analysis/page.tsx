@@ -56,19 +56,19 @@ export default async function AnalysisPage({
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">기간 분석</h1>
-        <p className="mt-2 text-sm text-gray-600">
+        <h1 className="text-2xl font-black text-brutal-black">기간 분석</h1>
+        <p className="mt-2 text-sm font-medium text-brutal-black/70">
           판매 원가 및 마진율 분석
         </p>
       </div>
 
       {/* Date Range Filter - renders immediately */}
-      <form method="GET" className="bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl p-6 mb-6">
+      <form method="GET" className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-6 mb-6">
         {/* Preserve storeId from URL */}
         {storeId && <input type="hidden" name="storeId" value={storeId} />}
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
           <div className="sm:col-span-2">
-            <label htmlFor="startDate" className="block text-sm font-medium text-gray-900">
+            <label htmlFor="startDate" className="block text-sm font-bold text-brutal-black">
               시작 날짜
             </label>
             <div className="mt-2">
@@ -77,13 +77,13 @@ export default async function AnalysisPage({
                 name="startDate"
                 id="startDate"
                 defaultValue={startDate}
-                className="block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                className="block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all"
               />
             </div>
           </div>
 
           <div className="sm:col-span-2">
-            <label htmlFor="endDate" className="block text-sm font-medium text-gray-900">
+            <label htmlFor="endDate" className="block text-sm font-bold text-brutal-black">
               종료 날짜
             </label>
             <div className="mt-2">
@@ -92,7 +92,7 @@ export default async function AnalysisPage({
                 name="endDate"
                 id="endDate"
                 defaultValue={endDate}
-                className="block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                className="block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all"
               />
             </div>
           </div>
@@ -100,7 +100,7 @@ export default async function AnalysisPage({
           <div className="sm:col-span-2 flex items-end">
             <button
               type="submit"
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+              className="w-full bg-brutal-yellow border-3 border-brutal-black px-4 py-3 text-base font-black text-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition-all"
             >
               조회
             </button>

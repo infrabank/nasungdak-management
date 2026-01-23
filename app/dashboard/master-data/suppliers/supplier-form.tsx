@@ -178,7 +178,7 @@ export default function SupplierForm({ supplier }: SupplierFormProps) {
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    className="px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
                   >
                     취소
                   </button>

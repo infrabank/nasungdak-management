@@ -19,10 +19,10 @@ export default function OilChangeForm({ storeId }: OilChangeFormProps) {
   }
 
   const inputClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
   const selectClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 appearance-none bg-white'
-  const labelClass = 'block text-sm font-medium text-gray-700 mb-2'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all appearance-none'
+  const labelClass = 'block text-sm font-bold text-brutal-black mb-2'
 
   return (
     <form action={formAction} className="pb-32 max-w-2xl mx-auto">
@@ -37,7 +37,7 @@ export default function OilChangeForm({ storeId }: OilChangeFormProps) {
       )}
 
       {/* Form Fields Card */}
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4 mb-4">
+      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
         <div className="space-y-4">
           <div>
             <label className={labelClass}>
@@ -84,13 +84,13 @@ export default function OilChangeForm({ storeId }: OilChangeFormProps) {
         </div>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
-        <p className="text-sm text-blue-800">
+      <div className="bg-brutal-blue border-3 border-brutal-black shadow-brutal p-4 mb-4">
+        <p className="text-sm font-bold text-brutal-black">
           사용 기간은 이전 기름 교체 이력을 참조하여 자동으로 계산됩니다.
         </p>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4 mb-4">
+      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
         <div>
           <label className={labelClass}>
             📝 비고

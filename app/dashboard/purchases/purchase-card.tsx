@@ -131,19 +131,19 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
   }
 
   const inputClass =
-    'block w-full rounded-lg border-0 py-2 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-2 px-3 text-sm font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
   const selectClass =
-    'block w-full rounded-lg border-0 py-2 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-2 px-3 text-sm font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
 
   if (isEditing) {
     return (
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-blue-500 ring-2 overflow-hidden">
-        <div className="p-4 bg-blue-50 border-b border-blue-100">
-          <p className="font-medium text-blue-900">매입 수정</p>
+      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
+        <div className="p-4 bg-brutal-blue border-b-3 border-brutal-black">
+          <p className="font-bold text-brutal-black">매입 수정</p>
         </div>
         <div className="p-4 space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">날짜</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">날짜</label>
             <input
               type="date"
               value={editData.transactionDate}
@@ -152,7 +152,7 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">메뉴</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">메뉴</label>
             <select
               value={editData.menuId}
               onChange={(e) => setEditData({ ...editData, menuId: e.target.value })}
@@ -165,7 +165,7 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">재료</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">재료</label>
             <select
               value={editData.ingredientId}
               onChange={(e) => setEditData({ ...editData, ingredientId: e.target.value })}
@@ -178,7 +178,7 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">공급업체</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">공급업체</label>
             <input
               type="text"
               value={editData.supplierName}
@@ -188,7 +188,7 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">수량</label>
+              <label className="block text-xs font-bold text-brutal-black mb-1">수량</label>
               <input
                 type="number"
                 step="0.01"
@@ -198,7 +198,7 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
               />
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">단가</label>
+              <label className="block text-xs font-bold text-brutal-black mb-1">단가</label>
               <input
                 type="number"
                 step="1"
@@ -209,7 +209,7 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">비고</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">비고</label>
             <input
               type="text"
               value={editData.notes}
@@ -221,14 +221,14 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
             >
               {isSaving ? '저장 중...' : '저장'}
             </button>
@@ -240,25 +240,25 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 overflow-hidden ${
+      className={`bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden ${
         isDeleting ? 'opacity-50' : ''
       }`}
     >
       {/* Card Header */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-100">
+      <div className="flex items-center justify-between p-4 bg-brutal-yellow/30 border-b-2 border-brutal-black">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">📅</span>
-          <span className="font-medium text-gray-900">
+          <span className="text-sm">📅</span>
+          <span className="font-bold text-brutal-black">
             {formatDate(new Date(purchase.transactionDate), 'yyyy-MM-dd')}
           </span>
         </div>
         <button
           onClick={handleToggle}
           disabled={isToggling}
-          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold leading-5 transition-colors ${
+          className={`inline-flex border-2 border-brutal-black px-3 py-1 text-xs font-bold leading-5 transition-all ${
             isValid
-              ? 'bg-green-100 text-green-800 hover:bg-green-200'
-              : 'bg-red-100 text-red-800 hover:bg-red-200'
+              ? 'bg-brutal-green text-brutal-black hover:shadow-brutal-sm'
+              : 'bg-brutal-pink text-brutal-black hover:shadow-brutal-sm'
           } ${isToggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
         >
           {isToggling ? '...' : isValid ? '✓ 유효' : '✗ 무효'}
@@ -269,27 +269,27 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
       <div className="p-4">
         {/* Menu & Ingredient */}
         <div className="mb-3">
-          <p className="text-lg font-semibold text-gray-900">
+          <p className="text-lg font-bold text-brutal-black">
             {purchase.menuName || '-'}{' '}
-            <span className="text-gray-400">→</span>{' '}
+            <span className="text-brutal-black/50">→</span>{' '}
             {purchase.ingredientName || '-'}
           </p>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm font-medium text-brutal-black/70 mt-1">
             🏢 {purchase.supplierName}
           </p>
         </div>
 
         {/* Quantity & Price */}
-        <div className="grid grid-cols-2 gap-3 py-3 border-t border-gray-100">
+        <div className="grid grid-cols-2 gap-3 py-3 border-t-2 border-brutal-black/20">
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">수량</p>
-            <p className="text-base font-medium text-gray-900">
+            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">수량</p>
+            <p className="text-base font-bold text-brutal-black">
               {Number(purchase.quantity).toFixed(2)}
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">단가</p>
-            <p className="text-base font-medium text-gray-900">
+            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">단가</p>
+            <p className="text-base font-bold text-brutal-black">
               {formatCurrency(Number(purchase.unitPrice))}
             </p>
           </div>
@@ -297,16 +297,16 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
 
         {/* Notes */}
         {purchase.notes && (
-          <p className="text-sm text-gray-500 py-2 border-t border-gray-100">
+          <p className="text-sm font-medium text-brutal-black/70 py-2 border-t-2 border-brutal-black/20">
             📝 {purchase.notes}
           </p>
         )}
 
         {/* Total & Actions */}
-        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-3 border-t-2 border-brutal-black/20">
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">합계</p>
-            <p className="text-xl font-bold text-blue-600">
+            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">합계</p>
+            <p className="text-xl font-black text-brutal-black">
               {formatCurrency(Number(purchase.totalAmount))}
             </p>
           </div>
@@ -314,14 +314,14 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
             <button
               onClick={() => setIsEditing(true)}
               disabled={isDeleting}
-              className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-blue border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               수정
             </button>
             <button
               onClick={handleDelete}
               disabled={isDeleting}
-              className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-pink border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isDeleting ? '삭제 중...' : '삭제'}
             </button>

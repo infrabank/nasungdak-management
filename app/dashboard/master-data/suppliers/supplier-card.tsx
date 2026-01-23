@@ -79,17 +79,17 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
   }
 
   const inputClass =
-    'block w-full rounded-lg border-0 py-2 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-2 px-3 text-sm font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
 
   if (isEditing) {
     return (
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-blue-500 ring-2 overflow-hidden">
-        <div className="p-4 bg-blue-50 border-b border-blue-100">
-          <p className="font-medium text-blue-900">공급업체 수정</p>
+      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
+        <div className="p-4 bg-brutal-blue border-b-3 border-brutal-black">
+          <p className="font-black text-brutal-black">공급업체 수정</p>
         </div>
         <div className="p-4 space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">공급업체명 *</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">공급업체명 *</label>
             <input
               type="text"
               value={editData.supplierName}
@@ -98,7 +98,7 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">담당자명</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">담당자명</label>
             <input
               type="text"
               value={editData.contactName}
@@ -107,7 +107,7 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">연락처</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">연락처</label>
             <input
               type="tel"
               value={editData.phone}
@@ -116,7 +116,7 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">이메일</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">이메일</label>
             <input
               type="email"
               value={editData.email}
@@ -125,7 +125,7 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">사업자등록번호</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">사업자등록번호</label>
             <input
               type="text"
               value={editData.businessNumber}
@@ -134,7 +134,7 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">주소</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">주소</label>
             <input
               type="text"
               value={editData.address}
@@ -143,7 +143,7 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">비고</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">비고</label>
             <input
               type="text"
               value={editData.notes}
@@ -156,22 +156,22 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
               type="checkbox"
               checked={editData.isActive}
               onChange={(e) => setEditData({ ...editData, isActive: e.target.checked })}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600"
+              className="h-4 w-4 border-2 border-brutal-black text-brutal-black"
             />
-            <label className="text-sm text-gray-700">활성화</label>
+            <label className="text-sm font-bold text-brutal-black">활성화</label>
           </div>
           <div className="flex gap-2 pt-2">
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
             >
               {isSaving ? '저장 중...' : '저장'}
             </button>
@@ -183,18 +183,18 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 overflow-hidden ${
+      className={`bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden ${
         isDeleting ? 'opacity-50' : ''
       }`}
     >
       {/* Card Header */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-100">
-        <p className="font-semibold text-gray-900">{supplier.supplierName}</p>
+      <div className="flex items-center justify-between p-4 bg-brutal-yellow border-b-3 border-brutal-black">
+        <p className="font-black text-brutal-black">{supplier.supplierName}</p>
         <span
-          className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+          className={`inline-flex px-2.5 py-0.5 text-xs font-bold border-2 border-brutal-black ${
             supplier.isActive
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
+              ? 'bg-brutal-green text-brutal-black'
+              : 'bg-brutal-white text-brutal-black'
           }`}
         >
           {supplier.isActive ? '활성' : '비활성'}
@@ -204,49 +204,49 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
       {/* Card Body */}
       <div className="p-4 space-y-2">
         {supplier.contactName && (
-          <p className="text-sm text-gray-600">
-            <span className="text-gray-500">담당자:</span> {supplier.contactName}
+          <p className="text-sm text-brutal-black">
+            <span className="font-bold">담당자:</span> {supplier.contactName}
           </p>
         )}
         {supplier.phone && (
-          <p className="text-sm text-gray-600">
-            <span className="text-gray-500">연락처:</span> {supplier.phone}
+          <p className="text-sm text-brutal-black">
+            <span className="font-bold">연락처:</span> {supplier.phone}
           </p>
         )}
         {supplier.email && (
-          <p className="text-sm text-gray-600">
-            <span className="text-gray-500">이메일:</span> {supplier.email}
+          <p className="text-sm text-brutal-black">
+            <span className="font-bold">이메일:</span> {supplier.email}
           </p>
         )}
         {supplier.businessNumber && (
-          <p className="text-sm text-gray-600">
-            <span className="text-gray-500">사업자번호:</span> {supplier.businessNumber}
+          <p className="text-sm text-brutal-black">
+            <span className="font-bold">사업자번호:</span> {supplier.businessNumber}
           </p>
         )}
         {supplier.address && (
-          <p className="text-sm text-gray-600">
-            <span className="text-gray-500">주소:</span> {supplier.address}
+          <p className="text-sm text-brutal-black">
+            <span className="font-bold">주소:</span> {supplier.address}
           </p>
         )}
         {supplier.notes && (
-          <p className="text-sm text-gray-500 pt-2 border-t border-gray-100">
+          <p className="text-sm text-brutal-black/70 pt-2 border-t-2 border-brutal-black">
             {supplier.notes}
           </p>
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+        <div className="flex justify-end gap-2 pt-3 border-t-2 border-brutal-black">
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-blue border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-pink border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

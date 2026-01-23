@@ -108,13 +108,13 @@ export default function SalesForm({ storeId }: SalesFormProps) {
   }
 
   const inputClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600'
-  const labelClass = 'block text-sm font-medium text-gray-700 mb-2'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm placeholder:text-brutal-black/50 focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
+  const labelClass = 'block text-sm font-bold text-brutal-black mb-2'
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-500">로딩 중...</div>
+        <div className="font-bold text-brutal-black">로딩 중...</div>
       </div>
     )
   }
@@ -122,8 +122,8 @@ export default function SalesForm({ storeId }: SalesFormProps) {
   return (
     <form onSubmit={handleSubmit} className="pb-32">
       {/* Date selection */}
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4 mb-4">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
+      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
+        <h3 className="text-sm font-black text-brutal-black uppercase tracking-wide mb-4">
           판매 정보
         </h3>
         <div>
@@ -144,10 +144,10 @@ export default function SalesForm({ storeId }: SalesFormProps) {
       {/* SKU list */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-3 px-1">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+          <h3 className="text-sm font-black text-brutal-black uppercase tracking-wide">
             SKU별 판매량 입력
             {getEnteredCount() > 0 && (
-              <span className="ml-2 text-blue-600 font-bold">
+              <span className="ml-2 text-brutal-black font-black">
                 ({getEnteredCount()}개 입력됨)
               </span>
             )}
@@ -156,7 +156,7 @@ export default function SalesForm({ storeId }: SalesFormProps) {
 
         <div className="space-y-3">
           {skus.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-8 text-center text-gray-500">
+            <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-8 text-center font-medium text-brutal-black">
               등록된 SKU가 없습니다. 먼저 기초 데이터에서 SKU를 등록해주세요.
             </div>
           ) : (
@@ -168,21 +168,21 @@ export default function SalesForm({ storeId }: SalesFormProps) {
               return (
                 <div
                   key={sku.id}
-                  className={`bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4 transition-colors ${
-                    hasQuantity ? 'ring-blue-200 bg-blue-50/30' : ''
+                  className={`bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 transition-all ${
+                    hasQuantity ? 'border-brutal-green bg-brutal-green/20' : ''
                   }`}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-baseline gap-2 flex-wrap">
-                        <h4 className="font-medium text-gray-900 text-lg">
+                        <h4 className="font-bold text-brutal-black text-lg">
                           {sku.skuName}
                         </h4>
-                        <span className="text-sm text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                        <span className="text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black px-2 py-0.5">
                           {sku.menuName}
                         </span>
                       </div>
-                      <p className="mt-1 text-sm text-gray-600">
+                      <p className="mt-1 text-sm font-medium text-brutal-black">
                         단가: {formatCurrency(Number(sku.unitPrice))}
                       </p>
                     </div>
@@ -197,18 +197,18 @@ export default function SalesForm({ storeId }: SalesFormProps) {
                             handleQuantityChange(sku.id, e.target.value)
                           }
                           placeholder="0"
-                          className={`${inputClass} w-24 text-right font-bold text-lg`}
+                          className={`${inputClass} w-24 text-right font-black text-lg`}
                         />
-                        <span className="text-gray-500 font-medium">개</span>
+                        <span className="text-brutal-black font-bold">개</span>
                       </div>
 
                       <div className="text-right w-24 sm:w-32">
                         {hasQuantity ? (
-                          <div className="font-bold text-blue-600 text-lg">
+                          <div className="font-black text-brutal-black text-lg">
                             {formatCurrency(revenue)}
                           </div>
                         ) : (
-                          <div className="text-gray-300">-</div>
+                          <div className="text-brutal-black/30">-</div>
                         )}
                       </div>
                     </div>
@@ -222,10 +222,10 @@ export default function SalesForm({ storeId }: SalesFormProps) {
 
       {/* Total - Sticky */}
       <div className="sticky bottom-24 z-10">
-        <div className="bg-gradient-to-t from-gray-50 via-gray-50 to-transparent pt-4 -mx-4 px-4">
-          <div className="bg-red-50 rounded-xl p-4 text-center shadow-sm">
-            <span className="text-sm text-red-600">총 매출액</span>
-            <p className="text-2xl font-bold text-red-700">
+        <div className="pt-4 -mx-4 px-4">
+          <div className="bg-brutal-pink border-3 border-brutal-black shadow-brutal p-4 text-center">
+            <span className="text-sm font-bold text-brutal-black">총 매출액</span>
+            <p className="text-2xl font-black text-brutal-black">
               {formatCurrency(getTotalRevenue())}
             </p>
           </div>
@@ -233,7 +233,7 @@ export default function SalesForm({ storeId }: SalesFormProps) {
       </div>
 
       {/* Fixed Bottom Action Bar - positioned above bottom nav on mobile */}
-      <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4 z-20">
+      <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-brutal-yellow border-t-3 border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4 z-20">
         <div className="flex gap-3 max-w-lg mx-auto">
           <Button
             type="button"

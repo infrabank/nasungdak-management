@@ -92,20 +92,20 @@ export default async function PurchasesPage({
     ? `/dashboard/purchases/new?storeId=${storeId}`
     : '/dashboard/purchases/new'
 
-  // Mobile-friendly input classes
+  // Mobile-friendly input classes - Neo-Brutalism
   const inputClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
   const selectClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 appearance-none bg-white'
-  const labelClass = 'block text-sm font-medium text-gray-700 mb-2'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all appearance-none'
+  const labelClass = 'block text-sm font-bold text-brutal-black mb-2'
 
   return (
     <div className="pb-24 md:pb-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">매입 관리</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-black text-brutal-black">매입 관리</h1>
+          <p className="mt-1 text-sm font-medium text-brutal-black">
             매입 거래 이력 조회 및 관리
           </p>
         </div>
@@ -114,7 +114,7 @@ export default async function PurchasesPage({
           <CSVUpload />
           <Link
             href={newPurchaseUrl}
-            className="block rounded-md bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+            className="block bg-brutal-yellow border-2 border-brutal-black px-4 py-2 text-center text-sm font-bold text-brutal-black shadow-brutal hover:shadow-brutal-hover hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition-all"
           >
             새 매입 등록
           </Link>
@@ -124,7 +124,7 @@ export default async function PurchasesPage({
       {/* Filters */}
       <form
         method="GET"
-        className="mt-4 bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4"
+        className="mt-4 bg-brutal-white border-3 border-brutal-black shadow-brutal p-4"
       >
         {storeId && <input type="hidden" name="storeId" value={storeId} />}
 
@@ -178,7 +178,7 @@ export default async function PurchasesPage({
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
                 <svg
-                  className="h-5 w-5 text-gray-400"
+                  className="h-5 w-5 text-brutal-black"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -213,7 +213,7 @@ export default async function PurchasesPage({
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
                 <svg
-                  className="h-5 w-5 text-gray-400"
+                  className="h-5 w-5 text-brutal-black"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -229,8 +229,8 @@ export default async function PurchasesPage({
         </div>
 
         {/* Filter Actions */}
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
-          <p className="text-sm text-gray-600">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t-2 border-brutal-black/20">
+          <p className="text-sm font-medium text-brutal-black">
             페이지 {page} · {purchases.length}건 표시
             {hasMore ? ' (더 있음)' : ''}
             {menuId || ingredientId ? ' · 필터 적용됨' : ''}
@@ -238,13 +238,13 @@ export default async function PurchasesPage({
           <div className="flex gap-2">
             <a
               href={storeId ? `/dashboard/purchases?storeId=${storeId}` : '/dashboard/purchases'}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
             >
               초기화
             </a>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500"
+              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
             >
               조회
             </button>
@@ -255,19 +255,19 @@ export default async function PurchasesPage({
       {/* Summary - Sticky on Mobile */}
       {purchases.length > 0 && (
         <div className="sticky top-0 z-10 mt-4 md:static">
-          <div className="bg-blue-50 rounded-xl p-4 shadow-sm">
+          <div className="bg-brutal-blue border-3 border-brutal-black shadow-brutal p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-blue-600">
+                <p className="text-sm font-bold text-brutal-black">
                   검색 기간 총 {totalCount}건
                 </p>
-                <p className="text-xs text-blue-500">
+                <p className="text-xs font-medium text-brutal-black">
                   수량 합계: {totalQuantity.toFixed(2)}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-blue-600">총 매입액</p>
-                <p className="text-2xl font-bold text-blue-700">
+                <p className="text-sm font-bold text-brutal-black">총 매입액</p>
+                <p className="text-2xl font-black text-brutal-black">
                   {formatCurrency(totalAmount)}
                 </p>
               </div>
@@ -279,11 +279,11 @@ export default async function PurchasesPage({
       {/* Mobile: Card List */}
       <div className="mt-4 md:hidden">
         {purchases.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-8 text-center">
-            <p className="text-gray-500">매입 데이터가 없습니다.</p>
+          <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-8 text-center">
+            <p className="font-medium text-brutal-black">매입 데이터가 없습니다.</p>
             <Link
               href={newPurchaseUrl}
-              className="inline-block mt-4 text-blue-600 font-medium"
+              className="inline-block mt-4 font-bold text-brutal-black underline underline-offset-4 hover:bg-brutal-yellow px-1"
             >
               새 매입 등록하기 →
             </Link>
@@ -299,43 +299,43 @@ export default async function PurchasesPage({
 
       {/* Desktop: Table */}
       <div className="mt-6 hidden md:block">
-        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
-          <table className="min-w-full divide-y divide-gray-300">
-            <thead className="bg-gray-50">
+        <div className="overflow-hidden border-3 border-brutal-black shadow-brutal">
+          <table className="min-w-full">
+            <thead className="bg-brutal-yellow border-b-3 border-brutal-black">
               <tr>
-                <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                <th className="py-3.5 pl-4 pr-3 text-left text-sm font-black text-brutal-black sm:pl-6">
                   날짜
                 </th>
-                <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
                   메뉴
                 </th>
-                <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
                   재료
                 </th>
-                <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
                   공급업체
                 </th>
-                <th className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
                   수량
                 </th>
-                <th className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
                   단가
                 </th>
-                <th className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
                   합계
                 </th>
-                <th className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-center text-sm font-black text-brutal-black">
                   검증
                 </th>
-                <th className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
                   작업
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="divide-y-2 divide-brutal-black/20 bg-brutal-white">
               {purchases.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-sm text-gray-500">
+                  <td colSpan={9} className="py-8 text-center text-sm font-medium text-brutal-black">
                     매입 데이터가 없습니다. &ldquo;새 매입 등록&rdquo; 버튼을 클릭하여 시작하세요.
                   </td>
                 </tr>
@@ -344,20 +344,20 @@ export default async function PurchasesPage({
                   {purchases.map((purchase) => (
                     <PurchaseRow key={purchase.id} purchase={purchase} />
                   ))}
-                  <tr className="bg-gray-50 font-semibold">
+                  <tr className="bg-brutal-yellow/50 font-bold border-t-3 border-brutal-black">
                     <td
                       colSpan={4}
-                      className="py-4 pl-4 pr-3 text-sm text-right text-gray-900 sm:pl-6"
+                      className="py-4 pl-4 pr-3 text-sm text-right text-brutal-black sm:pl-6"
                     >
                       검색 기간 합계 ({totalCount}건)
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right">
                       {totalQuantity.toFixed(2)}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right">
                       -
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-black">
                       {formatCurrency(totalAmount)}
                     </td>
                     <td colSpan={2}></td>
@@ -375,16 +375,16 @@ export default async function PurchasesPage({
           {page > 1 && (
             <Link
               href={buildPageUrl(page - 1)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
             >
               ← 이전
             </Link>
           )}
-          <span className="text-sm text-gray-600">페이지 {page}</span>
+          <span className="text-sm font-bold text-brutal-black">페이지 {page}</span>
           {hasMore && (
             <Link
               href={buildPageUrl(page + 1)}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white rounded-lg ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
             >
               다음 →
             </Link>
@@ -393,12 +393,12 @@ export default async function PurchasesPage({
       )}
 
       {/* Mobile: Fixed Bottom Action Bar - positioned above bottom nav */}
-      <div className="fixed bottom-14 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 lg:hidden">
+      <div className="fixed bottom-14 left-0 right-0 bg-brutal-yellow border-t-3 border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 lg:hidden">
         <div className="flex gap-3">
           <CSVUpload />
           <Link
             href={newPurchaseUrl}
-            className="flex-1 rounded-xl bg-blue-600 py-3 text-center text-base font-semibold text-white shadow-sm hover:bg-blue-500"
+            className="flex-1 bg-brutal-white border-3 border-brutal-black py-3 text-center text-base font-bold text-brutal-black shadow-brutal hover:shadow-brutal-hover hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition-all"
           >
             + 새 매입 등록
           </Link>

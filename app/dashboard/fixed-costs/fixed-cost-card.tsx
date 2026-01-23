@@ -75,34 +75,34 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
   const getCostTypeStyle = (type: string) => {
     switch (type) {
       case '인건비':
-        return { bg: 'bg-blue-100 text-blue-800', emoji: '👷' }
+        return { bg: 'bg-brutal-blue border-2 border-brutal-black text-brutal-black', emoji: '👷' }
       case '임대료':
-        return { bg: 'bg-purple-100 text-purple-800', emoji: '🏠' }
+        return { bg: 'bg-brutal-purple border-2 border-brutal-black text-brutal-black', emoji: '🏠' }
       case '관리비':
-        return { bg: 'bg-green-100 text-green-800', emoji: '🔧' }
+        return { bg: 'bg-brutal-green border-2 border-brutal-black text-brutal-black', emoji: '🔧' }
       case '기타':
-        return { bg: 'bg-gray-100 text-gray-800', emoji: '📋' }
+        return { bg: 'bg-brutal-white border-2 border-brutal-black text-brutal-black', emoji: '📋' }
       default:
-        return { bg: 'bg-gray-100 text-gray-800', emoji: '📋' }
+        return { bg: 'bg-brutal-white border-2 border-brutal-black text-brutal-black', emoji: '📋' }
     }
   }
 
   const typeStyle = getCostTypeStyle(cost.costType)
 
   const inputClass =
-    'block w-full rounded-lg border-0 py-2 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-2 px-3 text-sm font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
   const selectClass =
-    'block w-full rounded-lg border-0 py-2 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-2 px-3 text-sm font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
 
   if (isEditing) {
     return (
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-blue-500 ring-2 overflow-hidden">
-        <div className="p-4 bg-blue-50 border-b border-blue-100">
-          <p className="font-medium text-blue-900">고정비 수정</p>
+      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
+        <div className="p-4 bg-brutal-blue border-b-3 border-brutal-black">
+          <p className="font-black text-brutal-black">고정비 수정</p>
         </div>
         <div className="p-4 space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">날짜</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">날짜</label>
             <input
               type="date"
               value={editData.costDate}
@@ -111,7 +111,7 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">비용 유형</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">비용 유형</label>
             <select
               value={editData.costType}
               onChange={(e) => setEditData({ ...editData, costType: e.target.value })}
@@ -123,7 +123,7 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">비용 항목명</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">비용 항목명</label>
             <input
               type="text"
               value={editData.costName}
@@ -132,7 +132,7 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">금액</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">금액</label>
             <input
               type="number"
               min="1"
@@ -143,7 +143,7 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">비고</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">비고</label>
             <input
               type="text"
               value={editData.notes}
@@ -155,14 +155,14 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
             >
               {isSaving ? '저장 중...' : '저장'}
             </button>
@@ -174,20 +174,20 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 overflow-hidden ${
+      className={`bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden ${
         isDeleting ? 'opacity-50' : ''
       }`}
     >
       {/* Card Header */}
-      <div className="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-100">
+      <div className="flex items-center justify-between p-4 bg-brutal-yellow border-b-3 border-brutal-black">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">📅</span>
-          <span className="font-medium text-gray-900">
+          <span className="text-sm">📅</span>
+          <span className="font-bold text-brutal-black">
             {formatDate(new Date(cost.costDate), 'yyyy-MM-dd')}
           </span>
         </div>
         <span
-          className={`inline-flex items-center gap-1 px-3 py-1 text-sm font-semibold rounded-full ${typeStyle.bg}`}
+          className={`inline-flex items-center gap-1 px-3 py-1 text-sm font-bold ${typeStyle.bg}`}
         >
           {typeStyle.emoji} {cost.costType}
         </span>
@@ -196,41 +196,41 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
       {/* Card Body */}
       <div className="p-4">
         {/* Cost Name */}
-        <p className="text-lg font-semibold text-gray-900 mb-3">
+        <p className="text-lg font-black text-brutal-black mb-3">
           {cost.costName}
         </p>
 
         {/* Amount */}
-        <div className="bg-red-50 rounded-lg p-3 mb-3">
-          <p className="text-xs text-red-600 uppercase tracking-wide">금액</p>
-          <p className="text-2xl font-bold text-red-700">
+        <div className="bg-brutal-pink border-2 border-brutal-black p-3 mb-3">
+          <p className="text-xs font-bold text-brutal-black uppercase tracking-wide">금액</p>
+          <p className="text-2xl font-black text-brutal-black">
             {formatCurrency(Number(cost.amount))}
           </p>
         </div>
 
         {/* Notes */}
         {cost.notes && (
-          <div className="py-2 border-t border-gray-100">
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+          <div className="py-2 border-t-2 border-brutal-black">
+            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide mb-1">
               비고
             </p>
-            <p className="text-sm text-gray-700">{cost.notes}</p>
+            <p className="text-sm text-brutal-black">{cost.notes}</p>
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+        <div className="flex justify-end gap-2 pt-3 border-t-2 border-brutal-black">
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-blue border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-pink border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

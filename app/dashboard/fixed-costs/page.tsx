@@ -50,8 +50,8 @@ export default async function FixedCostsPage({
 
   // Mobile-friendly input classes
   const inputClass =
-    'block w-full rounded-lg border-0 py-3 px-4 text-base text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
-  const labelClass = 'block text-sm font-medium text-gray-700 mb-2'
+    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
+  const labelClass = 'block text-sm font-bold text-brutal-black mb-2'
 
   // Type emoji map
   const typeEmoji: Record<string, string> = {
@@ -113,7 +113,7 @@ export default async function FixedCostsPage({
       {/* Filters */}
       <form
         method="GET"
-        className="mt-4 bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4"
+        className="mt-4 bg-brutal-white border-3 border-brutal-black shadow-brutal p-4"
       >
         {storeId && <input type="hidden" name="storeId" value={storeId} />}
 
@@ -150,7 +150,7 @@ export default async function FixedCostsPage({
           <div className="flex items-end">
             <button
               type="submit"
-              className="w-full px-4 py-3 text-base font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-500"
+              className="w-full px-4 py-3 text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition-all"
             >
               조회
             </button>
@@ -161,11 +161,11 @@ export default async function FixedCostsPage({
       {/* Mobile: Card List */}
       <div className="mt-4 md:hidden">
         {costs.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-8 text-center">
-            <p className="text-gray-500">고정비 데이터가 없습니다.</p>
+          <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-8 text-center">
+            <p className="font-bold text-brutal-black">고정비 데이터가 없습니다.</p>
             <Link
               href={newFixedCostUrl}
-              className="inline-block mt-4 text-blue-600 font-medium"
+              className="inline-block mt-4 font-bold text-brutal-black underline"
             >
               새 고정비 등록하기 →
             </Link>

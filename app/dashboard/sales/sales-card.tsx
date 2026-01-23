@@ -96,19 +96,19 @@ export default function SalesCard({
   }
 
   const inputClass =
-    'block w-full rounded-lg border-0 py-2 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-2 px-3 text-sm font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
   const selectClass =
-    'block w-full rounded-lg border-0 py-2 px-3 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600'
+    'block w-full border-2 border-brutal-black py-2 px-3 text-sm font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
 
   if (isEditing) {
     return (
-      <div className="bg-white rounded-xl shadow-sm ring-1 ring-blue-500 ring-2 overflow-hidden">
-        <div className="p-4 bg-blue-50 border-b border-blue-100">
-          <p className="font-medium text-blue-900">판매 수정</p>
+      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
+        <div className="p-4 bg-brutal-blue border-b-3 border-brutal-black">
+          <p className="font-bold text-brutal-black">판매 수정</p>
         </div>
         <div className="p-4 space-y-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">날짜</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">날짜</label>
             <input
               type="date"
               value={editData.saleDate}
@@ -117,7 +117,7 @@ export default function SalesCard({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">SKU</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">SKU</label>
             <select
               value={editData.skuId}
               onChange={(e) => setEditData({ ...editData, skuId: e.target.value })}
@@ -132,7 +132,7 @@ export default function SalesCard({
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">판매량</label>
+            <label className="block text-xs font-bold text-brutal-black mb-1">판매량</label>
             <input
               type="number"
               min="1"
@@ -146,14 +146,14 @@ export default function SalesCard({
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
             >
               {isSaving ? '저장 중...' : '저장'}
             </button>
@@ -165,13 +165,13 @@ export default function SalesCard({
 
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm ring-1 overflow-hidden transition-all ${
-        isSelected ? 'ring-blue-500 ring-2' : 'ring-gray-900/5'
+      className={`bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden transition-all ${
+        isSelected ? 'border-brutal-blue' : ''
       } ${isDeleting ? 'opacity-50' : ''}`}
     >
       {/* Card Header */}
       <div
-        className="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-100 cursor-pointer"
+        className="flex items-center justify-between p-4 bg-brutal-yellow/30 border-b-2 border-brutal-black cursor-pointer"
         onClick={onToggleSelect}
       >
         <div className="flex items-center gap-3">
@@ -180,15 +180,15 @@ export default function SalesCard({
             checked={isSelected}
             onChange={onToggleSelect}
             onClick={(e) => e.stopPropagation()}
-            className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+            className="h-5 w-5 border-2 border-brutal-black text-brutal-black focus:ring-brutal-black cursor-pointer"
           />
           <div>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm font-bold text-brutal-black">
               📅 {formatDate(sale.saleDate, 'yyyy-MM-dd')}
             </p>
           </div>
         </div>
-        <span className="text-lg font-bold text-green-600">
+        <span className="text-lg font-black text-brutal-black">
           {formatCurrency(Number(sale.totalRevenue))}
         </span>
       </div>
@@ -197,45 +197,45 @@ export default function SalesCard({
       <div className="p-4">
         {/* Menu & SKU */}
         <div className="mb-3">
-          <p className="text-lg font-semibold text-gray-900">
+          <p className="text-lg font-bold text-brutal-black">
             {sale.menuName || '-'}
           </p>
-          <p className="text-sm text-gray-500">{sale.skuName || '-'}</p>
+          <p className="text-sm font-medium text-brutal-black/70">{sale.skuName || '-'}</p>
         </div>
 
         {/* Quantity & Price */}
-        <div className="grid grid-cols-2 gap-3 py-3 border-t border-gray-100">
+        <div className="grid grid-cols-2 gap-3 py-3 border-t-2 border-brutal-black/20">
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">
+            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">
               판매량
             </p>
-            <p className="text-base font-medium text-gray-900">
+            <p className="text-base font-bold text-brutal-black">
               {sale.quantitySold}개
             </p>
           </div>
           <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide">
+            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">
               단가
             </p>
-            <p className="text-base font-medium text-gray-900">
+            <p className="text-base font-bold text-brutal-black">
               {formatCurrency(Number(sale.unitPrice))}
             </p>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-3 border-t border-gray-100">
+        <div className="flex justify-end gap-2 pt-3 border-t-2 border-brutal-black/20">
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-blue border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-pink border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

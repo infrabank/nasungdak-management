@@ -83,19 +83,19 @@ export default function SalesList({
       {/* Summary - Sticky on Mobile */}
       {sales.length > 0 && (
         <div className="sticky top-0 z-10 mb-4 md:static">
-          <div className="bg-green-50 rounded-xl p-4 shadow-sm">
+          <div className="bg-brutal-green border-3 border-brutal-black shadow-brutal p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-green-600">
+                <p className="text-sm font-bold text-brutal-black">
                   검색 기간 총 {totalCount}건
                 </p>
-                <p className="text-xs text-green-500">
+                <p className="text-xs font-medium text-brutal-black">
                   판매량 합계: {totalQuantity}개
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-green-600">총 매출액</p>
-                <p className="text-2xl font-bold text-green-700">
+                <p className="text-sm font-bold text-brutal-black">총 매출액</p>
+                <p className="text-2xl font-black text-brutal-black">
                   {formatCurrency(totalRevenue)}
                 </p>
               </div>
@@ -106,14 +106,14 @@ export default function SalesList({
 
       {/* Selection Actions */}
       {selectedIds.size > 0 && (
-        <div className="mb-4 flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <span className="text-sm font-medium text-blue-900">
+        <div className="mb-4 flex items-center justify-between bg-brutal-blue border-3 border-brutal-black shadow-brutal p-4">
+          <span className="text-sm font-bold text-brutal-black">
             {selectedIds.size}개 항목 선택됨
           </span>
           <button
             onClick={handleBulkDelete}
             disabled={isDeleting}
-            className="inline-flex items-center rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:opacity-50"
+            className="inline-flex items-center bg-brutal-pink border-2 border-brutal-black px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
           >
             {isDeleting ? '삭제 중...' : '선택 삭제'}
           </button>
@@ -123,9 +123,9 @@ export default function SalesList({
       {/* Mobile: Card List */}
       <div className="md:hidden">
         {sales.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-8 text-center">
-            <p className="text-gray-500">판매 데이터가 없습니다.</p>
-            <p className="text-sm text-gray-400 mt-1">
+          <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-8 text-center">
+            <p className="font-medium text-brutal-black">판매 데이터가 없습니다.</p>
+            <p className="text-sm font-medium text-brutal-black/70 mt-1">
               일일 판매 입력 버튼을 클릭하여 시작하세요.
             </p>
           </div>
@@ -133,7 +133,7 @@ export default function SalesList({
           <>
             {/* Mobile Select All */}
             <div className="flex items-center justify-between mb-3 px-1">
-              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <label className="flex items-center gap-2 text-sm font-bold text-brutal-black cursor-pointer">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -143,11 +143,11 @@ export default function SalesList({
                     }
                   }}
                   onChange={handleSelectAll}
-                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+                  className="h-5 w-5 border-2 border-brutal-black text-brutal-black focus:ring-brutal-black"
                 />
                 전체 선택
               </label>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm font-bold text-brutal-black">
                 {selectedIds.size > 0 && `${selectedIds.size}개 선택`}
               </span>
             </div>
@@ -170,13 +170,13 @@ export default function SalesList({
       <div className="hidden md:block">
         <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
-              <table className="min-w-full divide-y divide-gray-300">
-                <thead className="bg-gray-50">
+            <div className="overflow-hidden border-3 border-brutal-black shadow-brutal">
+              <table className="min-w-full">
+                <thead className="bg-brutal-yellow border-b-3 border-brutal-black">
                   <tr>
                     <th
                       scope="col"
-                      className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+                      className="py-3.5 pl-4 pr-3 text-left text-sm font-black text-brutal-black sm:pl-6"
                     >
                       <input
                         type="checkbox"
@@ -187,42 +187,42 @@ export default function SalesList({
                           }
                         }}
                         onChange={handleSelectAll}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 cursor-pointer"
+                        className="h-4 w-4 border-2 border-brutal-black text-brutal-black focus:ring-brutal-black cursor-pointer"
                       />
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      className="px-3 py-3.5 text-left text-sm font-black text-brutal-black"
                     >
                       날짜
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      className="px-3 py-3.5 text-left text-sm font-black text-brutal-black"
                     >
                       메뉴
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      className="px-3 py-3.5 text-left text-sm font-black text-brutal-black"
                     >
                       SKU
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900"
+                      className="px-3 py-3.5 text-right text-sm font-black text-brutal-black"
                     >
                       판매량
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900"
+                      className="px-3 py-3.5 text-right text-sm font-black text-brutal-black"
                     >
                       단가
                     </th>
                     <th
                       scope="col"
-                      className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900"
+                      className="px-3 py-3.5 text-right text-sm font-black text-brutal-black"
                     >
                       매출액
                     </th>
@@ -231,12 +231,12 @@ export default function SalesList({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 bg-white">
+                <tbody className="divide-y-2 divide-brutal-black/20 bg-brutal-white">
                   {sales.length === 0 ? (
                     <tr>
                       <td
                         colSpan={8}
-                        className="py-10 text-center text-sm text-gray-500"
+                        className="py-10 text-center text-sm font-medium text-brutal-black"
                       >
                         판매 데이터가 없습니다. &ldquo;일일 판매 입력&rdquo;
                         버튼을 클릭하여 시작하세요.
@@ -252,21 +252,21 @@ export default function SalesList({
                           onToggleSelect={() => handleSelectOne(sale.id)}
                         />
                       ))}
-                      <tr className="bg-gray-50 font-semibold">
+                      <tr className="bg-brutal-yellow/50 font-bold border-t-3 border-brutal-black">
                         <td className="py-4 pl-4 pr-3 text-sm sm:pl-6"></td>
                         <td
                           colSpan={3}
-                          className="px-3 py-4 text-sm text-right text-gray-900"
+                          className="px-3 py-4 text-sm text-right text-brutal-black"
                         >
                           검색 기간 합계 ({totalCount}건)
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right">
                           {totalQuantity}개
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right">
                           -
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                        <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-black">
                           {formatCurrency(totalRevenue)}
                         </td>
                         <td></td>

@@ -9,9 +9,9 @@ export default async function DashboardPage() {
     const errorMessage = 'error' in result ? result.error : '데이터를 불러올 수 없습니다'
     return (
       <div>
-        <h1 className="text-3xl font-bold mb-6">대시보드</h1>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-sm text-red-800">{errorMessage}</p>
+        <h1 className="text-3xl font-black text-brutal-black mb-6">대시보드</h1>
+        <div className="bg-brutal-pink border-3 border-brutal-black shadow-brutal p-4">
+          <p className="text-sm font-bold text-brutal-black">{errorMessage}</p>
         </div>
       </div>
     )
@@ -22,72 +22,72 @@ export default async function DashboardPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">대시보드</h1>
-        <p className="mt-2 text-sm text-gray-800">
+        <h1 className="text-3xl font-black text-brutal-black">대시보드</h1>
+        <p className="mt-2 text-sm font-medium text-brutal-black">
           이번 달 요약 ({formatDate(new Date(), 'yyyy년 MM월')})
         </p>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-8">
-        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4">
+        <div className="bg-brutal-yellow border-3 border-brutal-black shadow-brutal p-4">
           <div className="flex items-center">
             <div className="flex-1">
-              <dt className="text-sm font-medium text-gray-700 truncate">
+              <dt className="text-sm font-bold text-brutal-black truncate">
                 실제 원가 (이번달)
               </dt>
-              <dd className="mt-1 text-3xl font-bold text-gray-900">
+              <dd className="mt-1 text-2xl lg:text-3xl font-black text-brutal-black">
                 {formatCurrency(data.monthlyPurchases)}
               </dd>
-              <dd className="mt-1 text-xs text-gray-700">
+              <dd className="mt-1 text-xs font-medium text-brutal-black">
                 {data.purchaseCount}건
               </dd>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4">
+        <div className="bg-brutal-green border-3 border-brutal-black shadow-brutal p-4">
           <div className="flex items-center">
             <div className="flex-1">
-              <dt className="text-sm font-medium text-gray-700 truncate">
+              <dt className="text-sm font-bold text-brutal-black truncate">
                 총 판매액 (이번달)
               </dt>
-              <dd className="mt-1 text-3xl font-bold text-gray-900">
+              <dd className="mt-1 text-2xl lg:text-3xl font-black text-brutal-black">
                 {formatCurrency(data.monthlySales)}
               </dd>
-              <dd className="mt-1 text-xs text-gray-700">
+              <dd className="mt-1 text-xs font-medium text-brutal-black">
                 {data.salesCount}건
               </dd>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4">
+        <div className="bg-brutal-blue border-3 border-brutal-black shadow-brutal p-4">
           <div className="flex items-center">
             <div className="flex-1">
-              <dt className="text-sm font-medium text-gray-700 truncate">
+              <dt className="text-sm font-bold text-brutal-black truncate">
                 이번달 마진율 (변동비 기준)
               </dt>
-              <dd className="mt-1 text-3xl font-bold text-gray-900">
+              <dd className="mt-1 text-2xl lg:text-3xl font-black text-brutal-black">
                 {data.marginPercent.toFixed(1)}%
               </dd>
-              <dd className="mt-1 text-xs text-gray-700">
+              <dd className="mt-1 text-xs font-medium text-brutal-black">
                 순이익: {formatCurrency(data.monthlySales - data.monthlyPurchases)} (고정비 제외)
               </dd>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-4">
+        <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4">
           <div className="flex items-center">
             <div className="flex-1">
-              <dt className="text-sm font-medium text-gray-700 truncate">
+              <dt className="text-sm font-bold text-brutal-black truncate">
                 매입 검증 상태
               </dt>
-              <dd className="mt-1 text-3xl font-bold text-gray-900">
+              <dd className="mt-1 text-2xl lg:text-3xl font-black text-brutal-black">
                 {data.validPurchases}
               </dd>
-              <dd className="mt-1 text-xs text-gray-700">
+              <dd className="mt-1 text-xs font-medium text-brutal-black">
                 유효: {data.validPurchases} / 무효: {data.invalidPurchases}
               </dd>
             </div>
@@ -97,46 +97,46 @@ export default async function DashboardPage() {
 
       {/* Quick Actions */}
       <div className="mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">빠른 작업</h2>
+        <h2 className="text-lg font-black text-brutal-black mb-4">빠른 작업</h2>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <Link
             href="/dashboard/purchases/new"
-            className="bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl p-4 transition-colors"
+            className="bg-brutal-blue border-3 border-brutal-black shadow-brutal p-4 transition-all hover:shadow-brutal-hover hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5"
           >
-            <h3 className="font-semibold text-blue-900">매입 등록</h3>
-            <p className="text-sm text-blue-700 mt-1">새 매입 기록 추가</p>
+            <h3 className="font-bold text-brutal-black">매입 등록</h3>
+            <p className="text-sm font-medium text-brutal-black mt-1">새 매입 기록 추가</p>
           </Link>
 
           <Link
             href="/dashboard/sales/daily"
-            className="bg-green-50 hover:bg-green-100 border border-green-200 rounded-xl p-4 transition-colors"
+            className="bg-brutal-green border-3 border-brutal-black shadow-brutal p-4 transition-all hover:shadow-brutal-hover hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5"
           >
-            <h3 className="font-semibold text-green-900">일일 판매 입력</h3>
-            <p className="text-sm text-green-700 mt-1">오늘 판매 기록</p>
+            <h3 className="font-bold text-brutal-black">일일 판매 입력</h3>
+            <p className="text-sm font-medium text-brutal-black mt-1">오늘 판매 기록</p>
           </Link>
 
           <Link
             href="/dashboard/fixed-costs/new"
-            className="bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl p-4 transition-colors"
+            className="bg-brutal-yellow border-3 border-brutal-black shadow-brutal p-4 transition-all hover:shadow-brutal-hover hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5"
           >
-            <h3 className="font-semibold text-amber-900">고정비 등록</h3>
-            <p className="text-sm text-amber-700 mt-1">인건비, 임대료 등</p>
+            <h3 className="font-bold text-brutal-black">고정비 등록</h3>
+            <p className="text-sm font-medium text-brutal-black mt-1">인건비, 임대료 등</p>
           </Link>
 
           <Link
             href="/dashboard/analysis"
-            className="bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl p-4 transition-colors"
+            className="bg-brutal-purple border-3 border-brutal-black shadow-brutal p-4 transition-all hover:shadow-brutal-hover hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5"
           >
-            <h3 className="font-semibold text-purple-900">기간 분석</h3>
-            <p className="text-sm text-purple-700 mt-1">수익성 분석</p>
+            <h3 className="font-bold text-brutal-black">기간 분석</h3>
+            <p className="text-sm font-medium text-brutal-black mt-1">수익성 분석</p>
           </Link>
 
           <Link
             href="/dashboard/master-data/cost-rules"
-            className="bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-xl p-4 transition-colors"
+            className="bg-brutal-pink border-3 border-brutal-black shadow-brutal p-4 transition-all hover:shadow-brutal-hover hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5"
           >
-            <h3 className="font-semibold text-orange-900">원가 배분 규칙</h3>
-            <p className="text-sm text-orange-700 mt-1">
+            <h3 className="font-bold text-brutal-black">원가 배분 규칙</h3>
+            <p className="text-sm font-medium text-brutal-black mt-1">
               {data.costRules > 0 ? `${data.costRules}개 규칙` : '규칙 설정 필요'}
             </p>
           </Link>
@@ -146,33 +146,33 @@ export default async function DashboardPage() {
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Purchases */}
-        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
+        <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-4">최근 매입</h3>
+            <h3 className="text-base font-black text-brutal-black mb-4">최근 매입</h3>
             {data.recentPurchases.length > 0 ? (
               <div className="space-y-3">
                 {data.recentPurchases.map((purchase, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                    className="flex items-center justify-between py-2 border-b-2 border-brutal-black/20 last:border-0"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-bold text-brutal-black truncate">
                         {purchase.menuName} - {purchase.ingredientName}
                       </p>
-                      <p className="text-xs text-gray-700">
+                      <p className="text-xs font-medium text-brutal-black/70">
                         {formatDate(new Date(purchase.date), 'yyyy-MM-dd')}
                       </p>
                     </div>
                     <div className="ml-4 flex items-center gap-2">
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-black text-brutal-black">
                         {formatCurrency(purchase.amount)}
                       </span>
                       <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        className={`inline-flex border-2 border-brutal-black px-2 py-0.5 text-xs font-bold ${
                           purchase.isValid
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                            ? 'bg-brutal-green text-brutal-black'
+                            : 'bg-brutal-pink text-brutal-black'
                         }`}
                       >
                         {purchase.isValid ? '유효' : '무효'}
@@ -182,12 +182,12 @@ export default async function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-700">최근 매입 기록이 없습니다</p>
+              <p className="text-sm font-medium text-brutal-black/70">최근 매입 기록이 없습니다</p>
             )}
             <div className="mt-4">
               <Link
                 href="/dashboard/purchases"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-brutal-black font-bold underline underline-offset-4 hover:bg-brutal-yellow px-1 transition-colors"
               >
                 모든 매입 보기 →
               </Link>
@@ -196,26 +196,26 @@ export default async function DashboardPage() {
         </div>
 
         {/* Recent Sales */}
-        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 overflow-hidden">
+        <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
           <div className="px-4 py-5 sm:p-6">
-            <h3 className="text-base font-semibold text-gray-900 mb-4">최근 판매</h3>
+            <h3 className="text-base font-black text-brutal-black mb-4">최근 판매</h3>
             {data.recentSales.length > 0 ? (
               <div className="space-y-3">
                 {data.recentSales.map((sale, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0"
+                    className="flex items-center justify-between py-2 border-b-2 border-brutal-black/20 last:border-0"
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                      <p className="text-sm font-bold text-brutal-black truncate">
                         {sale.skuName}
                       </p>
-                      <p className="text-xs text-gray-700">
+                      <p className="text-xs font-medium text-brutal-black/70">
                         {formatDate(new Date(sale.date), 'yyyy-MM-dd')} · {sale.quantity}개
                       </p>
                     </div>
                     <div className="ml-4">
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-black text-brutal-black">
                         {formatCurrency(sale.revenue)}
                       </span>
                     </div>
@@ -223,12 +223,12 @@ export default async function DashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-700">최근 판매 기록이 없습니다</p>
+              <p className="text-sm font-medium text-brutal-black/70">최근 판매 기록이 없습니다</p>
             )}
             <div className="mt-4">
               <Link
                 href="/dashboard/sales"
-                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="text-sm text-brutal-black font-bold underline underline-offset-4 hover:bg-brutal-yellow px-1 transition-colors"
               >
                 모든 판매 보기 →
               </Link>
@@ -239,11 +239,11 @@ export default async function DashboardPage() {
 
       {/* Alerts */}
       {data.invalidPurchases > 0 && (
-        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+        <div className="mt-6 bg-brutal-yellow border-3 border-brutal-black shadow-brutal p-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg
-                className="h-5 w-5 text-yellow-400"
+                className="h-6 w-6 text-brutal-black"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -255,13 +255,13 @@ export default async function DashboardPage() {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">
+              <h3 className="text-sm font-black text-brutal-black">
                 {data.invalidPurchases}건의 무효 매입이 있습니다
               </h3>
-              <div className="mt-2 text-sm text-yellow-700">
+              <div className="mt-2 text-sm font-medium text-brutal-black">
                 <p>
                   무효 매입은 원가 계산에서 제외됩니다.{' '}
-                  <Link href="/dashboard/purchases" className="font-medium underline">
+                  <Link href="/dashboard/purchases" className="font-bold underline underline-offset-2 hover:bg-brutal-white px-0.5">
                     매입 목록에서 확인
                   </Link>
                   하여 유효로 변경하세요.
@@ -273,11 +273,11 @@ export default async function DashboardPage() {
       )}
 
       {data.costRules === 0 && (
-        <div className="mt-6 bg-orange-50 border border-orange-200 rounded-xl p-4">
+        <div className="mt-6 bg-brutal-pink border-3 border-brutal-black shadow-brutal p-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg
-                className="h-5 w-5 text-orange-400"
+                className="h-6 w-6 text-brutal-black"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -289,15 +289,15 @@ export default async function DashboardPage() {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-orange-800">
+              <h3 className="text-sm font-black text-brutal-black">
                 원가 배분 규칙이 설정되지 않았습니다
               </h3>
-              <div className="mt-2 text-sm text-orange-700">
+              <div className="mt-2 text-sm font-medium text-brutal-black">
                 <p>
                   정확한 원가 계산을 위해{' '}
                   <Link
                     href="/dashboard/master-data/cost-rules"
-                    className="font-medium underline"
+                    className="font-bold underline underline-offset-2 hover:bg-brutal-white px-0.5"
                   >
                     원가 배분 규칙
                   </Link>

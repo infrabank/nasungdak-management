@@ -126,7 +126,7 @@ export default function CSVUpload() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="block rounded-md bg-green-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-green-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-600"
+        className="block bg-brutal-green border-2 border-brutal-black px-3 py-2 text-center text-sm font-bold text-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
       >
         CSV 일괄 업로드
       </button>
@@ -135,25 +135,25 @@ export default function CSVUpload() {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <div
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+              className="fixed inset-0 bg-brutal-black/75 transition-opacity"
               onClick={() => !isUploading && setIsOpen(false)}
             />
 
-            <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
+            <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal px-4 pb-4 pt-5 text-left sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
               <div>
-                <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
+                <h3 className="text-lg font-black leading-6 text-brutal-black mb-4">
                   매입 CSV 일괄 업로드
                 </h3>
 
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="text-sm font-medium text-brutal-black mb-2">
                       CSV 파일 형식: 날짜,메뉴,재료,공급업체,수량,단가,비고
                     </p>
                     <button
                       type="button"
                       onClick={downloadTemplate}
-                      className="text-sm text-blue-600 hover:text-blue-800 underline"
+                      className="text-sm font-bold text-brutal-black underline underline-offset-2 hover:bg-brutal-yellow px-1"
                     >
                       템플릿 다운로드
                     </button>
@@ -165,16 +165,16 @@ export default function CSVUpload() {
                       type="file"
                       accept=".csv"
                       onChange={handleFileChange}
-                      className="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 focus:outline-none p-2"
+                      className="block w-full text-sm font-medium text-brutal-black border-2 border-brutal-black cursor-pointer bg-brutal-white p-2"
                     />
                   </div>
 
                   {errors.length > 0 && (
-                    <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                      <p className="text-sm font-semibold text-red-800 mb-2">
+                    <div className="bg-brutal-pink border-2 border-brutal-black p-3">
+                      <p className="text-sm font-bold text-brutal-black mb-2">
                         오류가 발견되었습니다:
                       </p>
-                      <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+                      <ul className="text-sm font-medium text-brutal-black list-disc list-inside space-y-1">
                         {errors.map((error, index) => (
                           <li key={index}>{error}</li>
                         ))}
@@ -184,30 +184,30 @@ export default function CSVUpload() {
 
                   {preview.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-gray-700 mb-2">
+                      <p className="text-sm font-bold text-brutal-black mb-2">
                         미리보기 (처음 5개 행)
                       </p>
-                      <div className="overflow-x-auto border rounded-md">
-                        <table className="min-w-full divide-y divide-gray-200 text-sm">
-                          <thead className="bg-gray-50">
+                      <div className="overflow-x-auto border-2 border-brutal-black">
+                        <table className="min-w-full text-sm">
+                          <thead className="bg-brutal-yellow border-b-2 border-brutal-black">
                             <tr>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">날짜</th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">메뉴</th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">재료</th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">공급업체</th>
-                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">수량</th>
-                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">단가</th>
+                              <th className="px-3 py-2 text-left text-xs font-bold text-brutal-black">날짜</th>
+                              <th className="px-3 py-2 text-left text-xs font-bold text-brutal-black">메뉴</th>
+                              <th className="px-3 py-2 text-left text-xs font-bold text-brutal-black">재료</th>
+                              <th className="px-3 py-2 text-left text-xs font-bold text-brutal-black">공급업체</th>
+                              <th className="px-3 py-2 text-right text-xs font-bold text-brutal-black">수량</th>
+                              <th className="px-3 py-2 text-right text-xs font-bold text-brutal-black">단가</th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
+                          <tbody className="bg-brutal-white divide-y-2 divide-brutal-black/20">
                             {preview.map((row, index) => (
                               <tr key={index}>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs">{row.날짜}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs">{row.메뉴}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs">{row.재료}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs">{row.공급업체}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs text-right">{row.수량}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs text-right">{row.단가}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">{row.날짜}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">{row.메뉴}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">{row.재료}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-xs font-medium">{row.공급업체}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-xs font-medium text-right">{row.수량}</td>
+                                <td className="px-3 py-2 whitespace-nowrap text-xs font-medium text-right">{row.단가}</td>
                               </tr>
                             ))}
                           </tbody>
