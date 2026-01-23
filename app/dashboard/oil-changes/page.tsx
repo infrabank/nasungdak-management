@@ -59,7 +59,7 @@ export default async function OilChangesPage({
         {/* Desktop button */}
         <Link
           href={newOilChangeUrl}
-          className="hidden sm:block rounded-md bg-blue-600 px-4 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500"
+          className="hidden sm:block px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
         >
           새 교체 이력 등록
         </Link>
@@ -243,10 +243,10 @@ export default async function OilChangesPage({
       </div>
 
       {/* Mobile: Fixed Bottom Action Bar - positioned above bottom nav */}
-      <div className="fixed bottom-14 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 lg:hidden">
+      <div className="fixed bottom-14 left-0 right-0 bg-brutal-white border-t-3 border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 lg:hidden">
         <Link
           href={newOilChangeUrl}
-          className="block w-full rounded-xl bg-blue-600 py-3 text-center text-base font-semibold text-white shadow-sm hover:bg-blue-500"
+          className="block w-full py-3 text-center text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
         >
           + 새 교체 이력 등록
         </Link>

@@ -45,8 +45,8 @@ export default function SupplierForm({ supplier }: SupplierFormProps) {
         onClick={() => setIsOpen(true)}
         className={
           isEditing
-            ? 'text-blue-600 hover:text-blue-900 text-sm font-medium'
-            : 'block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500'
+            ? 'font-bold text-brutal-black underline underline-offset-2 hover:text-brutal-yellow hover:bg-brutal-black px-1 text-sm transition-all'
+            : 'px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all'
         }
       >
         {isEditing ? '수정' : '공급업체 등록'}
@@ -185,7 +185,7 @@ export default function SupplierForm({ supplier }: SupplierFormProps) {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 disabled:opacity-50"
+                    className="px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
                   >
                     {isSubmitting ? '처리 중...' : isEditing ? '수정' : '등록'}
                   </button>

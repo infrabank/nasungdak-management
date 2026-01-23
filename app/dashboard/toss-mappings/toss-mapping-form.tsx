@@ -74,8 +74,8 @@ export default function TossMappingForm({ mapping, stores, skus }: TossMappingFo
         onClick={() => setIsOpen(true)}
         className={
           mapping
-            ? 'text-blue-600 hover:text-blue-900'
-            : 'block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+            ? 'font-bold text-brutal-black underline underline-offset-2 hover:text-brutal-yellow hover:bg-brutal-black px-1 transition-all'
+            : 'px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all'
         }
       >
         {mapping ? '수정' : '새 매핑 등록'}

@@ -146,14 +146,14 @@ export default function FixedCostRow({ cost }: FixedCostRowProps) {
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-medium text-gray-700 bg-white hover:bg-gray-100 rounded ring-1 ring-gray-300 disabled:opacity-50"
+              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50"
+              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
             >
               {isSaving ? '...' : '저장'}
             </button>

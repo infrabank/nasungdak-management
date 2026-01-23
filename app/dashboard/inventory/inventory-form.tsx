@@ -38,7 +38,7 @@ export default function InventoryForm({ inventory }: InventoryFormProps) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="block rounded-md bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-blue-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+        className="px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
       >
         재고 조정
       </button>
