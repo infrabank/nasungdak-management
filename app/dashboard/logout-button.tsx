@@ -17,13 +17,13 @@ export default function LogoutButton({
     return (
       <button
         onClick={handleLogout}
-        className={`flex w-full items-center gap-3 rounded-lg p-3 text-left text-base font-medium text-gray-900 active:bg-gray-100 ${className}`}
+        className={`flex w-full items-center gap-3 p-3 text-left text-base font-bold text-brutal-black border-2 border-brutal-black bg-brutal-white shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-active active:translate-x-0.5 active:translate-y-0.5 transition-all duration-150 ${className}`}
       >
         <svg
-          className="h-6 w-6 text-gray-500"
+          className="h-6 w-6 text-brutal-black"
           fill="none"
           viewBox="0 0 24 24"
-          strokeWidth={1.5}
+          strokeWidth={2}
           stroke="currentColor"
         >
           <path
@@ -40,7 +40,7 @@ export default function LogoutButton({
   return (
     <button
       onClick={handleLogout}
-      className="rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
+      className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-active active:translate-x-0.5 active:translate-y-0.5 transition-all duration-150"
     >
       로그아웃
     </button>

@@ -103,7 +103,7 @@ export default function MobileBottomNav() {
 
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 z-40 block border-t bg-white pb-[env(safe-area-inset-bottom)] lg:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-40 block border-t-3 border-brutal-black bg-brutal-yellow pb-[env(safe-area-inset-bottom)] lg:hidden">
         <nav className="flex h-14 items-center justify-around">
           {navItems.map((item) => {
             const active = isActive(item.href)
@@ -111,18 +111,20 @@ export default function MobileBottomNav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex w-full flex-col items-center justify-center py-1"
+                className={`flex w-full flex-col items-center justify-center py-1 transition-all duration-150 ${
+                  active ? 'bg-brutal-pink' : ''
+                }`}
                 aria-current={active ? 'page' : undefined}
                 aria-label={item.label}
               >
                 <item.icon
                   className={`h-6 w-6 ${
-                    active ? 'text-red-600' : 'text-gray-400'
+                    active ? 'text-brutal-black' : 'text-brutal-black/60'
                   }`}
                 />
                 <span
-                  className={`mt-0.5 text-[10px] font-medium ${
-                    active ? 'text-red-600' : 'text-gray-500'
+                  className={`mt-0.5 text-[10px] font-bold ${
+                    active ? 'text-brutal-black' : 'text-brutal-black/60'
                   }`}
                 >
                   {item.label}
@@ -132,18 +134,20 @@ export default function MobileBottomNav() {
           })}
           <button
             onClick={() => setIsAllMenuOpen(true)}
-            className="flex w-full flex-col items-center justify-center py-1"
+            className={`flex w-full flex-col items-center justify-center py-1 transition-all duration-150 ${
+              isAllMenuOpen ? 'bg-brutal-pink' : ''
+            }`}
             aria-label="전체 메뉴"
             aria-expanded={isAllMenuOpen}
           >
             <Squares2X2Icon
               className={`h-6 w-6 ${
-                isAllMenuOpen ? 'text-red-600' : 'text-gray-400'
+                isAllMenuOpen ? 'text-brutal-black' : 'text-brutal-black/60'
               }`}
             />
             <span
-              className={`mt-0.5 text-[10px] font-medium ${
-                isAllMenuOpen ? 'text-red-600' : 'text-gray-500'
+              className={`mt-0.5 text-[10px] font-bold ${
+                isAllMenuOpen ? 'text-brutal-black' : 'text-brutal-black/60'
               }`}
             >
               전체

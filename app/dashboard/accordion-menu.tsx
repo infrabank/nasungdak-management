@@ -96,7 +96,6 @@ export default function AccordionMenu() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -107,7 +106,6 @@ export default function AccordionMenu() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Close menu when route changes
   useEffect(() => {
     setOpenGroup(null)
     setIsMobileMenuOpen(false)
@@ -127,26 +125,24 @@ export default function AccordionMenu() {
 
   return (
     <div ref={menuRef} className="flex items-center">
-      {/* Mobile Menu Button */}
       <div className="lg:hidden">
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="rounded-lg p-2 text-gray-600 hover:bg-gray-100"
+          className="p-2 text-brutal-black border-2 border-brutal-black bg-brutal-white shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150"
         >
           <MenuIcon className="h-6 w-6" />
         </button>
       </div>
 
-      {/* Desktop Menu */}
-      <div className="hidden lg:flex lg:space-x-1">
+      <div className="hidden lg:flex lg:space-x-2">
         {menuGroups.map((group) => (
           <div key={group.label} className="relative">
             <button
               onClick={() => toggleGroup(group.label)}
-              className={`inline-flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              className={`inline-flex items-center gap-1 px-3 py-2 text-sm font-bold border-2 border-brutal-black transition-all duration-150 ${
                 isGroupActive(group)
-                  ? 'bg-red-50 text-red-700'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  ? 'bg-brutal-pink text-brutal-black shadow-brutal-sm'
+                  : 'bg-brutal-white text-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5'
               }`}
             >
               {group.label}
@@ -157,9 +153,8 @@ export default function AccordionMenu() {
               />
             </button>
 
-            {/* Dropdown Panel */}
             <div
-              className={`absolute left-0 top-full z-50 mt-1 min-w-[160px] origin-top-left rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 transition-all duration-200 ${
+              className={`absolute left-0 top-full z-50 mt-2 min-w-[180px] origin-top-left bg-brutal-white border-2 border-brutal-black shadow-brutal transition-all duration-200 ${
                 openGroup === group.label
                   ? 'scale-100 opacity-100'
                   : 'pointer-events-none scale-95 opacity-0'
@@ -169,10 +164,10 @@ export default function AccordionMenu() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block px-4 py-2 text-sm transition-colors ${
+                  className={`block px-4 py-3 text-sm font-medium border-b-2 border-brutal-black last:border-b-0 transition-colors ${
                     isItemActive(item.href)
-                      ? 'bg-red-50 text-red-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-brutal-yellow text-brutal-black'
+                      : 'text-brutal-black hover:bg-brutal-yellow/50'
                   }`}
                 >
                   {item.label}
@@ -183,50 +178,49 @@ export default function AccordionMenu() {
         ))}
       </div>
 
-      {/* Mobile Slide-out Menu */}
       <div
         className={`fixed inset-0 z-50 lg:hidden ${
           isMobileMenuOpen ? 'pointer-events-auto' : 'pointer-events-none'
         }`}
       >
-        {/* Backdrop */}
         <div
-          className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
+          className={`absolute inset-0 bg-brutal-black/60 transition-opacity duration-300 ${
             isMobileMenuOpen ? 'opacity-100' : 'opacity-0'
           }`}
           onClick={() => setIsMobileMenuOpen(false)}
         />
 
-        {/* Side Panel */}
         <div
-          className={`absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-white shadow-xl transition-transform duration-300 ease-in-out ${
+          className={`absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-brutal-white border-r-3 border-brutal-black transition-transform duration-300 ease-in-out ${
             isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
           <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b px-4 py-3">
-              <span className="text-lg font-bold text-gray-900">메뉴</span>
+            <div className="flex items-center justify-between border-b-3 border-brutal-black px-4 py-3 bg-brutal-yellow">
+              <span className="text-lg font-bold text-brutal-black">메뉴</span>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="rounded-md p-2 text-gray-500 hover:bg-gray-100"
+                className="p-2 text-brutal-black border-2 border-brutal-black bg-brutal-white shadow-brutal-sm hover:shadow-brutal transition-all duration-150"
               >
                 <XIcon className="h-6 w-6" />
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 {menuGroups.map((group) => (
-                  <div key={group.label} className="border-b border-gray-100 pb-2 last:border-0">
+                  <div key={group.label} className="border-b-2 border-brutal-black pb-3 last:border-0">
                     <button
                       onClick={() => toggleGroup(group.label)}
-                      className={`flex w-full items-center justify-between rounded-md py-3 px-2 text-left font-medium transition-colors ${
-                        isGroupActive(group) ? 'text-red-700' : 'text-gray-900'
+                      className={`flex w-full items-center justify-between py-3 px-3 text-left font-bold border-2 border-brutal-black transition-all duration-150 ${
+                        isGroupActive(group) 
+                          ? 'bg-brutal-pink text-brutal-black shadow-brutal-sm' 
+                          : 'bg-brutal-white text-brutal-black shadow-brutal-sm'
                       }`}
                     >
                       {group.label}
                       <ChevronDownIcon
-                        className={`h-5 w-5 text-gray-400 transition-transform duration-200 ${
+                        className={`h-5 w-5 text-brutal-black transition-transform duration-200 ${
                           openGroup === group.label ? 'rotate-180' : ''
                         }`}
                       />
@@ -239,15 +233,15 @@ export default function AccordionMenu() {
                           : 'max-h-0 opacity-0'
                       }`}
                     >
-                      <div className="flex flex-col space-y-1 pl-4 pt-1">
+                      <div className="flex flex-col space-y-2 pl-2 pt-3">
                         {group.items.map((item) => (
                           <Link
                             key={item.href}
                             href={item.href}
-                            className={`block rounded-md py-3 px-4 text-base transition-colors ${
+                            className={`block py-3 px-4 text-base font-medium border-2 border-brutal-black transition-all duration-150 ${
                               isItemActive(item.href)
-                                ? 'bg-red-50 font-medium text-red-700'
-                                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                ? 'bg-brutal-yellow text-brutal-black shadow-brutal-sm'
+                                : 'bg-brutal-white text-brutal-black hover:bg-brutal-yellow/50'
                             }`}
                           >
                             {item.label}

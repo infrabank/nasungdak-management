@@ -15,11 +15,9 @@ export default async function DashboardLayout({
   const stores = await getActiveStores()
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-[env(safe-area-inset-bottom)] lg:pb-0">
-      {/* Navigation */}
-      <nav className="bg-white shadow">
+    <div className="min-h-screen bg-brutal-white pb-[env(safe-area-inset-bottom)] lg:pb-0">
+      <nav className="bg-brutal-yellow border-b-3 border-brutal-black">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Mobile Header - Centered Logo Only */}
           <div className="flex h-14 items-center justify-center lg:hidden">
             <Link href="/dashboard" className="flex items-center">
               <Image
@@ -32,7 +30,6 @@ export default async function DashboardLayout({
             </Link>
           </div>
 
-          {/* Desktop Header - Original Layout */}
           <div className="hidden h-16 justify-between lg:flex">
             <div className="flex">
               <Link href="/dashboard" className="flex items-center">
@@ -51,7 +48,7 @@ export default async function DashboardLayout({
             <div className="flex items-center gap-4">
               <Suspense
                 fallback={
-                  <div className="h-8 w-32 animate-pulse rounded bg-gray-200" />
+                  <div className="h-8 w-32 animate-pulse border-2 border-brutal-black bg-brutal-white" />
                 }
               >
                 <StoreSelector stores={stores} />
@@ -62,14 +59,12 @@ export default async function DashboardLayout({
         </div>
       </nav>
 
-      {/* Main Content */}
       <main className="py-10 mb-14 lg:mb-0">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {children}
         </div>
       </main>
 
-      {/* Mobile Bottom Navigation */}
       <MobileBottomNav />
     </div>
   )

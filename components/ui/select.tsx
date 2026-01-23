@@ -11,12 +11,14 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       <div className="w-full">
         <select
           className={cn(
-            'block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm',
-            'ring-1 ring-inset ring-gray-300',
-            'focus:ring-2 focus:ring-inset focus:ring-blue-600',
-            'disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500',
-            'sm:text-sm',
-            error && 'ring-red-300 focus:ring-red-600',
+            'block w-full py-2 px-3 text-brutal-black bg-brutal-white',
+            'border-2 border-brutal-black shadow-brutal-sm',
+            'focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5',
+            'transition-all duration-150 ease-in-out',
+            'disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-brutal-black/50 disabled:shadow-none',
+            'sm:text-sm font-medium',
+            'cursor-pointer',
+            error && 'border-brutal-red focus:border-brutal-red',
             className
           )}
           ref={ref}
@@ -24,7 +26,11 @@ const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         >
           {children}
         </select>
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        {error && (
+          <p className="mt-2 text-sm font-bold text-brutal-red border-l-2 border-brutal-red pl-2">
+            {error}
+          </p>
+        )}
       </div>
     )
   }

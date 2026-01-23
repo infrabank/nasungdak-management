@@ -29,7 +29,6 @@ export default function StoreSelector({ stores }: StoreSelectorProps) {
     const storeId = e.target.value
     setSelectedStore(storeId)
 
-    // Update URL with new storeId
     const params = new URLSearchParams(searchParams.toString())
     if (storeId) {
       params.set('storeId', storeId)
@@ -47,14 +46,14 @@ export default function StoreSelector({ stores }: StoreSelectorProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="storeSelector" className="text-sm font-medium text-gray-700">
+      <label htmlFor="storeSelector" className="text-sm font-bold text-brutal-black">
         매장:
       </label>
       <select
         id="storeSelector"
         value={selectedStore}
         onChange={handleChange}
-        className="rounded-md border-0 py-1.5 pl-3 pr-8 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-blue-600 sm:text-sm"
+        className="py-1.5 pl-3 pr-8 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none transition-all duration-150 sm:text-sm font-medium cursor-pointer"
       >
         <option value="">전체 매장</option>
         {stores.map((store) => (
