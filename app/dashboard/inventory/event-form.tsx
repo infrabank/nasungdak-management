@@ -33,7 +33,7 @@ export default function EventForm() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="block rounded-md bg-amber-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-amber-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600"
+        className="px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-orange border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
       >
         + 폐기/조정
       </button>
@@ -46,7 +46,7 @@ export default function EventForm() {
               onClick={() => setIsOpen(false)}
             />
 
-            <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
               <form onSubmit={handleSubmit}>
                 <div>
                   <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
@@ -64,7 +64,7 @@ export default function EventForm() {
                         id="storeId"
                         required
                         placeholder="매장 ID"
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
@@ -78,7 +78,7 @@ export default function EventForm() {
                         id="ingredientId"
                         required
                         placeholder="재료 ID"
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
@@ -90,7 +90,7 @@ export default function EventForm() {
                         name="eventType"
                         id="eventType"
                         required
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       >
                         <option value="">선택하세요</option>
                         <option value="purchase">매입 (재고 증가)</option>
@@ -112,7 +112,7 @@ export default function EventForm() {
                         required
                         step="0.01"
                         placeholder="양수: 증가, 음수: 감소"
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
@@ -125,7 +125,7 @@ export default function EventForm() {
                         name="eventDate"
                         id="eventDate"
                         required
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
@@ -138,7 +138,7 @@ export default function EventForm() {
                         id="reason"
                         rows={3}
                         placeholder="사유를 입력하세요 (선택사항)"
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
                   </div>

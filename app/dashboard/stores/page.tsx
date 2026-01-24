@@ -23,7 +23,7 @@ export default async function StoresPage() {
         {/* Mobile View - Cards */}
         <div className="md:hidden space-y-4">
           {storeList.length === 0 ? (
-            <div className="text-center py-10 bg-white rounded-lg border border-gray-200 text-gray-500">
+            <div className="text-center py-10 bg-brutal-white border-3 border-dashed border-brutal-black font-medium text-brutal-black/70">
               등록된 매장이 없습니다
             </div>
           ) : (

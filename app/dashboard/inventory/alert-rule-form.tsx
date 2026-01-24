@@ -50,7 +50,7 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
             onClick={() => setIsOpen(false)}
           />
 
-          <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+          <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
             <form onSubmit={handleSubmit}>
               <div>
                 <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
@@ -68,7 +68,7 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
                       id="storeId"
                       defaultValue={rule?.storeId || ''}
                       placeholder="매장 ID"
-                      className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                      className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                     />
                     <p className="mt-1 text-xs text-gray-500">빈 값이면 전체 매장에 적용됩니다</p>
                   </div>
@@ -84,7 +84,7 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
                       required
                       defaultValue={rule?.ingredientId || ''}
                       placeholder="재료 ID"
-                      className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                      className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                     />
                   </div>
 
@@ -99,7 +99,7 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
                       required
                       min="1"
                       defaultValue={rule?.alertThresholdDays || 3}
-                      className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                      className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                     />
                     <p className="mt-1 text-xs text-gray-500">잔여일이 이 값 이하면 알림 발송 (기본: 3일)</p>
                   </div>
@@ -116,7 +116,7 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
                       min="7"
                       max="90"
                       defaultValue={rule?.predictionPeriodDays || 30}
-                      className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                      className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                     />
                     <p className="mt-1 text-xs text-gray-500">최근 N일간의 판매량으로 평균을 계산 (기본: 30일)</p>
                   </div>

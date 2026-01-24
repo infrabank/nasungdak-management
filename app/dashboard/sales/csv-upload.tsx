@@ -142,7 +142,7 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
               onClick={() => !isUploading && setIsOpen(false)}
             />
 
-            <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
+            <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
               <div>
                 <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
                   판매 CSV 일괄 업로드

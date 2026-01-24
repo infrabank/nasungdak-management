@@ -75,7 +75,7 @@ export default function StoreForm({ store }: StoreFormProps) {
               onClick={() => setIsOpen(false)}
             />
 
-            <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
               <form onSubmit={handleSubmit}>
                 <div>
                   <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
@@ -94,7 +94,7 @@ export default function StoreForm({ store }: StoreFormProps) {
                         required
                         defaultValue={store?.storeName}
                         placeholder="예: 나성닭강정 본점"
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
@@ -109,7 +109,7 @@ export default function StoreForm({ store }: StoreFormProps) {
                         required
                         defaultValue={store?.storeCode}
                         placeholder="예: MAIN, BRANCH01"
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm uppercase"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium uppercase"
                       />
                       <p className="mt-1 text-xs text-gray-500">영문, 숫자, 하이픈, 언더스코어만 사용 가능</p>
                     </div>
@@ -124,7 +124,7 @@ export default function StoreForm({ store }: StoreFormProps) {
                         rows={2}
                         defaultValue={store?.address || ''}
                         placeholder="매장 주소"
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
@@ -139,7 +139,7 @@ export default function StoreForm({ store }: StoreFormProps) {
                           id="phone"
                           defaultValue={store?.phone || ''}
                           placeholder="02-1234-5678"
-                          className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                          className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                         />
                       </div>
 
@@ -153,7 +153,7 @@ export default function StoreForm({ store }: StoreFormProps) {
                           id="managerPhone"
                           defaultValue={store?.managerPhone || ''}
                           placeholder="010-1234-5678"
-                          className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                          className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                         />
                         <p className="mt-1 text-xs text-gray-500">알림 수신용</p>
                       </div>
@@ -169,7 +169,7 @@ export default function StoreForm({ store }: StoreFormProps) {
                         id="tossStoreId"
                         defaultValue={store?.tossStoreId || ''}
                         placeholder="토스 POS 연동용 매장 ID"
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                       <p className="mt-1 text-xs text-gray-500">토스 POS 연동 시 필요</p>
                     </div>

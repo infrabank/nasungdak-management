@@ -89,7 +89,7 @@ export default function TossMappingForm({ mapping, stores, skus }: TossMappingFo
               onClick={() => setIsOpen(false)}
             />
 
-            <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
               <form onSubmit={handleSubmit}>
                 <div>
                   <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
@@ -106,7 +106,7 @@ export default function TossMappingForm({ mapping, stores, skus }: TossMappingFo
                         id="storeId"
                         required
                         defaultValue={mapping?.storeId || ''}
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       >
                         <option value="">선택하세요</option>
                         {stores.map((store) => (
@@ -128,7 +128,7 @@ export default function TossMappingForm({ mapping, stores, skus }: TossMappingFo
                         required
                         defaultValue={mapping?.tossItemCode || ''}
                         placeholder="예: ITEM001"
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                       <p className="mt-1 text-xs text-gray-500">토스 POS에서 확인한 품목 코드를 입력하세요</p>
                     </div>
@@ -143,7 +143,7 @@ export default function TossMappingForm({ mapping, stores, skus }: TossMappingFo
                         id="tossItemName"
                         defaultValue={mapping?.tossItemName || ''}
                         placeholder="예: 닭강정(중)"
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
@@ -155,7 +155,7 @@ export default function TossMappingForm({ mapping, stores, skus }: TossMappingFo
                         name="skuId"
                         id="skuId"
                         defaultValue={mapping?.skuId || ''}
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       >
                         <option value="">매핑하지 않음</option>
                         {skus.map((sku) => (

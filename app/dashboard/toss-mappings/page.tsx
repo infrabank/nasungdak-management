@@ -35,7 +35,7 @@ export default async function TossMappingsPage({
         <select
           name="storeId"
           defaultValue={storeId}
-          className="block w-full rounded-lg border-0 py-3 px-4 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 text-base sm:py-1.5 sm:pl-3 sm:pr-8 sm:text-sm sm:w-auto"
+          className="block w-full py-3 px-4 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all text-base font-medium sm:py-1.5 sm:pl-3 sm:pr-8 sm:text-sm sm:w-auto"
         >
           <option value="">전체 매장</option>
           {stores.map((store) => (
@@ -50,7 +50,7 @@ export default async function TossMappingsPage({
         {/* Mobile View (Cards) */}
         <div className="md:hidden space-y-4">
           {mappings.length === 0 ? (
-            <div className="text-center py-10 text-gray-500 bg-white rounded-lg border border-gray-200">
+            <div className="text-center py-10 font-medium text-brutal-black/70 bg-brutal-white border-3 border-dashed border-brutal-black">
               등록된 매핑이 없습니다
             </div>
           ) : (

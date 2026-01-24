@@ -25,7 +25,7 @@ export default async function MenusPage() {
         {/* Mobile View */}
         <div className="md:hidden space-y-4">
           {menus.length === 0 ? (
-            <div className="text-center py-10 text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
+            <div className="text-center py-10 font-medium text-brutal-black/70 bg-brutal-white border-3 border-dashed border-brutal-black">
               등록된 메뉴가 없습니다
             </div>
           ) : (

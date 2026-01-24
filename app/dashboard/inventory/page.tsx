@@ -36,8 +36,8 @@ export default async function InventoryPage({
       {/* Mobile View - Cards */}
       <div className="mt-6 space-y-4 md:hidden">
         {inventoryList.length === 0 ? (
-          <div className="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
-            <p className="text-sm text-gray-500">재고 데이터가 없습니다</p>
+          <div className="border-3 border-dashed border-brutal-black bg-brutal-white p-12 text-center">
+            <p className="text-sm font-medium text-brutal-black/70">재고 데이터가 없습니다</p>
           </div>
         ) : (
           inventoryList.map((item) => (

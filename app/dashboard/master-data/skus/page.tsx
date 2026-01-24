@@ -24,7 +24,7 @@ export default async function SkusPage() {
       {/* Mobile View */}
       <div className="mt-6 md:hidden space-y-4">
         {skus.length === 0 ? (
-          <div className="text-center py-10 text-gray-500 bg-white rounded-lg border border-gray-200">
+          <div className="text-center py-10 font-medium text-brutal-black/70 bg-brutal-white border-3 border-dashed border-brutal-black">
             등록된 SKU가 없습니다
           </div>
         ) : (

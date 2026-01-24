@@ -167,7 +167,7 @@ export default function CSVUploadTranspose({ storeId }: CSVUploadTransposeProps)
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="block rounded-md bg-emerald-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-emerald-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
+        className="px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-green border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
       >
         엑셀 형식 업로드
       </button>
@@ -180,7 +180,7 @@ export default function CSVUploadTranspose({ storeId }: CSVUploadTransposeProps)
               onClick={() => !isUploading && setIsOpen(false)}
             />
 
-            <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-3xl sm:p-6">
+            <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-3xl sm:p-6">
               <div>
                 <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
                   판매 CSV 일괄 업로드 (엑셀 형식)

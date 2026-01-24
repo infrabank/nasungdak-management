@@ -36,7 +36,7 @@ export default function SupplierForm({ supplier }: SupplierFormProps) {
   }
 
   const inputClass =
-    'block w-full rounded-lg border-0 py-2.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm'
+    'block w-full py-2.5 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium'
 
   return (
     <>
@@ -59,7 +59,7 @@ export default function SupplierForm({ supplier }: SupplierFormProps) {
             onClick={() => setIsOpen(false)}
           />
           <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 shadow-xl transition-all">
+            <div className="relative w-full max-w-md transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg p-6 transition-all">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 {isEditing ? '공급업체 수정' : '공급업체 등록'}
               </h3>

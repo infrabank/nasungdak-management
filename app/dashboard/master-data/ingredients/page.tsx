@@ -25,8 +25,8 @@ export default async function IngredientsPage() {
         {/* Mobile View - Cards */}
         <div className="md:hidden space-y-4">
           {ingredients.length === 0 ? (
-            <div className="text-center py-10 bg-white rounded-lg border border-gray-200">
-              <p className="text-gray-500">등록된 재료가 없습니다</p>
+            <div className="text-center py-10 bg-brutal-white border-3 border-dashed border-brutal-black">
+              <p className="font-medium text-brutal-black/70">등록된 재료가 없습니다</p>
             </div>
           ) : (
             ingredients.map((ingredient) => (

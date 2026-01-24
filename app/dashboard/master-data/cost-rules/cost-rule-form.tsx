@@ -95,7 +95,7 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
               onClick={() => setIsOpen(false)}
             />
 
-            <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
               <form onSubmit={handleSubmit}>
                 <div>
                   <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
@@ -112,7 +112,7 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
                         id="menuId"
                         required
                         defaultValue={rule?.menuId}
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       >
                         <option value="">선택하세요</option>
                         {menus.map((menu) => (
@@ -132,7 +132,7 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
                         id="ingredientId"
                         required
                         defaultValue={rule?.ingredientId}
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       >
                         <option value="">선택하세요</option>
                         {ingredientsList.map((ingredient) => (
@@ -156,7 +156,7 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
                         min="0.01"
                         max="100"
                         defaultValue={rule?.distributionPercent}
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                         placeholder="예: 40.5"
                       />
                       <p className="mt-1 text-xs text-gray-500">
@@ -174,7 +174,7 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
                         id="effectiveFrom"
                         required
                         defaultValue={rule?.effectiveFrom}
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
@@ -187,7 +187,7 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
                         name="effectiveTo"
                         id="effectiveTo"
                         defaultValue={rule?.effectiveTo || ''}
-                        className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:text-sm"
+                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                       <p className="mt-1 text-xs text-gray-500">
                         비워두면 계속 유효합니다
