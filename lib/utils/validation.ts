@@ -56,22 +56,10 @@ export const storeSchema = z.object({
   address: z.string().max(500).optional().nullable(),
   phone: z.string().max(20).optional().nullable(),
   managerPhone: z.string().max(20).optional().nullable(),
-  tossStoreId: z.string().max(50).optional().nullable(),
   isActive: z.boolean().default(true),
 })
 
 export type StoreFormData = z.infer<typeof storeSchema>
-
-// Toss SKU Mapping validation
-export const tossSkuMappingSchema = z.object({
-  storeId: z.string().uuid('유효한 매장을 선택해주세요'),
-  tossItemCode: z.string().min(1, '토스 품목 코드를 입력해주세요').max(50),
-  tossItemName: z.string().max(100).optional().nullable(),
-  skuId: z.string().uuid('유효한 SKU를 선택해주세요').nullable().optional(),
-  isActive: z.boolean().default(true),
-})
-
-export type TossSkuMappingFormData = z.infer<typeof tossSkuMappingSchema>
 
 // Inventory Alert Rule validation
 export const inventoryAlertRuleSchema = z.object({

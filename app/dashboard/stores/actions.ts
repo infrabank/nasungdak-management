@@ -15,7 +15,6 @@ export async function createStore(formData: FormData) {
       address: formData.get('address') || null,
       phone: formData.get('phone') || null,
       managerPhone: formData.get('managerPhone') || null,
-      tossStoreId: formData.get('tossStoreId') || null,
       isActive: formData.get('isActive') === 'true',
     }
 
@@ -76,7 +75,6 @@ export async function updateStore(id: string, formData: FormData) {
       address: formData.get('address') || null,
       phone: formData.get('phone') || null,
       managerPhone: formData.get('managerPhone') || null,
-      tossStoreId: formData.get('tossStoreId') || null,
       isActive: formData.get('isActive') === 'true',
     }
 

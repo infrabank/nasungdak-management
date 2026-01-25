@@ -162,21 +162,6 @@ export default function StoreForm({ store }: StoreFormProps) {
                        </div>
                      </div>
 
-                     <div>
-                       <Label htmlFor="tossStoreId">
-                         토스 매장 ID
-                       </Label>
-                       <Input
-                         type="text"
-                         name="tossStoreId"
-                         id="tossStoreId"
-                         defaultValue={store?.tossStoreId || ''}
-                         placeholder="토스 POS 연동용 매장 ID"
-                         className="mt-1"
-                       />
-                        <p className="mt-1 text-xs text-brutal-black/70">토스 POS 연동 시 필요</p>
-                     </div>
-
                      <div className="flex items-center">
                        <input
                          type="checkbox"

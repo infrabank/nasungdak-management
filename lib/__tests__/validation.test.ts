@@ -149,7 +149,6 @@ describe('storeSchema', () => {
       address: null,
       phone: null,
       managerPhone: null,
-      tossStoreId: null,
     })
     expect(result.success).toBe(true)
   })
