@@ -38,10 +38,9 @@ export const menuGroups: MenuGroup[] = [
     ],
   },
   {
-    label: '재고/연동',
+    label: '재고',
     items: [
       { label: '재고 관리', href: '/dashboard/inventory' },
-      { label: '토스 매핑', href: '/dashboard/toss-mappings' },
     ],
   },
 ]

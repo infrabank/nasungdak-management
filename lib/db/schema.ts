@@ -9,7 +9,6 @@ export const stores = pgTable('stores', {
   address: text('address'),
   phone: varchar('phone', { length: 20 }),
   managerPhone: varchar('manager_phone', { length: 20 }),
-  tossStoreId: varchar('toss_store_id', { length: 50 }), // 토스 POS 연동용
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -147,7 +146,6 @@ export const salesRecords = pgTable('sales_records', {
   totalRevenue: decimal('total_revenue', { precision: 14, scale: 2 }).generatedAlwaysAs(
     sql`quantity_sold * unit_price`
   ),
-  tossSyncId: uuid('toss_sync_id'), // 토스 동기화 추적용 (Phase 2)
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
   createdBy: varchar('created_by', { length: 100 }),
@@ -230,45 +228,7 @@ export const oilChangeHistory = pgTable('oil_change_history', {
 ])
 
 // =====================
-// Phase 2: 토스 POS 연동
-// =====================
-
-// 토스 SKU 매핑 테이블
-export const tossSkuMappings = pgTable('toss_sku_mappings', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  storeId: uuid('store_id').notNull().references(() => stores.id, { onDelete: 'cascade' }),
-  tossItemCode: varchar('toss_item_code', { length: 50 }).notNull(),
-  tossItemName: varchar('toss_item_name', { length: 100 }),
-  skuId: uuid('sku_id').references(() => skus.id, { onDelete: 'set null' }), // NULL이면 미매핑
-  isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-}, (table) => ({
-  uniqueStoreTossCode: unique('unique_store_toss_code').on(table.storeId, table.tossItemCode),
-}))
-
-// 토스 동기화 로그 테이블
-export const tossSyncLogs = pgTable('toss_sync_logs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  storeId: uuid('store_id').notNull().references(() => stores.id),
-  syncDate: date('sync_date').notNull(),
-  syncType: varchar('sync_type', { length: 20 }).notNull(), // 'auto' | 'manual'
-  status: varchar('status', { length: 20 }).notNull(), // 'success' | 'partial' | 'failed'
-  totalRecords: integer('total_records'),
-  successCount: integer('success_count'),
-  failedCount: integer('failed_count'),
-  errorDetails: jsonb('error_details'),
-  startedAt: timestamp('started_at'),
-  completedAt: timestamp('completed_at'),
-  createdBy: varchar('created_by', { length: 100 }),
-})
-
-// =====================
-// Phase 3: 재고 관리 & 알림
+// 재고 관리 & 알림
 // =====================
 
 // 재고 테이블 (매장별 현재 재고)
@@ -328,10 +288,6 @@ export const alertHistory = pgTable('alert_history', {
 
 export type Store = typeof stores.$inferSelect
 export type NewStore = typeof stores.$inferInsert
-export type TossSkuMapping = typeof tossSkuMappings.$inferSelect
-export type NewTossSkuMapping = typeof tossSkuMappings.$inferInsert
-export type TossSyncLog = typeof tossSyncLogs.$inferSelect
-export type NewTossSyncLog = typeof tossSyncLogs.$inferInsert
 export type Inventory = typeof inventory.$inferSelect
 export type NewInventory = typeof inventory.$inferInsert
 export type InventoryAlertRule = typeof inventoryAlertRules.$inferSelect

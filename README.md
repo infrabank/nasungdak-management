@@ -20,10 +20,9 @@
 | 💵 **고정비용 관리** | 인건비, 임대료, 관리비 등 월별 비용 관리 |
 | 📊 **기초 데이터** | 메뉴, 재료, SKU, 공급업체 마스터 관리 |
 
-### 확장 기능 (Phase 2-3)
+### 확장 기능
 | 기능 | 설명 | 상태 |
 |------|------|------|
-| 🔄 **토스 POS 연동** | SKU 매핑, 자동 판매 데이터 동기화 | 🔧 준비됨 |
 | 📦 **재고 관리** | 실시간 재고 추적, 폐기/조정 기록 | 🔧 준비됨 |
 | 🔔 **재고 알림** | 재고 부족 예측 및 카카오 알림 | 🔧 준비됨 |
 
@@ -112,7 +111,6 @@ npm run dev
 │       ├── fixed-costs/        # 고정비용
 │       ├── oil-changes/        # 기름 교체
 │       ├── inventory/          # 재고 관리
-│       ├── toss-mappings/      # 토스 매핑
 │       └── master-data/        # 기초 데이터
 │           ├── menus/
 │           ├── ingredients/
@@ -122,7 +120,7 @@ npm run dev
 │           └── cost-rules/
 ├── components/ui/              # 재사용 UI 컴포넌트
 ├── lib/
-│   ├── db/schema.ts           # Drizzle 스키마 (15개 테이블)
+│   ├── db/schema.ts           # Drizzle 스키마 (13개 테이블)
 │   ├── utils/validation.ts    # Zod 스키마
 │   └── animations.ts          # Framer Motion 변형
 └── specs/                      # 프로젝트 문서
@@ -148,8 +146,6 @@ npm run dev
 ### 확장 테이블 (Phase 2-3)
 | 테이블 | 설명 |
 |--------|------|
-| `toss_sku_mappings` | 토스 SKU 매핑 |
-| `toss_sync_logs` | 토스 동기화 로그 |
 | `inventory` | 재고 현황 |
 | `inventory_events` | 재고 이벤트 |
 | `inventory_alert_rules` | 재고 알림 규칙 |
