@@ -66,10 +66,10 @@ export default async function FixedCostsPage({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-black text-brutal-black">
             고정비 관리
           </h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm font-medium text-brutal-black/70">
             인건비, 임대료, 관리비 등 고정비용 관리
           </p>
         </div>
@@ -85,12 +85,12 @@ export default async function FixedCostsPage({
       {/* Summary - Sticky on Mobile */}
       {costs.length > 0 && (
         <div className="sticky top-0 z-10 mt-4 md:static">
-          <div className="bg-red-50 rounded-xl p-4 shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-red-600">
+          <div className="bg-brutal-pink border-3 border-brutal-black shadow-brutal p-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-bold text-brutal-black">
                 총 {costs.length}건 ({startDate} ~ {endDate})
               </p>
-              <p className="text-2xl font-bold text-red-700">
+              <p className="text-2xl font-black text-brutal-black">
                 {formatCurrency(grandTotal)}
               </p>
             </div>
@@ -99,7 +99,7 @@ export default async function FixedCostsPage({
               {Object.entries(totalsByType).map(([type, amount]) => (
                 <span
                   key={type}
-                  className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-white rounded-full text-gray-700"
+                  className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold bg-brutal-white border-2 border-brutal-black text-brutal-black"
                 >
                   {typeEmoji[type] || '📋'} {type}:{' '}
                   {formatCurrency(amount)}
@@ -181,43 +181,57 @@ export default async function FixedCostsPage({
 
       {/* Desktop: Table */}
       <div className="mt-6 hidden md:block">
-        <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
-          <table className="min-w-full divide-y divide-gray-300">
-            <thead className="bg-gray-50">
+        <div className="overflow-hidden border-3 border-brutal-black shadow-brutal">
+          <table className="min-w-full">
+            <thead className="bg-brutal-yellow border-b-3 border-brutal-black">
               <tr>
-                <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                <th className="py-3.5 pl-4 pr-3 text-left text-sm font-black text-brutal-black sm:pl-6">
                   날짜
                 </th>
-                <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
                   유형
                 </th>
-                <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
                   항목명
                 </th>
-                <th className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
                   금액
                 </th>
-                <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
                   비고
                 </th>
-                <th className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                <th className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
                   작업
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
+            <tbody className="divide-y-2 divide-brutal-black/20 bg-brutal-white">
               {costs.length === 0 ? (
                 <tr>
                   <td
                     colSpan={6}
-                    className="py-8 text-center text-sm text-gray-500"
+                    className="py-8 text-center text-sm font-medium text-brutal-black"
                   >
                     고정비 데이터가 없습니다. &ldquo;새 고정비 등록&rdquo;
                     버튼을 클릭하여 시작하세요.
                   </td>
                 </tr>
               ) : (
-                costs.map((cost) => <FixedCostRow key={cost.id} cost={cost} />)
+                <>
+                  {costs.map((cost) => <FixedCostRow key={cost.id} cost={cost} />)}
+                  <tr className="bg-brutal-pink/50 font-bold border-t-3 border-brutal-black">
+                    <td
+                      colSpan={3}
+                      className="py-4 pl-4 pr-3 text-sm text-right font-black text-brutal-black sm:pl-6"
+                    >
+                      총 합계 ({costs.length}건)
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-black">
+                      {formatCurrency(grandTotal)}
+                    </td>
+                    <td colSpan={2}></td>
+                  </tr>
+                </>
               )}
             </tbody>
           </table>

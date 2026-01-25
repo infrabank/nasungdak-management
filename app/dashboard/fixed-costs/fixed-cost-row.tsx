@@ -75,15 +75,15 @@ export default function FixedCostRow({ cost }: FixedCostRowProps) {
   const getCostTypeBadgeColor = (type: string) => {
     switch (type) {
       case '인건비':
-        return 'bg-blue-50 text-blue-700 ring-blue-600/20'
+        return 'bg-brutal-blue border-2 border-brutal-black text-brutal-black'
       case '임대료':
-        return 'bg-purple-50 text-purple-700 ring-purple-600/20'
+        return 'bg-brutal-purple border-2 border-brutal-black text-brutal-black'
       case '관리비':
-        return 'bg-green-50 text-green-700 ring-green-600/20'
+        return 'bg-brutal-green border-2 border-brutal-black text-brutal-black'
       case '기타':
-        return 'bg-gray-50 text-gray-700 ring-gray-600/20'
+        return 'bg-brutal-white border-2 border-brutal-black text-brutal-black'
       default:
-        return 'bg-gray-50 text-gray-700 ring-gray-600/20'
+        return 'bg-brutal-white border-2 border-brutal-black text-brutal-black'
     }
   }
 
@@ -94,7 +94,7 @@ export default function FixedCostRow({ cost }: FixedCostRowProps) {
 
   if (isEditing) {
     return (
-      <tr className="bg-blue-50">
+      <tr className="bg-brutal-yellow/30">
         <td className="whitespace-nowrap py-2 pl-4 pr-2 text-sm sm:pl-6">
           <input
             type="date"
@@ -165,23 +165,23 @@ export default function FixedCostRow({ cost }: FixedCostRowProps) {
 
   return (
     <tr className={isDeleting ? 'opacity-50' : ''}>
-      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-6">
+      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brutal-black sm:pl-6">
         {formatDate(new Date(cost.costDate), 'yyyy-MM-dd')}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm">
         <span
-          className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${getCostTypeBadgeColor(cost.costType)}`}
+          className={`inline-flex items-center px-2 py-1 text-xs font-bold ${getCostTypeBadgeColor(cost.costType)}`}
         >
           {cost.costType}
         </span>
       </td>
-      <td className="px-3 py-4 text-sm text-gray-900">
+      <td className="px-3 py-4 text-sm font-medium text-brutal-black">
         {cost.costName}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right font-semibold">
+      <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-bold">
         {formatCurrency(Number(cost.amount))}
       </td>
-      <td className="px-3 py-4 text-sm text-gray-900 max-w-xs truncate">
+      <td className="px-3 py-4 text-sm text-brutal-black/70 max-w-xs truncate">
         {cost.notes || '-'}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
@@ -189,14 +189,14 @@ export default function FixedCostRow({ cost }: FixedCostRowProps) {
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="text-blue-600 hover:text-blue-900 disabled:opacity-50 font-medium"
+            className="px-3 py-1 text-xs font-bold text-brutal-black bg-brutal-blue border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="text-red-600 hover:text-red-900 disabled:opacity-50"
+            className="px-3 py-1 text-xs font-bold text-brutal-black bg-brutal-pink border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>
