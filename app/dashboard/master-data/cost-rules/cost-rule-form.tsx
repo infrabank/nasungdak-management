@@ -54,7 +54,7 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
         setIsOpen(false)
         e.currentTarget.reset()
       } else {
-        toast.error(result.error)
+        toast.error(result.error || '저장 중 오류가 발생했습니다')
       }
     } finally {
       setIsSubmitting(false)
@@ -72,7 +72,7 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
       if (result.success) {
         setIsOpen(false)
       } else {
-        toast.error(result.error)
+        toast.error(result.error || '삭제 중 오류가 발생했습니다')
       }
     } finally {
       setIsSubmitting(false)
