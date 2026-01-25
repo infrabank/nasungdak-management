@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeEach } from 'vitest'
 
 // Mock next/cache functions
 vi.mock('next/cache', () => ({
