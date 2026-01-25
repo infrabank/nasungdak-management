@@ -230,8 +230,8 @@ export default function PurchaseForm() {
 
          <div className="space-y-3">
            {entries.map((entry, index) => {
-             const filteredIngredients = useMemo(() => getFilteredIngredients(entry.menuId), [entry.menuId, getFilteredIngredients])
-             const rowTotal = useMemo(() => calculateRowTotal(entry.quantity, entry.unitPrice), [entry.quantity, entry.unitPrice, calculateRowTotal])
+             const filteredIngredients = getFilteredIngredients(entry.menuId)
+             const rowTotal = calculateRowTotal(entry.quantity, entry.unitPrice)
              const isComplete =
                entry.menuId && entry.ingredientId && entry.quantity && entry.unitPrice
 
