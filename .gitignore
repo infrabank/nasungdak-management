@@ -113,3 +113,16 @@ file-history/
 plugins/install-counts-cache.json
 stats-cache.json
 plugins/installed_plugins.json
+
+# AI/Claude skills (local only)
+.claude/skills/
+.sisyphus/
+
+# Temp files
+nul
+error.txt
+.work-state.md
+
+# Data files (should not be in repo)
+*.xlsx
+*.csv
