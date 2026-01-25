@@ -34,65 +34,65 @@ export default async function SuppliersPage() {
         </div>
 
         {/* Desktop View - Table */}
-        <div className="hidden md:block -mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-          <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-             <table className="min-w-full divide-y divide-brutal-black border-2 border-brutal-black">
-              <thead>
+        <div className="hidden md:block">
+          <div className="overflow-hidden border-3 border-brutal-black shadow-brutal">
+            <table className="min-w-full">
+              <thead className="bg-brutal-yellow border-b-3 border-brutal-black">
                 <tr>
-                   <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-brutal-black sm:pl-0">
-                     공급업체명
-                   </th>
-                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brutal-black">
-                     담당자
-                   </th>
-                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brutal-black">
-                     연락처
-                   </th>
-                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brutal-black">
-                     사업자번호
-                   </th>
-                   <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-brutal-black">
-                     활성
-                   </th>
-                  <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0">
+                  <th scope="col" className="py-3.5 pl-6 pr-3 text-left text-sm font-black text-brutal-black">
+                    공급업체명
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
+                    담당자
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
+                    연락처
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
+                    사업자번호
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-center text-sm font-black text-brutal-black">
+                    활성
+                  </th>
+                  <th scope="col" className="relative py-3.5 pl-3 pr-6">
                     <span className="sr-only">작업</span>
                   </th>
                 </tr>
               </thead>
-               <tbody className="divide-y divide-brutal-black">
+              <tbody className="divide-y-2 divide-brutal-black/20 bg-brutal-white">
                 {suppliers.length === 0 ? (
                   <tr>
-                     <td colSpan={6} className="py-10 text-center text-sm text-brutal-black/70">
-                       등록된 공급업체가 없습니다
-                     </td>
+                    <td colSpan={6} className="py-10 text-center text-sm font-medium text-brutal-black">
+                      등록된 공급업체가 없습니다
+                    </td>
                   </tr>
                 ) : (
                   suppliers.map((supplier) => (
                     <tr key={supplier.id}>
-                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brutal-black sm:pl-0">
-                         {supplier.supplierName}
-                       </td>
-                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black">
-                         {supplier.contactName || '-'}
-                       </td>
-                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black">
-                         {supplier.phone || '-'}
-                       </td>
-                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black">
-                         {supplier.businessNumber || '-'}
-                       </td>
+                      <td className="whitespace-nowrap py-4 pl-6 pr-3 text-sm font-medium text-brutal-black">
+                        {supplier.supplierName}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black">
+                        {supplier.contactName || '-'}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black">
+                        {supplier.phone || '-'}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black/70">
+                        {supplier.businessNumber || '-'}
+                      </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-center">
                         <span
-                          className={`inline-flex px-2 text-xs font-semibold leading-5 border-2 ${
-                             supplier.isActive
-                               ? 'bg-brutal-green border-brutal-green text-brutal-black'
-                               : 'bg-brutal-white border-brutal-black text-brutal-black'
-                           }`}
+                          className={`inline-flex px-2 py-1 text-xs font-bold border-2 ${
+                            supplier.isActive
+                              ? 'bg-brutal-green border-brutal-black text-brutal-black'
+                              : 'bg-brutal-white border-brutal-black text-brutal-black'
+                          }`}
                         >
                           {supplier.isActive ? '활성' : '비활성'}
                         </span>
                       </td>
-                      <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+                      <td className="relative whitespace-nowrap py-4 pl-3 pr-6 text-right text-sm font-medium">
                         <SupplierForm supplier={supplier} />
                       </td>
                     </tr>

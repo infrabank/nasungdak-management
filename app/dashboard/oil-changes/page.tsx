@@ -49,10 +49,10 @@ export default async function OilChangesPage({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-black text-brutal-black">
             기름 교체 이력
           </h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <p className="mt-1 text-sm font-medium text-brutal-black/70">
             튀김기 기름 교체 기록 관리
           </p>
         </div>
@@ -144,7 +144,7 @@ export default async function OilChangesPage({
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
                 <svg
-                  className="h-5 w-5 text-gray-400"
+                  className="h-5 w-5 text-brutal-black"
                   viewBox="0 0 20 20"
                   fill="currentColor"
                 >
@@ -212,26 +212,26 @@ export default async function OilChangesPage({
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-brutal-yellow border-b-3 border-brutal-black">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-sm font-black text-brutal-black uppercase tracking-wider">
                       교체일
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-sm font-black text-brutal-black uppercase tracking-wider">
                       튀김기
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-sm font-black text-brutal-black uppercase tracking-wider">
                       사용 기간
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-sm font-black text-brutal-black uppercase tracking-wider">
                       비고
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-sm font-black text-brutal-black uppercase tracking-wider">
                       액션
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-brutal-white divide-y-2 divide-brutal-black/20">
                   {oilChanges.map((oilChange) => (
                     <OilChangeRow key={oilChange.id} oilChange={oilChange} />
                   ))}
