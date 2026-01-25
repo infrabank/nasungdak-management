@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { createAlertRule } from './actions'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import type { InventoryAlertRule } from '@/lib/db/schema'
 
 interface AlertRuleFormProps {
@@ -59,56 +61,45 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
 
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="storeId" className="block text-sm font-medium text-gray-700">
-                      매장
-                    </label>
-                    <input
+                    <Label htmlFor="storeId">매장</Label>
+                    <Input
                       type="text"
                       name="storeId"
                       id="storeId"
                       defaultValue={rule?.storeId || ''}
                       placeholder="매장 ID"
-                      className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                     />
                     <p className="mt-1 text-xs text-gray-500">빈 값이면 전체 매장에 적용됩니다</p>
                   </div>
 
                   <div>
-                    <label htmlFor="ingredientId" className="block text-sm font-medium text-gray-700">
-                      재료 *
-                    </label>
-                    <input
+                    <Label htmlFor="ingredientId">재료 *</Label>
+                    <Input
                       type="text"
                       name="ingredientId"
                       id="ingredientId"
                       required
                       defaultValue={rule?.ingredientId || ''}
                       placeholder="재료 ID"
-                      className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="alertThresholdDays" className="block text-sm font-medium text-gray-700">
-                      알림 임계값 (잔여일) *
-                    </label>
-                    <input
+                    <Label htmlFor="alertThresholdDays">알림 임계값 (잔여일) *</Label>
+                    <Input
                       type="number"
                       name="alertThresholdDays"
                       id="alertThresholdDays"
                       required
                       min="1"
                       defaultValue={rule?.alertThresholdDays || 3}
-                      className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                     />
                     <p className="mt-1 text-xs text-gray-500">잔여일이 이 값 이하면 알림 발송 (기본: 3일)</p>
                   </div>
 
                   <div>
-                    <label htmlFor="predictionPeriodDays" className="block text-sm font-medium text-gray-700">
-                      예측 기간 (일) *
-                    </label>
-                    <input
+                    <Label htmlFor="predictionPeriodDays">예측 기간 (일) *</Label>
+                    <Input
                       type="number"
                       name="predictionPeriodDays"
                       id="predictionPeriodDays"
@@ -116,7 +107,6 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
                       min="7"
                       max="90"
                       defaultValue={rule?.predictionPeriodDays || 30}
-                      className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                     />
                     <p className="mt-1 text-xs text-gray-500">최근 N일간의 판매량으로 평균을 계산 (기본: 30일)</p>
                   </div>

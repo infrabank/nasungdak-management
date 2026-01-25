@@ -10,10 +10,10 @@ export default async function MenusPage() {
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div className="mb-4 sm:mb-0">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">메뉴 카테고리</h1>
-          <p className="mt-1 text-sm text-gray-600">
-            메뉴 카테고리 등록 및 관리
-          </p>
+           <h1 className="text-2xl sm:text-3xl font-bold text-brutal-black">메뉴 카테고리</h1>
+           <p className="mt-1 text-sm text-brutal-black/70">
+             메뉴 카테고리 등록 및 관리
+           </p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <CSVUpload />
@@ -37,46 +37,46 @@ export default async function MenusPage() {
         <div className="hidden md:block flow-root">
           <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-              <table className="min-w-full divide-y divide-gray-300">
+              <table className="min-w-full divide-y divide-brutal-black border-2 border-brutal-black">
               <thead>
                 <tr>
-                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
+                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-brutal-black sm:pl-0">
                     메뉴명
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                   </th>
+                   <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-brutal-black">
                     설명
-                  </th>
-                  <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900">
+                   </th>
+                   <th scope="col" className="px-3 py-3.5 text-center text-sm font-semibold text-brutal-black">
                     활성
-                  </th>
+                   </th>
                   <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-0">
                     <span className="sr-only">작업</span>
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+               <tbody className="divide-y divide-brutal-black">
                 {menus.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-10 text-center text-sm text-gray-800">
-                      등록된 메뉴가 없습니다
-                    </td>
+                    <td colSpan={4} className="py-10 text-center text-sm text-brutal-black/70">
+                       등록된 메뉴가 없습니다
+                     </td>
                   </tr>
                 ) : (
                   menus.map((menu) => (
                     <tr key={menu.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                        {menu.menuName}
-                      </td>
-                      <td className="px-3 py-4 text-sm text-gray-900">
-                        {menu.description}
-                      </td>
+                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brutal-black sm:pl-0">
+                         {menu.menuName}
+                       </td>
+                       <td className="px-3 py-4 text-sm text-brutal-black">
+                         {menu.description}
+                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-center">
                         <span
-                          className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                            menu.isActive
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
+                          className={`inline-flex px-2 text-xs font-semibold leading-5 border-2 ${
+                             menu.isActive
+                               ? 'bg-brutal-green border-brutal-green text-brutal-black'
+                               : 'bg-brutal-white border-brutal-black text-brutal-black'
+                           }`}
                         >
                           {menu.isActive ? '활성' : '비활성'}
                         </span>

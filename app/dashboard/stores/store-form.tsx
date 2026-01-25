@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { createStore, updateStore, deleteStore } from './actions'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import type { Store } from '@/lib/db/schema'
 
 interface StoreFormProps {
@@ -70,123 +73,123 @@ export default function StoreForm({ store }: StoreFormProps) {
       {isOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-            <div
-              className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-              onClick={() => setIsOpen(false)}
-            />
+             <div
+               className="fixed inset-0 bg-brutal-black/50 transition-opacity"
+               onClick={() => setIsOpen(false)}
+             />
 
             <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
               <form onSubmit={handleSubmit}>
                 <div>
-                  <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
-                    {store ? '매장 수정' : '새 매장 등록'}
-                  </h3>
+                   <h3 className="text-lg font-semibold leading-6 text-brutal-black mb-4">
+                     {store ? '매장 수정' : '새 매장 등록'}
+                   </h3>
 
-                  <div className="space-y-4">
-                    <div>
-                      <label htmlFor="storeName" className="block text-sm font-medium text-gray-700">
-                        매장명 *
-                      </label>
-                      <input
-                        type="text"
-                        name="storeName"
-                        id="storeName"
-                        required
-                        defaultValue={store?.storeName}
-                        placeholder="예: 나성닭강정 본점"
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
-                      />
-                    </div>
+                   <div className="space-y-4">
+                     <div>
+                       <Label htmlFor="storeName">
+                         매장명 *
+                       </Label>
+                       <Input
+                         type="text"
+                         name="storeName"
+                         id="storeName"
+                         required
+                         defaultValue={store?.storeName}
+                         placeholder="예: 나성닭강정 본점"
+                         className="mt-1"
+                       />
+                     </div>
 
-                    <div>
-                      <label htmlFor="storeCode" className="block text-sm font-medium text-gray-700">
-                        매장 코드 *
-                      </label>
-                      <input
-                        type="text"
-                        name="storeCode"
-                        id="storeCode"
-                        required
-                        defaultValue={store?.storeCode}
-                        placeholder="예: MAIN, BRANCH01"
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium uppercase"
-                      />
-                      <p className="mt-1 text-xs text-gray-500">영문, 숫자, 하이픈, 언더스코어만 사용 가능</p>
-                    </div>
+                     <div>
+                       <Label htmlFor="storeCode">
+                         매장 코드 *
+                       </Label>
+                       <Input
+                         type="text"
+                         name="storeCode"
+                         id="storeCode"
+                         required
+                         defaultValue={store?.storeCode}
+                         placeholder="예: MAIN, BRANCH01"
+                         className="mt-1 uppercase"
+                       />
+                        <p className="mt-1 text-xs text-brutal-black/70">영문, 숫자, 하이픈, 언더스코어만 사용 가능</p>
+                     </div>
 
-                    <div>
-                      <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-                        주소
-                      </label>
-                      <textarea
-                        name="address"
-                        id="address"
-                        rows={2}
-                        defaultValue={store?.address || ''}
-                        placeholder="매장 주소"
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
-                      />
-                    </div>
+                     <div>
+                       <Label htmlFor="address">
+                         주소
+                       </Label>
+                       <Textarea
+                         name="address"
+                         id="address"
+                         rows={2}
+                         defaultValue={store?.address || ''}
+                         placeholder="매장 주소"
+                         className="mt-1"
+                       />
+                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-                          매장 연락처
-                        </label>
-                        <input
-                          type="tel"
-                          name="phone"
-                          id="phone"
-                          defaultValue={store?.phone || ''}
-                          placeholder="02-1234-5678"
-                          className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
-                        />
-                      </div>
+                     <div className="grid grid-cols-2 gap-4">
+                       <div>
+                         <Label htmlFor="phone">
+                           매장 연락처
+                         </Label>
+                         <Input
+                           type="tel"
+                           name="phone"
+                           id="phone"
+                           defaultValue={store?.phone || ''}
+                           placeholder="02-1234-5678"
+                           className="mt-1"
+                         />
+                       </div>
 
-                      <div>
-                        <label htmlFor="managerPhone" className="block text-sm font-medium text-gray-700">
-                          관리자 연락처
-                        </label>
-                        <input
-                          type="tel"
-                          name="managerPhone"
-                          id="managerPhone"
-                          defaultValue={store?.managerPhone || ''}
-                          placeholder="010-1234-5678"
-                          className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
-                        />
-                        <p className="mt-1 text-xs text-gray-500">알림 수신용</p>
-                      </div>
-                    </div>
+                       <div>
+                         <Label htmlFor="managerPhone">
+                           관리자 연락처
+                         </Label>
+                         <Input
+                           type="tel"
+                           name="managerPhone"
+                           id="managerPhone"
+                           defaultValue={store?.managerPhone || ''}
+                           placeholder="010-1234-5678"
+                           className="mt-1"
+                         />
+                          <p className="mt-1 text-xs text-brutal-black/70">알림 수신용</p>
+                       </div>
+                     </div>
 
-                    <div>
-                      <label htmlFor="tossStoreId" className="block text-sm font-medium text-gray-700">
-                        토스 매장 ID
-                      </label>
-                      <input
-                        type="text"
-                        name="tossStoreId"
-                        id="tossStoreId"
-                        defaultValue={store?.tossStoreId || ''}
-                        placeholder="토스 POS 연동용 매장 ID"
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
-                      />
-                      <p className="mt-1 text-xs text-gray-500">토스 POS 연동 시 필요</p>
-                    </div>
+                     <div>
+                       <Label htmlFor="tossStoreId">
+                         토스 매장 ID
+                       </Label>
+                       <Input
+                         type="text"
+                         name="tossStoreId"
+                         id="tossStoreId"
+                         defaultValue={store?.tossStoreId || ''}
+                         placeholder="토스 POS 연동용 매장 ID"
+                         className="mt-1"
+                       />
+                        <p className="mt-1 text-xs text-brutal-black/70">토스 POS 연동 시 필요</p>
+                     </div>
 
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="isActive"
-                        id="isActive"
-                        value="true"
-                        defaultChecked={store?.isActive ?? true}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
-                      />
-                      <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
-                        활성
-                      </label>
-                    </div>
+                     <div className="flex items-center">
+                       <input
+                         type="checkbox"
+                         name="isActive"
+                         id="isActive"
+                         value="true"
+                         defaultChecked={store?.isActive ?? true}
+                         className="h-4 w-4 border-brutal-black text-brutal-black"
+                       />
+                       <label htmlFor="isActive" className="ml-2 block text-sm text-brutal-black">
+                         활성
+                       </label>
+                     </div>
                   </div>
                 </div>
 

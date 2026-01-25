@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import Papa from 'papaparse'
 import { bulkCreateSales } from './actions'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/toast'
 
 interface CSVUploadTransposeProps {
   storeId?: string
@@ -22,7 +23,7 @@ export default function CSVUploadTranspose({ storeId }: CSVUploadTransposeProps)
     if (!selectedFile) return
 
     if (!selectedFile.name.endsWith('.csv')) {
-      alert('CSV 파일만 업로드 가능합니다')
+      toast.error('CSV 파일만 업로드 가능합니다')
       return
     }
 
@@ -79,20 +80,20 @@ export default function CSVUploadTranspose({ storeId }: CSVUploadTransposeProps)
           setErrors([`파싱 오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}`])
         }
       },
-      error: (error) => {
-        alert(`CSV 파싱 오류: ${error.message}`)
-      },
-    })
-  }
+       error: (error) => {
+         toast.error(`CSV 파싱 오류: ${error.message}`)
+       },
+     })
+   }
 
   const handleUpload = async () => {
     if (!file || !previewData) {
-      alert('파일을 선택해주세요')
+      toast.error('파일을 선택해주세요')
       return
     }
 
     if (errors.length > 0) {
-      alert('CSV 파일에 오류가 있습니다')
+      toast.error('CSV 파일에 오류가 있습니다')
       return
     }
 
@@ -125,30 +126,27 @@ export default function CSVUploadTranspose({ storeId }: CSVUploadTransposeProps)
 
       const result = await bulkCreateSales(salesData, storeId)
 
-      if (result.success) {
-        alert(
-          `성공: ${result.successCount}건 등록, 실패: ${result.failedCount}건${
-            result.errors && result.errors.length > 0
-              ? '\n\n오류:\n' + result.errors.slice(0, 10).join('\n')
-              : ''
-          }`
-        )
-        setIsOpen(false)
-        setFile(null)
-        setPreviewData(null)
-        setErrors([])
-        if (fileInputRef.current) {
-          fileInputRef.current.value = ''
-        }
-      } else {
-        alert(`업로드 실패: ${result.error}`)
-      }
-    } catch (error) {
-      alert(`업로드 중 오류 발생: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
-    } finally {
-      setIsUploading(false)
-    }
-  }
+       if (result.success) {
+         toast.success(`성공: ${result.successCount}건 등록, 실패: ${result.failedCount}건`)
+         if (result.errors && result.errors.length > 0) {
+           toast.error(`오류:\n${result.errors.slice(0, 10).join('\n')}`)
+         }
+         setIsOpen(false)
+         setFile(null)
+         setPreviewData(null)
+         setErrors([])
+         if (fileInputRef.current) {
+           fileInputRef.current.value = ''
+         }
+       } else {
+         toast.error(`업로드 실패: ${result.error}`)
+       }
+     } catch (error) {
+       toast.error(`업로드 중 오류 발생: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+     } finally {
+       setIsUploading(false)
+     }
+   }
 
   const downloadTemplate = () => {
     const template = `날짜,닭강정_소,닭강정_중,닭강정_컵,떡볶이_1인분,떡볶이_컵

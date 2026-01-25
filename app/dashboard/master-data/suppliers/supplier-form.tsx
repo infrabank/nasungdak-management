@@ -2,6 +2,9 @@
 
 import { useState } from 'react'
 import { createSupplier, updateSupplier } from './actions'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import type { Supplier } from '@/lib/db/schema'
 
 interface SupplierFormProps {
@@ -35,9 +38,6 @@ export default function SupplierForm({ supplier }: SupplierFormProps) {
     setIsSubmitting(false)
   }
 
-  const inputClass =
-    'block w-full py-2.5 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium'
-
   return (
     <>
       <button
@@ -54,125 +54,111 @@ export default function SupplierForm({ supplier }: SupplierFormProps) {
 
       {isOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-            onClick={() => setIsOpen(false)}
-          />
+           <div
+             className="fixed inset-0 bg-brutal-black/50 transition-opacity"
+             onClick={() => setIsOpen(false)}
+           />
           <div className="flex min-h-full items-center justify-center p-4">
             <div className="relative w-full max-w-md transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg p-6 transition-all">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                {isEditing ? '공급업체 수정' : '공급업체 등록'}
-              </h3>
+              <h3 className="text-lg font-semibold text-brutal-black mb-4">
+                 {isEditing ? '공급업체 수정' : '공급업체 등록'}
+               </h3>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    공급업체명 *
-                  </label>
-                  <input
+                  <Label htmlFor="supplierName">공급업체명 *</Label>
+                  <Input
                     type="text"
                     name="supplierName"
+                    id="supplierName"
                     defaultValue={supplier?.supplierName || ''}
                     required
-                    className={inputClass}
                     placeholder="예: (주)나성식품"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    담당자명
-                  </label>
-                  <input
+                  <Label htmlFor="contactName">담당자명</Label>
+                  <Input
                     type="text"
                     name="contactName"
+                    id="contactName"
                     defaultValue={supplier?.contactName || ''}
-                    className={inputClass}
                     placeholder="담당자 이름"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    연락처
-                  </label>
-                  <input
+                  <Label htmlFor="phone">연락처</Label>
+                  <Input
                     type="tel"
                     name="phone"
+                    id="phone"
                     defaultValue={supplier?.phone || ''}
-                    className={inputClass}
                     placeholder="010-1234-5678"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    이메일
-                  </label>
-                  <input
+                  <Label htmlFor="email">이메일</Label>
+                  <Input
                     type="email"
                     name="email"
+                    id="email"
                     defaultValue={supplier?.email || ''}
-                    className={inputClass}
                     placeholder="example@company.com"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    사업자등록번호
-                  </label>
-                  <input
+                  <Label htmlFor="businessNumber">사업자등록번호</Label>
+                  <Input
                     type="text"
                     name="businessNumber"
+                    id="businessNumber"
                     defaultValue={supplier?.businessNumber || ''}
-                    className={inputClass}
                     placeholder="123-45-67890"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    주소
-                  </label>
-                  <input
+                  <Label htmlFor="address">주소</Label>
+                  <Input
                     type="text"
                     name="address"
+                    id="address"
                     defaultValue={supplier?.address || ''}
-                    className={inputClass}
                     placeholder="사업장 주소"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    비고
-                  </label>
-                  <textarea
+                  <Label htmlFor="notes">비고</Label>
+                  <Textarea
                     name="notes"
+                    id="notes"
                     defaultValue={supplier?.notes || ''}
                     rows={2}
-                    className={inputClass}
                     placeholder="추가 메모"
                   />
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    value="true"
-                    defaultChecked={supplier?.isActive ?? true}
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
-                  />
-                  <label className="text-sm text-gray-700">활성화</label>
-                </div>
+                 <div className="flex items-center gap-2">
+                   <input
+                     type="checkbox"
+                     name="isActive"
+                     value="true"
+                     defaultChecked={supplier?.isActive ?? true}
+                     className="h-4 w-4 border-brutal-black text-brutal-black"
+                   />
+                   <label className="text-sm text-brutal-black">활성화</label>
+                 </div>
 
-                {error && (
-                  <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">
-                    {error}
-                  </div>
-                )}
+                 {error && (
+                   <div className="bg-brutal-red/10 p-3 text-sm text-brutal-red">
+                     {error}
+                   </div>
+                 )}
 
                 <div className="flex justify-end gap-3 pt-2">
                   <button

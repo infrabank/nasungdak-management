@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, decimal, date, timestamp, boolean, text, integer, unique, jsonb } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, varchar, decimal, date, timestamp, boolean, text, integer, unique, jsonb, index } from 'drizzle-orm/pg-core'
 import { sql } from 'drizzle-orm'
 
 // Stores Table (다매장 지원)
@@ -81,7 +81,10 @@ export const skus = pgTable('skus', {
   updatedBy: varchar('updated_by', { length: 100 }),
   deletedAt: timestamp('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 100 }),
-})
+}, (table) => [
+  index('skus_deleted_at_idx').on(table.deletedAt),
+  index('skus_menu_id_idx').on(table.menuId),
+])
 
 // Menu-Ingredient Junction Table
 export const menuIngredients = pgTable('menu_ingredients', {
@@ -95,7 +98,11 @@ export const menuIngredients = pgTable('menu_ingredients', {
   updatedBy: varchar('updated_by', { length: 100 }),
   deletedAt: timestamp('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 100 }),
-})
+}, (table) => [
+  index('mi_deleted_at_idx').on(table.deletedAt),
+  // Composite index for menu-ingredient lookup (used for validation)
+  index('mi_menu_ingredient_idx').on(table.menuId, table.ingredientId),
+])
 
 // Purchase Transactions Table
 export const purchaseTransactions = pgTable('purchase_transactions', {
@@ -118,7 +125,16 @@ export const purchaseTransactions = pgTable('purchase_transactions', {
   updatedBy: varchar('updated_by', { length: 100 }),
   deletedAt: timestamp('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 100 }),
-})
+}, (table) => [
+  // Performance indexes for common queries
+  index('pt_deleted_at_idx').on(table.deletedAt),
+  index('pt_store_id_idx').on(table.storeId),
+  index('pt_transaction_date_idx').on(table.transactionDate.desc()),
+  index('pt_menu_id_idx').on(table.menuId),
+  index('pt_ingredient_id_idx').on(table.ingredientId),
+  // Composite index for date range + store filtering (most common query pattern)
+  index('pt_store_date_idx').on(table.storeId, table.transactionDate.desc()),
+])
 
 // Sales Records Table
 export const salesRecords = pgTable('sales_records', {
@@ -138,7 +154,15 @@ export const salesRecords = pgTable('sales_records', {
   updatedBy: varchar('updated_by', { length: 100 }),
   deletedAt: timestamp('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 100 }),
-})
+}, (table) => [
+  // Performance indexes for common queries
+  index('sr_deleted_at_idx').on(table.deletedAt),
+  index('sr_store_id_idx').on(table.storeId),
+  index('sr_sale_date_idx').on(table.saleDate.desc()),
+  index('sr_sku_id_idx').on(table.skuId),
+  // Composite index for date range + store filtering (most common query pattern)
+  index('sr_store_date_idx').on(table.storeId, table.saleDate.desc()),
+])
 
 // Cost Distribution Rules Table
 export const costDistributionRules = pgTable('cost_distribution_rules', {
@@ -171,7 +195,11 @@ export const fixedCosts = pgTable('fixed_costs', {
   updatedBy: varchar('updated_by', { length: 100 }),
   deletedAt: timestamp('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 100 }),
-})
+}, (table) => [
+  index('fc_deleted_at_idx').on(table.deletedAt),
+  index('fc_store_id_idx').on(table.storeId),
+  index('fc_cost_date_idx').on(table.costDate.desc()),
+])
 
 // Oil Change History Table
 export const oilChangeHistory = pgTable('oil_change_history', {
@@ -195,7 +223,11 @@ export const oilChangeHistory = pgTable('oil_change_history', {
   updatedBy: varchar('updated_by', { length: 100 }),
   deletedAt: timestamp('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 100 }),
-})
+}, (table) => [
+  index('och_deleted_at_idx').on(table.deletedAt),
+  index('och_store_id_idx').on(table.storeId),
+  index('och_change_date_idx').on(table.changeDate.desc()),
+])
 
 // =====================
 // Phase 2: 토스 POS 연동

@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { updateOilChange, deleteOilChange } from './actions'
 import { formatDate } from '@/lib/utils/format'
+import { toast } from '@/components/ui/toast'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import type { OilChangeHistory } from '@/lib/db/schema'
 
 interface OilChangeCardProps {
@@ -13,6 +15,7 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const confirm = useConfirm()
 
   const [editData, setEditData] = useState({
     changeDate: oilChange.changeDate,
@@ -30,7 +33,7 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
   const handleDelete = async () => {
     if (isDeleting) return
 
-    if (!confirm('이 기름 교체 이력을 삭제하시겠습니까?')) {
+    if (!(await confirm({ title: '확인', description: '이 기름 교체 이력을 삭제하시겠습니까?', variant: 'danger' }))) {
       return
     }
 
@@ -38,11 +41,11 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
     try {
       const result = await deleteOilChange(oilChange.id)
       if (!result.success) {
-        alert(result.error || '삭제 실패')
+        toast.error(result.error || '삭제 실패')
         setIsDeleting(false)
       }
     } catch {
-      alert('삭제 중 오류가 발생했습니다')
+      toast.error('삭제 중 오류가 발생했습니다')
       setIsDeleting(false)
     }
   }
@@ -61,10 +64,10 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
       if (result.success) {
         setIsEditing(false)
       } else {
-        alert(result.error || '수정 실패')
+        toast.error(result.error || '수정 실패')
       }
     } catch {
-      alert('수정 중 오류가 발생했습니다')
+      toast.error('수정 중 오류가 발생했습니다')
     } finally {
       setIsSaving(false)
     }

@@ -3,6 +3,10 @@
 import { useState } from 'react'
 import { createInventoryEvent } from './actions'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 export default function EventForm() {
   const [isOpen, setIsOpen] = useState(false)
@@ -55,42 +59,33 @@ export default function EventForm() {
 
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="storeId" className="block text-sm font-medium text-gray-700">
-                        매장 *
-                      </label>
-                      <input
+                      <Label htmlFor="storeId">매장 *</Label>
+                      <Input
                         type="text"
                         name="storeId"
                         id="storeId"
                         required
                         placeholder="매장 ID"
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="ingredientId" className="block text-sm font-medium text-gray-700">
-                        재료 *
-                      </label>
-                      <input
+                      <Label htmlFor="ingredientId">재료 *</Label>
+                      <Input
                         type="text"
                         name="ingredientId"
                         id="ingredientId"
                         required
                         placeholder="재료 ID"
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="eventType" className="block text-sm font-medium text-gray-700">
-                        이벤트 유형 *
-                      </label>
-                      <select
+                      <Label htmlFor="eventType">이벤트 유형 *</Label>
+                      <Select
                         name="eventType"
                         id="eventType"
                         required
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       >
                         <option value="">선택하세요</option>
                         <option value="purchase">매입 (재고 증가)</option>
@@ -98,47 +93,38 @@ export default function EventForm() {
                         <option value="waste">폐기 (손실)</option>
                         <option value="audit">실사 (조정)</option>
                         <option value="adjustment">조정</option>
-                      </select>
+                      </Select>
                     </div>
 
                     <div>
-                      <label htmlFor="quantityChange" className="block text-sm font-medium text-gray-700">
-                        수량 변동 *
-                      </label>
-                      <input
+                      <Label htmlFor="quantityChange">수량 변동 *</Label>
+                      <Input
                         type="number"
                         name="quantityChange"
                         id="quantityChange"
                         required
                         step="0.01"
                         placeholder="양수: 증가, 음수: 감소"
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="eventDate" className="block text-sm font-medium text-gray-700">
-                        이벤트 날짜 *
-                      </label>
-                      <input
+                      <Label htmlFor="eventDate">이벤트 날짜 *</Label>
+                      <Input
                         type="date"
                         name="eventDate"
                         id="eventDate"
                         required
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="reason" className="block text-sm font-medium text-gray-700">
-                        사유
-                      </label>
-                      <textarea
+                      <Label htmlFor="reason">사유</Label>
+                      <Textarea
                         name="reason"
                         id="reason"
                         rows={3}
                         placeholder="사유를 입력하세요 (선택사항)"
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
                   </div>

@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { createTossMapping, updateTossMapping, deleteTossMapping } from './actions'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 
 interface TossMappingData {
   id: string
@@ -98,15 +101,12 @@ export default function TossMappingForm({ mapping, stores, skus }: TossMappingFo
 
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="storeId" className="block text-sm font-medium text-gray-700">
-                        매장 *
-                      </label>
-                      <select
+                      <Label htmlFor="storeId">매장 *</Label>
+                      <Select
                         name="storeId"
                         id="storeId"
                         required
                         defaultValue={mapping?.storeId || ''}
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       >
                         <option value="">선택하세요</option>
                         {stores.map((store) => (
@@ -114,48 +114,39 @@ export default function TossMappingForm({ mapping, stores, skus }: TossMappingFo
                             {store.storeName} ({store.storeCode})
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
 
                     <div>
-                      <label htmlFor="tossItemCode" className="block text-sm font-medium text-gray-700">
-                        토스 품목 코드 *
-                      </label>
-                      <input
+                      <Label htmlFor="tossItemCode">토스 품목 코드 *</Label>
+                      <Input
                         type="text"
                         name="tossItemCode"
                         id="tossItemCode"
                         required
                         defaultValue={mapping?.tossItemCode || ''}
                         placeholder="예: ITEM001"
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                       <p className="mt-1 text-xs text-gray-500">토스 POS에서 확인한 품목 코드를 입력하세요</p>
                     </div>
 
                     <div>
-                      <label htmlFor="tossItemName" className="block text-sm font-medium text-gray-700">
-                        토스 품목명
-                      </label>
-                      <input
+                      <Label htmlFor="tossItemName">토스 품목명</Label>
+                      <Input
                         type="text"
                         name="tossItemName"
                         id="tossItemName"
                         defaultValue={mapping?.tossItemName || ''}
                         placeholder="예: 닭강정(중)"
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="skuId" className="block text-sm font-medium text-gray-700">
-                        내부 SKU
-                      </label>
-                      <select
+                      <Label htmlFor="skuId">내부 SKU</Label>
+                      <Select
                         name="skuId"
                         id="skuId"
                         defaultValue={mapping?.skuId || ''}
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       >
                         <option value="">매핑하지 않음</option>
                         {skus.map((sku) => (
@@ -163,7 +154,7 @@ export default function TossMappingForm({ mapping, stores, skus }: TossMappingFo
                             {sku.skuName}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                       <p className="mt-1 text-xs text-gray-500">빈 값이면 미매핑으로 처리됩니다</p>
                     </div>
 

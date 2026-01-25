@@ -3,6 +3,11 @@
 import { useState, useEffect } from 'react'
 import { createMenuIngredient, updateMenuIngredient, deleteMenuIngredient, getMenus, getIngredients } from './actions'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import { toast } from '@/components/ui/toast'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface MenuIngredientFormProps {
   mapping?: {
@@ -21,6 +26,7 @@ export default function MenuIngredientForm({ mapping }: MenuIngredientFormProps)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [menus, setMenus] = useState<Array<{ id: string; menuName: string }>>([])
   const [ingredientsList, setIngredientsList] = useState<Array<{ id: string; ingredientName: string; unit: string }>>([])
+  const confirm = useConfirm()
 
   useEffect(() => {
     if (isOpen) {
@@ -46,7 +52,7 @@ export default function MenuIngredientForm({ mapping }: MenuIngredientFormProps)
         setIsOpen(false)
         e.currentTarget.reset()
       } else {
-        alert(result.error)
+        toast.error(result.error)
       }
     } finally {
       setIsSubmitting(false)
@@ -56,7 +62,7 @@ export default function MenuIngredientForm({ mapping }: MenuIngredientFormProps)
   const handleDelete = async () => {
     if (!mapping) return
 
-    if (!confirm('정말 삭제하시겠습니까?')) return
+    if (!(await confirm({ title: '확인', description: '정말 삭제하시겠습니까?', variant: 'danger' }))) return
 
     setIsSubmitting(true)
     try {
@@ -64,7 +70,7 @@ export default function MenuIngredientForm({ mapping }: MenuIngredientFormProps)
       if (result.success) {
         setIsOpen(false)
       } else {
-        alert(result.error)
+        toast.error(result.error)
       }
     } finally {
       setIsSubmitting(false)
@@ -102,16 +108,13 @@ export default function MenuIngredientForm({ mapping }: MenuIngredientFormProps)
 
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="menuId" className="block text-sm font-medium text-gray-700">
-                        메뉴 *
-                      </label>
-                      <select
+                      <Label htmlFor="menuId">메뉴 *</Label>
+                      <Select
                         name="menuId"
                         id="menuId"
                         required
                         defaultValue={mapping?.menuId}
                         disabled={!!mapping}
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium disabled:bg-gray-100 disabled:cursor-not-allowed disabled:shadow-none"
                       >
                         <option value="">선택하세요</option>
                         {menus.map((menu) => (
@@ -119,20 +122,17 @@ export default function MenuIngredientForm({ mapping }: MenuIngredientFormProps)
                             {menu.menuName}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
 
                     <div>
-                      <label htmlFor="ingredientId" className="block text-sm font-medium text-gray-700">
-                        재료 *
-                      </label>
-                      <select
+                      <Label htmlFor="ingredientId">재료 *</Label>
+                      <Select
                         name="ingredientId"
                         id="ingredientId"
                         required
                         defaultValue={mapping?.ingredientId}
                         disabled={!!mapping}
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium disabled:bg-gray-100 disabled:cursor-not-allowed disabled:shadow-none"
                       >
                         <option value="">선택하세요</option>
                         {ingredientsList.map((ingredient) => (
@@ -140,14 +140,12 @@ export default function MenuIngredientForm({ mapping }: MenuIngredientFormProps)
                             {ingredient.ingredientName} ({ingredient.unit})
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
 
                     <div>
-                      <label htmlFor="requiredQuantity" className="block text-sm font-medium text-gray-700">
-                        필요 수량 *
-                      </label>
-                      <input
+                      <Label htmlFor="requiredQuantity">필요 수량 *</Label>
+                      <Input
                         type="number"
                         name="requiredQuantity"
                         id="requiredQuantity"
@@ -155,7 +153,6 @@ export default function MenuIngredientForm({ mapping }: MenuIngredientFormProps)
                         step="0.01"
                         min="0.01"
                         defaultValue={mapping?.requiredQuantity}
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
                   </div>

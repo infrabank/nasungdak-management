@@ -5,6 +5,8 @@ import SalesRow from './sales-row'
 import SalesCard from './sales-card'
 import { bulkDeleteSalesRecords } from './actions'
 import { formatCurrency } from '@/lib/utils/format'
+import { toast } from '@/components/ui/toast'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface Sale {
   id: string
@@ -30,6 +32,7 @@ export default function SalesList({
   totalQuantity,
   totalRevenue,
 }: SalesListProps) {
+  const confirm = useConfirm()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -53,12 +56,12 @@ export default function SalesList({
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) {
-      alert('삭제할 항목을 선택해주세요')
+      toast.error('삭제할 항목을 선택해주세요')
       return
     }
 
     if (
-      !confirm(`선택한 ${selectedIds.size}건의 판매 기록을 삭제하시겠습니까?`)
+      !(await confirm({ title: '확인', description: `선택한 ${selectedIds.size}건의 판매 기록을 삭제하시겠습니까?`, variant: 'danger' }))
     ) {
       return
     }
@@ -68,9 +71,9 @@ export default function SalesList({
 
     if (result.success) {
       setSelectedIds(new Set())
-      alert(`${result.deletedCount}건이 삭제되었습니다`)
+      toast.success(`${result.deletedCount}건이 삭제되었습니다`)
     } else {
-      alert(result.error || '삭제에 실패했습니다')
+      toast.error(result.error || '삭제에 실패했습니다')
     }
     setIsDeleting(false)
   }

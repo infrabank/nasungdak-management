@@ -5,6 +5,8 @@ import { togglePurchaseValidation, deletePurchase, updatePurchase } from './acti
 import { getMenus } from '../master-data/menus/actions'
 import { getIngredients } from '../master-data/ingredients/actions'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { toast } from '@/components/ui/toast'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import type { MenuCategory, Ingredient } from '@/lib/db/schema'
 
 interface Purchase {
@@ -23,11 +25,12 @@ interface Purchase {
 }
 
 export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
-  const [isValid, setIsValid] = useState(purchase.isValid)
-  const [isToggling, setIsToggling] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [isEditing, setIsEditing] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
+   const confirm = useConfirm()
+   const [isValid, setIsValid] = useState(purchase.isValid)
+   const [isToggling, setIsToggling] = useState(false)
+   const [isDeleting, setIsDeleting] = useState(false)
+   const [isEditing, setIsEditing] = useState(false)
+   const [isSaving, setIsSaving] = useState(false)
 
   const [editData, setEditData] = useState({
     transactionDate: purchase.transactionDate,
@@ -51,70 +54,71 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
     }
   }, [isEditing, menus.length])
 
-  const handleToggle = async () => {
-    if (isToggling) return
+   const handleToggle = async () => {
+     if (isToggling) return
 
-    setIsToggling(true)
-    try {
-      const result = await togglePurchaseValidation(purchase.id)
-      if (result.success) {
-        setIsValid(!isValid)
-      } else {
-        alert(result.error || '검증 상태 변경 실패')
-      }
-    } catch {
-      alert('검증 상태 변경 중 오류가 발생했습니다')
-    } finally {
-      setIsToggling(false)
-    }
-  }
+     setIsToggling(true)
+     try {
+       const result = await togglePurchaseValidation(purchase.id)
+       if (result.success) {
+         setIsValid(!isValid)
+       } else {
+         toast.error(result.error || '검증 상태 변경 실패')
+       }
+     } catch {
+       toast.error('검증 상태 변경 중 오류가 발생했습니다')
+     } finally {
+       setIsToggling(false)
+     }
+   }
 
-  const handleDelete = async () => {
-    if (isDeleting) return
+   const handleDelete = async () => {
+     if (isDeleting) return
 
-    if (!confirm('이 매입 기록을 삭제하시겠습니까?')) {
-      return
-    }
+     if (!(await confirm({ title: '확인', description: '이 매입 기록을 삭제하시겠습니까?', variant: 'danger' }))) {
+       return
+     }
 
-    setIsDeleting(true)
-    try {
-      const result = await deletePurchase(purchase.id)
-      if (!result.success) {
-        alert(result.error || '삭제 실패')
-        setIsDeleting(false)
-      }
-    } catch {
-      alert('삭제 중 오류가 발생했습니다')
-      setIsDeleting(false)
-    }
-  }
+     setIsDeleting(true)
+     try {
+       const result = await deletePurchase(purchase.id)
+       if (!result.success) {
+         toast.error(result.error || '삭제 실패')
+         setIsDeleting(false)
+       }
+     } catch {
+       toast.error('삭제 중 오류가 발생했습니다')
+       setIsDeleting(false)
+     }
+   }
 
-  const handleSave = async () => {
-    if (isSaving) return
+   const handleSave = async () => {
+     if (isSaving) return
 
-    setIsSaving(true)
-    try {
-      const formData = new FormData()
-      formData.append('transactionDate', editData.transactionDate)
-      formData.append('menuId', editData.menuId)
-      formData.append('ingredientId', editData.ingredientId)
-      formData.append('supplierName', editData.supplierName)
-      formData.append('quantity', editData.quantity)
-      formData.append('unitPrice', editData.unitPrice)
-      formData.append('notes', editData.notes)
+     setIsSaving(true)
+     try {
+       const formData = new FormData()
+       formData.append('transactionDate', editData.transactionDate)
+       formData.append('menuId', editData.menuId)
+       formData.append('ingredientId', editData.ingredientId)
+       formData.append('supplierName', editData.supplierName)
+       formData.append('quantity', editData.quantity)
+       formData.append('unitPrice', editData.unitPrice)
+       formData.append('notes', editData.notes)
 
-      const result = await updatePurchase(purchase.id, formData)
-      if (result.success) {
-        setIsEditing(false)
-      } else {
-        alert(result.error || '수정 실패')
-      }
-    } catch {
-      alert('수정 중 오류가 발생했습니다')
-    } finally {
-      setIsSaving(false)
-    }
-  }
+       const result = await updatePurchase(purchase.id, formData)
+       if (result.success) {
+         setIsEditing(false)
+         toast.success('수정되었습니다')
+       } else {
+         toast.error(result.error || '수정 실패')
+       }
+     } catch {
+       toast.error('수정 중 오류가 발생했습니다')
+     } finally {
+       setIsSaving(false)
+     }
+   }
 
   const handleCancel = () => {
     setEditData({

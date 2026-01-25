@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import { deleteSupplier, updateSupplier } from './actions'
+import { toast } from '@/components/ui/toast'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 import type { Supplier } from '@/lib/db/schema'
 
 interface SupplierCardProps {
@@ -12,6 +14,7 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const confirm = useConfirm()
 
   const [editData, setEditData] = useState({
     supplierName: supplier.supplierName,
@@ -25,13 +28,13 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
   })
 
   const handleDelete = async () => {
-    if (!confirm('이 공급업체를 삭제하시겠습니까?')) return
+    if (!(await confirm({ title: '확인', description: '이 공급업체를 삭제하시겠습니까?', variant: 'danger' }))) return
 
     setIsDeleting(true)
     const result = await deleteSupplier(supplier.id)
 
     if (!result.success) {
-      alert(result.error || '삭제에 실패했습니다')
+      toast.error(result.error || '삭제에 실패했습니다')
       setIsDeleting(false)
     }
   }
@@ -55,10 +58,10 @@ export default function SupplierCard({ supplier }: SupplierCardProps) {
       if (result.success) {
         setIsEditing(false)
       } else {
-        alert(result.error || '수정 실패')
+        toast.error(result.error || '수정 실패')
       }
     } catch {
-      alert('수정 중 오류가 발생했습니다')
+      toast.error('수정 중 오류가 발생했습니다')
     } finally {
       setIsSaving(false)
     }

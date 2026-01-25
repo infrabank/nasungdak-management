@@ -407,61 +407,72 @@ export async function createMultiplePurchases(
   }> = []
 
   try {
-    for (let i = 0; i < entries.length; i++) {
-      const entry = entries[i]
-      const rowNum = i + 1
+    // Pre-fetch all menu-ingredient mappings - SINGLE QUERY (avoids N+1)
+    const allMenuIngredients = await db
+      .select({
+        menuId: menuIngredients.menuId,
+        ingredientId: menuIngredients.ingredientId,
+      })
+      .from(menuIngredients)
+      .where(isNull(menuIngredients.deletedAt))
 
-      try {
-        const rawData = {
-          transactionDate,
-          menuId: entry.menuId,
-          ingredientId: entry.ingredientId,
-          supplierName,
-          quantity: entry.quantity,
-          unitPrice: entry.unitPrice,
-          notes: entry.notes?.trim() || null,
-        }
+    // Create composite key map for O(1) lookup
+    const menuIngredientMap = new Set(
+      allMenuIngredients.map(mi => `${mi.menuId}:${mi.ingredientId}`)
+    )
 
-        const validatedData = purchaseSchema.parse(rawData)
+    // Use transaction for atomicity
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < entries.length; i++) {
+        const entry = entries[i]
+        const rowNum = i + 1
 
-        // Check if menu-ingredient mapping exists for auto-validation
-        const menuIngredient = await db.query.menuIngredients.findFirst({
-          where: and(
-            eq(menuIngredients.menuId, validatedData.menuId),
-            eq(menuIngredients.ingredientId, validatedData.ingredientId),
-            isNull(menuIngredients.deletedAt)
-          ),
-        })
+        try {
+          const rawData = {
+            transactionDate,
+            menuId: entry.menuId,
+            ingredientId: entry.ingredientId,
+            supplierName,
+            quantity: entry.quantity,
+            unitPrice: entry.unitPrice,
+            notes: entry.notes?.trim() || null,
+          }
 
-        const isValid = !!menuIngredient
+          const validatedData = purchaseSchema.parse(rawData)
 
-        const [transaction] = await db
-          .insert(purchaseTransactions)
-          .values({
-            ...validatedData,
-            isValid,
-            createdBy: 'system',
-          })
-          .returning()
-
-        successCount++
-        results.push({
-          index: i,
-          id: transaction.id,
-          totalAmount: Number(transaction.totalAmount),
-          isValid: transaction.isValid,
-        })
-      } catch (error) {
-        failedCount++
-        if (error instanceof z.ZodError) {
-          errors.push(`${rowNum}번 항목: ${error.errors[0].message}`)
-        } else {
-          errors.push(
-            `${rowNum}번 항목: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+          // Check if menu-ingredient mapping exists using pre-fetched Set - O(1)
+          const isValid = menuIngredientMap.has(
+            `${validatedData.menuId}:${validatedData.ingredientId}`
           )
+
+          const [transaction] = await tx
+            .insert(purchaseTransactions)
+            .values({
+              ...validatedData,
+              isValid,
+              createdBy: 'system',
+            })
+            .returning()
+
+          successCount++
+          results.push({
+            index: i,
+            id: transaction.id,
+            totalAmount: Number(transaction.totalAmount),
+            isValid: transaction.isValid,
+          })
+        } catch (error) {
+          failedCount++
+          if (error instanceof z.ZodError) {
+            errors.push(`${rowNum}번 항목: ${error.errors[0].message}`)
+          } else {
+            errors.push(
+              `${rowNum}번 항목: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+            )
+          }
         }
       }
-    }
+    })
 
     revalidatePath('/dashboard/purchases')
     revalidateTag('purchases:all')
@@ -523,68 +534,79 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
       ingredientsList.map((i) => [i.ingredientName, i.id])
     )
 
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i]
-      const rowNum = i + 1
+    // Pre-fetch all menu-ingredient mappings - SINGLE QUERY (avoids N+1)
+    const allMenuIngredients = await db
+      .select({
+        menuId: menuIngredients.menuId,
+        ingredientId: menuIngredients.ingredientId,
+      })
+      .from(menuIngredients)
+      .where(isNull(menuIngredients.deletedAt))
 
-      try {
-        // Find menu and ingredient IDs
-        const menuId = menuMap.get(row.메뉴)
-        const ingredientId = ingredientMap.get(row.재료)
+    // Create composite key set for O(1) lookup
+    const menuIngredientSet = new Set(
+      allMenuIngredients.map(mi => `${mi.menuId}:${mi.ingredientId}`)
+    )
 
-        if (!menuId) {
-          errors.push(`${rowNum}행: 메뉴 '${row.메뉴}'를 찾을 수 없습니다`)
-          failedCount++
-          continue
-        }
+    // Use transaction for atomicity
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i]
+        const rowNum = i + 1
 
-        if (!ingredientId) {
-          errors.push(`${rowNum}행: 재료 '${row.재료}'를 찾을 수 없습니다`)
-          failedCount++
-          continue
-        }
+        try {
+          // Find menu and ingredient IDs
+          const menuId = menuMap.get(row.메뉴)
+          const ingredientId = ingredientMap.get(row.재료)
 
-        // Validate data
-        const validatedData = purchaseSchema.parse({
-          transactionDate: row.날짜,
-          menuId,
-          ingredientId,
-          supplierName: row.공급업체,
-          quantity: row.수량,
-          unitPrice: row.단가,
-          notes: row.비고 && row.비고.trim() ? row.비고.trim() : null,
-        })
+          if (!menuId) {
+            errors.push(`${rowNum}행: 메뉴 '${row.메뉴}'를 찾을 수 없습니다`)
+            failedCount++
+            continue
+          }
 
-        // Check if menu-ingredient mapping exists
-        const menuIngredient = await db.query.menuIngredients.findFirst({
-          where: and(
-            eq(menuIngredients.menuId, validatedData.menuId),
-            eq(menuIngredients.ingredientId, validatedData.ingredientId),
-            isNull(menuIngredients.deletedAt)
-          ),
-        })
+          if (!ingredientId) {
+            errors.push(`${rowNum}행: 재료 '${row.재료}'를 찾을 수 없습니다`)
+            failedCount++
+            continue
+          }
 
-        const isValid = !!menuIngredient
+          // Validate data
+          const validatedData = purchaseSchema.parse({
+            transactionDate: row.날짜,
+            menuId,
+            ingredientId,
+            supplierName: row.공급업체,
+            quantity: row.수량,
+            unitPrice: row.단가,
+            notes: row.비고 && row.비고.trim() ? row.비고.trim() : null,
+          })
 
-        // Insert purchase transaction
-        await db.insert(purchaseTransactions).values({
-          ...validatedData,
-          isValid,
-          createdBy: 'system',
-        })
-
-        successCount++
-      } catch (error) {
-        failedCount++
-        if (error instanceof z.ZodError) {
-          errors.push(`${rowNum}행: ${error.errors[0].message}`)
-        } else {
-          errors.push(
-            `${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+          // Check if menu-ingredient mapping exists using pre-fetched Set - O(1)
+          const isValid = menuIngredientSet.has(
+            `${validatedData.menuId}:${validatedData.ingredientId}`
           )
+
+          // Insert purchase transaction using transaction context
+          await tx.insert(purchaseTransactions).values({
+            ...validatedData,
+            isValid,
+            createdBy: 'system',
+          })
+
+          successCount++
+        } catch (error) {
+          failedCount++
+          if (error instanceof z.ZodError) {
+            errors.push(`${rowNum}행: ${error.errors[0].message}`)
+          } else {
+            errors.push(
+              `${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+            )
+          }
         }
       }
-    }
+    })
 
     revalidatePath('/dashboard/purchases')
     revalidateTag('purchases:all')

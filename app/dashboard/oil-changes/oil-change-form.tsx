@@ -4,6 +4,10 @@ import { useActionState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createOilChange } from './actions'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 interface OilChangeFormProps {
   storeId?: string
@@ -18,71 +22,48 @@ export default function OilChangeForm({ storeId }: OilChangeFormProps) {
     router.push(storeId ? `/dashboard/oil-changes?storeId=${storeId}` : '/dashboard/oil-changes')
   }
 
-  const inputClass =
-    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all'
-  const selectClass =
-    'block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all appearance-none'
-  const labelClass = 'block text-sm font-bold text-brutal-black mb-2'
-
-  return (
+   return (
     <form action={formAction} className="pb-32 max-w-2xl mx-auto">
       {/* Hidden storeId */}
       {storeId && <input type="hidden" name="storeId" value={storeId} />}
 
-      {/* Error Message */}
-      {state?.error && (
-        <div className="rounded-md bg-red-50 p-4 mb-4">
-          <p className="text-sm text-red-800">{state.error}</p>
-        </div>
-      )}
+       {/* Error Message */}
+       {state?.error && (
+         <div className="bg-brutal-red/10 p-4 mb-4">
+           <p className="text-sm text-brutal-red">{state.error}</p>
+         </div>
+       )}
 
-      {/* Form Fields Card */}
-      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
-        <div className="space-y-4">
-          <div>
-            <label className={labelClass}>
-              📅 교체일 <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              name="changeDate"
-              required
-              className={inputClass}
-            />
-          </div>
+       {/* Form Fields Card */}
+       <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
+         <div className="space-y-4">
+           <div>
+             <Label>
+               📅 교체일 <span className="text-red-500">*</span>
+             </Label>
+             <Input
+               type="date"
+               name="changeDate"
+               required
+             />
+           </div>
 
-          <div>
-            <label className={labelClass}>
-              🛢️ 튀김기 종류 <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <select
-                name="fryerType"
-                required
-                className={selectClass}
-                defaultValue=""
-              >
-                <option value="">선택하세요</option>
-                <option value="초벌">초벌</option>
-                <option value="재벌">재벌</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                <svg
-                  className="h-5 w-5 text-gray-400"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+           <div>
+             <Label>
+               🛢️ 튀김기 종류 <span className="text-red-500">*</span>
+             </Label>
+             <Select
+               name="fryerType"
+               required
+               defaultValue=""
+             >
+               <option value="">선택하세요</option>
+               <option value="초벌">초벌</option>
+               <option value="재벌">재벌</option>
+             </Select>
+           </div>
+         </div>
+       </div>
 
       <div className="bg-brutal-blue border-3 border-brutal-black shadow-brutal p-4 mb-4">
         <p className="text-sm font-bold text-brutal-black">
@@ -90,22 +71,21 @@ export default function OilChangeForm({ storeId }: OilChangeFormProps) {
         </p>
       </div>
 
-      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
-        <div>
-          <label className={labelClass}>
-            📝 비고
-          </label>
-          <textarea
-            name="notes"
-            rows={3}
-            placeholder="특이사항을 입력하세요"
-            className={inputClass}
-          />
-        </div>
-      </div>
+       <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
+         <div>
+           <Label>
+             📝 비고
+           </Label>
+           <Textarea
+             name="notes"
+             rows={3}
+             placeholder="특이사항을 입력하세요"
+           />
+         </div>
+       </div>
 
-      {/* Fixed Bottom Action Bar - positioned above bottom nav on mobile */}
-      <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4 z-20">
+       {/* Fixed Bottom Action Bar - positioned above bottom nav on mobile */}
+       <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-brutal-white border-t border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4 z-20">
         <div className="flex gap-3 max-w-lg mx-auto">
           <Button
             type="button"

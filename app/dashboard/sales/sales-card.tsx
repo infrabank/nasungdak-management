@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { deleteSalesRecord, updateSalesRecord, getActiveSKUs } from './actions'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+import { toast } from '@/components/ui/toast'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface SalesRecord {
   id: string
@@ -33,6 +35,7 @@ export default function SalesCard({
   isSelected,
   onToggleSelect,
 }: SalesCardProps) {
+  const confirm = useConfirm()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -52,13 +55,13 @@ export default function SalesCard({
   }, [isEditing, skuList.length])
 
   const handleDelete = async () => {
-    if (!confirm('이 판매 기록을 삭제하시겠습니까?')) return
+    if (!(await confirm({ title: '확인', description: '이 판매 기록을 삭제하시겠습니까?', variant: 'danger' }))) return
 
     setIsDeleting(true)
     const result = await deleteSalesRecord(sale.id)
 
     if (!result.success) {
-      alert(`삭제 실패: ${result.error}`)
+      toast.error(`삭제 실패: ${result.error}`)
       setIsDeleting(false)
     }
   }
@@ -77,10 +80,10 @@ export default function SalesCard({
       if (result.success) {
         setIsEditing(false)
       } else {
-        alert(result.error || '수정 실패')
+        toast.error(result.error || '수정 실패')
       }
     } catch {
-      alert('수정 중 오류가 발생했습니다')
+      toast.error('수정 중 오류가 발생했습니다')
     } finally {
       setIsSaving(false)
     }

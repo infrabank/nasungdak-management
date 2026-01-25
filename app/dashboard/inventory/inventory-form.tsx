@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { createInventory } from './actions'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import type { Inventory } from '@/lib/db/schema'
 
 interface InventoryFormProps {
@@ -59,40 +61,32 @@ export default function InventoryForm({ inventory }: InventoryFormProps) {
 
                 <div className="space-y-4">
                   <div>
-                    <label htmlFor="storeId" className="block text-sm font-medium text-gray-700">
-                      매장 *
-                    </label>
-                    <input
+                    <Label htmlFor="storeId">매장 *</Label>
+                    <Input
                       type="text"
                       name="storeId"
                       id="storeId"
                       required
                       defaultValue={inventory?.storeId || ''}
                       placeholder="매장 ID"
-                      className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="ingredientId" className="block text-sm font-medium text-gray-700">
-                      재료 *
-                    </label>
-                    <input
+                    <Label htmlFor="ingredientId">재료 *</Label>
+                    <Input
                       type="text"
                       name="ingredientId"
                       id="ingredientId"
                       required
                       defaultValue={inventory?.ingredientId || ''}
                       placeholder="재료 ID"
-                      className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="currentQuantity" className="block text-sm font-medium text-gray-700">
-                      현재 재고량 *
-                    </label>
-                    <input
+                    <Label htmlFor="currentQuantity">현재 재고량 *</Label>
+                    <Input
                       type="number"
                       name="currentQuantity"
                       id="currentQuantity"
@@ -101,21 +95,17 @@ export default function InventoryForm({ inventory }: InventoryFormProps) {
                       step="0.01"
                       defaultValue={inventory?.currentQuantity ? String(inventory.currentQuantity) : ''}
                       placeholder="0.00"
-                      className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="unit" className="block text-sm font-medium text-gray-700">
-                      단위
-                    </label>
-                    <input
+                    <Label htmlFor="unit">단위</Label>
+                    <Input
                       type="text"
                       name="unit"
                       id="unit"
                       defaultValue={inventory?.unit || ''}
                       placeholder="kg, 개"
-                      className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                     />
                   </div>
                 </div>

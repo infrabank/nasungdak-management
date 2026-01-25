@@ -3,7 +3,12 @@
 import { useState, useEffect } from 'react'
 import { createCostRule, updateCostRule, deleteCostRule, getMenus, getIngredients } from './actions'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import { formatDate } from '@/lib/utils/format'
+import { toast } from '@/components/ui/toast'
+import { useConfirm } from '@/components/ui/confirm-dialog'
 
 interface CostRuleFormProps {
   rule?: {
@@ -23,6 +28,7 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [menus, setMenus] = useState<Array<{ id: string; menuName: string }>>([])
   const [ingredientsList, setIngredientsList] = useState<Array<{ id: string; ingredientName: string; unit: string }>>([])
+  const confirm = useConfirm()
 
   useEffect(() => {
     if (isOpen) {
@@ -48,7 +54,7 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
         setIsOpen(false)
         e.currentTarget.reset()
       } else {
-        alert(result.error)
+        toast.error(result.error)
       }
     } finally {
       setIsSubmitting(false)
@@ -58,7 +64,7 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
   const handleDelete = async () => {
     if (!rule) return
 
-    if (!confirm('정말 삭제하시겠습니까?')) return
+    if (!(await confirm({ title: '확인', description: '정말 삭제하시겠습니까?', variant: 'danger' }))) return
 
     setIsSubmitting(true)
     try {
@@ -66,7 +72,7 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
       if (result.success) {
         setIsOpen(false)
       } else {
-        alert(result.error)
+        toast.error(result.error)
       }
     } finally {
       setIsSubmitting(false)
@@ -104,15 +110,12 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
 
                   <div className="space-y-4">
                     <div>
-                      <label htmlFor="menuId" className="block text-sm font-medium text-gray-700">
-                        메뉴 *
-                      </label>
-                      <select
+                      <Label htmlFor="menuId">메뉴 *</Label>
+                      <Select
                         name="menuId"
                         id="menuId"
                         required
                         defaultValue={rule?.menuId}
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       >
                         <option value="">선택하세요</option>
                         {menus.map((menu) => (
@@ -120,19 +123,16 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
                             {menu.menuName}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
 
                     <div>
-                      <label htmlFor="ingredientId" className="block text-sm font-medium text-gray-700">
-                        재료 *
-                      </label>
-                      <select
+                      <Label htmlFor="ingredientId">재료 *</Label>
+                      <Select
                         name="ingredientId"
                         id="ingredientId"
                         required
                         defaultValue={rule?.ingredientId}
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       >
                         <option value="">선택하세요</option>
                         {ingredientsList.map((ingredient) => (
@@ -140,14 +140,12 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
                             {ingredient.ingredientName} ({ingredient.unit})
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </div>
 
                     <div>
-                      <label htmlFor="distributionPercent" className="block text-sm font-medium text-gray-700">
-                        배분 비율 (%) *
-                      </label>
-                      <input
+                      <Label htmlFor="distributionPercent">배분 비율 (%) *</Label>
+                      <Input
                         type="number"
                         name="distributionPercent"
                         id="distributionPercent"
@@ -156,7 +154,6 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
                         min="0.01"
                         max="100"
                         defaultValue={rule?.distributionPercent}
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder:text-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                         placeholder="예: 40.5"
                       />
                       <p className="mt-1 text-xs text-gray-500">
@@ -165,29 +162,23 @@ export default function CostRuleForm({ rule }: CostRuleFormProps) {
                     </div>
 
                     <div>
-                      <label htmlFor="effectiveFrom" className="block text-sm font-medium text-gray-700">
-                        시작일 *
-                      </label>
-                      <input
+                      <Label htmlFor="effectiveFrom">시작일 *</Label>
+                      <Input
                         type="date"
                         name="effectiveFrom"
                         id="effectiveFrom"
                         required
                         defaultValue={rule?.effectiveFrom}
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                     </div>
 
                     <div>
-                      <label htmlFor="effectiveTo" className="block text-sm font-medium text-gray-700">
-                        종료일 (선택사항)
-                      </label>
-                      <input
+                      <Label htmlFor="effectiveTo">종료일 (선택사항)</Label>
+                      <Input
                         type="date"
                         name="effectiveTo"
                         id="effectiveTo"
                         defaultValue={rule?.effectiveTo || ''}
-                        className="mt-1 block w-full py-2 px-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all sm:text-sm font-medium"
                       />
                       <p className="mt-1 text-xs text-gray-500">
                         비워두면 계속 유효합니다

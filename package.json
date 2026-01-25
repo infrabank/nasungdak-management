@@ -31,7 +31,9 @@
     "clsx": "^2.1.1",
     "bcryptjs": "^2.4.3",
     "jose": "^5.9.6",
-    "papaparse": "^5.4.1"
+    "papaparse": "^5.4.1",
+    "sonner": "^1.7.1",
+    "lucide-react": "^0.468.0"
   },
   "devDependencies": {
     "typescript": "^5.7.2",

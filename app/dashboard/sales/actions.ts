@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { salesRecords, skus, menuCategories } from '@/lib/db/schema'
-import { eq, isNull, desc, sql } from 'drizzle-orm'
+import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 
 const salesRecordSchema = z.object({
@@ -33,9 +33,9 @@ export async function createSalesRecord(formData: FormData) {
 
     const validatedData = salesRecordSchema.parse(rawData)
 
-    // Get SKU unit price
+    // Get SKU unit price (must not be deleted)
     const sku = await db.query.skus.findFirst({
-      where: eq(skus.id, validatedData.skuId),
+      where: and(eq(skus.id, validatedData.skuId), isNull(skus.deletedAt)),
     })
 
     if (!sku) {
@@ -181,27 +181,25 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
       }
     }
 
-    // Fetch storeIds before deletion for cache invalidation
-    const existingRecords = await Promise.all(
-      ids.map(id => db.query.salesRecords.findFirst({
-        where: eq(salesRecords.id, id),
-        columns: { storeId: true },
-      }))
-    )
-    const storeIds = new Set(existingRecords.map(r => r?.storeId).filter(Boolean))
+    // Fetch storeIds before deletion for cache invalidation - SINGLE QUERY
+    const existingRecords = await db
+      .select({ storeId: salesRecords.storeId })
+      .from(salesRecords)
+      .where(inArray(salesRecords.id, ids))
 
-    // Perform bulk soft delete using loop for simplicity
-    let deletedCount = 0
-    for (const id of ids) {
-      await db
-        .update(salesRecords)
-        .set({
-          deletedAt: new Date(),
-          deletedBy: 'system',
-        })
-        .where(eq(salesRecords.id, id))
-      deletedCount++
-    }
+    const storeIds = new Set(existingRecords.map(r => r.storeId).filter(Boolean))
+
+    // Perform bulk soft delete - SINGLE QUERY
+    const result = await db
+      .update(salesRecords)
+      .set({
+        deletedAt: new Date(),
+        deletedBy: 'system',
+      })
+      .where(inArray(salesRecords.id, ids))
+      .returning({ id: salesRecords.id })
+
+    const deletedCount = result.length
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')
@@ -392,7 +390,6 @@ export async function createDailySales(saleDate: string, sales: DailySaleInput[]
     }
 
     // Get SKU prices
-    const skuIds = validSales.map(s => s.skuId)
     const skuList = await db
       .select({
         id: skus.id,
@@ -404,45 +401,48 @@ export async function createDailySales(saleDate: string, sales: DailySaleInput[]
 
     const skuMap = new Map(skuList.map(s => [s.id, s]))
 
-    for (let i = 0; i < validSales.length; i++) {
-      const sale = validSales[i]
+    // Use transaction for atomicity
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < validSales.length; i++) {
+        const sale = validSales[i]
 
-      try {
-        const sku = skuMap.get(sale.skuId)
+        try {
+          const sku = skuMap.get(sale.skuId)
 
-        if (!sku) {
-          errors.push(`SKU를 찾을 수 없습니다`)
-          failedCount++
-          continue
-        }
+          if (!sku) {
+            errors.push(`SKU를 찾을 수 없습니다`)
+            failedCount++
+            continue
+          }
 
-        // Validate data
-        const validatedData = salesRecordSchema.parse({
-          saleDate,
-          skuId: sale.skuId,
-          quantitySold: sale.quantitySold,
-        })
-
-        // Insert sales record
-        await db
-          .insert(salesRecords)
-          .values({
-            ...validatedData,
-            storeId: storeId || null,
-            unitPrice: sku.unitPrice,
-            createdBy: 'system',
+          // Validate data
+          const validatedData = salesRecordSchema.parse({
+            saleDate,
+            skuId: sale.skuId,
+            quantitySold: sale.quantitySold,
           })
 
-        successCount++
-      } catch (error) {
-        failedCount++
-        if (error instanceof z.ZodError) {
-          errors.push(`${error.errors[0].message}`)
-        } else {
-          errors.push(`${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+          // Insert sales record using transaction context
+          await tx
+            .insert(salesRecords)
+            .values({
+              ...validatedData,
+              storeId: storeId || null,
+              unitPrice: sku.unitPrice,
+              createdBy: 'system',
+            })
+
+          successCount++
+        } catch (error) {
+          failedCount++
+          if (error instanceof z.ZodError) {
+            errors.push(`${error.errors[0].message}`)
+          } else {
+            errors.push(`${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+          }
         }
       }
-    }
+    })
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')
@@ -500,47 +500,50 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
       skuList.map((s) => [s.skuName, { id: s.id, unitPrice: s.unitPrice }])
     )
 
-    for (let i = 0; i < rows.length; i++) {
-      const row = rows[i]
-      const rowNum = i + 1
+    // Use transaction for atomicity
+    await db.transaction(async (tx) => {
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i]
+        const rowNum = i + 1
 
-      try {
-        // Find SKU ID
-        const skuInfo = skuMap.get(row.SKU)
+        try {
+          // Find SKU ID
+          const skuInfo = skuMap.get(row.SKU)
 
-        if (!skuInfo) {
-          errors.push(`${rowNum}행: SKU '${row.SKU}'를 찾을 수 없습니다`)
+          if (!skuInfo) {
+            errors.push(`${rowNum}행: SKU '${row.SKU}'를 찾을 수 없습니다`)
+            failedCount++
+            continue
+          }
+
+          // Validate data
+          const validatedData = salesRecordSchema.parse({
+            saleDate: row.날짜,
+            skuId: skuInfo.id,
+            quantitySold: row.판매수량,
+          })
+
+          // Insert sales record using transaction context
+          await tx.insert(salesRecords).values({
+            ...validatedData,
+            storeId: storeId || null,
+            unitPrice: skuInfo.unitPrice,
+            createdBy: 'system',
+          })
+
+          successCount++
+        } catch (error) {
           failedCount++
-          continue
-        }
-
-        // Validate data
-        const validatedData = salesRecordSchema.parse({
-          saleDate: row.날짜,
-          skuId: skuInfo.id,
-          quantitySold: row.판매수량,
-        })
-
-        // Insert sales record
-        await db.insert(salesRecords).values({
-          ...validatedData,
-          storeId: storeId || null,
-          unitPrice: skuInfo.unitPrice,
-          createdBy: 'system',
-        })
-
-        successCount++
-      } catch (error) {
-        failedCount++
-        if (error instanceof z.ZodError) {
-          errors.push(`${rowNum}행: ${error.errors[0].message}`)
-        } else {
-          errors.push(
-            `${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
-          )
+          if (error instanceof z.ZodError) {
+            errors.push(`${rowNum}행: ${error.errors[0].message}`)
+          } else {
+            errors.push(
+              `${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+            )
+          }
         }
       }
-    }
+    })
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')

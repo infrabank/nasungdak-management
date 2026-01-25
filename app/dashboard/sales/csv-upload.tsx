@@ -4,6 +4,7 @@ import { useState, useRef } from 'react'
 import Papa from 'papaparse'
 import { bulkCreateSales } from './actions'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/toast'
 
 interface CSVRow {
   날짜: string
@@ -29,7 +30,7 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
     if (!selectedFile) return
 
     if (!selectedFile.name.endsWith('.csv')) {
-      alert('CSV 파일만 업로드 가능합니다')
+      toast.error('CSV 파일만 업로드 가능합니다')
       return
     }
 
@@ -57,20 +58,20 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
           setErrors(validationErrors.slice(0, 10)) // Show first 10 errors
         }
       },
-      error: (error) => {
-        alert(`CSV 파싱 오류: ${error.message}`)
-      },
+       error: (error) => {
+         toast.error(`CSV 파싱 오류: ${error.message}`)
+       },
     })
   }
 
   const handleUpload = async () => {
     if (!file) {
-      alert('파일을 선택해주세요')
+      toast.error('파일을 선택해주세요')
       return
     }
 
     if (errors.length > 0) {
-      alert('CSV 파일에 오류가 있습니다. 오류를 수정한 후 다시 시도해주세요.')
+      toast.error('CSV 파일에 오류가 있습니다. 오류를 수정한 후 다시 시도해주세요.')
       return
     }
 
@@ -85,28 +86,31 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
           // Server Action에 직렬화 가능한 데이터로 전달
           const result = await bulkCreateSales(JSON.parse(JSON.stringify(results.data)), storeId)
 
-          if (result.success) {
-            alert(`성공: ${result.successCount}건 등록, 실패: ${result.failedCount}건${result.errors && result.errors.length > 0 ? '\n\n오류:\n' + result.errors.join('\n') : ''}`)
-            setIsOpen(false)
-            setFile(null)
-            setPreview([])
-            setErrors([])
-            if (fileInputRef.current) {
-              fileInputRef.current.value = ''
-            }
-          } else {
-            alert(`업로드 실패: ${result.error}`)
-          }
-        } catch (error) {
-          alert(`업로드 중 오류 발생: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
-        } finally {
-          setIsUploading(false)
-        }
-      },
-      error: (error) => {
-        alert(`CSV 파싱 오류: ${error.message}`)
-        setIsUploading(false)
-      },
+           if (result.success) {
+             toast.success(`성공: ${result.successCount}건 등록, 실패: ${result.failedCount}건`)
+             if (result.errors && result.errors.length > 0) {
+               toast.error(`오류:\n${result.errors.join('\n')}`)
+             }
+             setIsOpen(false)
+             setFile(null)
+             setPreview([])
+             setErrors([])
+             if (fileInputRef.current) {
+               fileInputRef.current.value = ''
+             }
+           } else {
+             toast.error(`업로드 실패: ${result.error}`)
+           }
+         } catch (error) {
+           toast.error(`업로드 중 오류 발생: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+         } finally {
+           setIsUploading(false)
+         }
+       },
+       error: (error) => {
+         toast.error(`CSV 파싱 오류: ${error.message}`)
+         setIsUploading(false)
+       },
     })
   }
 

@@ -558,9 +558,9 @@ export async function checkInventoryAlerts(storeId: string): Promise<{
   }
 }> {
   try {
-    // Get store info
+    // Get store info (must not be deleted)
     const store = await db.query.stores.findFirst({
-      where: eq(stores.id, storeId),
+      where: and(eq(stores.id, storeId), isNull(stores.deletedAt)),
     })
 
     if (!store) {
