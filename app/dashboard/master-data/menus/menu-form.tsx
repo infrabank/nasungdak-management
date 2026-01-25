@@ -34,7 +34,7 @@ export default function MenuForm({ menu }: MenuFormProps) {
         setIsOpen(false)
         e.currentTarget.reset()
       } else {
-        alert(result.error)
+        toast.error(result.error || '저장 중 오류가 발생했습니다')
       }
     } finally {
       setIsSubmitting(false)
@@ -44,7 +44,7 @@ export default function MenuForm({ menu }: MenuFormProps) {
   const handleDelete = async () => {
     if (!menu) return
 
-    if (!confirm('정말 삭제하시겠습니까?')) return
+    if (!(await confirm({ title: '확인', description: '정말 삭제하시겠습니까?', variant: 'danger' }))) return
 
     setIsSubmitting(true)
     try {
@@ -52,7 +52,7 @@ export default function MenuForm({ menu }: MenuFormProps) {
       if (result.success) {
         setIsOpen(false)
       } else {
-        alert(result.error)
+        toast.error(result.error || '삭제 중 오류가 발생했습니다')
       }
     } finally {
       setIsSubmitting(false)
