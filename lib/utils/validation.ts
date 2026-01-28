@@ -121,6 +121,85 @@ export const inventoryEventSchema = z.object({
 
 export type InventoryEventData = z.infer<typeof inventoryEventSchema>
 
+// Employee validation (storeId is validated in actions, not here)
+export const employeeSchema = z.object({
+  employeeName: z.string().min(1, '직원명을 입력해주세요').max(100, '직원명은 100자 이내로 입력해주세요'),
+  hourlyRate: z.coerce.string().transform((val, ctx) => {
+    const num = Number(val)
+    if (isNaN(num) || num <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '시급은 0보다 커야 합니다',
+      })
+      return z.NEVER
+    }
+    return val
+  }),
+  phone: z.string().max(20).optional().nullable(),
+  hireDate: z.string().optional().nullable(),
+  isActive: z.coerce.boolean().optional().default(true),
+})
+
+export type EmployeeFormData = z.infer<typeof employeeSchema>
+
+// Attendance record validation (storeId is set from employee, not validated here)
+export const attendanceSchema = z.object({
+  employeeId: z.string().uuid('직원을 선택해주세요'),
+  workDate: z.string().min(1, '근무일을 선택해주세요'),
+  workHours: z.coerce.string().transform((val, ctx) => {
+    const num = Number(val)
+    if (isNaN(num) || num <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '근무시간은 0보다 커야 합니다',
+      })
+      return z.NEVER
+    }
+    if (num > 24) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '24시간을 초과할 수 없습니다',
+      })
+      return z.NEVER
+    }
+    return val
+  }),
+  hourlyRate: z.coerce.string().transform((val, ctx) => {
+    const num = Number(val)
+    if (isNaN(num) || num <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '시급은 0보다 커야 합니다',
+      })
+      return z.NEVER
+    }
+    return val
+  }),
+  // totalPay: optional - if undefined, server calculates Math.round(workHours * hourlyRate)
+  totalPay: z.coerce.string().optional().transform((val, ctx) => {
+    if (!val || val === '') return undefined // Missing → server calculates
+    const num = Number(val)
+    if (isNaN(num) || num < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '지급액은 0 이상이어야 합니다',
+      })
+      return z.NEVER
+    }
+    if (!Number.isInteger(num)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '지급액은 정수여야 합니다',
+      })
+      return z.NEVER
+    }
+    return val
+  }),
+  notes: z.string().optional().nullable(),
+})
+
+export type AttendanceFormData = z.infer<typeof attendanceSchema>
+
 // Add more schemas here:
 // - salesSchema
 // - menuSchema

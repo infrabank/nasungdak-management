@@ -228,6 +228,56 @@ export const oilChangeHistory = pgTable('oil_change_history', {
 ])
 
 // =====================
+// 직원 관리 & 출퇴근 기록
+// =====================
+
+// Employees Table (직원)
+export const employees = pgTable('employees', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  storeId: uuid('store_id').references(() => stores.id), // 다매장 지원 (nullable in DB, app enforces required)
+  employeeName: varchar('employee_name', { length: 100 }).notNull(),
+  hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(),
+  phone: varchar('phone', { length: 20 }),
+  hireDate: date('hire_date'),
+  isActive: boolean('is_active').notNull().default(true),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
+}, (table) => [
+  index('emp_deleted_at_idx').on(table.deletedAt),
+  index('emp_store_id_idx').on(table.storeId),
+])
+
+// Attendance Records Table (출퇴근 기록)
+export const attendanceRecords = pgTable('attendance_records', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  storeId: uuid('store_id').references(() => stores.id), // 다매장 지원 (employee.storeId와 동일하게 설정)
+  employeeId: uuid('employee_id').notNull().references(() => employees.id),
+  workDate: date('work_date').notNull(),
+  workHours: decimal('work_hours', { precision: 5, scale: 2 }).notNull(),
+  hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(), // 스냅샷 (직원 시급 변경에 영향 안 받음)
+  totalPay: decimal('total_pay', { precision: 14, scale: 2 }).notNull(), // application 계산, NOT generated (수정 가능)
+  fixedCostId: uuid('fixed_cost_id').references(() => fixedCosts.id), // 고정비 연동 추적
+  notes: text('notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  createdBy: varchar('created_by', { length: 100 }),
+  updatedBy: varchar('updated_by', { length: 100 }),
+  deletedAt: timestamp('deleted_at'),
+  deletedBy: varchar('deleted_by', { length: 100 }),
+}, (table) => [
+  index('ar_deleted_at_idx').on(table.deletedAt),
+  index('ar_store_id_idx').on(table.storeId),
+  index('ar_employee_id_idx').on(table.employeeId),
+  index('ar_work_date_idx').on(table.workDate.desc()),
+  // Composite index for store + date filtering (common query pattern)
+  index('ar_store_date_idx').on(table.storeId, table.workDate.desc()),
+])
+
+// =====================
 // 재고 관리 & 알림
 // =====================
 
@@ -326,3 +376,9 @@ export type NewFixedCost = typeof fixedCosts.$inferInsert
 
 export type OilChangeHistory = typeof oilChangeHistory.$inferSelect
 export type NewOilChangeHistory = typeof oilChangeHistory.$inferInsert
+
+export type Employee = typeof employees.$inferSelect
+export type NewEmployee = typeof employees.$inferInsert
+
+export type AttendanceRecord = typeof attendanceRecords.$inferSelect
+export type NewAttendanceRecord = typeof attendanceRecords.$inferInsert
