@@ -5,20 +5,16 @@ import { db } from '@/lib/db'
 import { sql } from 'drizzle-orm'
 
 async function fetchDashboardStats(startDate: string, endDate: string) {
-  // Get monthly summary with cost distribution rules applied
+  // Get monthly summary - actual purchase costs (without distribution rules)
   const summary = await db.execute(sql`
       WITH cost_summary AS (
-        -- Calculate actual cost using cost distribution rules
+        -- Calculate actual cost from all valid purchases (no distribution rules)
         SELECT
-          COALESCE(SUM(pt.total_amount * cdr.distribution_percent / 100), 0) as total_actual_cost
+          COALESCE(SUM(pt.total_amount), 0) as total_actual_cost
         FROM purchase_transactions pt
-        JOIN cost_distribution_rules cdr ON pt.ingredient_id = cdr.ingredient_id
         WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND pt.deleted_at IS NULL
           AND pt.is_valid = true
-          AND cdr.deleted_at IS NULL
-          AND cdr.effective_from <= ${endDate}::date
-          AND COALESCE(cdr.effective_to, '9999-12-31'::date) >= ${startDate}::date
       ),
       monthly_sales AS (
         SELECT
@@ -48,6 +44,13 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
         FROM purchase_transactions
         WHERE transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND deleted_at IS NULL
+      ),
+      monthly_fixed_costs AS (
+        SELECT
+          COALESCE(SUM(amount), 0) as total_fixed_costs
+        FROM fixed_costs
+        WHERE cost_date BETWEEN ${startDate}::date AND ${endDate}::date
+          AND deleted_at IS NULL
       )
       SELECT
         pc.count as purchase_count,
@@ -57,9 +60,10 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
         vp.valid_count,
         ip.invalid_count,
         cr.rules_count,
+        mfc.total_fixed_costs,
         CASE
           WHEN ms.total_sales > 0
-          THEN ((ms.total_sales - cs.total_actual_cost) / ms.total_sales * 100)
+          THEN ((ms.total_sales - cs.total_actual_cost - mfc.total_fixed_costs) / ms.total_sales * 100)
           ELSE 0
         END as margin_percent
       FROM cost_summary cs
@@ -68,6 +72,7 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
       CROSS JOIN invalid_purchases ip
       CROSS JOIN cost_rules cr
       CROSS JOIN purchase_count pc
+      CROSS JOIN monthly_fixed_costs mfc
     `)
 
     const stats = summary.rows[0]
@@ -107,6 +112,7 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
     data: {
       monthlyPurchases: Number(stats.total_actual_cost),
       monthlySales: Number(stats.total_sales),
+      monthlyFixedCosts: Number(stats.total_fixed_costs),
       purchaseCount: Number(stats.purchase_count),
       salesCount: Number(stats.sales_count),
       marginPercent: Number(stats.margin_percent),

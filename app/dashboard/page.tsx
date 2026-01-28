@@ -29,7 +29,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-8">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-5 mb-8">
         <div className="bg-brutal-yellow border-3 border-brutal-black shadow-brutal p-4">
           <div className="flex items-center">
             <div className="flex-1">
@@ -66,13 +66,29 @@ export default async function DashboardPage() {
           <div className="flex items-center">
             <div className="flex-1">
               <dt className="text-sm font-bold text-brutal-black truncate">
-                이번달 마진율 (변동비 기준)
+                이번달 순마진율
               </dt>
               <dd className="mt-1 text-2xl lg:text-3xl font-black text-brutal-black">
                 {data.marginPercent.toFixed(1)}%
               </dd>
               <dd className="mt-1 text-xs font-medium text-brutal-black">
-                순이익: {formatCurrency(data.monthlySales - data.monthlyPurchases)} (고정비 제외)
+                순이익: {formatCurrency(data.monthlySales - data.monthlyPurchases - data.monthlyFixedCosts)}
+              </dd>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-brutal-purple border-3 border-brutal-black shadow-brutal p-4">
+          <div className="flex items-center">
+            <div className="flex-1">
+              <dt className="text-sm font-bold text-brutal-black truncate">
+                고정비 (이번달)
+              </dt>
+              <dd className="mt-1 text-2xl lg:text-3xl font-black text-brutal-black">
+                {formatCurrency(data.monthlyFixedCosts)}
+              </dd>
+              <dd className="mt-1 text-xs font-medium text-brutal-black">
+                인건비, 임대료 등
               </dd>
             </div>
           </div>
