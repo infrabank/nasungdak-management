@@ -11,9 +11,10 @@ interface Store {
 
 interface StoreSelectorProps {
   stores: Store[]
+  mobile?: boolean
 }
 
-export default function StoreSelector({ stores }: StoreSelectorProps) {
+export default function StoreSelector({ stores, mobile }: StoreSelectorProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -44,6 +45,27 @@ export default function StoreSelector({ stores }: StoreSelectorProps) {
     return null
   }
 
+  // Mobile: compact selector without label
+  if (mobile) {
+    return (
+      <select
+        id="storeSelectorMobile"
+        value={selectedStore}
+        onChange={handleChange}
+        aria-label="매장 선택"
+        className="py-2 pl-3 pr-8 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none transition-all duration-150 cursor-pointer max-w-[140px] truncate"
+      >
+        <option value="">🏪 매장선택</option>
+        {stores.map((store) => (
+          <option key={store.id} value={store.id}>
+            {store.storeName}
+          </option>
+        ))}
+      </select>
+    )
+  }
+
+  // Desktop: full selector with label
   return (
     <div className="flex items-center gap-2">
       <label htmlFor="storeSelector" className="text-sm font-bold text-brutal-black">

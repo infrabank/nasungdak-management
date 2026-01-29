@@ -18,7 +18,8 @@ export default async function DashboardLayout({
     <div className="min-h-screen bg-brutal-white pb-[env(safe-area-inset-bottom)] lg:pb-0">
       <nav className="bg-brutal-yellow border-b-3 border-brutal-black">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-14 items-center justify-center lg:hidden">
+          {/* Mobile Header */}
+          <div className="flex h-14 items-center justify-between lg:hidden">
             <Link href="/dashboard" className="flex items-center">
               <Image
                 src="/images/logo.png"
@@ -28,6 +29,13 @@ export default async function DashboardLayout({
                 className="h-9 w-auto"
               />
             </Link>
+            <Suspense
+              fallback={
+                <div className="h-8 w-24 animate-pulse border-2 border-brutal-black bg-brutal-white" />
+              }
+            >
+              <StoreSelector stores={stores} mobile />
+            </Suspense>
           </div>
 
           <div className="hidden h-16 justify-between lg:flex">
