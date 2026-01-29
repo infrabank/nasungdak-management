@@ -5,8 +5,10 @@ import { db } from '@/lib/db'
 import { sql } from 'drizzle-orm'
 
 async function fetchDashboardStats(startDate: string, endDate: string) {
-  // Get monthly summary - actual purchase costs (without distribution rules)
-  const summary = await db.execute(sql`
+  // Execute all queries in parallel for better performance
+  const [summary, recentPurchases, recentSales] = await Promise.all([
+    // Get monthly summary - actual purchase costs (without distribution rules)
+    db.execute(sql`
       WITH cost_summary AS (
         -- Calculate actual cost from all valid purchases (no distribution rules)
         SELECT
@@ -73,12 +75,9 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
       CROSS JOIN cost_rules cr
       CROSS JOIN purchase_count pc
       CROSS JOIN monthly_fixed_costs mfc
-    `)
-
-    const stats = summary.rows[0]
-
+    `),
     // Get recent purchases
-    const recentPurchases = await db.execute(sql`
+    db.execute(sql`
       SELECT
         pt.transaction_date,
         mc.menu_name,
@@ -91,10 +90,9 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
       WHERE pt.deleted_at IS NULL
       ORDER BY pt.transaction_date DESC, pt.created_at DESC
       LIMIT 5
-    `)
-
+    `),
     // Get recent sales
-    const recentSales = await db.execute(sql`
+    db.execute(sql`
       SELECT
         sr.sale_date,
         s.sku_name,
@@ -105,7 +103,10 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
       WHERE sr.deleted_at IS NULL
       ORDER BY sr.sale_date DESC, sr.created_at DESC
       LIMIT 5
-    `)
+    `),
+  ])
+
+  const stats = summary.rows[0]
 
   return {
     success: true,
