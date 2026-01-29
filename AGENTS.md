@@ -1,14 +1,14 @@
 # AGENTS.md
 
-Guidance for AI agents in this Next.js 15 + Drizzle ORM project (Korean restaurant management system).
+Next.js 15 + Drizzle ORM Korean restaurant management system. This file guides AI agents.
 
 ## Commands
 
 ```bash
 # Development
 npm run dev              # Dev server at localhost:3000
-npm run build            # Production build
-npm run type-check       # TypeScript check (MUST run before commits)
+npm run build            # Production build (MUST pass before deploy)
+npm run type-check       # TypeScript check (MUST pass before commits)
 npm run lint             # ESLint (next/core-web-vitals)
 npm run format           # Prettier formatting
 
@@ -17,13 +17,12 @@ npm run db:generate      # Generate migration from schema changes
 npm run db:migrate       # Apply migrations
 npm run db:studio        # GUI for database
 npm run db:seed          # Seed sample data
-npm run import:excel     # Import data from Excel files
 
-# Testing
-npm run test             # Run all Vitest tests
-npm run test -- <file>   # Run specific test file
-npm run test -- --watch  # Watch mode
-npm run test:e2e         # Playwright E2E tests
+# Testing (Vitest)
+npm run test                      # Run all tests
+npm run test -- validation        # Run tests matching "validation"
+npm run test -- --watch           # Watch mode
+npm run test -- lib/__tests__/validation.test.ts  # Specific file
 ```
 
 ## Code Style
@@ -31,9 +30,7 @@ npm run test:e2e         # Playwright E2E tests
 - **No semicolons**, single quotes, 2-space indent, trailing commas (ES5)
 - **80 char width**, Tailwind class auto-sorting via prettier plugin
 - **Import order**: External libs first, then `@/*` internal modules
-- Use `import type` for type-only imports
 
-### Naming Conventions
 | Context | Convention | Example |
 |---------|------------|---------|
 | DB columns | snake_case | `created_at`, `menu_id` |
@@ -46,23 +43,20 @@ npm run test:e2e         # Playwright E2E tests
 ```
 app/dashboard/[feature]/
   page.tsx           # Server component (data fetching)
-  actions.ts         # Server actions (CRUD operations)
+  actions.ts         # Server actions (mutations + cached queries)
   *-form.tsx         # Client component ('use client')
-  *-card.tsx         # Display cards for list items
-  *-row.tsx          # Table row components
-  csv-upload.tsx     # CSV import functionality
 
 lib/
-  db/schema.ts       # Drizzle ORM schema (all tables)
+  db/schema.ts       # Drizzle schema (all tables)
   utils/validation.ts # Zod validation schemas
   utils/format.ts    # Korean locale formatters
 ```
 
-## Server Actions Pattern
+## Server Actions
 
 ```typescript
 'use server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { tableName } from '@/lib/db/schema'
 import { schema } from '@/lib/utils/validation'
@@ -70,45 +64,49 @@ import { z } from 'zod'
 
 export async function createEntity(formData: FormData) {
   try {
-    const rawData = { field1: formData.get('field1') }
-    const validated = schema.parse(rawData)
+    const validated = schema.parse({ field: formData.get('field') })
     await db.insert(tableName).values(validated)
     revalidatePath('/dashboard/feature')
+    revalidateTag('feature:all')
     return { success: true }
   } catch (error) {
-    console.error('Failed to create entity:', error)
+    console.error('Failed:', error)
     if (error instanceof z.ZodError) {
       return { success: false, error: error.errors[0].message }
     }
     return { success: false, error: '처리 중 오류가 발생했습니다' }
   }
 }
+
+// Cached queries with tags
+export async function getData(storeId: string) {
+  const getCached = unstable_cache(
+    () => db.select().from(tableName).where(eq(tableName.storeId, storeId)),
+    ['feature:list', storeId],
+    { tags: [`feature:${storeId}`] }
+  )
+  return getCached()
+}
 ```
 
-**Rules:** Input: always `FormData` | Validation: Zod schemas from `lib/utils/validation.ts` | After mutation: always `revalidatePath()` | Return: `{ success: boolean, data?: T, error?: string }` | Error messages: Korean
+**Rules:** Input `FormData` | Validate Zod | Return `{ success, data?, error? }` | Korean errors | Cache with tags
 
 ## Database Patterns
 
 ### Soft Delete (NEVER hard delete)
 ```typescript
-// Delete = set deletedAt
 await db.update(table).set({ deletedAt: new Date() }).where(eq(table.id, id))
-// Query = always filter deleted
-.where(isNull(table.deletedAt))
+// Always filter: .where(isNull(table.deletedAt))
 ```
 
-### Generated Columns (NEVER insert/update these)
-- `purchase_transactions.total_amount` = quantity * unit_price
-- `sales_records.total_revenue` = quantity_sold * unit_price
-- `oil_change_history.total_cost` = quantity * unit_price
+### Generated Columns (NEVER insert/update)
+- `purchase_transactions.total_amount`, `sales_records.total_revenue`, `oil_change_history.total_cost`
 
-### Query Standards
+### Transactions for Bulk Operations
 ```typescript
-await db.select().from(table)
-  .leftJoin(related, eq(table.relatedId, related.id))
-  .where(isNull(table.deletedAt))
-  .orderBy(desc(table.createdAt))
-  .limit(100)  // Always limit queries
+await db.transaction(async (tx) => {
+  for (const item of items) await tx.insert(table).values(item)
+})
 ```
 
 ### Type Inference
@@ -136,24 +134,20 @@ quantity: z.coerce.string().transform((val, ctx) => {
 
 - **NEVER** use `as any`, `@ts-ignore`, `@ts-expect-error`
 - **NEVER** suppress type errors - fix root cause
-- Use explicit types, leverage Drizzle type inference
+- Use Drizzle's `$inferSelect`/`$inferInsert`
 
 ## UI Guidelines
 
-- **Tailwind CSS only** (no CSS modules)
-- **Korean language** for all user-facing text
-- **Responsive design** required
+- **Tailwind CSS only**, **Korean language**, **Responsive design**
 - **HTML5 validation**: `required`, `type`, `min`, `max`, `step`
+- **Toast**: `toast.success('저장되었습니다')` / `toast.error(result.error)`
 
-## Multi-Store Support
+## Multi-Store & Auth
 
-All transactional tables have `storeId` FK. Filter by `storeId` URL param where applicable.
+- All transactional tables have `storeId` FK. Filter by URL param.
+- JWT (jose), HTTP-only cookies, 7-day expiry. Middleware protects `/dashboard/*`.
 
-## Auth
-
-Single-password JWT (jose), HTTP-only cookies, 7-day expiry. Middleware protects all routes except `/login`.
-
-## Pre-Commit Checklist
+## Pre-Commit
 
 ```bash
 npm run type-check && npm run lint && npm run format
