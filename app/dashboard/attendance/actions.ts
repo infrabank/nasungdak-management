@@ -263,17 +263,19 @@ export async function getAttendance(params: GetAttendanceParams) {
       .orderBy(desc(attendanceRecords.workDate), desc(attendanceRecords.createdAt))
       .limit(1000)
 
-    // Query total sum (all filtered records, not just limit 1000)
+    // Query totals (all filtered records, not just limit 1000)
     const sumResult = await db
       .select({
         totalSum: sql<string>`COALESCE(SUM(${attendanceRecords.totalPay}), 0)`.as('total_sum'),
+        totalHours: sql<string>`COALESCE(SUM(${attendanceRecords.workHours}), 0)`.as('total_hours'),
       })
       .from(attendanceRecords)
       .where(and(...conditions))
 
     const totalSum = Number(sumResult[0]?.totalSum) || 0
+    const totalHours = Number(sumResult[0]?.totalHours) || 0
 
-    return { records, totalSum }
+    return { records, totalSum, totalHours }
   } catch (error) {
     console.error('Failed to fetch attendance:', error)
     return { records: [], totalSum: 0 }

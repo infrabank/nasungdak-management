@@ -29,9 +29,9 @@ export default async function AttendancePage({
 
   const hasStoreId = Boolean(storeId)
 
-  const { records, totalSum } = hasStoreId
+  const { records, totalSum, totalHours } = hasStoreId
     ? await getAttendance({ storeId, startDate, endDate, employeeId })
-    : { records: [], totalSum: 0 }
+    : { records: [], totalSum: 0, totalHours: 0 }
 
   const activeEmployees = hasStoreId ? await getActiveEmployees(storeId) : []
 
@@ -85,10 +85,15 @@ export default async function AttendancePage({
       {hasStoreId && records.length > 0 && (
         <div className="sticky top-0 z-10 mt-4 md:static">
           <div className="bg-brutal-pink border-3 border-brutal-black shadow-brutal p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-bold text-brutal-black">
-                총 {records.length}건 ({startDate} ~ {endDate})
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-bold text-brutal-black">
+                  총 {records.length}건 ({startDate} ~ {endDate})
+                </p>
+                <p className="text-sm font-medium text-brutal-black/70 mt-1">
+                  총 근무시간: {totalHours.toFixed(1)}시간
+                </p>
+              </div>
               <p className="text-2xl font-black text-brutal-black">
                 {formatCurrency(totalSum)}
               </p>
@@ -237,11 +242,15 @@ export default async function AttendancePage({
                     ))}
                     <tr className="bg-brutal-pink/50 font-bold border-t-3 border-brutal-black">
                       <td
-                        colSpan={4}
+                        colSpan={2}
                         className="py-4 pl-4 pr-3 text-sm text-right font-black text-brutal-black sm:pl-6"
                       >
                         총 합계 ({records.length}건)
                       </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-black">
+                        {totalHours.toFixed(1)}시간
+                      </td>
+                      <td className="px-3 py-4"></td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-black">
                         {formatCurrency(totalSum)}
                       </td>
