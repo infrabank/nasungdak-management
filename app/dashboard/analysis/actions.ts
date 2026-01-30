@@ -186,14 +186,16 @@ async function fetchAnalysis(
   const purchaseStoreFilter = storeId !== 'all' ? sql`AND pt.store_id = ${storeId}` : sql``
   const fixedCostStoreFilter = storeId !== 'all' ? sql`AND store_id = ${storeId}` : sql``
 
-  // Execute both queries in parallel for better performance
-  const [result, fixedCostsResult] = await Promise.all([
-    // Complex SQL query combining sales, purchases, and cost distribution
+  // Execute queries in parallel for better performance
+  // Uses direct purchase costs (same as dashboard) instead of distribution rules
+  const [skuResult, totalCostsResult, fixedCostsResult] = await Promise.all([
+    // SKU-level sales with costs attributed by menu
     db.execute(sql`
       WITH sales_summary AS (
         SELECT
           sr.sku_id,
           s.sku_name,
+          s.menu_id,
           SUM(sr.quantity_sold) AS total_quantity,
           SUM(sr.total_revenue) AS total_revenue
         FROM sales_records sr
@@ -202,45 +204,43 @@ async function fetchAnalysis(
           AND sr.deleted_at IS NULL
           AND s.deleted_at IS NULL
           ${salesStoreFilter}
-        GROUP BY sr.sku_id, s.sku_name
+        GROUP BY sr.sku_id, s.sku_name, s.menu_id
       ),
-      cost_summary AS (
+      cost_by_menu AS (
+        -- Direct purchase costs grouped by menu (no distribution rules)
         SELECT
-          s.id AS sku_id,
-          SUM(
-            pt.total_amount * cdr.distribution_percent / 100
-          ) AS total_cost
-        FROM skus s
-        JOIN menu_categories mc ON s.menu_id = mc.id
-        JOIN cost_distribution_rules cdr ON mc.id = cdr.menu_id
-        JOIN purchase_transactions pt ON cdr.ingredient_id = pt.ingredient_id
+          pt.menu_id,
+          SUM(pt.total_amount) AS total_cost
+        FROM purchase_transactions pt
         WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND pt.deleted_at IS NULL
           AND pt.is_valid = true
-          AND s.deleted_at IS NULL
-          AND mc.deleted_at IS NULL
-          AND cdr.deleted_at IS NULL
-          -- Check if cost rule date range overlaps with query date range
-          AND cdr.effective_from <= ${endDate}::date
-          AND COALESCE(cdr.effective_to, '9999-12-31'::date) >= ${startDate}::date
           ${purchaseStoreFilter}
-        GROUP BY s.id
+        GROUP BY pt.menu_id
       )
       SELECT
-        COALESCE(ss.sku_name, 'Unknown') AS sku_name,
-        COALESCE(ss.total_quantity, 0) AS quantity_sold,
-        COALESCE(ss.total_revenue, 0) AS revenue,
-        COALESCE(cs.total_cost, 0) AS cost,
-        COALESCE(ss.total_revenue, 0) - COALESCE(cs.total_cost, 0) AS profit,
+        ss.sku_name,
+        ss.total_quantity AS quantity_sold,
+        ss.total_revenue AS revenue,
+        COALESCE(cm.total_cost, 0) AS cost,
+        ss.total_revenue - COALESCE(cm.total_cost, 0) AS profit,
         CASE
-          WHEN COALESCE(ss.total_revenue, 0) > 0
-          THEN ((COALESCE(ss.total_revenue, 0) - COALESCE(cs.total_cost, 0)) / ss.total_revenue * 100)
+          WHEN ss.total_revenue > 0
+          THEN ((ss.total_revenue - COALESCE(cm.total_cost, 0)) / ss.total_revenue * 100)
           ELSE 0
         END AS margin_percent
       FROM sales_summary ss
-      FULL OUTER JOIN cost_summary cs ON ss.sku_id = cs.sku_id
-      WHERE COALESCE(ss.total_revenue, 0) > 0 OR COALESCE(cs.total_cost, 0) > 0
+      LEFT JOIN cost_by_menu cm ON ss.menu_id = cm.menu_id
       ORDER BY revenue DESC
+    `),
+    // Total variable costs (all valid purchases - same as dashboard)
+    db.execute(sql`
+      SELECT COALESCE(SUM(total_amount), 0) AS total_variable_cost
+      FROM purchase_transactions
+      WHERE transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
+        AND deleted_at IS NULL
+        AND is_valid = true
+        ${purchaseStoreFilter}
     `),
     // Get fixed costs for the period
     db.execute(sql`
@@ -252,8 +252,8 @@ async function fetchAnalysis(
     `),
   ])
 
-  // Process results
-  const skuAnalysis = result.rows.map((row: any) => ({
+  // Process SKU results
+  const skuAnalysis = skuResult.rows.map((row: any) => ({
     skuName: row.sku_name,
     quantitySold: Number(row.quantity_sold),
     revenue: Number(row.revenue),
@@ -262,11 +262,11 @@ async function fetchAnalysis(
     marginPercent: Number(row.margin_percent),
   }))
 
-  // Calculate variable costs (ingredient costs from purchases)
+  // Calculate totals using direct purchase costs (same as dashboard)
   const totalRevenue = skuAnalysis.reduce((sum, item) => sum + item.revenue, 0)
-  const totalVariableCost = skuAnalysis.reduce((sum, item) => sum + item.cost, 0)
-
+  const totalVariableCost = Number(totalCostsResult.rows[0]?.total_variable_cost || 0)
   const totalFixedCost = Number(fixedCostsResult.rows[0]?.total_fixed_cost || 0)
+
   // Calculate total costs and profit
   const totalCost = totalVariableCost + totalFixedCost
   const netProfit = totalRevenue - totalCost
