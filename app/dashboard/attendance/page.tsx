@@ -29,9 +29,11 @@ export default async function AttendancePage({
 
   const hasStoreId = Boolean(storeId)
 
-  const { records, totalSum, totalHours } = hasStoreId
+  const attendanceData = hasStoreId
     ? await getAttendance({ storeId, startDate, endDate, employeeId })
     : { records: [], totalSum: 0, totalHours: 0 }
+  const { records, totalSum } = attendanceData
+  const totalHours = attendanceData.totalHours ?? 0
 
   const activeEmployees = hasStoreId ? await getActiveEmployees(storeId) : []
 
