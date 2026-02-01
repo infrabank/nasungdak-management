@@ -73,23 +73,46 @@ export async function createStore(formData: FormData) {
       })
       .returning()
 
-    // store_owner 역할 가져오기
-    const ownerRole = await db.query.roles.findFirst({
+    // store_owner 역할 가져오기 (없으면 생성)
+    let ownerRole = await db.query.roles.findFirst({
       where: eq(roles.roleName, 'store_owner'),
     })
 
-    if (ownerRole) {
-      // 사용자를 매장에 연결
-      await db.insert(userStoreAssignments).values({
-        userId: userContext.userId,
-        storeId: store.id,
-        roleId: ownerRole.id,
-        assignedBy: userContext.userId,
-      })
-
-      // JWT 세션 업데이트
-      await updateSessionWithNewStore(userContext.userId, store.id)
+    if (!ownerRole) {
+      // store_owner 역할이 없으면 생성
+      const [newRole] = await db
+        .insert(roles)
+        .values({
+          roleName: 'store_owner',
+          description: '매장 오너 - 소속 매장의 모든 기능 접근',
+          permissions: {
+            purchases: ['read', 'write', 'delete'],
+            sales: ['read', 'write', 'delete'],
+            inventory: ['read', 'write', 'delete'],
+            employees: ['read', 'write', 'delete'],
+            attendance: ['read', 'write', 'delete'],
+            'fixed-costs': ['read', 'write', 'delete'],
+            'oil-changes': ['read', 'write', 'delete'],
+            'master-data': ['read', 'write'],
+            analysis: ['read'],
+            settings: ['read', 'write'],
+          },
+          isSystem: true,
+        })
+        .returning()
+      ownerRole = newRole
     }
+
+    // 사용자를 매장에 연결
+    await db.insert(userStoreAssignments).values({
+      userId: userContext.userId,
+      storeId: store.id,
+      roleId: ownerRole.id,
+      assignedBy: userContext.userId,
+    })
+
+    // JWT 세션 업데이트
+    await updateSessionWithNewStore(userContext.userId, store.id)
 
     revalidatePath('/dashboard/stores')
     revalidateTag('stores:active')
