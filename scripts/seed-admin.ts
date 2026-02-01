@@ -63,7 +63,6 @@ async function seedAdmin() {
       name,
       passwordHash,
       isActive: true,
-      emailVerifiedAt: new Date(), // 이메일 인증 완료로 설정
     }).returning()
     console.log(`   User ID: ${user.id}`)
 
