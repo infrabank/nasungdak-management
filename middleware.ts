@@ -15,6 +15,7 @@ const PUBLIC_ROUTES = [
   '/invite',
   '/api/webhooks',
   '/api/health',
+  '/api/setup',
 ]
 
 export async function middleware(request: NextRequest) {
