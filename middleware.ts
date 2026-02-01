@@ -6,11 +6,22 @@ const SESSION_SECRET = new TextEncoder().encode(
   process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
 )
 
+// Public routes that don't require authentication
+const PUBLIC_ROUTES = [
+  '/login',
+  '/signup',
+  '/onboarding',
+  '/pricing',
+  '/invite',
+  '/api/webhooks',
+  '/api/health',
+]
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Allow access to login page
-  if (pathname.startsWith('/login')) {
+  // Allow access to public routes
+  if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
     return NextResponse.next()
   }
 
