@@ -7,6 +7,7 @@ import { eq, isNull, desc, and, sql, gte, lte } from 'drizzle-orm'
 import { z } from 'zod'
 import { attendanceSchema } from '@/lib/utils/validation'
 import { formatDate } from '@/lib/utils/format'
+import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 export async function createAttendance(
   prevState: any,
@@ -223,6 +224,12 @@ export async function getAttendance(params: GetAttendanceParams) {
       return { records: [], totalSum: 0 }
     }
 
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0 || !authorizedStoreIds.includes(storeId)) {
+      return { records: [], totalSum: 0 }
+    }
+
     // Default dates: first day of current month to today
     const today = new Date()
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
@@ -286,6 +293,12 @@ export async function getAttendance(params: GetAttendanceParams) {
 export async function getActiveEmployees(storeId?: string) {
   try {
     if (!storeId) {
+      return []
+    }
+
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0 || !authorizedStoreIds.includes(storeId)) {
       return []
     }
 

@@ -3,8 +3,9 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
 import { fixedCosts } from '@/lib/db/schema'
-import { eq, isNull, desc, sql } from 'drizzle-orm'
+import { eq, isNull, desc, sql, inArray, and } from 'drizzle-orm'
 import { z } from 'zod'
+import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 const fixedCostSchema = z.object({
   costDate: z.string().min(1, '날짜를 선택해주세요'),
@@ -16,10 +17,7 @@ const fixedCostSchema = z.object({
   notes: z.string().optional(),
 })
 
-export async function createFixedCost(
-  prevState: any,
-  formData: FormData
-) {
+export async function createFixedCost(prevState: any, formData: FormData) {
   try {
     const storeId = formData.get('storeId') as string | null
     const rawData = {
@@ -63,7 +61,8 @@ export async function createFixedCost(
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '고정비 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '고정비 등록에 실패했습니다',
     }
   }
 }
@@ -112,7 +111,8 @@ export async function updateFixedCost(id: string, formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '고정비 수정에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '고정비 수정에 실패했습니다',
     }
   }
 }
@@ -139,27 +139,44 @@ export async function deleteFixedCost(id: string) {
     console.error('Failed to delete fixed cost:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '고정비 삭제에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '고정비 삭제에 실패했습니다',
     }
   }
 }
 
-export async function getFixedCosts(startDate?: string, endDate?: string, storeId?: string) {
+export async function getFixedCosts(
+  startDate?: string,
+  endDate?: string,
+  storeId?: string
+) {
   try {
-    const conditions = [isNull(fixedCosts.deletedAt)]
-
-    if (startDate && endDate) {
-      conditions.push(sql`${fixedCosts.costDate} BETWEEN ${startDate}::date AND ${endDate}::date`)
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return []
     }
 
-    if (storeId) {
+    const conditions = [isNull(fixedCosts.deletedAt)]
+
+    // 항상 권한 있는 매장으로 필터링
+    conditions.push(inArray(fixedCosts.storeId, authorizedStoreIds))
+
+    if (startDate && endDate) {
+      conditions.push(
+        sql`${fixedCosts.costDate} BETWEEN ${startDate}::date AND ${endDate}::date`
+      )
+    }
+
+    // 특정 매장 필터 (권한 체크는 이미 위에서 함)
+    if (storeId && authorizedStoreIds.includes(storeId)) {
       conditions.push(eq(fixedCosts.storeId, storeId))
     }
 
     const records = await db
       .select()
       .from(fixedCosts)
-      .where(sql`${sql.join(conditions, sql` AND `)}`)
+      .where(and(...conditions))
       .orderBy(desc(fixedCosts.costDate))
       .limit(1000)
 

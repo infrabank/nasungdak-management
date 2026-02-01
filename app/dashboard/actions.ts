@@ -3,8 +3,35 @@
 import { unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { sql } from 'drizzle-orm'
+import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
-async function fetchDashboardStats(startDate: string, endDate: string) {
+async function fetchDashboardStats(startDate: string, endDate: string, authorizedStoreIds: string[]) {
+  // 권한이 있는 매장이 없으면 빈 결과 반환
+  if (authorizedStoreIds.length === 0) {
+    return {
+      success: true,
+      data: {
+        monthlyPurchases: 0,
+        monthlySales: 0,
+        monthlyFixedCosts: 0,
+        purchaseCount: 0,
+        salesCount: 0,
+        marginPercent: 0,
+        validPurchases: 0,
+        invalidPurchases: 0,
+        costRules: 0,
+        recentPurchases: [],
+        recentSales: [],
+      },
+    }
+  }
+
+  // Build store filter for authorized stores
+  const storeIdList = authorizedStoreIds.map(id => `'${id}'`).join(',')
+  const storeFilter = sql.raw(`AND store_id IN (${storeIdList})`)
+  const ptStoreFilter = sql.raw(`AND pt.store_id IN (${storeIdList})`)
+  const srStoreFilter = sql.raw(`AND sr.store_id IN (${storeIdList})`)
+
   // Execute all queries in parallel for better performance
   const [summary, recentPurchases, recentSales] = await Promise.all([
     // Get monthly summary - actual purchase costs (without distribution rules)
@@ -17,6 +44,7 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
         WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND pt.deleted_at IS NULL
           AND pt.is_valid = true
+          ${ptStoreFilter}
       ),
       monthly_sales AS (
         SELECT
@@ -25,16 +53,19 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
         FROM sales_records
         WHERE sale_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND deleted_at IS NULL
+          ${storeFilter}
       ),
       valid_purchases AS (
         SELECT COUNT(*) as valid_count
         FROM purchase_transactions
         WHERE deleted_at IS NULL AND is_valid = true
+          ${storeFilter}
       ),
       invalid_purchases AS (
         SELECT COUNT(*) as invalid_count
         FROM purchase_transactions
         WHERE deleted_at IS NULL AND is_valid = false
+          ${storeFilter}
       ),
       cost_rules AS (
         SELECT COUNT(*) as rules_count
@@ -46,6 +77,7 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
         FROM purchase_transactions
         WHERE transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND deleted_at IS NULL
+          ${storeFilter}
       ),
       monthly_fixed_costs AS (
         SELECT
@@ -53,6 +85,7 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
         FROM fixed_costs
         WHERE cost_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND deleted_at IS NULL
+          ${storeFilter}
       )
       SELECT
         pc.count as purchase_count,
@@ -88,6 +121,7 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
       LEFT JOIN menu_categories mc ON pt.menu_id = mc.id
       LEFT JOIN ingredients i ON pt.ingredient_id = i.id
       WHERE pt.deleted_at IS NULL
+        ${ptStoreFilter}
       ORDER BY pt.transaction_date DESC, pt.created_at DESC
       LIMIT 5
     `),
@@ -101,6 +135,7 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
       FROM sales_records sr
       LEFT JOIN skus s ON sr.sku_id = s.id
       WHERE sr.deleted_at IS NULL
+        ${srStoreFilter}
       ORDER BY sr.sale_date DESC, sr.created_at DESC
       LIMIT 5
     `),
@@ -139,18 +174,42 @@ async function fetchDashboardStats(startDate: string, endDate: string) {
 
 export async function getDashboardStats() {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return {
+        success: true,
+        data: {
+          monthlyPurchases: 0,
+          monthlySales: 0,
+          monthlyFixedCosts: 0,
+          purchaseCount: 0,
+          salesCount: 0,
+          marginPercent: 0,
+          validPurchases: 0,
+          invalidPurchases: 0,
+          costRules: 0,
+          recentPurchases: [],
+          recentSales: [],
+        },
+      }
+    }
+
     const today = new Date()
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
     const startDate = firstDayOfMonth.toISOString().split('T')[0]
     const endDate = today.toISOString().split('T')[0]
 
+    // 캐시 키에 사용자의 권한 정보 포함
+    const storeKey = authorizedStoreIds.sort().join(',')
+
     const getCachedDashboardStats = unstable_cache(
-      fetchDashboardStats,
-      ['dashboard:stats', startDate, endDate],
+      () => fetchDashboardStats(startDate, endDate, authorizedStoreIds),
+      ['dashboard:stats', storeKey, startDate, endDate],
       { tags: ['dashboard:stats'] }
     )
 
-    return await getCachedDashboardStats(startDate, endDate)
+    return await getCachedDashboardStats()
   } catch (error) {
     console.error('Failed to fetch dashboard stats:', error)
     return {

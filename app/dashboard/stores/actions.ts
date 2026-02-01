@@ -4,8 +4,9 @@ import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { storeSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { stores } from '@/lib/db/schema'
-import { eq, and, isNull, desc } from 'drizzle-orm'
+import { eq, and, isNull, desc, inArray } from 'drizzle-orm'
 import { z } from 'zod'
+import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 export async function createStore(formData: FormData) {
   try {
@@ -156,10 +157,19 @@ export async function deleteStore(id: string) {
 
 export async function getStores() {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return []
+    }
+
     const storeList = await db
       .select()
       .from(stores)
-      .where(isNull(stores.deletedAt))
+      .where(and(
+        isNull(stores.deletedAt),
+        inArray(stores.id, authorizedStoreIds)
+      ))
       .orderBy(desc(stores.createdAt))
 
     return storeList
@@ -169,7 +179,11 @@ export async function getStores() {
   }
 }
 
-async function fetchActiveStores() {
+async function fetchActiveStores(authorizedStoreIds: string[]) {
+  if (authorizedStoreIds.length === 0) {
+    return []
+  }
+
   const storeList = await db
     .select({
       id: stores.id,
@@ -177,7 +191,11 @@ async function fetchActiveStores() {
       storeCode: stores.storeCode,
     })
     .from(stores)
-    .where(and(isNull(stores.deletedAt), eq(stores.isActive, true)))
+    .where(and(
+      isNull(stores.deletedAt),
+      eq(stores.isActive, true),
+      inArray(stores.id, authorizedStoreIds)
+    ))
     .orderBy(stores.storeName)
 
   return storeList
@@ -185,9 +203,18 @@ async function fetchActiveStores() {
 
 export async function getActiveStores() {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return []
+    }
+
+    // 캐시 키에 사용자의 권한 정보 포함
+    const storeKey = authorizedStoreIds.sort().join(',')
+
     const getCachedActiveStores = unstable_cache(
-      fetchActiveStores,
-      ['stores:active'],
+      () => fetchActiveStores(authorizedStoreIds),
+      ['stores:active', storeKey],
       { tags: ['stores:active'] }
     )
 

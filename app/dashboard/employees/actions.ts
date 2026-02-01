@@ -3,9 +3,10 @@
 import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import { employees } from '@/lib/db/schema'
-import { eq, isNull, desc, and } from 'drizzle-orm'
+import { eq, isNull, desc, and, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { employeeSchema } from '@/lib/utils/validation'
+import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 export async function createEmployee(
   prevState: any,
@@ -149,6 +150,12 @@ export async function getEmployees(storeId?: string) {
       return []
     }
 
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0 || !authorizedStoreIds.includes(storeId)) {
+      return []
+    }
+
     const records = await db
       .select()
       .from(employees)
@@ -171,6 +178,12 @@ export async function getActiveEmployees(storeId?: string) {
   try {
     // If no storeId, return empty array
     if (!storeId) {
+      return []
+    }
+
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0 || !authorizedStoreIds.includes(storeId)) {
       return []
     }
 

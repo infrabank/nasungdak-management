@@ -4,9 +4,10 @@ import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { inventorySchema, inventoryEventSchema, inventoryAlertRuleSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { inventory, inventoryEvents, inventoryAlertRules, ingredients, stores } from '@/lib/db/schema'
-import { eq, and, isNull, desc, sql } from 'drizzle-orm'
+import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { subDays, format } from 'date-fns'
+import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 // =====================
 // Inventory CRUD
@@ -151,10 +152,14 @@ export async function deleteInventory(id: string) {
   }
 }
 
-async function fetchInventory(storeId: string) {
-  const conditions = []
+async function fetchInventory(storeId: string, authorizedStoreIds: string[]) {
+  if (authorizedStoreIds.length === 0) {
+    return []
+  }
 
-  if (storeId !== 'all') {
+  const conditions = [inArray(inventory.storeId, authorizedStoreIds)]
+
+  if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
     conditions.push(eq(inventory.storeId, storeId))
   }
 
@@ -172,7 +177,7 @@ async function fetchInventory(storeId: string) {
     .from(inventory)
     .innerJoin(ingredients, eq(inventory.ingredientId, ingredients.id))
     .innerJoin(stores, eq(inventory.storeId, stores.id))
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(and(...conditions))
     .orderBy(ingredients.ingredientName)
 
   return inventoryList
@@ -180,15 +185,24 @@ async function fetchInventory(storeId: string) {
 
 export async function getInventory(storeId?: string) {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return []
+    }
+
     const normalizedStoreId = storeId ?? 'all'
 
+    // 캐시 키에 사용자의 권한 정보 포함
+    const storeKey = authorizedStoreIds.sort().join(',')
+
     const getCachedInventory = unstable_cache(
-      fetchInventory,
-      ['inventory:list', normalizedStoreId],
+      () => fetchInventory(normalizedStoreId, authorizedStoreIds),
+      ['inventory:list', storeKey, normalizedStoreId],
       { tags: [`inventory:${normalizedStoreId}`] }
     )
 
-    return await getCachedInventory(normalizedStoreId)
+    return await getCachedInventory()
   } catch (error) {
     console.error('Failed to fetch inventory:', error)
     return []
@@ -270,9 +284,15 @@ export async function createInventoryEvent(formData: FormData) {
 
 export async function getInventoryEvents(storeId?: string, ingredientId?: string) {
   try {
-    const conditions = []
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return []
+    }
 
-    if (storeId) {
+    const conditions = [inArray(inventoryEvents.storeId, authorizedStoreIds)]
+
+    if (storeId && authorizedStoreIds.includes(storeId)) {
       conditions.push(eq(inventoryEvents.storeId, storeId))
     }
     if (ingredientId) {
@@ -440,10 +460,17 @@ export async function deleteAlertRule(id: string) {
   }
 }
 
-async function fetchAlertRules(storeId: string) {
-  const conditions = [isNull(inventoryAlertRules.deletedAt)]
+async function fetchAlertRules(storeId: string, authorizedStoreIds: string[]) {
+  if (authorizedStoreIds.length === 0) {
+    return []
+  }
 
-  if (storeId !== 'all') {
+  const conditions = [
+    isNull(inventoryAlertRules.deletedAt),
+    inArray(inventoryAlertRules.storeId, authorizedStoreIds)
+  ]
+
+  if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
     conditions.push(eq(inventoryAlertRules.storeId, storeId))
   }
 
@@ -467,15 +494,24 @@ async function fetchAlertRules(storeId: string) {
 
 export async function getAlertRules(storeId?: string) {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return []
+    }
+
     const normalizedStoreId = storeId ?? 'all'
 
+    // 캐시 키에 사용자의 권한 정보 포함
+    const storeKey = authorizedStoreIds.sort().join(',')
+
     const getCachedAlertRules = unstable_cache(
-      fetchAlertRules,
-      ['inventory:alerts', normalizedStoreId],
+      () => fetchAlertRules(normalizedStoreId, authorizedStoreIds),
+      ['inventory:alerts', storeKey, normalizedStoreId],
       { tags: [`inventory:alerts:${normalizedStoreId}`] }
     )
 
-    return await getCachedAlertRules(normalizedStoreId)
+    return await getCachedAlertRules()
   } catch (error) {
     console.error('Failed to fetch alert rules:', error)
     return []

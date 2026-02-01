@@ -3,6 +3,7 @@
 import { unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { sql } from 'drizzle-orm'
+import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 export interface AnalysisResult {
   success: boolean
@@ -44,12 +45,29 @@ export interface MonthlyAnalysisResult {
 async function fetchMonthlyAnalysis(
   startDate: string,
   endDate: string,
-  storeId: string
+  storeId: string,
+  authorizedStoreIds: string[]
 ): Promise<MonthlyAnalysisResult> {
-  // Build store filter condition
-  const salesStoreFilter = storeId !== 'all' ? sql`AND sr.store_id = ${storeId}` : sql``
-  const purchaseStoreFilter = storeId !== 'all' ? sql`AND pt.store_id = ${storeId}` : sql``
-  const fixedCostStoreFilter = storeId !== 'all' ? sql`AND fc.store_id = ${storeId}` : sql``
+  // 권한이 있는 매장이 없으면 빈 결과 반환
+  if (authorizedStoreIds.length === 0) {
+    return { success: true, data: [] }
+  }
+
+  // Build store filter condition - always filter by authorized stores
+  const storeIdList = authorizedStoreIds.map(id => `'${id}'`).join(',')
+  const baseStoreFilter = sql`AND sr.store_id IN (${sql.raw(storeIdList)})`
+  const basePurchaseFilter = sql`AND pt.store_id IN (${sql.raw(storeIdList)})`
+  const baseFixedCostFilter = sql`AND fc.store_id IN (${sql.raw(storeIdList)})`
+
+  const salesStoreFilter = storeId !== 'all' && authorizedStoreIds.includes(storeId)
+    ? sql`AND sr.store_id = ${storeId}`
+    : baseStoreFilter
+  const purchaseStoreFilter = storeId !== 'all' && authorizedStoreIds.includes(storeId)
+    ? sql`AND pt.store_id = ${storeId}`
+    : basePurchaseFilter
+  const fixedCostStoreFilter = storeId !== 'all' && authorizedStoreIds.includes(storeId)
+    ? sql`AND fc.store_id = ${storeId}`
+    : baseFixedCostFilter
 
   // Execute all queries in parallel for better performance
   const [monthlyRevenueResult, monthlyVariableCostResult, monthlyFixedCostResult] =
@@ -158,15 +176,24 @@ export async function getMonthlyAnalysis(
   storeId?: string
 ): Promise<MonthlyAnalysisResult> {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return { success: true, data: [] }
+    }
+
     const normalizedStoreId = storeId ?? 'all'
 
+    // 캐시 키에 사용자의 권한 정보 포함
+    const storeKey = authorizedStoreIds.sort().join(',')
+
     const getCachedMonthlyAnalysis = unstable_cache(
-      fetchMonthlyAnalysis,
-      ['analysis:monthly', startDate, endDate, normalizedStoreId],
+      () => fetchMonthlyAnalysis(startDate, endDate, normalizedStoreId, authorizedStoreIds),
+      ['analysis:monthly', storeKey, startDate, endDate, normalizedStoreId],
       { tags: ['analysis:monthly'] }
     )
 
-    return await getCachedMonthlyAnalysis(startDate, endDate, normalizedStoreId)
+    return await getCachedMonthlyAnalysis()
   } catch (error) {
     console.error('Failed to get monthly analysis:', error)
     return {
@@ -179,12 +206,42 @@ export async function getMonthlyAnalysis(
 async function fetchAnalysis(
   startDate: string,
   endDate: string,
-  storeId: string
+  storeId: string,
+  authorizedStoreIds: string[]
 ): Promise<AnalysisResult> {
-  // Build store filter conditions
-  const salesStoreFilter = storeId !== 'all' ? sql`AND sr.store_id = ${storeId}` : sql``
-  const purchaseStoreFilter = storeId !== 'all' ? sql`AND pt.store_id = ${storeId}` : sql``
-  const fixedCostStoreFilter = storeId !== 'all' ? sql`AND store_id = ${storeId}` : sql``
+  // 권한이 있는 매장이 없으면 빈 결과 반환
+  if (authorizedStoreIds.length === 0) {
+    return {
+      success: true,
+      data: {
+        summary: {
+          totalRevenue: 0,
+          totalVariableCost: 0,
+          totalFixedCost: 0,
+          totalCost: 0,
+          netProfit: 0,
+          marginPercent: 0,
+        },
+        skuAnalysis: [],
+      },
+    }
+  }
+
+  // Build store filter conditions - always filter by authorized stores
+  const storeIdList = authorizedStoreIds.map(id => `'${id}'`).join(',')
+  const baseStoreFilter = sql`AND sr.store_id IN (${sql.raw(storeIdList)})`
+  const basePurchaseFilter = sql`AND pt.store_id IN (${sql.raw(storeIdList)})`
+  const baseFixedCostFilter = sql`AND store_id IN (${sql.raw(storeIdList)})`
+
+  const salesStoreFilter = storeId !== 'all' && authorizedStoreIds.includes(storeId)
+    ? sql`AND sr.store_id = ${storeId}`
+    : baseStoreFilter
+  const purchaseStoreFilter = storeId !== 'all' && authorizedStoreIds.includes(storeId)
+    ? sql`AND pt.store_id = ${storeId}`
+    : basePurchaseFilter
+  const fixedCostStoreFilter = storeId !== 'all' && authorizedStoreIds.includes(storeId)
+    ? sql`AND store_id = ${storeId}`
+    : baseFixedCostFilter
 
   // Execute queries in parallel for better performance
   // Uses direct purchase costs (same as dashboard) instead of distribution rules
@@ -294,15 +351,37 @@ export async function getAnalysis(
   storeId?: string
 ): Promise<AnalysisResult> {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return {
+        success: true,
+        data: {
+          summary: {
+            totalRevenue: 0,
+            totalVariableCost: 0,
+            totalFixedCost: 0,
+            totalCost: 0,
+            netProfit: 0,
+            marginPercent: 0,
+          },
+          skuAnalysis: [],
+        },
+      }
+    }
+
     const normalizedStoreId = storeId ?? 'all'
 
+    // 캐시 키에 사용자의 권한 정보 포함
+    const storeKey = authorizedStoreIds.sort().join(',')
+
     const getCachedAnalysis = unstable_cache(
-      fetchAnalysis,
-      ['analysis:sku', startDate, endDate, normalizedStoreId],
+      () => fetchAnalysis(startDate, endDate, normalizedStoreId, authorizedStoreIds),
+      ['analysis:sku', storeKey, startDate, endDate, normalizedStoreId],
       { tags: ['analysis:sku'] }
     )
 
-    return await getCachedAnalysis(startDate, endDate, normalizedStoreId)
+    return await getCachedAnalysis()
   } catch (error) {
     console.error('Failed to get analysis:', error)
     return {

@@ -4,8 +4,9 @@ import { revalidatePath } from 'next/cache'
 import { oilChangeSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { oilChangeHistory } from '@/lib/db/schema'
-import { eq, and, isNull, desc, sql } from 'drizzle-orm'
+import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
+import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 export async function createOilChange(
   prevState: any,
@@ -78,7 +79,16 @@ export async function getOilChanges(filters?: {
   storeId?: string
 }) {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return []
+    }
+
     const conditions = [isNull(oilChangeHistory.deletedAt)]
+
+    // 항상 권한 있는 매장으로 필터링
+    conditions.push(inArray(oilChangeHistory.storeId, authorizedStoreIds))
 
     if (filters?.startDate) {
       conditions.push(sql`oil_change_history.change_date >= ${filters.startDate}`)
@@ -92,7 +102,8 @@ export async function getOilChanges(filters?: {
       conditions.push(eq(oilChangeHistory.fryerType, filters.fryerType))
     }
 
-    if (filters?.storeId) {
+    // 특정 매장 필터 (권한 체크는 이미 위에서 함)
+    if (filters?.storeId && authorizedStoreIds.includes(filters.storeId)) {
       conditions.push(eq(oilChangeHistory.storeId, filters.storeId))
     }
 
@@ -200,16 +211,26 @@ export async function deleteOilChange(id: string) {
 
 export async function getOilChangeStats(storeId?: string) {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return {
+        recentChanges: { count: 0 },
+        lastChangeByFryer: {},
+      }
+    }
+
     // Get total oil changes in last 30 days
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
     const recentConditions = [
       isNull(oilChangeHistory.deletedAt),
-      sql`oil_change_history.change_date >= ${thirtyDaysAgo.toISOString().split('T')[0]}`
+      sql`oil_change_history.change_date >= ${thirtyDaysAgo.toISOString().split('T')[0]}`,
+      inArray(oilChangeHistory.storeId, authorizedStoreIds)
     ]
 
-    if (storeId) {
+    if (storeId && authorizedStoreIds.includes(storeId)) {
       recentConditions.push(eq(oilChangeHistory.storeId, storeId))
     }
 
@@ -221,8 +242,11 @@ export async function getOilChangeStats(storeId?: string) {
       .where(and(...recentConditions))
 
     // Get last change date for each fryer type
-    const lastChangeConditions = [isNull(oilChangeHistory.deletedAt)]
-    if (storeId) {
+    const lastChangeConditions = [
+      isNull(oilChangeHistory.deletedAt),
+      inArray(oilChangeHistory.storeId, authorizedStoreIds)
+    ]
+    if (storeId && authorizedStoreIds.includes(storeId)) {
       lastChangeConditions.push(eq(oilChangeHistory.storeId, storeId))
     }
 

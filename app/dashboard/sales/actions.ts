@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import { salesRecords, skus, menuCategories } from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
+import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 const salesRecordSchema = z.object({
   saleDate: z.string().min(1, '날짜를 선택해주세요'),
@@ -231,10 +232,19 @@ async function fetchSalesRecords(
   endDate: string,
   skuId: string,
   storeId: string,
-  page: number
+  page: number,
+  authorizedStoreIds: string[]
 ) {
+  // 권한이 있는 매장이 없으면 빈 결과 반환
+  if (authorizedStoreIds.length === 0) {
+    return { items: [], hasMore: false, page: 1 }
+  }
+
   // Build WHERE conditions
   const conditions = [isNull(salesRecords.deletedAt)]
+
+  // 항상 권한 있는 매장으로 필터링
+  conditions.push(inArray(salesRecords.storeId, authorizedStoreIds))
 
   if (startDate !== 'all' && endDate !== 'all') {
     conditions.push(
@@ -246,7 +256,8 @@ async function fetchSalesRecords(
     conditions.push(eq(salesRecords.skuId, skuId))
   }
 
-  if (storeId !== 'all') {
+  // 특정 매장 필터 (권한 체크는 이미 위에서 함)
+  if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
     conditions.push(eq(salesRecords.storeId, storeId))
   }
 
@@ -266,7 +277,7 @@ async function fetchSalesRecords(
     .from(salesRecords)
     .leftJoin(skus, eq(salesRecords.skuId, skus.id))
     .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-    .where(sql`${sql.join(conditions, sql` AND `)}`)
+    .where(and(...conditions))
     .orderBy(desc(salesRecords.saleDate))
     .limit(SALES_PAGE_SIZE + 1) // Fetch one extra to check if there are more
     .offset(offset)
@@ -286,19 +297,35 @@ export async function getSalesRecords(
   page: number = 1
 ) {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return { items: [], hasMore: false, page: 1 }
+    }
+
     const normalizedStartDate = startDate ?? 'all'
     const normalizedEndDate = endDate ?? 'all'
     const normalizedSkuId = skuId ?? 'all'
     const normalizedStoreId = storeId ?? 'all'
     const normalizedPage = Math.max(1, page)
 
+    // 캐시 키에 사용자의 권한 정보 포함
+    const storeKey = authorizedStoreIds.sort().join(',')
+
     const getCachedSalesRecords = unstable_cache(
-      fetchSalesRecords,
-      ['sales:list', normalizedStartDate, normalizedEndDate, normalizedSkuId, normalizedStoreId, String(normalizedPage)],
+      () => fetchSalesRecords(
+        normalizedStartDate,
+        normalizedEndDate,
+        normalizedSkuId,
+        normalizedStoreId,
+        normalizedPage,
+        authorizedStoreIds
+      ),
+      ['sales:list', storeKey, normalizedStartDate, normalizedEndDate, normalizedSkuId, normalizedStoreId, String(normalizedPage)],
       { tags: [`sales:${normalizedStoreId}`] }
     )
 
-    return await getCachedSalesRecords(normalizedStartDate, normalizedEndDate, normalizedSkuId, normalizedStoreId, normalizedPage)
+    return await getCachedSalesRecords()
   } catch (error) {
     console.error('Failed to fetch sales records:', error)
     return { items: [], hasMore: false, page: 1 }
@@ -575,9 +602,18 @@ async function fetchSalesTotals(
   startDate: string,
   endDate: string,
   skuId: string,
-  storeId: string
+  storeId: string,
+  authorizedStoreIds: string[]
 ) {
+  // 권한이 있는 매장이 없으면 빈 결과 반환
+  if (authorizedStoreIds.length === 0) {
+    return { totalCount: 0, totalQuantity: 0, totalRevenue: 0 }
+  }
+
   const conditions = [isNull(salesRecords.deletedAt)]
+
+  // 항상 권한 있는 매장으로 필터링
+  conditions.push(inArray(salesRecords.storeId, authorizedStoreIds))
 
   if (startDate !== 'all' && endDate !== 'all') {
     conditions.push(
@@ -589,7 +625,7 @@ async function fetchSalesTotals(
     conditions.push(eq(salesRecords.skuId, skuId))
   }
 
-  if (storeId !== 'all') {
+  if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
     conditions.push(eq(salesRecords.storeId, storeId))
   }
 
@@ -600,7 +636,7 @@ async function fetchSalesTotals(
       totalRevenue: sql<string>`COALESCE(SUM(${salesRecords.totalRevenue}), 0)`,
     })
     .from(salesRecords)
-    .where(sql`${sql.join(conditions, sql` AND `)}`)
+    .where(and(...conditions))
 
   return {
     totalCount: result[0]?.totalCount ?? 0,
@@ -616,15 +652,31 @@ export async function getSalesTotals(
   storeId?: string
 ) {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return { totalCount: 0, totalQuantity: 0, totalRevenue: 0 }
+    }
+
     const normalizedStartDate = startDate ?? 'all'
     const normalizedEndDate = endDate ?? 'all'
     const normalizedSkuId = skuId ?? 'all'
     const normalizedStoreId = storeId ?? 'all'
 
+    // 캐시 키에 사용자의 권한 정보 포함
+    const storeKey = authorizedStoreIds.sort().join(',')
+
     const getCachedSalesTotals = unstable_cache(
-      fetchSalesTotals,
+      () => fetchSalesTotals(
+        normalizedStartDate,
+        normalizedEndDate,
+        normalizedSkuId,
+        normalizedStoreId,
+        authorizedStoreIds
+      ),
       [
         'sales:totals',
+        storeKey,
         normalizedStartDate,
         normalizedEndDate,
         normalizedSkuId,
@@ -633,12 +685,7 @@ export async function getSalesTotals(
       { tags: [`sales:${normalizedStoreId}`] }
     )
 
-    return await getCachedSalesTotals(
-      normalizedStartDate,
-      normalizedEndDate,
-      normalizedSkuId,
-      normalizedStoreId
-    )
+    return await getCachedSalesTotals()
   } catch (error) {
     console.error('Failed to fetch sales totals:', error)
     return { totalCount: 0, totalQuantity: 0, totalRevenue: 0 }
