@@ -1,6 +1,8 @@
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { getDashboardStats } from './actions'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
+import BillingWidget from './billing-widget'
 
 export default async function DashboardPage() {
   const result = await getDashboardStats()
@@ -109,6 +111,13 @@ export default async function DashboardPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Billing Widget */}
+      <div className="mb-8 max-w-sm">
+        <Suspense fallback={<div className="h-24 bg-brutal-white border-3 border-brutal-black animate-pulse" />}>
+          <BillingWidget />
+        </Suspense>
       </div>
 
       {/* Quick Actions */}

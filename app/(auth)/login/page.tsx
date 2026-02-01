@@ -3,6 +3,7 @@
 import { useActionState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import { login } from './actions'
 
 export default function LoginPage() {
@@ -89,6 +90,19 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
+
+          {/* Signup link */}
+          <div className="mt-6 text-center">
+            <p className="text-sm font-medium text-brutal-black/70">
+              계정이 없으신가요?{' '}
+              <Link
+                href="/signup"
+                className="font-bold text-brutal-black underline underline-offset-2 hover:text-brutal-yellow transition-colors"
+              >
+                회원가입
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm'
 // Stores Table (다매장 지원)
 export const stores = pgTable('stores', {
   id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id'), // FK는 마이그레이션에서 추가 (organizations 테이블 생성 후)
   storeName: varchar('store_name', { length: 100 }).notNull(),
   storeCode: varchar('store_code', { length: 20 }).notNull().unique(),
   address: text('address'),
@@ -16,7 +17,9 @@ export const stores = pgTable('stores', {
   updatedBy: varchar('updated_by', { length: 100 }),
   deletedAt: timestamp('deleted_at'),
   deletedBy: varchar('deleted_by', { length: 100 }),
-})
+}, (table) => [
+  index('stores_org_id_idx').on(table.organizationId),
+])
 
 // Suppliers Table (공급업체)
 export const suppliers = pgTable('suppliers', {
@@ -336,6 +339,214 @@ export const alertHistory = pgTable('alert_history', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
+// =====================
+// SaaS: 사용자 관리 & 권한
+// =====================
+
+// Users Table (사용자 계정)
+export const users = pgTable('users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  name: varchar('name', { length: 100 }).notNull(),
+  phone: varchar('phone', { length: 20 }),
+  isActive: boolean('is_active').notNull().default(true),
+  lastLoginAt: timestamp('last_login_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => [
+  index('users_email_idx').on(table.email),
+  index('users_deleted_at_idx').on(table.deletedAt),
+])
+
+// Roles Table (역할 정의)
+export const roles = pgTable('roles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  roleName: varchar('role_name', { length: 50 }).notNull().unique(),
+  description: varchar('description', { length: 200 }),
+  permissions: jsonb('permissions').notNull(), // {"purchases": ["read", "write"], "sales": ["read"]}
+  isSystem: boolean('is_system').notNull().default(false), // 시스템 기본 역할 여부
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+// User-Store Assignments Table (사용자-매장 매핑)
+export const userStoreAssignments = pgTable('user_store_assignments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  storeId: uuid('store_id').notNull().references(() => stores.id),
+  roleId: uuid('role_id').notNull().references(() => roles.id),
+  assignedAt: timestamp('assigned_at').notNull().defaultNow(),
+  assignedBy: uuid('assigned_by').references(() => users.id),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => [
+  index('usa_user_id_idx').on(table.userId),
+  index('usa_store_id_idx').on(table.storeId),
+  index('usa_deleted_at_idx').on(table.deletedAt),
+  unique('usa_user_store_unique').on(table.userId, table.storeId),
+])
+
+// Audit Logs Table (감사 로그)
+export const auditLogs = pgTable('audit_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  storeId: uuid('store_id').references(() => stores.id),
+  userId: uuid('user_id').references(() => users.id),
+  tableName: varchar('table_name', { length: 100 }).notNull(),
+  recordId: uuid('record_id'),
+  action: varchar('action', { length: 20 }).notNull(), // 'CREATE' | 'UPDATE' | 'DELETE'
+  oldValues: jsonb('old_values'),
+  newValues: jsonb('new_values'),
+  ipAddress: varchar('ip_address', { length: 45 }),
+  userAgent: text('user_agent'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => [
+  index('al_store_id_idx').on(table.storeId),
+  index('al_user_id_idx').on(table.userId),
+  index('al_table_name_idx').on(table.tableName),
+  index('al_created_at_idx').on(table.createdAt.desc()),
+])
+
+// =====================
+// SaaS: 조직 & 구독 관리
+// =====================
+
+// Organizations Table (조직/회사)
+export const organizations = pgTable('organizations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 200 }).notNull(),
+  slug: varchar('slug', { length: 100 }).notNull().unique(), // URL용 슬러그
+  plan: varchar('plan', { length: 50 }).notNull().default('free'), // 'free', 'basic', 'standard', 'premium', 'enterprise'
+  maxStores: integer('max_stores').notNull().default(1),
+  maxUsers: integer('max_users').notNull().default(3),
+  billingEmail: varchar('billing_email', { length: 255 }),
+  billingName: varchar('billing_name', { length: 200 }),
+  businessNumber: varchar('business_number', { length: 20 }), // 사업자등록번호
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+  logoUrl: varchar('logo_url', { length: 500 }),
+  settings: jsonb('settings'), // 조직 설정
+  isActive: boolean('is_active').notNull().default(true),
+  trialEndsAt: timestamp('trial_ends_at'), // 무료 체험 종료일
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => [
+  index('org_slug_idx').on(table.slug),
+  index('org_stripe_customer_idx').on(table.stripeCustomerId),
+  index('org_deleted_at_idx').on(table.deletedAt),
+])
+
+// Subscriptions Table (구독)
+export const subscriptions = pgTable('subscriptions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  plan: varchar('plan', { length: 50 }).notNull(), // 'basic', 'standard', 'premium', 'enterprise'
+  status: varchar('status', { length: 30 }).notNull().default('active'), // 'active', 'past_due', 'canceled', 'trialing', 'paused'
+  priceMonthly: integer('price_monthly').notNull(), // 월 금액 (원)
+  priceYearly: integer('price_yearly'), // 연 금액 (원)
+  billingCycle: varchar('billing_cycle', { length: 20 }).notNull().default('monthly'), // 'monthly', 'yearly'
+  stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
+  stripePriceId: varchar('stripe_price_id', { length: 255 }),
+  currentPeriodStart: timestamp('current_period_start'),
+  currentPeriodEnd: timestamp('current_period_end'),
+  cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
+  canceledAt: timestamp('canceled_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => [
+  index('sub_org_id_idx').on(table.organizationId),
+  index('sub_stripe_id_idx').on(table.stripeSubscriptionId),
+  index('sub_status_idx').on(table.status),
+])
+
+// Invoices Table (청구서)
+export const invoices = pgTable('invoices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  subscriptionId: uuid('subscription_id').references(() => subscriptions.id),
+  invoiceNumber: varchar('invoice_number', { length: 50 }).notNull().unique(),
+  status: varchar('status', { length: 20 }).notNull().default('draft'), // 'draft', 'pending', 'paid', 'failed', 'void'
+  amount: integer('amount').notNull(), // 금액 (원)
+  tax: integer('tax').notNull().default(0), // 세금 (원)
+  total: integer('total').notNull(), // 총액 (원)
+  currency: varchar('currency', { length: 10 }).notNull().default('KRW'),
+  stripeInvoiceId: varchar('stripe_invoice_id', { length: 255 }),
+  stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }),
+  paidAt: timestamp('paid_at'),
+  dueDate: date('due_date'),
+  invoiceUrl: varchar('invoice_url', { length: 500 }),
+  pdfUrl: varchar('pdf_url', { length: 500 }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => [
+  index('inv_org_id_idx').on(table.organizationId),
+  index('inv_stripe_id_idx').on(table.stripeInvoiceId),
+  index('inv_status_idx').on(table.status),
+])
+
+// Usage Metrics Table (사용량 추적)
+export const usageMetrics = pgTable('usage_metrics', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  metricType: varchar('metric_type', { length: 50 }).notNull(), // 'api_calls', 'storage', 'active_users', 'stores'
+  metricValue: integer('metric_value').notNull(),
+  periodStart: timestamp('period_start').notNull(),
+  periodEnd: timestamp('period_end').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => [
+  index('um_org_id_idx').on(table.organizationId),
+  index('um_type_idx').on(table.metricType),
+  index('um_period_idx').on(table.periodStart, table.periodEnd),
+])
+
+// Plan Features Table (플랜별 기능)
+export const planFeatures = pgTable('plan_features', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  plan: varchar('plan', { length: 50 }).notNull(), // 'free', 'basic', 'standard', 'premium', 'enterprise'
+  featureKey: varchar('feature_key', { length: 100 }).notNull(), // 'purchases', 'sales', 'inventory', 'analytics', etc.
+  enabled: boolean('enabled').notNull().default(true),
+  limit: integer('limit'), // null = 무제한
+  description: varchar('description', { length: 500 }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => [
+  index('pf_plan_idx').on(table.plan),
+  unique('pf_plan_feature_unique').on(table.plan, table.featureKey),
+])
+
+// Organization Members Table (조직 멤버)
+export const organizationMembers = pgTable('organization_members', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  role: varchar('role', { length: 30 }).notNull().default('member'), // 'owner', 'admin', 'member'
+  invitedBy: uuid('invited_by').references(() => users.id),
+  invitedAt: timestamp('invited_at').notNull().defaultNow(),
+  joinedAt: timestamp('joined_at'),
+  deletedAt: timestamp('deleted_at'),
+}, (table) => [
+  index('om_org_id_idx').on(table.organizationId),
+  index('om_user_id_idx').on(table.userId),
+  unique('om_org_user_unique').on(table.organizationId, table.userId),
+])
+
+// Organization Invitations Table (초대)
+export const organizationInvitations = pgTable('organization_invitations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
+  email: varchar('email', { length: 255 }).notNull(),
+  role: varchar('role', { length: 30 }).notNull().default('member'),
+  token: varchar('token', { length: 100 }).notNull().unique(),
+  invitedBy: uuid('invited_by').notNull().references(() => users.id),
+  expiresAt: timestamp('expires_at').notNull(),
+  acceptedAt: timestamp('accepted_at'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => [
+  index('oi_org_id_idx').on(table.organizationId),
+  index('oi_token_idx').on(table.token),
+  index('oi_email_idx').on(table.email),
+])
+
 export type Store = typeof stores.$inferSelect
 export type NewStore = typeof stores.$inferInsert
 export type Inventory = typeof inventory.$inferSelect
@@ -382,3 +593,36 @@ export type NewEmployee = typeof employees.$inferInsert
 
 export type AttendanceRecord = typeof attendanceRecords.$inferSelect
 export type NewAttendanceRecord = typeof attendanceRecords.$inferInsert
+
+export type User = typeof users.$inferSelect
+export type NewUser = typeof users.$inferInsert
+
+export type Role = typeof roles.$inferSelect
+export type NewRole = typeof roles.$inferInsert
+
+export type UserStoreAssignment = typeof userStoreAssignments.$inferSelect
+export type NewUserStoreAssignment = typeof userStoreAssignments.$inferInsert
+
+export type AuditLog = typeof auditLogs.$inferSelect
+export type NewAuditLog = typeof auditLogs.$inferInsert
+
+export type Organization = typeof organizations.$inferSelect
+export type NewOrganization = typeof organizations.$inferInsert
+
+export type Subscription = typeof subscriptions.$inferSelect
+export type NewSubscription = typeof subscriptions.$inferInsert
+
+export type Invoice = typeof invoices.$inferSelect
+export type NewInvoice = typeof invoices.$inferInsert
+
+export type UsageMetric = typeof usageMetrics.$inferSelect
+export type NewUsageMetric = typeof usageMetrics.$inferInsert
+
+export type PlanFeature = typeof planFeatures.$inferSelect
+export type NewPlanFeature = typeof planFeatures.$inferInsert
+
+export type OrganizationMember = typeof organizationMembers.$inferSelect
+export type NewOrganizationMember = typeof organizationMembers.$inferInsert
+
+export type OrganizationInvitation = typeof organizationInvitations.$inferSelect
+export type NewOrganizationInvitation = typeof organizationInvitations.$inferInsert
