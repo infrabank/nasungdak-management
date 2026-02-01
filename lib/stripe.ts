@@ -16,10 +16,28 @@ import { eq } from 'drizzle-orm'
 import { PLANS, type PlanType } from '@/lib/features'
 import { revalidateTag } from 'next/cache'
 
-// Stripe 클라이언트 (서버 사이드 전용)
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-02-24.acacia',
-  typescript: true,
+// Stripe 클라이언트 (서버 사이드 전용, lazy initialization)
+let _stripe: Stripe | null = null
+
+export function getStripe(): Stripe {
+  if (!_stripe) {
+    const secretKey = process.env.STRIPE_SECRET_KEY
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY 환경변수가 설정되지 않았습니다')
+    }
+    _stripe = new Stripe(secretKey, {
+      apiVersion: '2025-02-24.acacia',
+      typescript: true,
+    })
+  }
+  return _stripe
+}
+
+// Legacy export for backward compatibility (lazy getter)
+export const stripe = new Proxy({} as Stripe, {
+  get(_, prop) {
+    return (getStripe() as Record<string | symbol, unknown>)[prop]
+  },
 })
 
 // Stripe Price ID 매핑 (Stripe Dashboard에서 생성 후 설정)
