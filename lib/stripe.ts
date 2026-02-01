@@ -36,7 +36,7 @@ export function getStripe(): Stripe {
 // Legacy export for backward compatibility (lazy getter)
 export const stripe = new Proxy({} as Stripe, {
   get(_, prop) {
-    return (getStripe() as Record<string | symbol, unknown>)[prop]
+    return (getStripe() as unknown as Record<string | symbol, unknown>)[prop]
   },
 })
 
