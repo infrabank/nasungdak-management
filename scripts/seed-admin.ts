@@ -11,7 +11,7 @@
 
 import 'dotenv/config'
 import { db } from '../lib/db'
-import { users, organizations, organizationMembers, stores, userStoreAssignments } from '../lib/db/schema'
+import { users, organizations, organizationMembers, stores, userStoreAssignments, roles } from '../lib/db/schema'
 import { eq } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
 
@@ -32,6 +32,7 @@ async function seedAdmin() {
     if (existingUser) {
       console.log('⚠️  이미 해당 이메일로 등록된 계정이 있습니다.')
       console.log(`   User ID: ${existingUser.id}`)
+      process.exit(0)
       return
     }
 
@@ -56,7 +57,32 @@ async function seedAdmin() {
       console.log(`   조직 ID: ${org.id}`)
     }
 
-    // 4. 사용자 생성
+    // 4. 관리자 역할 가져오기 또는 생성
+    let adminRole = await db.query.roles.findFirst({
+      where: eq(roles.roleName, 'admin'),
+    })
+
+    if (!adminRole) {
+      console.log('🔑 관리자 역할 생성 중...')
+      const [newRole] = await db.insert(roles).values({
+        roleName: 'admin',
+        description: '시스템 관리자 - 모든 권한',
+        permissions: {
+          purchases: ['read', 'write', 'delete'],
+          sales: ['read', 'write', 'delete'],
+          stores: ['read', 'write', 'delete'],
+          inventory: ['read', 'write', 'delete'],
+          reports: ['read', 'write'],
+          settings: ['read', 'write'],
+          users: ['read', 'write', 'delete'],
+        },
+        isSystem: true,
+      }).returning()
+      adminRole = newRole
+      console.log(`   Role ID: ${adminRole.id}`)
+    }
+
+    // 5. 사용자 생성
     console.log('👤 관리자 계정 생성 중...')
     const [user] = await db.insert(users).values({
       email: email.toLowerCase(),
@@ -66,7 +92,7 @@ async function seedAdmin() {
     }).returning()
     console.log(`   User ID: ${user.id}`)
 
-    // 5. 조직 멤버십 생성 (owner 권한)
+    // 6. 조직 멤버십 생성 (owner 권한)
     console.log('🔗 조직 멤버십 설정 중...')
     await db.insert(organizationMembers).values({
       organizationId: org.id,
@@ -75,7 +101,7 @@ async function seedAdmin() {
       joinedAt: new Date(),
     })
 
-    // 6. 기존 매장들에 대한 접근 권한 부여
+    // 7. 기존 매장들에 대한 접근 권한 부여
     const existingStores = await db.select().from(stores)
     
     if (existingStores.length > 0) {
@@ -89,11 +115,11 @@ async function seedAdmin() {
             .where(eq(stores.id, store.id))
         }
 
-        // 사용자-매장 할당
+        // 사용자-매장 할당 (roleId 필수)
         await db.insert(userStoreAssignments).values({
           userId: user.id,
           storeId: store.id,
-          isPrimary: existingStores.indexOf(store) === 0, // 첫 번째 매장을 기본으로
+          roleId: adminRole.id,
         })
       }
     }
