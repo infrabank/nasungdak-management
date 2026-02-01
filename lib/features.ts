@@ -1,5 +1,3 @@
-'use server'
-
 import { db } from '@/lib/db'
 import { organizations, planFeatures, subscriptions } from '@/lib/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
