@@ -41,7 +41,31 @@ export default function LoginPage() {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
         <div className="bg-brutal-white px-6 py-8 border-3 border-brutal-black shadow-brutal-lg">
-          <form action={formAction} className="space-y-6">
+          <form action={formAction} className="space-y-5">
+            {/* Email */}
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-bold text-brutal-black"
+              >
+                이메일
+              </label>
+              <div className="mt-2">
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  disabled={isPending}
+                  className="block w-full appearance-none px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm font-medium"
+                  placeholder="이메일을 입력하세요"
+                  style={{ minHeight: '48px', fontSize: '16px' }}
+                />
+              </div>
+            </div>
+
+            {/* Password */}
             <div>
               <label
                 htmlFor="password"
