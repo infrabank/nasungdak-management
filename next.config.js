@@ -1,5 +1,4 @@
 // @ts-check
-const { withSentryConfig } = require('@sentry/nextjs')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -25,37 +24,29 @@ const nextConfig = {
   },
 }
 
-// Sentry 설정 (SENTRY_DSN이 설정된 경우에만 활성화)
-const sentryWebpackPluginOptions = {
-  // For all available options, see:
-  // https://github.com/getsentry/sentry-webpack-plugin#options
+// Sentry 설정 (SENTRY_DSN이 설정되고 @sentry/nextjs가 설치된 경우에만 활성화)
+let finalConfig = nextConfig
 
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
+if (process.env.SENTRY_DSN) {
+  try {
+    const { withSentryConfig } = require('@sentry/nextjs')
 
-  // Only print logs for uploading source maps in CI
-  silent: !process.env.CI,
+    const sentryWebpackPluginOptions = {
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      silent: !process.env.CI,
+      widenClientFileUpload: true,
+      tunnelRoute: '/monitoring',
+      hideSourceMaps: true,
+      disableLogger: true,
+      automaticVercelMonitors: true,
+    }
 
-  // For all available options, see:
-  // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
-
-  // Upload a larger set of source maps for prettier stack traces (increases build time)
-  widenClientFileUpload: true,
-
-  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
-  tunnelRoute: '/monitoring',
-
-  // Hides source maps from generated client bundles
-  hideSourceMaps: true,
-
-  // Automatically tree-shake Sentry logger statements to reduce bundle size
-  disableLogger: true,
-
-  // Enables automatic instrumentation of Vercel Cron Monitors.
-  automaticVercelMonitors: true,
+    finalConfig = withSentryConfig(nextConfig, sentryWebpackPluginOptions)
+  } catch {
+    // @sentry/nextjs not installed, skip Sentry integration
+    console.warn('Sentry DSN is set but @sentry/nextjs is not installed. Skipping Sentry integration.')
+  }
 }
 
-// Sentry가 설정된 경우에만 withSentryConfig 적용
-module.exports = process.env.SENTRY_DSN
-  ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
-  : nextConfig
+module.exports = finalConfig
