@@ -1,15 +1,35 @@
 'use server'
 
+import { cookies } from 'next/headers'
+import { jwtVerify, SignJWT } from 'jose'
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { storeSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
-import { stores } from '@/lib/db/schema'
+import {
+  stores,
+  userStoreAssignments,
+  roles,
+  organizationMembers,
+} from '@/lib/db/schema'
 import { eq, and, isNull, desc, inArray } from 'drizzle-orm'
 import { z } from 'zod'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import { getAuthorizedStoreIds, getUserContext } from '@/lib/auth-context'
+
+const SESSION_SECRET = new TextEncoder().encode(
+  process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
+)
 
 export async function createStore(formData: FormData) {
   try {
+    // 현재 사용자 정보 가져오기
+    const userContext = await getUserContext()
+    if (!userContext.isAuthenticated || !userContext.userId) {
+      return {
+        success: false,
+        error: '로그인이 필요합니다',
+      }
+    }
+
     const rawData = {
       storeName: formData.get('storeName'),
       storeCode: formData.get('storeCode'),
@@ -36,13 +56,40 @@ export async function createStore(formData: FormData) {
       }
     }
 
+    // 사용자의 조직 ID 가져오기
+    const membership = await db.query.organizationMembers.findFirst({
+      where: and(
+        eq(organizationMembers.userId, userContext.userId),
+        isNull(organizationMembers.deletedAt)
+      ),
+    })
+
     const [store] = await db
       .insert(stores)
       .values({
         ...validatedData,
-        createdBy: 'system',
+        organizationId: membership?.organizationId || null,
+        createdBy: userContext.userId,
       })
       .returning()
+
+    // store_owner 역할 가져오기
+    const ownerRole = await db.query.roles.findFirst({
+      where: eq(roles.roleName, 'store_owner'),
+    })
+
+    if (ownerRole) {
+      // 사용자를 매장에 연결
+      await db.insert(userStoreAssignments).values({
+        userId: userContext.userId,
+        storeId: store.id,
+        roleId: ownerRole.id,
+        assignedBy: userContext.userId,
+      })
+
+      // JWT 세션 업데이트
+      await updateSessionWithNewStore(userContext.userId, store.id)
+    }
 
     revalidatePath('/dashboard/stores')
     revalidateTag('stores:active')
@@ -63,8 +110,59 @@ export async function createStore(formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '매장 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '매장 등록에 실패했습니다',
     }
+  }
+}
+
+/**
+ * JWT 세션에 새 매장 추가
+ */
+async function updateSessionWithNewStore(
+  userId: string,
+  storeId: string
+): Promise<void> {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('session')?.value
+    if (!token) return
+
+    const { payload } = await jwtVerify(token, SESSION_SECRET)
+    const currentPayload = payload as {
+      userId: string
+      email: string
+      name: string
+      storeIds?: string[]
+      organizationId?: string
+      [key: string]: unknown
+    }
+
+    // 새 매장을 storeIds에 추가
+    const currentStoreIds = currentPayload.storeIds || []
+    if (!currentStoreIds.includes(storeId)) {
+      const newStoreIds = [...currentStoreIds, storeId]
+
+      // 새 토큰 생성
+      const newToken = await new SignJWT({
+        ...currentPayload,
+        storeIds: newStoreIds,
+      })
+        .setProtectedHeader({ alg: 'HS256' })
+        .setIssuedAt()
+        .setExpirationTime('7d')
+        .sign(SESSION_SECRET)
+
+      cookieStore.set('session', newToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60,
+        path: '/',
+      })
+    }
+  } catch (error) {
+    console.error('Update session error:', error)
   }
 }
 
@@ -125,7 +223,8 @@ export async function updateStore(id: string, formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '매장 수정에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '매장 수정에 실패했습니다',
     }
   }
 }
@@ -150,7 +249,8 @@ export async function deleteStore(id: string) {
     console.error('Failed to delete store:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '매장 삭제에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '매장 삭제에 실패했습니다',
     }
   }
 }
@@ -166,10 +266,9 @@ export async function getStores() {
     const storeList = await db
       .select()
       .from(stores)
-      .where(and(
-        isNull(stores.deletedAt),
-        inArray(stores.id, authorizedStoreIds)
-      ))
+      .where(
+        and(isNull(stores.deletedAt), inArray(stores.id, authorizedStoreIds))
+      )
       .orderBy(desc(stores.createdAt))
 
     return storeList
@@ -191,11 +290,13 @@ async function fetchActiveStores(authorizedStoreIds: string[]) {
       storeCode: stores.storeCode,
     })
     .from(stores)
-    .where(and(
-      isNull(stores.deletedAt),
-      eq(stores.isActive, true),
-      inArray(stores.id, authorizedStoreIds)
-    ))
+    .where(
+      and(
+        isNull(stores.deletedAt),
+        eq(stores.isActive, true),
+        inArray(stores.id, authorizedStoreIds)
+      )
+    )
     .orderBy(stores.storeName)
 
   return storeList
