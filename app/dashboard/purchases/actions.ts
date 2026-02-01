@@ -4,8 +4,9 @@ import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { purchaseSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { purchaseTransactions, menuCategories, ingredients, menuIngredients } from '@/lib/db/schema'
-import { eq, and, isNull, desc, sql } from 'drizzle-orm'
+import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
+import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 export async function createPurchase(formData: FormData) {
   try {
@@ -232,10 +233,19 @@ async function fetchPurchases(
   menuId: string,
   ingredientId: string,
   storeId: string,
-  page: number
+  page: number,
+  authorizedStoreIds: string[]
 ) {
+  // 권한이 있는 매장이 없으면 빈 결과 반환
+  if (authorizedStoreIds.length === 0) {
+    return { items: [], hasMore: false, page: 1 }
+  }
+
   // Build WHERE conditions
   const conditions = [isNull(purchaseTransactions.deletedAt)]
+
+  // 항상 권한 있는 매장으로 필터링
+  conditions.push(inArray(purchaseTransactions.storeId, authorizedStoreIds))
 
   if (startDate !== 'all' && endDate !== 'all') {
     conditions.push(
@@ -251,7 +261,8 @@ async function fetchPurchases(
     conditions.push(eq(purchaseTransactions.ingredientId, ingredientId))
   }
 
-  if (storeId !== 'all') {
+  // 특정 매장 필터 (권한 체크는 이미 위에서 함)
+  if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
     conditions.push(eq(purchaseTransactions.storeId, storeId))
   }
 
@@ -297,6 +308,12 @@ export async function getPurchases(
   page: number = 1
 ) {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return { items: [], hasMore: false, page: 1 }
+    }
+
     const normalizedStartDate = startDate ?? 'all'
     const normalizedEndDate = endDate ?? 'all'
     const normalizedMenuId = menuId ?? 'all'
@@ -304,13 +321,24 @@ export async function getPurchases(
     const normalizedStoreId = storeId ?? 'all'
     const normalizedPage = Math.max(1, page)
 
+    // 캐시 키에 사용자의 권한 정보 포함
+    const storeKey = authorizedStoreIds.sort().join(',')
+
     const getCachedPurchases = unstable_cache(
-      fetchPurchases,
-      ['purchases:list', normalizedStartDate, normalizedEndDate, normalizedMenuId, normalizedIngredientId, normalizedStoreId, String(normalizedPage)],
+      () => fetchPurchases(
+        normalizedStartDate,
+        normalizedEndDate,
+        normalizedMenuId,
+        normalizedIngredientId,
+        normalizedStoreId,
+        normalizedPage,
+        authorizedStoreIds
+      ),
+      ['purchases:list', storeKey, normalizedStartDate, normalizedEndDate, normalizedMenuId, normalizedIngredientId, normalizedStoreId, String(normalizedPage)],
       { tags: [`purchases:${normalizedStoreId}`] }
     )
 
-    return await getCachedPurchases(normalizedStartDate, normalizedEndDate, normalizedMenuId, normalizedIngredientId, normalizedStoreId, normalizedPage)
+    return await getCachedPurchases()
   } catch (error) {
     console.error('Failed to fetch purchases:', error)
     return { items: [], hasMore: false, page: 1 }
@@ -636,9 +664,18 @@ async function fetchPurchasesTotals(
   endDate: string,
   menuId: string,
   ingredientId: string,
-  storeId: string
+  storeId: string,
+  authorizedStoreIds: string[]
 ) {
+  // 권한이 있는 매장이 없으면 빈 결과 반환
+  if (authorizedStoreIds.length === 0) {
+    return { totalCount: 0, totalQuantity: 0, totalAmount: 0 }
+  }
+
   const conditions = [isNull(purchaseTransactions.deletedAt)]
+
+  // 항상 권한 있는 매장으로 필터링
+  conditions.push(inArray(purchaseTransactions.storeId, authorizedStoreIds))
 
   if (startDate !== 'all' && endDate !== 'all') {
     conditions.push(
@@ -654,7 +691,7 @@ async function fetchPurchasesTotals(
     conditions.push(eq(purchaseTransactions.ingredientId, ingredientId))
   }
 
-  if (storeId !== 'all') {
+  if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
     conditions.push(eq(purchaseTransactions.storeId, storeId))
   }
 
@@ -682,16 +719,33 @@ export async function getPurchasesTotals(
   storeId?: string
 ) {
   try {
+    // 사용자 권한 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return { totalCount: 0, totalQuantity: 0, totalAmount: 0 }
+    }
+
     const normalizedStartDate = startDate ?? 'all'
     const normalizedEndDate = endDate ?? 'all'
     const normalizedMenuId = menuId ?? 'all'
     const normalizedIngredientId = ingredientId ?? 'all'
     const normalizedStoreId = storeId ?? 'all'
 
+    // 캐시 키에 사용자의 권한 정보 포함
+    const storeKey = authorizedStoreIds.sort().join(',')
+
     const getCachedPurchasesTotals = unstable_cache(
-      fetchPurchasesTotals,
+      () => fetchPurchasesTotals(
+        normalizedStartDate,
+        normalizedEndDate,
+        normalizedMenuId,
+        normalizedIngredientId,
+        normalizedStoreId,
+        authorizedStoreIds
+      ),
       [
         'purchases:totals',
+        storeKey,
         normalizedStartDate,
         normalizedEndDate,
         normalizedMenuId,
@@ -701,13 +755,7 @@ export async function getPurchasesTotals(
       { tags: [`purchases:${normalizedStoreId}`] }
     )
 
-    return await getCachedPurchasesTotals(
-      normalizedStartDate,
-      normalizedEndDate,
-      normalizedMenuId,
-      normalizedIngredientId,
-      normalizedStoreId
-    )
+    return await getCachedPurchasesTotals()
   } catch (error) {
     console.error('Failed to fetch purchases totals:', error)
     return { totalCount: 0, totalQuantity: 0, totalAmount: 0 }
