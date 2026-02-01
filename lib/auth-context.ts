@@ -54,20 +54,15 @@ export async function getUserContext(): Promise<UserContext> {
       return defaultContext
     }
 
-    // JWT에 storeIds가 있으면 사용, 없으면 DB에서 조회
-    let storeIds = jwtPayload.storeIds || []
+    // 항상 DB에서 최신 storeIds 조회 (JWT 업데이트 지연/실패 대비)
+    const assignments = await db.query.userStoreAssignments.findMany({
+      where: and(
+        eq(userStoreAssignments.userId, jwtPayload.userId),
+        isNull(userStoreAssignments.deletedAt)
+      ),
+    })
+    const storeIds = assignments.map((a) => a.storeId)
     let organizationId = jwtPayload.organizationId || null
-
-    // DB에서 최신 정보 조회 (JWT가 오래된 경우 대비)
-    if (storeIds.length === 0) {
-      const assignments = await db.query.userStoreAssignments.findMany({
-        where: and(
-          eq(userStoreAssignments.userId, jwtPayload.userId),
-          isNull(userStoreAssignments.deletedAt)
-        ),
-      })
-      storeIds = assignments.map((a) => a.storeId)
-    }
 
     if (!organizationId) {
       const membership = await db.query.organizationMembers.findFirst({
