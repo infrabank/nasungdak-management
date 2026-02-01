@@ -31,6 +31,7 @@ interface JWTPayload {
   permissions: Record<string, string[]>
   iat?: number
   exp?: number
+  [key: string]: unknown // Required for jose JWTPayload compatibility
 }
 
 /**
