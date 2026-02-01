@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { getAttendance, getActiveEmployees } from './actions'
+import { getActiveStores } from '../stores/actions'
 import AttendanceRow from './attendance-row'
 import AttendanceCard from './attendance-card'
 import { formatDate, formatCurrency } from '@/lib/utils/format'
@@ -7,7 +8,6 @@ import { formatDate, formatCurrency } from '@/lib/utils/format'
 interface SearchParams {
   startDate?: string
   endDate?: string
-  storeId?: string
   employeeId?: string
 }
 
@@ -18,16 +18,21 @@ export default async function AttendancePage({
 }) {
   const params = await searchParams
 
+  // 사용자의 권한 있는 매장 목록 조회 (이미 auth-context로 필터링됨)
+  const stores = await getActiveStores()
+
+  // 매장이 1개면 자동 선택, 여러 개면 첫 번째 매장 선택
+  const storeId = stores.length > 0 ? stores[0].id : ''
+  const hasStoreId = stores.length > 0
+
   // Default to current month
   const today = new Date()
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
 
-  const startDate = params.startDate || formatDate(firstDayOfMonth, 'yyyy-MM-dd')
+  const startDate =
+    params.startDate || formatDate(firstDayOfMonth, 'yyyy-MM-dd')
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
-  const storeId = params.storeId || ''
   const employeeId = params.employeeId || ''
-
-  const hasStoreId = Boolean(storeId)
 
   const attendanceData = hasStoreId
     ? await getAttendance({ storeId, startDate, endDate, employeeId })
@@ -51,9 +56,9 @@ export default async function AttendancePage({
   return (
     <div className="pb-24 md:pb-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-brutal-black">
+          <h1 className="text-2xl font-black text-brutal-black sm:text-3xl">
             출퇴근 기록
           </h1>
           <p className="mt-1 text-sm font-medium text-brutal-black/70">
@@ -64,21 +69,21 @@ export default async function AttendancePage({
         {hasStoreId && (
           <Link
             href={newAttendanceUrl}
-            className="hidden sm:block px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+            className="hidden border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg sm:block"
           >
             새 출퇴근 기록
           </Link>
         )}
       </div>
 
-      {/* No Store Selected Message */}
+      {/* No Store Access Message */}
       {!hasStoreId && (
-        <div className="mt-6 bg-brutal-yellow border-3 border-brutal-black shadow-brutal p-6 text-center">
-          <p className="text-lg font-black text-brutal-black mb-2">
-            매장을 선택해주세요
+        <div className="mt-6 border-3 border-brutal-black bg-brutal-pink p-6 text-center shadow-brutal">
+          <p className="mb-2 text-lg font-black text-brutal-black">
+            접근 권한이 없습니다
           </p>
           <p className="text-sm font-medium text-brutal-black/70">
-            출퇴근 기록은 매장별로 관리됩니다. 상단에서 매장을 선택하세요.
+            할당된 매장이 없습니다. 관리자에게 문의하세요.
           </p>
         </div>
       )}
@@ -86,13 +91,13 @@ export default async function AttendancePage({
       {/* Summary - Sticky on Mobile */}
       {hasStoreId && records.length > 0 && (
         <div className="sticky top-0 z-10 mt-4 md:static">
-          <div className="bg-brutal-pink border-3 border-brutal-black shadow-brutal p-4">
+          <div className="border-3 border-brutal-black bg-brutal-pink p-4 shadow-brutal">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-brutal-black">
                   총 {records.length}건 ({startDate} ~ {endDate})
                 </p>
-                <p className="text-sm font-medium text-brutal-black/70 mt-1">
+                <p className="mt-1 text-sm font-medium text-brutal-black/70">
                   총 근무시간: {totalHours.toFixed(1)}시간
                 </p>
               </div>
@@ -108,11 +113,9 @@ export default async function AttendancePage({
       {hasStoreId && (
         <form
           method="GET"
-          className="mt-4 bg-brutal-white border-3 border-brutal-black shadow-brutal p-4"
+          className="mt-4 border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal"
         >
-          {storeId && <input type="hidden" name="storeId" value={storeId} />}
-
-          <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-4 md:gap-4">
+          <div className="space-y-4 md:grid md:grid-cols-4 md:gap-4 md:space-y-0">
             {/* Start Date */}
             <div>
               <label htmlFor="startDate" className={labelClass}>
@@ -165,7 +168,7 @@ export default async function AttendancePage({
             <div className="flex items-end">
               <button
                 type="submit"
-                className="w-full px-4 py-3 text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                className="w-full border-2 border-brutal-black bg-brutal-yellow px-4 py-3 text-base font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-sm"
               >
                 조회
               </button>
@@ -178,11 +181,13 @@ export default async function AttendancePage({
       {hasStoreId && (
         <div className="mt-4 md:hidden">
           {records.length === 0 ? (
-            <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-8 text-center">
-              <p className="font-bold text-brutal-black">출퇴근 기록이 없습니다.</p>
+            <div className="border-3 border-brutal-black bg-brutal-white p-8 text-center shadow-brutal">
+              <p className="font-bold text-brutal-black">
+                출퇴근 기록이 없습니다.
+              </p>
               <Link
                 href={newAttendanceUrl}
-                className="inline-block mt-4 font-bold text-brutal-black underline"
+                className="mt-4 inline-block font-bold text-brutal-black underline"
               >
                 새 출퇴근 기록 등록하기
               </Link>
@@ -202,7 +207,7 @@ export default async function AttendancePage({
         <div className="mt-6 hidden md:block">
           <div className="overflow-hidden border-3 border-brutal-black shadow-brutal">
             <table className="min-w-full">
-              <thead className="bg-brutal-yellow border-b-3 border-brutal-black">
+              <thead className="border-b-3 border-brutal-black bg-brutal-yellow">
                 <tr>
                   <th className="py-3.5 pl-4 pr-3 text-left text-sm font-black text-brutal-black sm:pl-6">
                     날짜
@@ -234,7 +239,8 @@ export default async function AttendancePage({
                       colSpan={7}
                       className="py-8 text-center text-sm font-medium text-brutal-black"
                     >
-                      출퇴근 기록이 없습니다. &ldquo;새 출퇴근 기록&rdquo; 버튼을 클릭하여 시작하세요.
+                      출퇴근 기록이 없습니다. &ldquo;새 출퇴근 기록&rdquo;
+                      버튼을 클릭하여 시작하세요.
                     </td>
                   </tr>
                 ) : (
@@ -242,18 +248,18 @@ export default async function AttendancePage({
                     {records.map((record) => (
                       <AttendanceRow key={record.id} record={record} />
                     ))}
-                    <tr className="bg-brutal-pink/50 font-bold border-t-3 border-brutal-black">
+                    <tr className="border-t-3 border-brutal-black bg-brutal-pink/50 font-bold">
                       <td
                         colSpan={2}
-                        className="py-4 pl-4 pr-3 text-sm text-right font-black text-brutal-black sm:pl-6"
+                        className="py-4 pl-4 pr-3 text-right text-sm font-black text-brutal-black sm:pl-6"
                       >
                         총 합계 ({records.length}건)
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-black">
+                      <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-black text-brutal-black">
                         {totalHours.toFixed(1)}시간
                       </td>
                       <td className="px-3 py-4"></td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-black">
+                      <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-black text-brutal-black">
                         {formatCurrency(totalSum)}
                       </td>
                       <td colSpan={2}></td>
@@ -268,10 +274,10 @@ export default async function AttendancePage({
 
       {/* Mobile: Fixed Bottom Action Bar */}
       {hasStoreId && (
-        <div className="fixed bottom-14 left-0 right-0 bg-brutal-white border-t-3 border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 lg:hidden">
+        <div className="fixed bottom-14 left-0 right-0 z-20 border-t-3 border-brutal-black bg-brutal-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:hidden">
           <Link
             href={newAttendanceUrl}
-            className="block w-full py-3 text-center text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+            className="block w-full border-2 border-brutal-black bg-brutal-yellow py-3 text-center text-base font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
           >
             + 새 출퇴근 기록
           </Link>
