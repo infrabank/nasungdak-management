@@ -18,7 +18,7 @@ import { revalidateTag } from 'next/cache'
 
 // Stripe 클라이언트 (서버 사이드 전용)
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-12-18.acacia',
+  apiVersion: '2025-02-24.acacia',
   typescript: true,
 })
 
