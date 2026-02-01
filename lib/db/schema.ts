@@ -1,5 +1,5 @@
 import { pgTable, uuid, varchar, decimal, date, timestamp, boolean, text, integer, unique, jsonb, index } from 'drizzle-orm/pg-core'
-import { sql } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 
 // Stores Table (다매장 지원)
 export const stores = pgTable('stores', {
@@ -626,3 +626,77 @@ export type NewOrganizationMember = typeof organizationMembers.$inferInsert
 
 export type OrganizationInvitation = typeof organizationInvitations.$inferSelect
 export type NewOrganizationInvitation = typeof organizationInvitations.$inferInsert
+
+// =================
+// Drizzle Relations
+// =================
+
+// Organization Members Relations
+export const organizationMembersRelations = relations(organizationMembers, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [organizationMembers.organizationId],
+    references: [organizations.id],
+  }),
+  user: one(users, {
+    fields: [organizationMembers.userId],
+    references: [users.id],
+  }),
+  invitedByUser: one(users, {
+    fields: [organizationMembers.invitedBy],
+    references: [users.id],
+  }),
+}))
+
+// Organizations Relations
+export const organizationsRelations = relations(organizations, ({ many }) => ({
+  members: many(organizationMembers),
+  subscriptions: many(subscriptions),
+  invitations: many(organizationInvitations),
+  stores: many(stores),
+}))
+
+// Users Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  memberships: many(organizationMembers),
+  storeAssignments: many(userStoreAssignments),
+}))
+
+// Subscriptions Relations
+export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [subscriptions.organizationId],
+    references: [organizations.id],
+  }),
+}))
+
+// Organization Invitations Relations
+export const organizationInvitationsRelations = relations(organizationInvitations, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [organizationInvitations.organizationId],
+    references: [organizations.id],
+  }),
+  invitedByUser: one(users, {
+    fields: [organizationInvitations.invitedBy],
+    references: [users.id],
+  }),
+}))
+
+// Stores Relations
+export const storesRelations = relations(stores, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [stores.organizationId],
+    references: [organizations.id],
+  }),
+}))
+
+// User Store Assignments Relations
+export const userStoreAssignmentsRelations = relations(userStoreAssignments, ({ one }) => ({
+  user: one(users, {
+    fields: [userStoreAssignments.userId],
+    references: [users.id],
+  }),
+  store: one(stores, {
+    fields: [userStoreAssignments.storeId],
+    references: [stores.id],
+  }),
+}))
