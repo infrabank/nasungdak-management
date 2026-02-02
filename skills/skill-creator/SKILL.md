@@ -150,17 +150,21 @@ Claude loads FORMS.md, REFERENCE.md, or EXAMPLES.md only when needed.
 # Product Management
 
 ## Overview
+
 [Quick overview of what the skill enables]
 
 ## Core Capabilities
 
 ### 1. Status communications
+
 Learn how to communicate product status effectively - see references/communication.md
 
 ### 2. Building context for decisions
+
 Learn how to gather and structure context - see references/context_building.md
 
 ### 3. Managing stakeholders
+
 Learn strategies for keeping stakeholders aligned - see references/stakeholder_management.md
 ```
 
@@ -305,7 +309,6 @@ scripts/package_skill.py <path/to/skill-folder> ./dist
 The packaging script will:
 
 1. **Validate** the skill automatically, checking:
-
    - YAML frontmatter format and required fields
    - Skill naming conventions and directory structure
    - Description completeness and quality

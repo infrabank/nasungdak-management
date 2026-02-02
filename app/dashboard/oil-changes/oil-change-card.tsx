@@ -33,7 +33,13 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
   const handleDelete = async () => {
     if (isDeleting) return
 
-    if (!(await confirm({ title: '확인', description: '이 기름 교체 이력을 삭제하시겠습니까?', variant: 'danger' }))) {
+    if (
+      !(await confirm({
+        title: '확인',
+        description: '이 기름 교체 이력을 삭제하시겠습니까?',
+        variant: 'danger',
+      }))
+    ) {
       return
     }
 
@@ -89,13 +95,13 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
 
   if (isEditing) {
     return (
-      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
-        <div className="p-4 bg-brutal-blue border-b-3 border-brutal-black">
+      <div className="overflow-hidden border-3 border-brutal-black bg-brutal-white shadow-brutal">
+        <div className="border-b-3 border-brutal-black bg-brutal-blue p-4">
           <p className="font-black text-brutal-black">기름 교체 이력 수정</p>
         </div>
-        <div className="p-4 space-y-3">
+        <div className="space-y-3 p-4">
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
               교체일
             </label>
             <input
@@ -108,7 +114,7 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
               튀김기 종류
             </label>
             <select
@@ -123,7 +129,7 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
               비고
             </label>
             <input
@@ -140,14 +146,14 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+              className="flex-1 border-2 border-brutal-black bg-brutal-white px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:opacity-50"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+              className="flex-1 border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:opacity-50"
             >
               {isSaving ? '저장 중...' : '저장'}
             </button>
@@ -159,12 +165,12 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
 
   return (
     <div
-      className={`bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden ${
+      className={`overflow-hidden border-3 border-brutal-black bg-brutal-white shadow-brutal ${
         isDeleting ? 'opacity-50' : ''
       }`}
     >
       {/* Card Header */}
-      <div className="flex items-center justify-between p-4 bg-brutal-yellow border-b-3 border-brutal-black">
+      <div className="flex items-center justify-between border-b-3 border-brutal-black bg-brutal-yellow p-4">
         <div className="flex items-center gap-2">
           <span className="text-sm">📅</span>
           <span className="font-bold text-brutal-black">
@@ -172,7 +178,7 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
           </span>
         </div>
         <span
-          className={`inline-flex px-3 py-1 text-sm font-bold border-2 border-brutal-black ${fryerTypeColor}`}
+          className={`inline-flex border-2 border-brutal-black px-3 py-1 text-sm font-bold ${fryerTypeColor}`}
         >
           {fryerEmoji} {oilChange.fryerType}
         </span>
@@ -183,7 +189,7 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
         {/* Usage Days */}
         <div className="flex items-center justify-between py-3">
           <div>
-            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">
+            <p className="text-xs font-bold uppercase tracking-wide text-brutal-black/70">
               사용 기간
             </p>
             <p className="text-2xl font-black text-brutal-black">
@@ -191,7 +197,7 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">
+            <p className="text-xs font-bold uppercase tracking-wide text-brutal-black/70">
               기름 종류
             </p>
             <p className="text-base font-bold text-brutal-black">
@@ -202,8 +208,8 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
 
         {/* Notes */}
         {oilChange.notes && (
-          <div className="py-3 border-t-2 border-brutal-black">
-            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide mb-1">
+          <div className="border-t-2 border-brutal-black py-3">
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-brutal-black/70">
               비고
             </p>
             <p className="text-sm text-brutal-black">{oilChange.notes}</p>
@@ -211,18 +217,18 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-3 border-t-2 border-brutal-black">
+        <div className="flex justify-end gap-2 border-t-2 border-brutal-black pt-3">
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-blue border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="border-2 border-brutal-black bg-brutal-blue px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:cursor-not-allowed disabled:opacity-50"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-pink border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="border-2 border-brutal-black bg-brutal-pink px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

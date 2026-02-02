@@ -3,13 +3,13 @@
 **Feature Branch**: `1-purchase-sales-management`
 **Created**: 2026-01-04
 **Status**: Draft
-**Input**: User description: "매입, 판매, 원가를 관리하는 시스템을 만들고 싶습니다. 재고 관리와 손익 계산 기능이 필요합니다. 매입_판매_원가.xlsx 이 엑셀 파일을 분석해서 동일한 역할을 하는 온라인 프로그램을 만들고 샆어. 매입 입력화면을 통해 입력 받으면 이력을 누적해서 보여주는 페이지와 일일 판매량을 입력 받으면 마찬가지로 누적 관리하는 페이지, 그리고 판매 원가 및 마진율등을 분석하는 페이지를 만들고 싶어. 반응형이어야 해"
+**Input**: User description: "매입, 판매, 원가를 관리하는 시스템을 만들고 싶습니다. 재고 관리와 손익 계산 기능이 필요합니다. 매입*판매*원가.xlsx 이 엑셀 파일을 분석해서 동일한 역할을 하는 온라인 프로그램을 만들고 샆어. 매입 입력화면을 통해 입력 받으면 이력을 누적해서 보여주는 페이지와 일일 판매량을 입력 받으면 마찬가지로 누적 관리하는 페이지, 그리고 판매 원가 및 마진율등을 분석하는 페이지를 만들고 싶어. 반응형이어야 해"
 
 ## Overview
 
 This system replaces an existing Excel-based workflow for managing purchases, sales, and cost analysis for a fried chicken restaurant business. The system will digitize the current manual tracking process, providing web-based data entry, cumulative history tracking, and automated cost/margin analysis. The solution must work on all devices (desktop, tablet, mobile) to support on-site business operations.
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Record Purchase Transactions (Priority: P1)
 
@@ -29,7 +29,7 @@ A business operator needs to record incoming purchases of raw materials and supp
 
 ### User Story 2 - Record Daily Sales Quantities (Priority: P1)
 
-A business operator needs to record daily sales quantities for each product SKU (sales unit). Products are sold in different forms that require conversion to raw ingredient equivalents (e.g., "양념치킨_봉" = 1 whole chicken = 95g equivalent, "양념치킨_박스(대)" = 2.84 chickens = 270g). The system should track cumulative sales over time.
+A business operator needs to record daily sales quantities for each product SKU (sales unit). Products are sold in different forms that require conversion to raw ingredient equivalents (e.g., "양념치킨*봉" = 1 whole chicken = 95g equivalent, "양념치킨*박스(대)" = 2.84 chickens = 270g). The system should track cumulative sales over time.
 
 **Why this priority**: Sales data is essential for calculating cost of goods sold (COGS) and profit margins. This is the second critical data input alongside purchases. Together with P1, it enables basic cost analysis.
 
@@ -37,9 +37,9 @@ A business operator needs to record daily sales quantities for each product SKU 
 
 **Acceptance Scenarios**:
 
-1. **Given** the daily sales entry form is displayed, **When** the operator enters date "2025-12-01" with "양념치킨_봉: 15", "양념치킨_박스(대): 5", and "만두_봉: 20", **Then** the system records these quantities for the specified date
+1. **Given** the daily sales entry form is displayed, **When** the operator enters date "2025-12-01" with "양념치킨*봉: 15", "양념치킨*박스(대): 5", and "만두\_봉: 20", **Then** the system records these quantities for the specified date
 2. **Given** sales entries exist for multiple dates, **When** the operator views the sales history page, **Then** all daily entries are displayed in chronological order showing date and quantities for each SKU
-3. **Given** a SKU with conversion factor exists (e.g., "양념치킨_박스(대)" = 2.84), **When** the operator enters sales quantity "5", **Then** the system internally tracks both the unit quantity (5 boxes) and the equivalent ingredient quantity (14.2 chickens) for cost calculation
+3. **Given** a SKU with conversion factor exists (e.g., "양념치킨\_박스(대)" = 2.84), **When** the operator enters sales quantity "5", **Then** the system internally tracks both the unit quantity (5 boxes) and the equivalent ingredient quantity (14.2 chickens) for cost calculation
 
 ---
 
@@ -71,7 +71,7 @@ A business operator needs to maintain reference lists of menu categories, ingred
 **Acceptance Scenarios**:
 
 1. **Given** the menu management page is displayed, **When** the operator adds a new menu "신메뉴" with ingredients "재료A", "재료B", "재료C", **Then** these become available for purchase entry validation
-2. **Given** the SKU management page exists, **When** the operator defines "신메뉴_봉" with conversion factor "1.5" and selling price "15,000원", **Then** sales entries for this SKU automatically convert quantities using this factor and calculate revenue using the price
+2. **Given** the SKU management page exists, **When** the operator defines "신메뉴\_봉" with conversion factor "1.5" and selling price "15,000원", **Then** sales entries for this SKU automatically convert quantities using this factor and calculate revenue using the price
 3. **Given** master data changes are made, **When** the operator attempts to enter a purchase or sale, **Then** the system validates against the current master data immediately
 4. **Given** SKU prices are defined, **When** the operator enters sales quantities, **Then** the system automatically calculates daily revenue as sum of (quantity × price) for all SKUs
 
@@ -86,7 +86,7 @@ A business operator needs to maintain reference lists of menu categories, ingred
 - What happens when sales are recorded for a date that has no purchase data? (System should allow the entry but may show incomplete margin analysis or estimated costs)
 - How does the system handle very large quantities that exceed storage limits (e.g., 999,999+)? (System should define reasonable maximum values based on business scale and validate inputs)
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -127,7 +127,7 @@ A business operator needs to maintain reference lists of menu categories, ingred
 
 - **Cost Distribution Rule**: Represents the percentage allocation of costs to each menu category. Key attributes: menu category, distribution percentage. Used in period analysis for cost allocation calculation.
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
@@ -167,6 +167,7 @@ A business operator needs to maintain reference lists of menu categories, ingred
 ### Scope
 
 **In Scope**:
+
 - Web-based purchase transaction entry and history tracking
 - Web-based daily sales quantity entry and history tracking
 - Period-based cost analysis with configurable date ranges
@@ -178,6 +179,7 @@ A business operator needs to maintain reference lists of menu categories, ingred
 - Historical data editing and correction
 
 **Out of Scope**:
+
 - Real-time POS system integration (sales data is manually entered)
 - Automated supplier ordering or inventory replenishment
 - Employee management or payroll integration

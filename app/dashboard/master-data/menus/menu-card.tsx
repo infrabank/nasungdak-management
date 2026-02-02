@@ -7,8 +7,8 @@ interface MenuCardProps {
 
 export default function MenuCard({ menu }: MenuCardProps) {
   return (
-    <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4">
-      <div className="flex justify-between items-start mb-2">
+    <div className="border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal">
+      <div className="mb-2 flex items-start justify-between">
         <div className="font-bold text-brutal-black">
           <span className="mr-1">🍗</span>
           {menu.menuName}
@@ -23,13 +23,13 @@ export default function MenuCard({ menu }: MenuCardProps) {
           {menu.isActive ? '활성' : '비활성'}
         </span>
       </div>
-      
-      <div className="text-sm font-medium text-brutal-black mb-4 flex items-start">
+
+      <div className="mb-4 flex items-start text-sm font-medium text-brutal-black">
         <span className="mr-2 mt-0.5">📝</span>
         <span>{menu.description || '설명 없음'}</span>
       </div>
 
-      <div className="border-t-2 border-brutal-black/20 pt-3 flex justify-end">
+      <div className="flex justify-end border-t-2 border-brutal-black/20 pt-3">
         <MenuForm menu={menu} />
       </div>
     </div>

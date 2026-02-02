@@ -16,16 +16,16 @@ interface CostRuleCardProps {
 
 export default function CostRuleCard({ rule }: CostRuleCardProps) {
   return (
-    <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
+    <div className="overflow-hidden border-3 border-brutal-black bg-brutal-white shadow-brutal">
       {/* Header - Menu & Ingredient */}
-      <div className="p-4 space-y-3">
+      <div className="space-y-3 p-4">
         {/* Menu */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm font-medium text-brutal-black/70">
             <span>🍗</span>
             <span>메뉴</span>
           </div>
-          <span className="font-bold text-brutal-black text-right">
+          <span className="text-right font-bold text-brutal-black">
             {rule.menuName}
           </span>
         </div>
@@ -36,13 +36,13 @@ export default function CostRuleCard({ rule }: CostRuleCardProps) {
             <span>🥬</span>
             <span>재료</span>
           </div>
-          <span className="font-bold text-brutal-black text-right">
+          <span className="text-right font-bold text-brutal-black">
             {rule.ingredientName}
           </span>
         </div>
 
         {/* Divider */}
-        <div className="border-t-2 border-brutal-black/20 my-2" />
+        <div className="my-2 border-t-2 border-brutal-black/20" />
 
         {/* Distribution Percent */}
         <div className="flex items-center justify-between">
@@ -61,16 +61,17 @@ export default function CostRuleCard({ rule }: CostRuleCardProps) {
             <span>📅</span>
             <span>유효 기간</span>
           </div>
-          <div className="text-sm font-bold text-brutal-black text-right">
+          <div className="text-right text-sm font-bold text-brutal-black">
             {formatDate(rule.effectiveFrom, 'yyyy-MM-dd')}
-            {rule.effectiveTo && ` ~ ${formatDate(rule.effectiveTo, 'yyyy-MM-dd')}`}
+            {rule.effectiveTo &&
+              ` ~ ${formatDate(rule.effectiveTo, 'yyyy-MM-dd')}`}
             {!rule.effectiveTo && ' ~ '}
           </div>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="px-4 py-3 bg-brutal-yellow/30 border-t-2 border-brutal-black flex justify-end">
+      <div className="flex justify-end border-t-2 border-brutal-black bg-brutal-yellow/30 px-4 py-3">
         <CostRuleForm rule={rule} />
       </div>
     </div>

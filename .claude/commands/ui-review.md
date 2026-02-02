@@ -3,6 +3,7 @@ description: Review UI/UX of specified files, or of staged/unstaged git changes.
 argument-hint: [path/to/file]... (optional)
 allowed-tools: Bash(git:diff)
 ---
+
 Engage the **ui-ux-consultant** subagent to perform a UI/UX and accessibility review.
 
 Your analysis target is determined by the following rules:
@@ -14,13 +15,17 @@ Your analysis target is determined by the following rules:
 ### Context from Git (if no arguments provided)
 
 **Staged Changes (Priority 1):**
+
 ```diff
 !git diff --staged
 ```
 
 **Unstaged Changes (Priority 2):**
+
 ```diff
 !git diff HEAD
 ```
+
 ---
-*Your final report should focus on platform guideline adherence, user experience flow, and accessibility (A11y).*
+
+_Your final report should focus on platform guideline adherence, user experience flow, and accessibility (A11y)._

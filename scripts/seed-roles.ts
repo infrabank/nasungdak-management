@@ -12,7 +12,7 @@ async function seedRolesAndUsers() {
   try {
     // 1. 기본 역할 생성
     console.log('👥 기본 역할 생성 중...')
-    
+
     const roleDefinitions = [
       {
         roleName: 'super_admin',
@@ -106,7 +106,7 @@ async function seedRolesAndUsers() {
 
     // 2. 기존 매장 조회
     const existingStores = await db.select().from(stores).limit(1)
-    
+
     if (existingStores.length === 0) {
       console.log('⚠️ 매장이 없습니다. 테스트 매장을 먼저 생성하세요.')
       return
@@ -114,9 +114,9 @@ async function seedRolesAndUsers() {
 
     // 3. 테스트 사용자 생성 (개발/테스트용)
     console.log('👤 테스트 사용자 생성 중...')
-    
+
     const testPassword = await bcrypt.hash('test1234', 12)
-    
+
     const [testUser] = await db
       .insert(users)
       .values({
@@ -147,7 +147,9 @@ async function seedRolesAndUsers() {
           })
           .onConflictDoNothing()
 
-        console.log(`✅ 사용자 매장 할당 완료: ${testUser.email} → ${existingStores[0].storeName}`)
+        console.log(
+          `✅ 사용자 매장 할당 완료: ${testUser.email} → ${existingStores[0].storeName}`
+        )
       }
     } else {
       console.log('ℹ️ 테스트 사용자가 이미 존재합니다.')
@@ -160,7 +162,6 @@ async function seedRolesAndUsers() {
     console.log('  이메일: admin@nasungdak.com')
     console.log('  비밀번호: test1234')
     console.log('')
-
   } catch (error) {
     console.error('❌ 시드 실패:', error)
     throw error

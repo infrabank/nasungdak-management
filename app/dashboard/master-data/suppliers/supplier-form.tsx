@@ -45,8 +45,8 @@ export default function SupplierForm({ supplier }: SupplierFormProps) {
         onClick={() => setIsOpen(true)}
         className={
           isEditing
-            ? 'font-bold text-brutal-black underline underline-offset-2 hover:text-brutal-yellow hover:bg-brutal-black px-1 text-sm transition-all'
-            : 'px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all'
+            ? 'px-1 text-sm font-bold text-brutal-black underline underline-offset-2 transition-all hover:bg-brutal-black hover:text-brutal-yellow'
+            : 'border-2 border-brutal-black bg-brutal-yellow px-3 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg'
         }
       >
         {isEditing ? '수정' : '공급업체 등록'}
@@ -54,15 +54,15 @@ export default function SupplierForm({ supplier }: SupplierFormProps) {
 
       {isOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
-           <div
-             className="fixed inset-0 bg-brutal-black/50 transition-opacity"
-             onClick={() => setIsOpen(false)}
-           />
+          <div
+            className="fixed inset-0 bg-brutal-black/50 transition-opacity"
+            onClick={() => setIsOpen(false)}
+          />
           <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-md transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg p-6 transition-all">
-              <h3 className="text-lg font-semibold text-brutal-black mb-4">
-                 {isEditing ? '공급업체 수정' : '공급업체 등록'}
-               </h3>
+            <div className="relative w-full max-w-md transform overflow-hidden border-3 border-brutal-black bg-brutal-white p-6 shadow-brutal-lg transition-all">
+              <h3 className="mb-4 text-lg font-semibold text-brutal-black">
+                {isEditing ? '공급업체 수정' : '공급업체 등록'}
+              </h3>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
@@ -143,35 +143,35 @@ export default function SupplierForm({ supplier }: SupplierFormProps) {
                   />
                 </div>
 
-                 <div className="flex items-center gap-2">
-                   <input
-                     type="checkbox"
-                     name="isActive"
-                     value="true"
-                     defaultChecked={supplier?.isActive ?? true}
-                     className="h-4 w-4 border-brutal-black text-brutal-black"
-                   />
-                   <label className="text-sm text-brutal-black">활성화</label>
-                 </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    name="isActive"
+                    value="true"
+                    defaultChecked={supplier?.isActive ?? true}
+                    className="h-4 w-4 border-brutal-black text-brutal-black"
+                  />
+                  <label className="text-sm text-brutal-black">활성화</label>
+                </div>
 
-                 {error && (
-                   <div className="bg-brutal-red/10 p-3 text-sm text-brutal-red">
-                     {error}
-                   </div>
-                 )}
+                {error && (
+                  <div className="bg-brutal-red/10 p-3 text-sm text-brutal-red">
+                    {error}
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+                    className="border-2 border-brutal-black bg-brutal-white px-3 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal"
                   >
                     취소
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+                    className="border-2 border-brutal-black bg-brutal-yellow px-3 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
                   >
                     {isSubmitting ? '처리 중...' : isEditing ? '수정' : '등록'}
                   </button>

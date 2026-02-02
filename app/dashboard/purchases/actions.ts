@@ -3,7 +3,12 @@
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { purchaseSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
-import { purchaseTransactions, menuCategories, ingredients, menuIngredients } from '@/lib/db/schema'
+import {
+  purchaseTransactions,
+  menuCategories,
+  ingredients,
+  menuIngredients,
+} from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
@@ -18,7 +23,10 @@ export async function createPurchase(formData: FormData) {
       supplierName: formData.get('supplierName'),
       quantity: formData.get('quantity'),
       unitPrice: formData.get('unitPrice'),
-      notes: notes && typeof notes === 'string' && notes.trim() ? notes.trim() : null,
+      notes:
+        notes && typeof notes === 'string' && notes.trim()
+          ? notes.trim()
+          : null,
     }
 
     const validatedData = purchaseSchema.parse(rawData)
@@ -72,7 +80,8 @@ export async function createPurchase(formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '매입 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '매입 등록에 실패했습니다',
     }
   }
 }
@@ -87,7 +96,10 @@ export async function updatePurchase(id: string, formData: FormData) {
       supplierName: formData.get('supplierName'),
       quantity: formData.get('quantity'),
       unitPrice: formData.get('unitPrice'),
-      notes: notes && typeof notes === 'string' && notes.trim() ? notes.trim() : null,
+      notes:
+        notes && typeof notes === 'string' && notes.trim()
+          ? notes.trim()
+          : null,
     }
 
     const validatedData = purchaseSchema.parse(rawData)
@@ -139,7 +151,8 @@ export async function updatePurchase(id: string, formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '매입 수정에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '매입 수정에 실패했습니다',
     }
   }
 }
@@ -176,7 +189,8 @@ export async function deletePurchase(id: string) {
     console.error('Failed to delete purchase:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '매입 삭제에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '매입 삭제에 실패했습니다',
     }
   }
 }
@@ -219,7 +233,10 @@ export async function togglePurchaseValidation(id: string) {
     console.error('Failed to toggle validation:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '검증 상태 변경에 실패했습니다',
+      error:
+        error instanceof Error
+          ? error.message
+          : '검증 상태 변경에 실패했습니다',
     }
   }
 }
@@ -285,8 +302,14 @@ async function fetchPurchases(
       notes: purchaseTransactions.notes,
     })
     .from(purchaseTransactions)
-    .leftJoin(menuCategories, eq(purchaseTransactions.menuId, menuCategories.id))
-    .leftJoin(ingredients, eq(purchaseTransactions.ingredientId, ingredients.id))
+    .leftJoin(
+      menuCategories,
+      eq(purchaseTransactions.menuId, menuCategories.id)
+    )
+    .leftJoin(
+      ingredients,
+      eq(purchaseTransactions.ingredientId, ingredients.id)
+    )
     .where(and(...conditions))
     .orderBy(desc(purchaseTransactions.transactionDate))
     .limit(PURCHASES_PAGE_SIZE + 1) // Fetch one extra to check if there are more
@@ -325,16 +348,26 @@ export async function getPurchases(
     const storeKey = authorizedStoreIds.sort().join(',')
 
     const getCachedPurchases = unstable_cache(
-      () => fetchPurchases(
+      () =>
+        fetchPurchases(
+          normalizedStartDate,
+          normalizedEndDate,
+          normalizedMenuId,
+          normalizedIngredientId,
+          normalizedStoreId,
+          normalizedPage,
+          authorizedStoreIds
+        ),
+      [
+        'purchases:list',
+        storeKey,
         normalizedStartDate,
         normalizedEndDate,
         normalizedMenuId,
         normalizedIngredientId,
         normalizedStoreId,
-        normalizedPage,
-        authorizedStoreIds
-      ),
-      ['purchases:list', storeKey, normalizedStartDate, normalizedEndDate, normalizedMenuId, normalizedIngredientId, normalizedStoreId, String(normalizedPage)],
+        String(normalizedPage),
+      ],
       { tags: [`purchases:${normalizedStoreId}`] }
     )
 
@@ -352,7 +385,9 @@ async function fetchMenusForFilter() {
       menuName: menuCategories.menuName,
     })
     .from(menuCategories)
-    .where(and(isNull(menuCategories.deletedAt), eq(menuCategories.isActive, true)))
+    .where(
+      and(isNull(menuCategories.deletedAt), eq(menuCategories.isActive, true))
+    )
     .orderBy(menuCategories.menuName)
 
   return menus
@@ -446,7 +481,7 @@ export async function createMultiplePurchases(
 
     // Create composite key map for O(1) lookup
     const menuIngredientMap = new Set(
-      allMenuIngredients.map(mi => `${mi.menuId}:${mi.ingredientId}`)
+      allMenuIngredients.map((mi) => `${mi.menuId}:${mi.ingredientId}`)
     )
 
     // Use transaction for atomicity
@@ -522,7 +557,8 @@ export async function createMultiplePurchases(
       successCount,
       failedCount,
       results,
-      error: error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
     }
   }
 }
@@ -552,9 +588,7 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
         ingredientName: ingredients.ingredientName,
       })
       .from(ingredients)
-      .where(
-        and(isNull(ingredients.deletedAt), eq(ingredients.isActive, true))
-      )
+      .where(and(isNull(ingredients.deletedAt), eq(ingredients.isActive, true)))
 
     // Create lookup maps
     const menuMap = new Map(menus.map((m) => [m.menuName, m.id]))
@@ -573,7 +607,7 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
 
     // Create composite key set for O(1) lookup
     const menuIngredientSet = new Set(
-      allMenuIngredients.map(mi => `${mi.menuId}:${mi.ingredientId}`)
+      allMenuIngredients.map((mi) => `${mi.menuId}:${mi.ingredientId}`)
     )
 
     // Use transaction for atomicity
@@ -654,7 +688,8 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
       success: false,
       successCount,
       failedCount,
-      error: error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
     }
   }
 }
@@ -735,14 +770,15 @@ export async function getPurchasesTotals(
     const storeKey = authorizedStoreIds.sort().join(',')
 
     const getCachedPurchasesTotals = unstable_cache(
-      () => fetchPurchasesTotals(
-        normalizedStartDate,
-        normalizedEndDate,
-        normalizedMenuId,
-        normalizedIngredientId,
-        normalizedStoreId,
-        authorizedStoreIds
-      ),
+      () =>
+        fetchPurchasesTotals(
+          normalizedStartDate,
+          normalizedEndDate,
+          normalizedMenuId,
+          normalizedIngredientId,
+          normalizedStoreId,
+          authorizedStoreIds
+        ),
       [
         'purchases:totals',
         storeKey,

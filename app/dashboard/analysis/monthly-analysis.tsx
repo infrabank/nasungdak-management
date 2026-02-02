@@ -19,33 +19,56 @@ interface MonthlyAnalysisProps {
 
 export default function MonthlyAnalysis({ monthlyData }: MonthlyAnalysisProps) {
   return (
-    <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal">
+    <div className="border-3 border-brutal-black bg-brutal-white shadow-brutal">
       <div className="px-4 py-5 sm:p-6">
-        <h3 className="text-base font-black text-brutal-black mb-4">월별 분석</h3>
+        <h3 className="mb-4 text-base font-black text-brutal-black">
+          월별 분석
+        </h3>
 
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
               <tr className="border-b-3 border-brutal-black">
-                <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-black text-brutal-black sm:pl-0">
+                <th
+                  scope="col"
+                  className="py-3.5 pl-4 pr-3 text-left text-sm font-black text-brutal-black sm:pl-0"
+                >
                   월
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
+                <th
+                  scope="col"
+                  className="px-3 py-3.5 text-right text-sm font-black text-brutal-black"
+                >
                   매출액
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
+                <th
+                  scope="col"
+                  className="px-3 py-3.5 text-right text-sm font-black text-brutal-black"
+                >
                   변동비
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
+                <th
+                  scope="col"
+                  className="px-3 py-3.5 text-right text-sm font-black text-brutal-black"
+                >
                   고정비
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
+                <th
+                  scope="col"
+                  className="px-3 py-3.5 text-right text-sm font-black text-brutal-black"
+                >
                   총비용
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
+                <th
+                  scope="col"
+                  className="px-3 py-3.5 text-right text-sm font-black text-brutal-black"
+                >
                   순이익
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
+                <th
+                  scope="col"
+                  className="px-3 py-3.5 text-right text-sm font-black text-brutal-black"
+                >
                   마진율
                 </th>
               </tr>
@@ -57,29 +80,29 @@ export default function MonthlyAnalysis({ monthlyData }: MonthlyAnalysisProps) {
                     <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-bold text-brutal-black sm:pl-0">
                       {month.month}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-bold">
+                    <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold text-brutal-black">
                       {formatCurrency(month.totalRevenue)}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-medium">
+                    <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-medium text-brutal-black">
                       {formatCurrency(month.totalVariableCost)}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-bold">
+                    <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold text-brutal-black">
                       {formatCurrency(month.totalFixedCost)}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-medium">
+                    <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-medium text-brutal-black">
                       {formatCurrency(month.totalCost)}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-right font-bold text-brutal-black">
+                    <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold text-brutal-black">
                       {formatCurrency(month.netProfit)}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
+                    <td className="whitespace-nowrap px-3 py-4 text-right text-sm">
                       <span
-                        className={`inline-flex items-center px-2 py-1 text-xs font-bold border-2 border-brutal-black ${
+                        className={`inline-flex items-center border-2 border-brutal-black px-2 py-1 text-xs font-bold ${
                           month.marginPercent >= 40
                             ? 'bg-brutal-green text-brutal-black'
                             : month.marginPercent >= 20
-                            ? 'bg-brutal-yellow text-brutal-black'
-                            : 'bg-brutal-pink text-brutal-black'
+                              ? 'bg-brutal-yellow text-brutal-black'
+                              : 'bg-brutal-pink text-brutal-black'
                         }`}
                       >
                         {month.marginPercent.toFixed(1)}%
@@ -89,7 +112,10 @@ export default function MonthlyAnalysis({ monthlyData }: MonthlyAnalysisProps) {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-sm text-brutal-black font-bold">
+                  <td
+                    colSpan={7}
+                    className="py-10 text-center text-sm font-bold text-brutal-black"
+                  >
                     해당 기간에 데이터가 없습니다
                   </td>
                 </tr>

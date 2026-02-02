@@ -35,7 +35,8 @@ export default function BillingSection({
 }: Props) {
   const [isLoading, setIsLoading] = useState(false)
 
-  const isTrial = organization.trialEndsAt && new Date(organization.trialEndsAt) > new Date()
+  const isTrial =
+    organization.trialEndsAt && new Date(organization.trialEndsAt) > new Date()
   const trialDaysLeft = isTrial
     ? Math.ceil(
         (new Date(organization.trialEndsAt!).getTime() - Date.now()) /
@@ -92,10 +93,10 @@ export default function BillingSection({
   return (
     <div className="space-y-6">
       {/* Current Plan */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-4 border-2 border-brutal-black bg-brutal-yellow/10">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="border-2 border-brutal-black bg-brutal-yellow/10 p-4">
           <div className="flex items-center gap-2 text-sm text-brutal-black/70">
-            <CreditCard className="w-4 h-4" />
+            <CreditCard className="h-4 w-4" />
             현재 플랜
           </div>
           <div className="mt-1 text-2xl font-bold text-brutal-black">
@@ -108,10 +109,9 @@ export default function BillingSection({
           )}
         </div>
 
-        <div className="p-4 border-2 border-brutal-black">
+        <div className="border-2 border-brutal-black p-4">
           <div className="flex items-center gap-2 text-sm text-brutal-black/70">
-            <TrendingUp className="w-4 h-4" />
-            월 요금
+            <TrendingUp className="h-4 w-4" />월 요금
           </div>
           <div className="mt-1 text-2xl font-bold text-brutal-black">
             {subscription
@@ -120,9 +120,9 @@ export default function BillingSection({
           </div>
         </div>
 
-        <div className="p-4 border-2 border-brutal-black">
+        <div className="border-2 border-brutal-black p-4">
           <div className="flex items-center gap-2 text-sm text-brutal-black/70">
-            <Calendar className="w-4 h-4" />
+            <Calendar className="h-4 w-4" />
             다음 결제일
           </div>
           <div className="mt-1 text-2xl font-bold text-brutal-black">
@@ -131,7 +131,7 @@ export default function BillingSection({
               : '-'}
           </div>
           {subscription?.cancelAtPeriodEnd && (
-            <div className="mt-1 text-sm text-brutal-red font-medium">
+            <div className="mt-1 text-sm font-medium text-brutal-red">
               기간 종료 시 해지 예정
             </div>
           )}
@@ -139,9 +139,9 @@ export default function BillingSection({
       </div>
 
       {/* Usage */}
-      <div className="p-4 border-2 border-brutal-black">
-        <h3 className="font-bold text-brutal-black mb-4">사용량</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="border-2 border-brutal-black p-4">
+        <h3 className="mb-4 font-bold text-brutal-black">사용량</h3>
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           <div>
             <div className="text-sm text-brutal-black/70">매장</div>
             <div className="font-bold">
@@ -173,7 +173,7 @@ export default function BillingSection({
           {organization.plan !== 'enterprise' && (
             <Link
               href="/pricing"
-              className="px-6 py-3 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+              className="border-2 border-brutal-black bg-brutal-yellow px-6 py-3 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
             >
               플랜 업그레이드
             </Link>
@@ -183,7 +183,7 @@ export default function BillingSection({
             <button
               onClick={handleManageBilling}
               disabled={isLoading}
-              className="px-6 py-3 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="border-2 border-brutal-black bg-brutal-white px-6 py-3 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? '로딩...' : '결제 관리'}
             </button>
@@ -193,13 +193,15 @@ export default function BillingSection({
 
       {/* Trial Warning */}
       {isTrial && trialDaysLeft <= 3 && (
-        <div className="flex items-start gap-3 p-4 border-2 border-brutal-red bg-brutal-red/10">
-          <AlertCircle className="w-5 h-5 text-brutal-red flex-shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 border-2 border-brutal-red bg-brutal-red/10 p-4">
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-brutal-red" />
           <div>
-            <p className="font-bold text-brutal-red">무료 체험이 곧 종료됩니다</p>
+            <p className="font-bold text-brutal-red">
+              무료 체험이 곧 종료됩니다
+            </p>
             <p className="mt-1 text-sm text-brutal-black/70">
-              {trialDaysLeft}일 후 무료 체험이 종료됩니다. 계속 사용하려면 플랜을
-              선택해주세요.
+              {trialDaysLeft}일 후 무료 체험이 종료됩니다. 계속 사용하려면
+              플랜을 선택해주세요.
             </p>
           </div>
         </div>
@@ -208,23 +210,29 @@ export default function BillingSection({
       {/* Quick Upgrade Options */}
       {organization.plan === 'free' && (
         <div className="border-2 border-brutal-black p-4">
-          <h3 className="font-bold text-brutal-black mb-4">빠른 업그레이드</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <h3 className="mb-4 font-bold text-brutal-black">빠른 업그레이드</h3>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {(['basic', 'standard', 'premium'] as PlanType[]).map((plan) => (
               <button
                 key={plan}
                 onClick={() => handleUpgrade(plan)}
                 disabled={isLoading || !isOwner}
-                className="p-4 text-left border-2 border-brutal-black hover:bg-brutal-yellow/10 transition-colors disabled:opacity-50"
+                className="border-2 border-brutal-black p-4 text-left transition-colors hover:bg-brutal-yellow/10 disabled:opacity-50"
               >
                 <div className="font-bold">{PLANS[plan].nameKo}</div>
                 <div className="text-sm text-brutal-black/70">
                   {formatPrice(PLANS[plan].priceMonthly)}/월
                 </div>
                 <div className="mt-2 text-xs text-brutal-black/50">
-                  매장 {PLANS[plan].maxStores === -1 ? '무제한' : `${PLANS[plan].maxStores}개`}
+                  매장{' '}
+                  {PLANS[plan].maxStores === -1
+                    ? '무제한'
+                    : `${PLANS[plan].maxStores}개`}
                   {' · '}
-                  사용자 {PLANS[plan].maxUsers === -1 ? '무제한' : `${PLANS[plan].maxUsers}명`}
+                  사용자{' '}
+                  {PLANS[plan].maxUsers === -1
+                    ? '무제한'
+                    : `${PLANS[plan].maxUsers}명`}
                 </div>
               </button>
             ))}

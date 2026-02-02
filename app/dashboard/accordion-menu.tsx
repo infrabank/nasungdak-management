@@ -28,9 +28,7 @@ export const menuGroups: MenuGroup[] = [
   },
   {
     label: '비용/분석',
-    items: [
-      { label: '기간 분석', href: '/dashboard/analysis' },
-    ],
+    items: [{ label: '기간 분석', href: '/dashboard/analysis' }],
   },
   {
     label: '데이터 관리',
@@ -41,9 +39,7 @@ export const menuGroups: MenuGroup[] = [
   },
   {
     label: '재고',
-    items: [
-      { label: '재고 관리', href: '/dashboard/inventory' },
-    ],
+    items: [{ label: '재고 관리', href: '/dashboard/inventory' }],
   },
 ]
 
@@ -67,7 +63,12 @@ function ChevronDownIcon({ className }: { className?: string }) {
 
 function MenuIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -80,7 +81,12 @@ function MenuIcon({ className }: { className?: string }) {
 
 function XIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
       <path
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -129,7 +135,7 @@ export default function AccordionMenu() {
       <div className="lg:hidden">
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="p-2 text-brutal-black border-2 border-brutal-black bg-brutal-white shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150"
+          className="border-2 border-brutal-black bg-brutal-white p-2 text-brutal-black shadow-brutal-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal"
         >
           <MenuIcon className="h-6 w-6" />
         </button>
@@ -140,10 +146,10 @@ export default function AccordionMenu() {
           <div key={group.label} className="relative">
             <button
               onClick={() => toggleGroup(group.label)}
-              className={`inline-flex items-center gap-1 px-3 py-2 text-sm font-bold border-2 border-brutal-black transition-all duration-150 ${
+              className={`inline-flex items-center gap-1 border-2 border-brutal-black px-3 py-2 text-sm font-bold transition-all duration-150 ${
                 isGroupActive(group)
                   ? 'bg-brutal-pink text-brutal-black shadow-brutal-sm'
-                  : 'bg-brutal-white text-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5'
+                  : 'bg-brutal-white text-brutal-black shadow-brutal-sm hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal'
               }`}
             >
               {group.label}
@@ -155,7 +161,7 @@ export default function AccordionMenu() {
             </button>
 
             <div
-              className={`absolute left-0 top-full z-50 mt-2 min-w-[180px] origin-top-left bg-brutal-white border-2 border-brutal-black shadow-brutal transition-all duration-200 ${
+              className={`absolute left-0 top-full z-50 mt-2 min-w-[180px] origin-top-left border-2 border-brutal-black bg-brutal-white shadow-brutal transition-all duration-200 ${
                 openGroup === group.label
                   ? 'scale-100 opacity-100'
                   : 'pointer-events-none scale-95 opacity-0'
@@ -165,7 +171,7 @@ export default function AccordionMenu() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`block px-4 py-3 text-sm font-medium border-b-2 border-brutal-black last:border-b-0 transition-colors ${
+                  className={`block border-b-2 border-brutal-black px-4 py-3 text-sm font-medium transition-colors last:border-b-0 ${
                     isItemActive(item.href)
                       ? 'bg-brutal-yellow text-brutal-black'
                       : 'text-brutal-black hover:bg-brutal-yellow/50'
@@ -192,16 +198,16 @@ export default function AccordionMenu() {
         />
 
         <div
-          className={`absolute left-0 top-0 bottom-0 w-72 max-w-[85vw] bg-brutal-white border-r-3 border-brutal-black transition-transform duration-300 ease-in-out ${
+          className={`absolute bottom-0 left-0 top-0 w-72 max-w-[85vw] border-r-3 border-brutal-black bg-brutal-white transition-transform duration-300 ease-in-out ${
             isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
         >
           <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b-3 border-brutal-black px-4 py-3 bg-brutal-yellow">
+            <div className="flex items-center justify-between border-b-3 border-brutal-black bg-brutal-yellow px-4 py-3">
               <span className="text-lg font-bold text-brutal-black">메뉴</span>
               <button
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 text-brutal-black border-2 border-brutal-black bg-brutal-white shadow-brutal-sm hover:shadow-brutal transition-all duration-150"
+                className="border-2 border-brutal-black bg-brutal-white p-2 text-brutal-black shadow-brutal-sm transition-all duration-150 hover:shadow-brutal"
               >
                 <XIcon className="h-6 w-6" />
               </button>
@@ -210,12 +216,15 @@ export default function AccordionMenu() {
             <div className="flex-1 overflow-y-auto p-4">
               <div className="flex flex-col gap-3">
                 {menuGroups.map((group) => (
-                  <div key={group.label} className="border-b-2 border-brutal-black pb-3 last:border-0">
+                  <div
+                    key={group.label}
+                    className="border-b-2 border-brutal-black pb-3 last:border-0"
+                  >
                     <button
                       onClick={() => toggleGroup(group.label)}
-                      className={`flex w-full items-center justify-between py-3 px-3 text-left font-bold border-2 border-brutal-black transition-all duration-150 ${
-                        isGroupActive(group) 
-                          ? 'bg-brutal-pink text-brutal-black shadow-brutal-sm' 
+                      className={`flex w-full items-center justify-between border-2 border-brutal-black px-3 py-3 text-left font-bold transition-all duration-150 ${
+                        isGroupActive(group)
+                          ? 'bg-brutal-pink text-brutal-black shadow-brutal-sm'
                           : 'bg-brutal-white text-brutal-black shadow-brutal-sm'
                       }`}
                     >
@@ -239,7 +248,7 @@ export default function AccordionMenu() {
                           <Link
                             key={item.href}
                             href={item.href}
-                            className={`block py-3 px-4 text-base font-medium border-2 border-brutal-black transition-all duration-150 ${
+                            className={`block border-2 border-brutal-black px-4 py-3 text-base font-medium transition-all duration-150 ${
                               isItemActive(item.href)
                                 ? 'bg-brutal-yellow text-brutal-black shadow-brutal-sm'
                                 : 'bg-brutal-white text-brutal-black hover:bg-brutal-yellow/50'

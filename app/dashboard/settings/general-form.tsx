@@ -18,7 +18,10 @@ interface Props {
 }
 
 export default function GeneralForm({ organization, isOwner }: Props) {
-  const [state, formAction, isPending] = useActionState(updateOrganization, null)
+  const [state, formAction, isPending] = useActionState(
+    updateOrganization,
+    null
+  )
 
   useEffect(() => {
     if (state?.success) {
@@ -47,7 +50,7 @@ export default function GeneralForm({ organization, isOwner }: Props) {
             type="text"
             defaultValue={organization.name}
             disabled={!canEdit || isPending}
-            className="mt-2 block w-full px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal transition-all disabled:bg-gray-100 disabled:cursor-not-allowed sm:text-sm font-medium"
+            className="mt-2 block w-full border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black shadow-brutal-sm transition-all focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 sm:text-sm"
           />
         </div>
 
@@ -64,7 +67,7 @@ export default function GeneralForm({ organization, isOwner }: Props) {
             type="text"
             value={organization.slug}
             disabled
-            className="mt-2 block w-full px-4 py-3 text-brutal-black/50 bg-gray-100 border-2 border-brutal-black/50 sm:text-sm font-medium cursor-not-allowed"
+            className="mt-2 block w-full cursor-not-allowed border-2 border-brutal-black/50 bg-gray-100 px-4 py-3 font-medium text-brutal-black/50 sm:text-sm"
           />
           <p className="mt-1 text-xs text-brutal-black/50">
             슬러그는 변경할 수 없습니다
@@ -86,7 +89,7 @@ export default function GeneralForm({ organization, isOwner }: Props) {
             defaultValue={organization.businessNumber || ''}
             disabled={!canEdit || isPending}
             placeholder="123-45-67890"
-            className="mt-2 block w-full px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal transition-all disabled:bg-gray-100 disabled:cursor-not-allowed sm:text-sm font-medium"
+            className="mt-2 block w-full border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black shadow-brutal-sm transition-all focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 sm:text-sm"
           />
         </div>
 
@@ -105,7 +108,7 @@ export default function GeneralForm({ organization, isOwner }: Props) {
             defaultValue={organization.billingName || ''}
             disabled={!canEdit || isPending}
             placeholder="홍길동"
-            className="mt-2 block w-full px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal transition-all disabled:bg-gray-100 disabled:cursor-not-allowed sm:text-sm font-medium"
+            className="mt-2 block w-full border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black shadow-brutal-sm transition-all focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 sm:text-sm"
           />
         </div>
 
@@ -124,7 +127,7 @@ export default function GeneralForm({ organization, isOwner }: Props) {
             defaultValue={organization.billingEmail || ''}
             disabled={!canEdit || isPending}
             placeholder="billing@example.com"
-            className="mt-2 block w-full px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:outline-none focus:shadow-brutal transition-all disabled:bg-gray-100 disabled:cursor-not-allowed sm:text-sm font-medium"
+            className="mt-2 block w-full border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black shadow-brutal-sm transition-all focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 sm:text-sm"
           />
           <p className="mt-1 text-xs text-brutal-black/50">
             청구서 및 결제 관련 알림이 발송됩니다
@@ -137,7 +140,7 @@ export default function GeneralForm({ organization, isOwner }: Props) {
           <button
             type="submit"
             disabled={isPending}
-            className="px-6 py-3 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-active active:translate-x-0.5 active:translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+            className="border-2 border-brutal-black bg-brutal-yellow px-6 py-3 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
           >
             {isPending ? '저장 중...' : '저장'}
           </button>

@@ -80,7 +80,9 @@ export default function EmployeeRow({ employee }: EmployeeRowProps) {
           <input
             type="text"
             value={editData.employeeName}
-            onChange={(e) => setEditData({ ...editData, employeeName: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, employeeName: e.target.value })
+            }
             className={inputClass}
             maxLength={100}
           />
@@ -91,15 +93,19 @@ export default function EmployeeRow({ employee }: EmployeeRowProps) {
             min="0"
             step="10"
             value={editData.hourlyRate}
-            onChange={(e) => setEditData({ ...editData, hourlyRate: e.target.value })}
-            className={`${inputClass} text-right w-28`}
+            onChange={(e) =>
+              setEditData({ ...editData, hourlyRate: e.target.value })
+            }
+            className={`${inputClass} w-28 text-right`}
           />
         </td>
         <td className="px-2 py-2 text-sm">
           <input
             type="tel"
             value={editData.phone}
-            onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, phone: e.target.value })
+            }
             className={inputClass}
             maxLength={20}
           />
@@ -108,31 +114,35 @@ export default function EmployeeRow({ employee }: EmployeeRowProps) {
           <input
             type="date"
             value={editData.hireDate}
-            onChange={(e) => setEditData({ ...editData, hireDate: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, hireDate: e.target.value })
+            }
             className={inputClass}
           />
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm text-center">
+        <td className="whitespace-nowrap px-2 py-2 text-center text-sm">
           <input
             type="checkbox"
             checked={editData.isActive}
-            onChange={(e) => setEditData({ ...editData, isActive: e.target.checked })}
-            className="w-4 h-4 border-2 border-brutal-black accent-brutal-yellow"
+            onChange={(e) =>
+              setEditData({ ...editData, isActive: e.target.checked })
+            }
+            className="h-4 w-4 border-2 border-brutal-black accent-brutal-yellow"
           />
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm text-right">
-          <div className="flex gap-1 justify-end">
+        <td className="whitespace-nowrap px-2 py-2 text-right text-sm">
+          <div className="flex justify-end gap-1">
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+              className="border-2 border-brutal-black bg-brutal-white px-2 py-1 text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+              className="border-2 border-brutal-black bg-brutal-yellow px-2 py-1 text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
             >
               {isSaving ? '...' : '저장'}
             </button>
@@ -143,25 +153,29 @@ export default function EmployeeRow({ employee }: EmployeeRowProps) {
   }
 
   return (
-    <tr className={`${isDeleting ? 'opacity-50' : ''} ${!employee.isActive ? 'bg-brutal-black/5' : ''}`}>
+    <tr
+      className={`${isDeleting ? 'opacity-50' : ''} ${!employee.isActive ? 'bg-brutal-black/5' : ''}`}
+    >
       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brutal-black sm:pl-6">
         {employee.employeeName}
         {!employee.isActive && (
           <span className="ml-2 text-xs text-brutal-black/50">(퇴직)</span>
         )}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-bold">
+      <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold text-brutal-black">
         {formatCurrency(Number(employee.hourlyRate))}
       </td>
       <td className="px-3 py-4 text-sm text-brutal-black">
         {employee.phone || '-'}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black">
-        {employee.hireDate ? formatDate(new Date(employee.hireDate), 'yyyy-MM-dd') : '-'}
+        {employee.hireDate
+          ? formatDate(new Date(employee.hireDate), 'yyyy-MM-dd')
+          : '-'}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-center">
+      <td className="whitespace-nowrap px-3 py-4 text-center text-sm">
         <span
-          className={`inline-flex items-center px-2 py-1 text-xs font-bold border-2 border-brutal-black ${
+          className={`inline-flex items-center border-2 border-brutal-black px-2 py-1 text-xs font-bold ${
             employee.isActive
               ? 'bg-brutal-green text-brutal-black'
               : 'bg-brutal-pink text-brutal-black'
@@ -170,19 +184,19 @@ export default function EmployeeRow({ employee }: EmployeeRowProps) {
           {employee.isActive ? '재직' : '퇴직'}
         </span>
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
-        <div className="flex gap-2 justify-end">
+      <td className="whitespace-nowrap px-3 py-4 text-right text-sm">
+        <div className="flex justify-end gap-2">
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="px-3 py-1 text-xs font-bold text-brutal-black bg-brutal-blue border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+            className="border-2 border-brutal-black bg-brutal-blue px-3 py-1 text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="px-3 py-1 text-xs font-bold text-brutal-black bg-brutal-pink border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+            className="border-2 border-brutal-black bg-brutal-pink px-3 py-1 text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

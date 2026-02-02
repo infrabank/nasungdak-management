@@ -61,7 +61,9 @@ export default function PurchaseForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [menus, setMenus] = useState<MenuCategory[]>([])
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
-  const [menuIngredients, setMenuIngredients] = useState<MenuIngredientMapping[]>([])
+  const [menuIngredients, setMenuIngredients] = useState<
+    MenuIngredientMapping[]
+  >([])
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([])
 
   const [transactionDate, setTransactionDate] = useState(
@@ -71,61 +73,80 @@ export default function PurchaseForm() {
   const [entries, setEntries] = useState<EntryRow[]>([createEmptyRow()])
 
   useEffect(() => {
-    Promise.all([getMenus(), getIngredients(), getMenuIngredients(), getActiveSuppliers()]).then(
-      ([menusData, ingredientsData, mappingsData, suppliersData]) => {
-        setMenus(menusData)
-        setIngredients(ingredientsData)
-        setMenuIngredients(mappingsData)
-        setSuppliers(suppliersData)
-      }
-    )
+    Promise.all([
+      getMenus(),
+      getIngredients(),
+      getMenuIngredients(),
+      getActiveSuppliers(),
+    ]).then(([menusData, ingredientsData, mappingsData, suppliersData]) => {
+      setMenus(menusData)
+      setIngredients(ingredientsData)
+      setMenuIngredients(mappingsData)
+      setSuppliers(suppliersData)
+    })
   }, [])
 
-   const updateEntry = useCallback((id: string, field: keyof EntryRow, value: string | boolean) => {
-     setEntries((prev) =>
-       prev.map((entry) => {
-         if (entry.id !== id) return entry
-         if (field === 'menuId') {
-           return { ...entry, menuId: value as string, ingredientId: '' }
-         }
-         return { ...entry, [field]: value }
-       })
-     )
-   }, [])
+  const updateEntry = useCallback(
+    (id: string, field: keyof EntryRow, value: string | boolean) => {
+      setEntries((prev) =>
+        prev.map((entry) => {
+          if (entry.id !== id) return entry
+          if (field === 'menuId') {
+            return { ...entry, menuId: value as string, ingredientId: '' }
+          }
+          return { ...entry, [field]: value }
+        })
+      )
+    },
+    []
+  )
 
-   const addRow = useCallback(() => setEntries((prev) => [...prev, createEmptyRow()]), [])
-   
-   const removeRow = useCallback((id: string) => {
-     if (entries.length <= 1) return
-     setEntries((prev) => prev.filter((entry) => entry.id !== id))
-   }, [entries.length])
+  const addRow = useCallback(
+    () => setEntries((prev) => [...prev, createEmptyRow()]),
+    []
+  )
 
-   const calculateRowTotal = useCallback((quantity: string, unitPrice: string) => {
-     return (parseFloat(quantity) || 0) * (parseFloat(unitPrice) || 0)
-   }, [])
+  const removeRow = useCallback(
+    (id: string) => {
+      if (entries.length <= 1) return
+      setEntries((prev) => prev.filter((entry) => entry.id !== id))
+    },
+    [entries.length]
+  )
 
-   const calculateGrandTotal = useMemo(() => {
-     return entries.reduce((sum, e) => sum + calculateRowTotal(e.quantity, e.unitPrice), 0)
-   }, [entries, calculateRowTotal])
+  const calculateRowTotal = useCallback(
+    (quantity: string, unitPrice: string) => {
+      return (parseFloat(quantity) || 0) * (parseFloat(unitPrice) || 0)
+    },
+    []
+  )
 
-   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-     e.preventDefault()
-     if (!transactionDate) {
-       toast.error('거래 날짜를 선택해주세요')
-       return
-     }
-     if (!supplierName.trim()) {
-       toast.error('공급업체명을 입력해주세요')
-       return
-     }
+  const calculateGrandTotal = useMemo(() => {
+    return entries.reduce(
+      (sum, e) => sum + calculateRowTotal(e.quantity, e.unitPrice),
+      0
+    )
+  }, [entries, calculateRowTotal])
 
-     const validEntries = entries.filter(
-       (entry) => entry.menuId && entry.ingredientId && entry.quantity && entry.unitPrice
-     )
-     if (validEntries.length === 0) {
-       toast.error('최소 하나의 항목을 입력해주세요')
-       return
-     }
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!transactionDate) {
+      toast.error('거래 날짜를 선택해주세요')
+      return
+    }
+    if (!supplierName.trim()) {
+      toast.error('공급업체명을 입력해주세요')
+      return
+    }
+
+    const validEntries = entries.filter(
+      (entry) =>
+        entry.menuId && entry.ingredientId && entry.quantity && entry.unitPrice
+    )
+    if (validEntries.length === 0) {
+      toast.error('최소 하나의 항목을 입력해주세요')
+      return
+    }
 
     setIsSubmitting(true)
     try {
@@ -137,124 +158,149 @@ export default function PurchaseForm() {
         notes: entry.notes || null,
       }))
 
-       const result = await createMultiplePurchases(transactionDate, supplierName.trim(), purchaseEntries)
+      const result = await createMultiplePurchases(
+        transactionDate,
+        supplierName.trim(),
+        purchaseEntries
+      )
 
-       if (result.success) {
-         const totalAmount = result.results.reduce((sum, r) => sum + r.totalAmount, 0)
-         const validCount = result.results.filter((r) => r.isValid).length
-         toast.success(
-           `${result.successCount}건 매입이 등록되었습니다. 총 합계: ${totalAmount.toLocaleString()}원 (유효: ${validCount}건 / 무효: ${result.successCount - validCount}건)`
-         )
-         router.push('/dashboard/purchases')
-       } else {
-         const errorMsg =
-           result.errors && result.errors.length > 0
-             ? result.errors.join(', ')
-             : result.error || '등록에 실패했습니다'
-         toast.error(`${result.successCount}건 성공, ${result.failedCount}건 실패: ${errorMsg}`)
-       }
+      if (result.success) {
+        const totalAmount = result.results.reduce(
+          (sum, r) => sum + r.totalAmount,
+          0
+        )
+        const validCount = result.results.filter((r) => r.isValid).length
+        toast.success(
+          `${result.successCount}건 매입이 등록되었습니다. 총 합계: ${totalAmount.toLocaleString()}원 (유효: ${validCount}건 / 무효: ${result.successCount - validCount}건)`
+        )
+        router.push('/dashboard/purchases')
+      } else {
+        const errorMsg =
+          result.errors && result.errors.length > 0
+            ? result.errors.join(', ')
+            : result.error || '등록에 실패했습니다'
+        toast.error(
+          `${result.successCount}건 성공, ${result.failedCount}건 실패: ${errorMsg}`
+        )
+      }
     } finally {
       setIsSubmitting(false)
     }
   }
 
-   const getFilteredIngredients = useCallback((menuId: string) => {
-     if (!menuId) return []
-     return menuIngredients
-       .filter((mi) => mi.menuId === menuId)
-       .map((mapping) => {
-         const ingredient = ingredients.find((i) => i.id === mapping.ingredientId)
-         return ingredient
-           ? { id: ingredient.id, name: ingredient.ingredientName, unit: ingredient.unit }
-           : null
-       })
-       .filter(Boolean) as Array<{ id: string; name: string; unit: string }>
-   }, [menuIngredients, ingredients])
+  const getFilteredIngredients = useCallback(
+    (menuId: string) => {
+      if (!menuId) return []
+      return menuIngredients
+        .filter((mi) => mi.menuId === menuId)
+        .map((mapping) => {
+          const ingredient = ingredients.find(
+            (i) => i.id === mapping.ingredientId
+          )
+          return ingredient
+            ? {
+                id: ingredient.id,
+                name: ingredient.ingredientName,
+                unit: ingredient.unit,
+              }
+            : null
+        })
+        .filter(Boolean) as Array<{ id: string; name: string; unit: string }>
+    },
+    [menuIngredients, ingredients]
+  )
 
-   const getEntryDisplayName = useCallback((entry: EntryRow) => {
-     const menu = menus.find((m) => m.id === entry.menuId)
-     const ingredient = ingredients.find((i) => i.id === entry.ingredientId)
-     if (menu && ingredient) return `${menu.menuName} - ${ingredient.ingredientName}`
-     if (menu) return menu.menuName
-     return '새 항목'
-   }, [menus, ingredients])
+  const getEntryDisplayName = useCallback(
+    (entry: EntryRow) => {
+      const menu = menus.find((m) => m.id === entry.menuId)
+      const ingredient = ingredients.find((i) => i.id === entry.ingredientId)
+      if (menu && ingredient)
+        return `${menu.menuName} - ${ingredient.ingredientName}`
+      if (menu) return menu.menuName
+      return '새 항목'
+    },
+    [menus, ingredients]
+  )
 
-   return (
+  return (
     <form onSubmit={handleSubmit} className="pb-32">
       {/* Shared Fields Section */}
-      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
-        <h3 className="text-sm font-black text-brutal-black uppercase tracking-wide mb-4">
+      <div className="mb-4 border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal">
+        <h3 className="mb-4 text-sm font-black uppercase tracking-wide text-brutal-black">
           공통 정보
         </h3>
-         <div className="space-y-4">
-           <div>
-             <Label htmlFor="transactionDate">
-               📅 거래 날짜
-             </Label>
-             <Input
-               type="date"
-               id="transactionDate"
-               required
-               value={transactionDate}
-               onChange={(e) => setTransactionDate(e.target.value)}
-             />
-           </div>
-           <div>
-             <Label htmlFor="supplierName">
-               🏢 공급업체
-             </Label>
-             <Select
-               id="supplierName"
-               required
-               value={supplierName}
-               onChange={(e) => setSupplierName(e.target.value)}
-             >
-               <option value="">공급업체를 선택하세요</option>
-               {suppliers.map((supplier) => (
-                 <option key={supplier.id} value={supplier.supplierName}>
-                   {supplier.supplierName}
-                 </option>
-               ))}
-             </Select>
-           </div>
-         </div>
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="transactionDate">📅 거래 날짜</Label>
+            <Input
+              type="date"
+              id="transactionDate"
+              required
+              value={transactionDate}
+              onChange={(e) => setTransactionDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="supplierName">🏢 공급업체</Label>
+            <Select
+              id="supplierName"
+              required
+              value={supplierName}
+              onChange={(e) => setSupplierName(e.target.value)}
+            >
+              <option value="">공급업체를 선택하세요</option>
+              {suppliers.map((supplier) => (
+                <option key={supplier.id} value={supplier.supplierName}>
+                  {supplier.supplierName}
+                </option>
+              ))}
+            </Select>
+          </div>
+        </div>
       </div>
 
       {/* Entry Rows Section */}
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-3 px-1">
-          <h3 className="text-sm font-black text-brutal-black uppercase tracking-wide">
+        <div className="mb-3 flex items-center justify-between px-1">
+          <h3 className="text-sm font-black uppercase tracking-wide text-brutal-black">
             매입 항목 ({entries.length}건)
           </h3>
         </div>
 
-         <div className="space-y-3">
-           {entries.map((entry, index) => {
-             const filteredIngredients = getFilteredIngredients(entry.menuId)
-             const rowTotal = calculateRowTotal(entry.quantity, entry.unitPrice)
-             const isComplete =
-               entry.menuId && entry.ingredientId && entry.quantity && entry.unitPrice
+        <div className="space-y-3">
+          {entries.map((entry, index) => {
+            const filteredIngredients = getFilteredIngredients(entry.menuId)
+            const rowTotal = calculateRowTotal(entry.quantity, entry.unitPrice)
+            const isComplete =
+              entry.menuId &&
+              entry.ingredientId &&
+              entry.quantity &&
+              entry.unitPrice
 
             return (
               <div
                 key={entry.id}
-                className={`bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden ${
+                className={`overflow-hidden border-3 border-brutal-black bg-brutal-white shadow-brutal ${
                   isComplete ? 'border-brutal-green' : ''
                 }`}
               >
                 {/* Card Header */}
                 <div
-                  className="flex items-center justify-between p-4 bg-brutal-yellow/30 cursor-pointer border-b-2 border-brutal-black"
-                  onClick={() => updateEntry(entry.id, 'isExpanded', !entry.isExpanded)}
+                  className="flex cursor-pointer items-center justify-between border-b-2 border-brutal-black bg-brutal-yellow/30 p-4"
+                  onClick={() =>
+                    updateEntry(entry.id, 'isExpanded', !entry.isExpanded)
+                  }
                 >
                   <div className="flex items-center gap-3">
-                    <span className="flex items-center justify-center w-7 h-7 bg-brutal-blue border-2 border-brutal-black text-brutal-black text-sm font-black">
+                    <span className="flex h-7 w-7 items-center justify-center border-2 border-brutal-black bg-brutal-blue text-sm font-black text-brutal-black">
                       {index + 1}
                     </span>
                     <div>
-                      <p className="font-bold text-brutal-black">{getEntryDisplayName(entry)}</p>
+                      <p className="font-bold text-brutal-black">
+                        {getEntryDisplayName(entry)}
+                      </p>
                       {isComplete && (
-                        <p className="text-sm text-brutal-black font-bold">
+                        <p className="text-sm font-bold text-brutal-black">
                           {rowTotal.toLocaleString()}원
                         </p>
                       )}
@@ -268,9 +314,14 @@ export default function PurchaseForm() {
                           e.stopPropagation()
                           removeRow(entry.id)
                         }}
-                        className="p-2 text-brutal-black hover:bg-brutal-pink border-2 border-brutal-black"
+                        className="border-2 border-brutal-black p-2 text-brutal-black hover:bg-brutal-pink"
                       >
-                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -281,109 +332,134 @@ export default function PurchaseForm() {
                       </button>
                     )}
                     <svg
-                      className={`w-5 h-5 text-brutal-black transition-transform ${
+                      className={`h-5 w-5 text-brutal-black transition-transform ${
                         entry.isExpanded ? 'rotate-180' : ''
                       }`}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
                     </svg>
                   </div>
                 </div>
 
                 {/* Card Body */}
                 {entry.isExpanded && (
-                   <div className="p-4 space-y-4">
-                     <div>
-                       <Label>메뉴 *</Label>
-                       <Select
-                         required
-                         value={entry.menuId}
-                         onChange={(e) => updateEntry(entry.id, 'menuId', e.target.value)}
-                       >
-                         <option value="">메뉴를 선택하세요</option>
-                         {menus
-                           .filter((m) => m.isActive)
-                           .map((menu) => (
-                             <option key={menu.id} value={menu.id}>
-                               {menu.menuName}
-                             </option>
-                           ))}
-                       </Select>
-                     </div>
+                  <div className="space-y-4 p-4">
+                    <div>
+                      <Label>메뉴 *</Label>
+                      <Select
+                        required
+                        value={entry.menuId}
+                        onChange={(e) =>
+                          updateEntry(entry.id, 'menuId', e.target.value)
+                        }
+                      >
+                        <option value="">메뉴를 선택하세요</option>
+                        {menus
+                          .filter((m) => m.isActive)
+                          .map((menu) => (
+                            <option key={menu.id} value={menu.id}>
+                              {menu.menuName}
+                            </option>
+                          ))}
+                      </Select>
+                    </div>
 
-                     <div>
-                       <Label>재료 *</Label>
-                       <Select
-                         required
-                         value={entry.ingredientId}
-                         onChange={(e) => updateEntry(entry.id, 'ingredientId', e.target.value)}
-                         disabled={!entry.menuId}
-                         className={!entry.menuId ? 'disabled:bg-brutal-black/10 disabled:cursor-not-allowed' : ''}
-                       >
-                         <option value="">
-                           {entry.menuId ? '재료를 선택하세요' : '먼저 메뉴를 선택하세요'}
-                         </option>
-                         {filteredIngredients.map((ing) => (
-                           <option key={ing.id} value={ing.id}>
-                             {ing.name} ({ing.unit})
-                           </option>
-                         ))}
-                       </Select>
-                       {entry.menuId && filteredIngredients.length === 0 && (
-                         <p className="mt-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black p-2">⚠️ 매핑된 재료가 없습니다</p>
-                       )}
-                     </div>
+                    <div>
+                      <Label>재료 *</Label>
+                      <Select
+                        required
+                        value={entry.ingredientId}
+                        onChange={(e) =>
+                          updateEntry(entry.id, 'ingredientId', e.target.value)
+                        }
+                        disabled={!entry.menuId}
+                        className={
+                          !entry.menuId
+                            ? 'disabled:cursor-not-allowed disabled:bg-brutal-black/10'
+                            : ''
+                        }
+                      >
+                        <option value="">
+                          {entry.menuId
+                            ? '재료를 선택하세요'
+                            : '먼저 메뉴를 선택하세요'}
+                        </option>
+                        {filteredIngredients.map((ing) => (
+                          <option key={ing.id} value={ing.id}>
+                            {ing.name} ({ing.unit})
+                          </option>
+                        ))}
+                      </Select>
+                      {entry.menuId && filteredIngredients.length === 0 && (
+                        <p className="mt-2 border-2 border-brutal-black bg-brutal-yellow p-2 text-sm font-bold text-brutal-black">
+                          ⚠️ 매핑된 재료가 없습니다
+                        </p>
+                      )}
+                    </div>
 
-                     <div className="grid grid-cols-2 gap-3">
-                       <div>
-                         <Label>수량 *</Label>
-                         <Input
-                           type="number"
-                           required
-                           inputMode="decimal"
-                           step="0.01"
-                           min="0.01"
-                           value={entry.quantity}
-                           onChange={(e) => updateEntry(entry.id, 'quantity', e.target.value)}
-                           placeholder="0"
-                         />
-                       </div>
-                       <div>
-                         <Label>단가 (원) *</Label>
-                         <Input
-                           type="number"
-                           required
-                           inputMode="numeric"
-                           step="1"
-                           value={entry.unitPrice}
-                           onChange={(e) => updateEntry(entry.id, 'unitPrice', e.target.value)}
-                           placeholder="0"
-                         />
-                       </div>
-                     </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>수량 *</Label>
+                        <Input
+                          type="number"
+                          required
+                          inputMode="decimal"
+                          step="0.01"
+                          min="0.01"
+                          value={entry.quantity}
+                          onChange={(e) =>
+                            updateEntry(entry.id, 'quantity', e.target.value)
+                          }
+                          placeholder="0"
+                        />
+                      </div>
+                      <div>
+                        <Label>단가 (원) *</Label>
+                        <Input
+                          type="number"
+                          required
+                          inputMode="numeric"
+                          step="1"
+                          value={entry.unitPrice}
+                          onChange={(e) =>
+                            updateEntry(entry.id, 'unitPrice', e.target.value)
+                          }
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
 
-                     {(entry.quantity || entry.unitPrice) && (
-                       <div className="bg-brutal-green/30 border-2 border-brutal-black p-3 text-center">
-                         <span className="text-sm font-bold text-brutal-black">소계: </span>
-                         <span className="text-lg font-black text-brutal-black">
-                           {rowTotal.toLocaleString()}원
-                         </span>
-                       </div>
-                     )}
+                    {(entry.quantity || entry.unitPrice) && (
+                      <div className="border-2 border-brutal-black bg-brutal-green/30 p-3 text-center">
+                        <span className="text-sm font-bold text-brutal-black">
+                          소계:{' '}
+                        </span>
+                        <span className="text-lg font-black text-brutal-black">
+                          {rowTotal.toLocaleString()}원
+                        </span>
+                      </div>
+                    )}
 
-                     <div>
-                       <Label>비고 (선택)</Label>
-                       <Input
-                         type="text"
-                         value={entry.notes}
-                         onChange={(e) => updateEntry(entry.id, 'notes', e.target.value)}
-                         placeholder="메모를 입력하세요"
-                       />
-                     </div>
-                   </div>
+                    <div>
+                      <Label>비고 (선택)</Label>
+                      <Input
+                        type="text"
+                        value={entry.notes}
+                        onChange={(e) =>
+                          updateEntry(entry.id, 'notes', e.target.value)
+                        }
+                        placeholder="메모를 입력하세요"
+                      />
+                    </div>
+                  </div>
                 )}
               </div>
             )
@@ -393,27 +469,27 @@ export default function PurchaseForm() {
         <button
           type="button"
           onClick={addRow}
-          className="w-full mt-3 py-4 border-3 border-dashed border-brutal-black text-brutal-black font-bold hover:border-solid hover:bg-brutal-blue transition-all"
+          className="mt-3 w-full border-3 border-dashed border-brutal-black py-4 font-bold text-brutal-black transition-all hover:border-solid hover:bg-brutal-blue"
         >
           + 항목 추가
         </button>
       </div>
 
-       {/* Grand Total - Sticky */}
-       <div className="sticky bottom-24 z-10">
-         <div className="pt-4 -mx-4 px-4">
-           <div className="bg-brutal-pink border-3 border-brutal-black shadow-brutal p-4 text-center">
-             <span className="text-sm font-bold text-brutal-black">총 합계</span>
-             <p className="text-2xl font-black text-brutal-black">
-               {calculateGrandTotal.toLocaleString()}원
-             </p>
-           </div>
-         </div>
-       </div>
+      {/* Grand Total - Sticky */}
+      <div className="sticky bottom-24 z-10">
+        <div className="-mx-4 px-4 pt-4">
+          <div className="border-3 border-brutal-black bg-brutal-pink p-4 text-center shadow-brutal">
+            <span className="text-sm font-bold text-brutal-black">총 합계</span>
+            <p className="text-2xl font-black text-brutal-black">
+              {calculateGrandTotal.toLocaleString()}원
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Fixed Bottom Action Bar - positioned above bottom nav on mobile */}
-      <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-brutal-yellow border-t-3 border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4 z-20">
-        <div className="flex gap-3 max-w-lg mx-auto">
+      <div className="fixed bottom-14 left-0 right-0 z-20 border-t-3 border-brutal-black bg-brutal-yellow p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:bottom-0 lg:pb-4">
+        <div className="mx-auto flex max-w-lg gap-3">
           <Button
             type="button"
             variant="secondary"
@@ -423,7 +499,11 @@ export default function PurchaseForm() {
           >
             취소
           </Button>
-          <Button type="submit" disabled={isSubmitting} className="flex-1 py-3 text-base">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 py-3 text-base"
+          >
             {isSubmitting ? '저장 중...' : `${entries.length}건 저장`}
           </Button>
         </div>

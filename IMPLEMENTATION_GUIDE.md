@@ -305,7 +305,11 @@ git merge feature/menu-management
 import { revalidatePath } from 'next/cache'
 import { purchaseSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
-import { purchaseTransactions, menuCategories, ingredients } from '@/lib/db/schema'
+import {
+  purchaseTransactions,
+  menuCategories,
+  ingredients,
+} from '@/lib/db/schema'
 import { eq, and } from 'drizzle-orm'
 
 export async function createPurchase(formData: FormData) {
@@ -652,7 +656,10 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         // TODO: 데이터베이스에서 사용자 확인
-        if (credentials?.username === 'admin' && credentials?.password === 'password') {
+        if (
+          credentials?.username === 'admin' &&
+          credentials?.password === 'password'
+        ) {
           return { id: '1', name: 'Admin', email: 'admin@example.com' }
         }
         return null
@@ -701,7 +708,6 @@ git push -u origin main
 ```
 
 2. **Vercel에서 프로젝트 생성**
-
    - [Vercel 대시보드](https://vercel.com/dashboard)에서 "New Project" 클릭
    - GitHub 저장소 선택
    - 환경 변수는 자동으로 설정됨 (Vercel Postgres 연결 시)

@@ -119,19 +119,19 @@ export default function OilChangeRow({ oilChange }: OilChangeRowProps) {
             className={inputClass}
           />
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm text-right">
-          <div className="flex gap-1 justify-end">
+        <td className="whitespace-nowrap px-2 py-2 text-right text-sm">
+          <div className="flex justify-end gap-1">
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+              className="border-2 border-brutal-black bg-brutal-white px-2 py-1 text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+              className="border-2 border-brutal-black bg-brutal-yellow px-2 py-1 text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
             >
               {isSaving ? '...' : '저장'}
             </button>
@@ -143,35 +143,35 @@ export default function OilChangeRow({ oilChange }: OilChangeRowProps) {
 
   return (
     <tr className={`hover:bg-gray-50 ${isDeleting ? 'opacity-50' : ''}`}>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
         {formatDate(new Date(oilChange.changeDate), 'yyyy-MM-dd')}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className="whitespace-nowrap px-6 py-4">
         <span
-          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${fryerTypeColor}`}
+          className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${fryerTypeColor}`}
         >
           {oilChange.fryerType}
         </span>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
         {oilChange.usageDays ? `${oilChange.usageDays}일` : '-'}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
         <div className="max-w-xs truncate">{oilChange.notes || '-'}</div>
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
-        <div className="flex gap-2 justify-end">
+      <td className="whitespace-nowrap px-3 py-4 text-right text-sm">
+        <div className="flex justify-end gap-2">
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="text-blue-600 hover:text-blue-900 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+            className="font-medium text-blue-600 hover:text-blue-900 disabled:cursor-not-allowed disabled:opacity-50"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="text-red-600 hover:text-red-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-red-600 hover:text-red-900 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

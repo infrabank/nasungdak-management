@@ -9,10 +9,12 @@ export default async function SuppliersPage() {
     <div>
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-           <h1 className="text-3xl font-bold text-brutal-black">공급업체 관리</h1>
-           <p className="mt-2 text-sm text-brutal-black/70">
-             거래처 정보 등록 및 관리
-           </p>
+          <h1 className="text-3xl font-bold text-brutal-black">
+            공급업체 관리
+          </h1>
+          <p className="mt-2 text-sm text-brutal-black/70">
+            거래처 정보 등록 및 관리
+          </p>
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
           <SupplierForm />
@@ -21,10 +23,12 @@ export default async function SuppliersPage() {
 
       <div className="mt-8 flow-root">
         {/* Mobile View - Cards */}
-        <div className="md:hidden space-y-4">
+        <div className="space-y-4 md:hidden">
           {suppliers.length === 0 ? (
-            <div className="text-center py-10 bg-brutal-white border-3 border-dashed border-brutal-black">
-              <p className="font-medium text-brutal-black/70">등록된 공급업체가 없습니다</p>
+            <div className="border-3 border-dashed border-brutal-black bg-brutal-white py-10 text-center">
+              <p className="font-medium text-brutal-black/70">
+                등록된 공급업체가 없습니다
+              </p>
             </div>
           ) : (
             suppliers.map((supplier) => (
@@ -37,21 +41,36 @@ export default async function SuppliersPage() {
         <div className="hidden md:block">
           <div className="overflow-hidden border-3 border-brutal-black shadow-brutal">
             <table className="min-w-full">
-              <thead className="bg-brutal-yellow border-b-3 border-brutal-black">
+              <thead className="border-b-3 border-brutal-black bg-brutal-yellow">
                 <tr>
-                  <th scope="col" className="py-3.5 pl-6 pr-3 text-left text-sm font-black text-brutal-black">
+                  <th
+                    scope="col"
+                    className="py-3.5 pl-6 pr-3 text-left text-sm font-black text-brutal-black"
+                  >
                     공급업체명
                   </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
+                  <th
+                    scope="col"
+                    className="px-3 py-3.5 text-left text-sm font-black text-brutal-black"
+                  >
                     담당자
                   </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
+                  <th
+                    scope="col"
+                    className="px-3 py-3.5 text-left text-sm font-black text-brutal-black"
+                  >
                     연락처
                   </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
+                  <th
+                    scope="col"
+                    className="px-3 py-3.5 text-left text-sm font-black text-brutal-black"
+                  >
                     사업자번호
                   </th>
-                  <th scope="col" className="px-3 py-3.5 text-center text-sm font-black text-brutal-black">
+                  <th
+                    scope="col"
+                    className="px-3 py-3.5 text-center text-sm font-black text-brutal-black"
+                  >
                     활성
                   </th>
                   <th scope="col" className="relative py-3.5 pl-3 pr-6">
@@ -62,7 +81,10 @@ export default async function SuppliersPage() {
               <tbody className="divide-y-2 divide-brutal-black/20 bg-brutal-white">
                 {suppliers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-10 text-center text-sm font-medium text-brutal-black">
+                    <td
+                      colSpan={6}
+                      className="py-10 text-center text-sm font-medium text-brutal-black"
+                    >
                       등록된 공급업체가 없습니다
                     </td>
                   </tr>
@@ -81,12 +103,12 @@ export default async function SuppliersPage() {
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black/70">
                         {supplier.businessNumber || '-'}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-center">
+                      <td className="whitespace-nowrap px-3 py-4 text-center text-sm">
                         <span
-                          className={`inline-flex px-2 py-1 text-xs font-bold border-2 ${
+                          className={`inline-flex border-2 px-2 py-1 text-xs font-bold ${
                             supplier.isActive
-                              ? 'bg-brutal-green border-brutal-black text-brutal-black'
-                              : 'bg-brutal-white border-brutal-black text-brutal-black'
+                              ? 'border-brutal-black bg-brutal-green text-brutal-black'
+                              : 'border-brutal-black bg-brutal-white text-brutal-black'
                           }`}
                         >
                           {supplier.isActive ? '활성' : '비활성'}

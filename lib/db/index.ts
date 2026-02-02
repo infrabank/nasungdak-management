@@ -6,8 +6,8 @@ import * as schema from './schema'
 if (!process.env.POSTGRES_URL) {
   console.error(
     'ERROR: POSTGRES_URL environment variable is not set.\n' +
-    'Please add it in Vercel Dashboard > Settings > Environment Variables\n' +
-    'Or create a Vercel Postgres database in Storage tab.'
+      'Please add it in Vercel Dashboard > Settings > Environment Variables\n' +
+      'Or create a Vercel Postgres database in Storage tab.'
   )
 }
 

@@ -15,9 +15,9 @@ interface MenuFormProps {
 }
 
 export default function MenuForm({ menu }: MenuFormProps) {
-   const [isOpen, setIsOpen] = useState(false)
-   const [isSubmitting, setIsSubmitting] = useState(false)
-   const confirm = useConfirm()
+  const [isOpen, setIsOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const confirm = useConfirm()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -44,7 +44,14 @@ export default function MenuForm({ menu }: MenuFormProps) {
   const handleDelete = async () => {
     if (!menu) return
 
-    if (!(await confirm({ title: '확인', description: '정말 삭제하시겠습니까?', variant: 'danger' }))) return
+    if (
+      !(await confirm({
+        title: '확인',
+        description: '정말 삭제하시겠습니까?',
+        variant: 'danger',
+      }))
+    )
+      return
 
     setIsSubmitting(true)
     try {
@@ -66,8 +73,8 @@ export default function MenuForm({ menu }: MenuFormProps) {
         onClick={() => setIsOpen(true)}
         className={
           menu
-            ? 'font-bold text-brutal-black underline underline-offset-2 hover:text-brutal-yellow hover:bg-brutal-black px-1 transition-all'
-            : 'px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all'
+            ? 'px-1 font-bold text-brutal-black underline underline-offset-2 transition-all hover:bg-brutal-black hover:text-brutal-yellow'
+            : 'border-2 border-brutal-black bg-brutal-yellow px-3 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg'
         }
       >
         {menu ? '수정' : '새 메뉴 등록'}
@@ -76,17 +83,17 @@ export default function MenuForm({ menu }: MenuFormProps) {
       {isOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-             <div
-               className="fixed inset-0 bg-brutal-black/50 transition-opacity"
-               onClick={() => setIsOpen(false)}
-             />
+            <div
+              className="fixed inset-0 bg-brutal-black/50 transition-opacity"
+              onClick={() => setIsOpen(false)}
+            />
 
-            <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div className="relative transform overflow-hidden border-3 border-brutal-black bg-brutal-white px-4 pb-4 pt-5 text-left shadow-brutal-lg transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
               <form onSubmit={handleSubmit}>
                 <div>
-                   <h3 className="text-lg font-semibold leading-6 text-brutal-black mb-4">
-                     {menu ? '메뉴 수정' : '새 메뉴 등록'}
-                   </h3>
+                  <h3 className="mb-4 text-lg font-semibold leading-6 text-brutal-black">
+                    {menu ? '메뉴 수정' : '새 메뉴 등록'}
+                  </h3>
 
                   <div className="space-y-4">
                     <div>
@@ -110,19 +117,22 @@ export default function MenuForm({ menu }: MenuFormProps) {
                       />
                     </div>
 
-                     <div className="flex items-center">
-                       <input
-                         type="checkbox"
-                         name="isActive"
-                         id="isActive"
-                         value="true"
-                         defaultChecked={menu?.isActive ?? true}
-                         className="h-4 w-4 border-brutal-black text-brutal-black"
-                       />
-                       <label htmlFor="isActive" className="ml-2 block text-sm text-brutal-black">
-                         활성
-                       </label>
-                     </div>
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="isActive"
+                        id="isActive"
+                        value="true"
+                        defaultChecked={menu?.isActive ?? true}
+                        className="h-4 w-4 border-brutal-black text-brutal-black"
+                      />
+                      <label
+                        htmlFor="isActive"
+                        className="ml-2 block text-sm text-brutal-black"
+                      >
+                        활성
+                      </label>
+                    </div>
                   </div>
                 </div>
 

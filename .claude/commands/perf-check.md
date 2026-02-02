@@ -3,6 +3,7 @@ description: Check performance of specified files, or of staged/unstaged git cha
 argument-hint: [path/to/file]... (optional)
 allowed-tools: Bash(git:diff)
 ---
+
 Use the **performance-profiler** subagent to analyze code for performance issues.
 
 Your analysis target is determined by the following rules:
@@ -14,13 +15,17 @@ Your analysis target is determined by the following rules:
 ### Context from Git (if no arguments provided)
 
 **Staged Changes (Priority 1):**
+
 ```diff
 !git diff --staged
 ```
 
 **Unstaged Changes (Priority 2):**
+
 ```diff
 !git diff HEAD
 ```
+
 ---
-*Your final report should identify potential bottlenecks related to main thread blocking, memory management, and rendering performance.*
+
+_Your final report should identify potential bottlenecks related to main thread blocking, memory management, and rendering performance._

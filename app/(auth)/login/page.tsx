@@ -20,7 +20,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col justify-center bg-brutal-white py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <div className="border-3 border-brutal-black shadow-brutal-lg p-4 bg-brutal-yellow">
+          <div className="border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal-lg">
             <Image
               src="/images/logo.png"
               alt="나성닭강정 로고"
@@ -39,8 +39,8 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
-        <div className="bg-brutal-white px-6 py-8 border-3 border-brutal-black shadow-brutal-lg">
+      <div className="mt-8 px-4 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="border-3 border-brutal-black bg-brutal-white px-6 py-8 shadow-brutal-lg">
           <form action={formAction} className="space-y-5">
             {/* Email */}
             <div>
@@ -58,7 +58,7 @@ export default function LoginPage() {
                   autoComplete="email"
                   required
                   disabled={isPending}
-                  className="block w-full appearance-none px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm font-medium"
+                  className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
                   placeholder="이메일을 입력하세요"
                   style={{ minHeight: '48px', fontSize: '16px' }}
                 />
@@ -81,7 +81,7 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   required
                   disabled={isPending}
-                  className="block w-full appearance-none px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm font-medium"
+                  className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
                   placeholder="비밀번호를 입력하세요"
                   style={{ minHeight: '48px', fontSize: '16px' }}
                 />
@@ -107,7 +107,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isPending}
-                className="flex w-full justify-center px-4 py-3 text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-1 hover:-translate-y-1 active:shadow-brutal-active active:translate-x-0.5 active:translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-brutal-yellow/50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+                className="flex w-full justify-center border-2 border-brutal-black bg-brutal-yellow px-4 py-3 text-base font-bold text-brutal-black shadow-brutal transition-all duration-150 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-brutal-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-brutal-yellow/50 disabled:shadow-none"
                 style={{ minHeight: '48px' }}
               >
                 {isPending ? '로그인 중...' : '로그인'}
@@ -121,7 +121,7 @@ export default function LoginPage() {
               계정이 없으신가요?{' '}
               <Link
                 href="/signup"
-                className="font-bold text-brutal-black underline underline-offset-2 hover:text-brutal-yellow transition-colors"
+                className="font-bold text-brutal-black underline underline-offset-2 transition-colors hover:text-brutal-yellow"
               >
                 회원가입
               </Link>

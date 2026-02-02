@@ -8,10 +8,7 @@ import { z } from 'zod'
 import { employeeSchema } from '@/lib/utils/validation'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
-export async function createEmployee(
-  prevState: any,
-  formData: FormData
-) {
+export async function createEmployee(prevState: any, formData: FormData) {
   try {
     const storeId = formData.get('storeId') as string | null
 
@@ -28,7 +25,9 @@ export async function createEmployee(
       hourlyRate: formData.get('hourlyRate'),
       phone: formData.get('phone') || null,
       hireDate: formData.get('hireDate') || null,
-      isActive: formData.get('isActive') === 'true' || formData.get('isActive') === 'on',
+      isActive:
+        formData.get('isActive') === 'true' ||
+        formData.get('isActive') === 'on',
     }
 
     const validatedData = employeeSchema.parse(rawData)
@@ -64,7 +63,8 @@ export async function createEmployee(
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '직원 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '직원 등록에 실패했습니다',
     }
   }
 }
@@ -77,7 +77,9 @@ export async function updateEmployee(id: string, formData: FormData) {
       hourlyRate: formData.get('hourlyRate'),
       phone: formData.get('phone') || null,
       hireDate: formData.get('hireDate') || null,
-      isActive: formData.get('isActive') === 'true' || formData.get('isActive') === 'on',
+      isActive:
+        formData.get('isActive') === 'true' ||
+        formData.get('isActive') === 'on',
     }
 
     const validatedData = employeeSchema.parse(rawData)
@@ -114,7 +116,8 @@ export async function updateEmployee(id: string, formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '직원 수정에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '직원 수정에 실패했습니다',
     }
   }
 }
@@ -138,7 +141,8 @@ export async function deleteEmployee(id: string) {
     console.error('Failed to delete employee:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '직원 삭제에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '직원 삭제에 실패했습니다',
     }
   }
 }
@@ -152,17 +156,17 @@ export async function getEmployees(storeId?: string) {
 
     // 사용자 권한 확인
     const authorizedStoreIds = await getAuthorizedStoreIds()
-    if (authorizedStoreIds.length === 0 || !authorizedStoreIds.includes(storeId)) {
+    if (
+      authorizedStoreIds.length === 0 ||
+      !authorizedStoreIds.includes(storeId)
+    ) {
       return []
     }
 
     const records = await db
       .select()
       .from(employees)
-      .where(and(
-        isNull(employees.deletedAt),
-        eq(employees.storeId, storeId)
-      ))
+      .where(and(isNull(employees.deletedAt), eq(employees.storeId, storeId)))
       .orderBy(desc(employees.createdAt))
       .limit(1000)
 
@@ -183,18 +187,23 @@ export async function getActiveEmployees(storeId?: string) {
 
     // 사용자 권한 확인
     const authorizedStoreIds = await getAuthorizedStoreIds()
-    if (authorizedStoreIds.length === 0 || !authorizedStoreIds.includes(storeId)) {
+    if (
+      authorizedStoreIds.length === 0 ||
+      !authorizedStoreIds.includes(storeId)
+    ) {
       return []
     }
 
     const records = await db
       .select()
       .from(employees)
-      .where(and(
-        isNull(employees.deletedAt),
-        eq(employees.storeId, storeId),
-        eq(employees.isActive, true)
-      ))
+      .where(
+        and(
+          isNull(employees.deletedAt),
+          eq(employees.storeId, storeId),
+          eq(employees.isActive, true)
+        )
+      )
       .orderBy(employees.employeeName)
       .limit(1000)
 

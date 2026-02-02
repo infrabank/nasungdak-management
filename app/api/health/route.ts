@@ -22,9 +22,9 @@ const startTime = Date.now()
 
 /**
  * GET /api/health
- * 
+ *
  * 헬스체크 엔드포인트 - 시스템 상태 확인
- * 
+ *
  * 응답 예시:
  * ```json
  * {
@@ -56,7 +56,8 @@ export async function GET() {
   }
 
   // 상태에 따른 HTTP 상태 코드
-  const httpStatus = status.status === 'healthy' ? 200 : status.status === 'degraded' ? 200 : 503
+  const httpStatus =
+    status.status === 'healthy' ? 200 : status.status === 'degraded' ? 200 : 503
 
   return NextResponse.json(status, { status: httpStatus })
 }
@@ -79,14 +80,15 @@ async function checkDatabase(): Promise<CheckResult> {
     return {
       status: 'fail',
       responseTime: Date.now() - start,
-      message: error instanceof Error ? error.message : 'Database connection failed',
+      message:
+        error instanceof Error ? error.message : 'Database connection failed',
     }
   }
 }
 
 /**
  * HEAD /api/health
- * 
+ *
  * 간단한 활성 상태 체크 (모니터링 도구용)
  */
 export async function HEAD() {

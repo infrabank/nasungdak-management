@@ -61,7 +61,11 @@ export default function SalesList({
     }
 
     if (
-      !(await confirm({ title: '확인', description: `선택한 ${selectedIds.size}건의 판매 기록을 삭제하시겠습니까?`, variant: 'danger' }))
+      !(await confirm({
+        title: '확인',
+        description: `선택한 ${selectedIds.size}건의 판매 기록을 삭제하시겠습니까?`,
+        variant: 'danger',
+      }))
     ) {
       return
     }
@@ -86,7 +90,7 @@ export default function SalesList({
       {/* Summary - Sticky on Mobile */}
       {sales.length > 0 && (
         <div className="sticky top-0 z-10 mb-4 md:static">
-          <div className="bg-brutal-green border-3 border-brutal-black shadow-brutal p-4">
+          <div className="border-3 border-brutal-black bg-brutal-green p-4 shadow-brutal">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-bold text-brutal-black">
@@ -109,14 +113,14 @@ export default function SalesList({
 
       {/* Selection Actions */}
       {selectedIds.size > 0 && (
-        <div className="mb-4 flex items-center justify-between bg-brutal-blue border-3 border-brutal-black shadow-brutal p-4">
+        <div className="mb-4 flex items-center justify-between border-3 border-brutal-black bg-brutal-blue p-4 shadow-brutal">
           <span className="text-sm font-bold text-brutal-black">
             {selectedIds.size}개 항목 선택됨
           </span>
           <button
             onClick={handleBulkDelete}
             disabled={isDeleting}
-            className="inline-flex items-center bg-brutal-pink border-2 border-brutal-black px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+            className="inline-flex items-center border-2 border-brutal-black bg-brutal-pink px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:opacity-50"
           >
             {isDeleting ? '삭제 중...' : '선택 삭제'}
           </button>
@@ -126,17 +130,19 @@ export default function SalesList({
       {/* Mobile: Card List */}
       <div className="md:hidden">
         {sales.length === 0 ? (
-          <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-8 text-center">
-            <p className="font-medium text-brutal-black">판매 데이터가 없습니다.</p>
-            <p className="text-sm font-medium text-brutal-black/70 mt-1">
+          <div className="border-3 border-brutal-black bg-brutal-white p-8 text-center shadow-brutal">
+            <p className="font-medium text-brutal-black">
+              판매 데이터가 없습니다.
+            </p>
+            <p className="mt-1 text-sm font-medium text-brutal-black/70">
               일일 판매 입력 버튼을 클릭하여 시작하세요.
             </p>
           </div>
         ) : (
           <>
             {/* Mobile Select All */}
-            <div className="flex items-center justify-between mb-3 px-1">
-              <label className="flex items-center gap-2 text-sm font-bold text-brutal-black cursor-pointer">
+            <div className="mb-3 flex items-center justify-between px-1">
+              <label className="flex cursor-pointer items-center gap-2 text-sm font-bold text-brutal-black">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -175,7 +181,7 @@ export default function SalesList({
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
             <div className="overflow-hidden border-3 border-brutal-black shadow-brutal">
               <table className="min-w-full">
-                <thead className="bg-brutal-yellow border-b-3 border-brutal-black">
+                <thead className="border-b-3 border-brutal-black bg-brutal-yellow">
                   <tr>
                     <th
                       scope="col"
@@ -190,7 +196,7 @@ export default function SalesList({
                           }
                         }}
                         onChange={handleSelectAll}
-                        className="h-4 w-4 border-2 border-brutal-black text-brutal-black focus:ring-brutal-black cursor-pointer"
+                        className="h-4 w-4 cursor-pointer border-2 border-brutal-black text-brutal-black focus:ring-brutal-black"
                       />
                     </th>
                     <th
@@ -229,7 +235,10 @@ export default function SalesList({
                     >
                       매출액
                     </th>
-                    <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
+                    <th
+                      scope="col"
+                      className="relative py-3.5 pl-3 pr-4 sm:pr-6"
+                    >
                       <span className="sr-only">삭제</span>
                     </th>
                   </tr>
@@ -255,21 +264,21 @@ export default function SalesList({
                           onToggleSelect={() => handleSelectOne(sale.id)}
                         />
                       ))}
-                      <tr className="bg-brutal-yellow/50 font-bold border-t-3 border-brutal-black">
+                      <tr className="border-t-3 border-brutal-black bg-brutal-yellow/50 font-bold">
                         <td className="py-4 pl-4 pr-3 text-sm sm:pl-6"></td>
                         <td
                           colSpan={3}
-                          className="px-3 py-4 text-sm text-right text-brutal-black"
+                          className="px-3 py-4 text-right text-sm text-brutal-black"
                         >
                           검색 기간 합계 ({totalCount}건)
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right">
+                        <td className="whitespace-nowrap px-3 py-4 text-right text-sm text-brutal-black">
                           {totalQuantity}개
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right">
+                        <td className="whitespace-nowrap px-3 py-4 text-right text-sm text-brutal-black">
                           -
                         </td>
-                        <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-black">
+                        <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-black text-brutal-black">
                           {formatCurrency(totalRevenue)}
                         </td>
                         <td></td>

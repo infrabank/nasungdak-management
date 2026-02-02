@@ -75,13 +75,13 @@ getFilteredStoreIds(requestedStoreId: string): Promise<string[]>
 
 ### 4. 기본 역할 시드 (scripts/seed-roles.ts)
 
-| 역할 | 설명 |
-|------|------|
+| 역할        | 설명               |
+| ----------- | ------------------ |
 | super_admin | 시스템 전체 관리자 |
-| store_owner | 매장 오너 |
-| manager | 매장 매니저 |
-| staff | 매장 직원 |
-| viewer | 읽기 전용 |
+| store_owner | 매장 오너          |
+| manager     | 매장 매니저        |
+| staff       | 매장 직원          |
+| viewer      | 읽기 전용          |
 
 ---
 
@@ -103,6 +103,7 @@ npx tsx scripts/seed-roles.ts
 ### Step 2: 기존 인증에서 새 인증으로 전환
 
 **현재 인증 (단일 비밀번호):**
+
 ```typescript
 // app/(auth)/login/actions.ts
 const passwordHash = process.env.AUTH_PASSWORD_HASH
@@ -110,6 +111,7 @@ const isValid = await bcrypt.compare(password, passwordHash)
 ```
 
 **새 인증 (사용자 계정):**
+
 ```typescript
 // lib/auth.ts
 import { authenticateUser } from '@/lib/auth'
@@ -119,16 +121,18 @@ const result = await authenticateUser(email, password)
 **점진적 전환 방법:**
 
 1. 환경변수로 인증 모드 전환:
+
 ```env
 AUTH_MODE=legacy  # 기존 단일 비밀번호
 AUTH_MODE=users   # 새 사용자 계정
 ```
 
 2. 로그인 액션 수정:
+
 ```typescript
 export async function login(formData: FormData) {
   const authMode = process.env.AUTH_MODE || 'legacy'
-  
+
   if (authMode === 'users') {
     // 새 인증
     const email = formData.get('email') as string
@@ -145,6 +149,7 @@ export async function login(formData: FormData) {
 ### Step 3: Server Actions에 권한 검증 추가
 
 **Before (현재):**
+
 ```typescript
 export async function getPurchases(storeId?: string) {
   // storeId를 클라이언트에서 받아 그대로 사용
@@ -155,24 +160,25 @@ export async function getPurchases(storeId?: string) {
 ```
 
 **After (권한 검증 추가):**
+
 ```typescript
 import { requireStoreAccess, getFilteredStoreIds } from '@/lib/auth'
 
 export async function getPurchases(storeId?: string) {
   // 권한 검증
   const auth = await requireStoreAccess(storeId || 'all')
-  
+
   // 접근 가능한 매장으로 필터링
   const allowedStoreIds = await getFilteredStoreIds(storeId || 'all')
-  
+
   if (allowedStoreIds.length === 0) {
     return { items: [], hasMore: false, page: 1 }
   }
-  
+
   // 단일 매장
   if (allowedStoreIds.length === 1) {
     conditions.push(eq(purchaseTransactions.storeId, allowedStoreIds[0]))
-  } 
+  }
   // 다중 매장
   else {
     conditions.push(inArray(purchaseTransactions.storeId, allowedStoreIds))
@@ -183,11 +189,13 @@ export async function getPurchases(storeId?: string) {
 ### Step 4: 로그인 UI 수정
 
 **Before (비밀번호만):**
+
 ```tsx
 <input type="password" name="password" />
 ```
 
 **After (이메일 + 비밀번호):**
+
 ```tsx
 <input type="email" name="email" placeholder="이메일" />
 <input type="password" name="password" placeholder="비밀번호" />
@@ -269,7 +277,7 @@ try {
 ## 다음 단계
 
 1. [ ] npm run db:generate 실행
-2. [ ] npm run db:migrate 실행  
+2. [ ] npm run db:migrate 실행
 3. [ ] npx tsx scripts/seed-roles.ts 실행
 4. [ ] 로그인 페이지 수정 (이메일 입력 추가)
 5. [ ] 각 Server Action에 권한 검증 추가

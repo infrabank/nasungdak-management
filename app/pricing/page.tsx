@@ -43,7 +43,7 @@ export default function PricingPage() {
         <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
-              <div className="border-2 border-brutal-black shadow-brutal-sm p-2 bg-brutal-yellow">
+              <div className="border-2 border-brutal-black bg-brutal-yellow p-2 shadow-brutal-sm">
                 <Image
                   src="/images/logo.png"
                   alt="나성닭강정 로고"
@@ -65,7 +65,7 @@ export default function PricingPage() {
               </Link>
               <Link
                 href="/signup"
-                className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+                className="border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
               >
                 무료로 시작하기
               </Link>
@@ -75,11 +75,11 @@ export default function PricingPage() {
       </header>
 
       {/* Hero */}
-      <section className="py-16 px-4 text-center">
-        <h1 className="text-4xl sm:text-5xl font-bold text-brutal-black">
+      <section className="px-4 py-16 text-center">
+        <h1 className="text-4xl font-bold text-brutal-black sm:text-5xl">
           심플한 요금제
         </h1>
-        <p className="mt-4 text-lg text-brutal-black/70 max-w-2xl mx-auto">
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-brutal-black/70">
           매장 규모와 필요에 맞는 플랜을 선택하세요.
           <br />
           모든 플랜은 <strong>14일 무료 체험</strong>이 가능합니다.
@@ -87,25 +87,27 @@ export default function PricingPage() {
       </section>
 
       {/* Pricing Cards */}
-      <section className="pb-16 px-4">
+      <section className="px-4 pb-16">
         <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {mainPlans.map((plan, index) => {
               const isPopular = plan.id === 'standard'
               return (
                 <div
                   key={plan.id}
                   className={`relative flex flex-col border-3 border-brutal-black bg-brutal-white ${
-                    isPopular ? 'shadow-brutal-lg -translate-y-2' : 'shadow-brutal'
+                    isPopular
+                      ? '-translate-y-2 shadow-brutal-lg'
+                      : 'shadow-brutal'
                   }`}
                 >
                   {isPopular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-brutal-yellow border-2 border-brutal-black text-sm font-bold">
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 border-2 border-brutal-black bg-brutal-yellow px-4 py-1 text-sm font-bold">
                       인기
                     </div>
                   )}
 
-                  <div className="p-6 border-b-2 border-brutal-black">
+                  <div className="border-b-2 border-brutal-black p-6">
                     <h3 className="text-xl font-bold text-brutal-black">
                       {plan.nameKo}
                     </h3>
@@ -125,7 +127,7 @@ export default function PricingPage() {
                     {plan.priceYearly > 0 && (
                       <p className="mt-1 text-sm text-brutal-black/50">
                         연간 결제 시 {formatPrice(plan.priceYearly)}/년
-                        <span className="ml-1 text-green-600 font-bold">
+                        <span className="ml-1 font-bold text-green-600">
                           (
                           {Math.round(
                             (1 - plan.priceYearly / (plan.priceMonthly * 12)) *
@@ -137,23 +139,27 @@ export default function PricingPage() {
                     )}
                   </div>
 
-                  <div className="p-6 flex-1">
-                    <p className="text-sm font-bold text-brutal-black mb-3">
+                  <div className="flex-1 p-6">
+                    <p className="mb-3 text-sm font-bold text-brutal-black">
                       포함된 기능:
                     </p>
                     <ul className="space-y-2">
                       <li className="flex items-center gap-2 text-sm">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <Check className="h-4 w-4 flex-shrink-0 text-green-600" />
                         <span>
                           매장{' '}
-                          {plan.maxStores === -1 ? '무제한' : `${plan.maxStores}개`}
+                          {plan.maxStores === -1
+                            ? '무제한'
+                            : `${plan.maxStores}개`}
                         </span>
                       </li>
                       <li className="flex items-center gap-2 text-sm">
-                        <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <Check className="h-4 w-4 flex-shrink-0 text-green-600" />
                         <span>
                           사용자{' '}
-                          {plan.maxUsers === -1 ? '무제한' : `${plan.maxUsers}명`}
+                          {plan.maxUsers === -1
+                            ? '무제한'
+                            : `${plan.maxUsers}명`}
                         </span>
                       </li>
                       {plan.features.slice(0, 5).map((feature) => (
@@ -161,12 +167,12 @@ export default function PricingPage() {
                           key={feature.key}
                           className="flex items-center gap-2 text-sm"
                         >
-                          <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
+                          <Check className="h-4 w-4 flex-shrink-0 text-green-600" />
                           <span>{feature.name}</span>
                         </li>
                       ))}
                       {plan.features.length > 5 && (
-                        <li className="text-sm text-brutal-black/50 pl-6">
+                        <li className="pl-6 text-sm text-brutal-black/50">
                           +{plan.features.length - 5}개 더...
                         </li>
                       )}
@@ -176,13 +182,15 @@ export default function PricingPage() {
                   <div className="p-6 pt-0">
                     <Link
                       href="/signup"
-                      className={`block w-full text-center px-4 py-3 text-sm font-bold border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all ${
+                      className={`block w-full border-2 border-brutal-black px-4 py-3 text-center text-sm font-bold shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg ${
                         isPopular
                           ? 'bg-brutal-yellow text-brutal-black'
                           : 'bg-brutal-white text-brutal-black'
                       }`}
                     >
-                      {plan.id === 'free' ? '무료로 시작하기' : '14일 무료 체험'}
+                      {plan.id === 'free'
+                        ? '무료로 시작하기'
+                        : '14일 무료 체험'}
                     </Link>
                   </div>
                 </div>
@@ -192,35 +200,37 @@ export default function PricingPage() {
 
           {/* Enterprise */}
           {enterprisePlan && (
-            <div className="mt-12 border-3 border-brutal-black bg-brutal-black text-brutal-white p-8">
-              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="mt-12 border-3 border-brutal-black bg-brutal-black p-8 text-brutal-white">
+              <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
                 <div>
-                  <h3 className="text-2xl font-bold">{enterprisePlan.nameKo}</h3>
+                  <h3 className="text-2xl font-bold">
+                    {enterprisePlan.nameKo}
+                  </h3>
                   <p className="mt-2 text-brutal-white/80">
                     {enterprisePlan.description}
                   </p>
                   <ul className="mt-4 flex flex-wrap gap-4 text-sm">
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-brutal-yellow" />
+                      <Check className="h-4 w-4 text-brutal-yellow" />
                       무제한 매장 및 사용자
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-brutal-yellow" />
+                      <Check className="h-4 w-4 text-brutal-yellow" />
                       SSO 및 화이트 라벨
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-brutal-yellow" />
+                      <Check className="h-4 w-4 text-brutal-yellow" />
                       전담 기술 지원
                     </li>
                     <li className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-brutal-yellow" />
+                      <Check className="h-4 w-4 text-brutal-yellow" />
                       맞춤 개발
                     </li>
                   </ul>
                 </div>
                 <Link
                   href="mailto:enterprise@nasungchicken.com"
-                  className="px-8 py-3 text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-yellow hover:bg-brutal-white transition-colors flex-shrink-0"
+                  className="flex-shrink-0 border-2 border-brutal-yellow bg-brutal-yellow px-8 py-3 text-base font-bold text-brutal-black transition-colors hover:bg-brutal-white"
                 >
                   영업팀 문의
                 </Link>
@@ -231,9 +241,9 @@ export default function PricingPage() {
       </section>
 
       {/* Feature Comparison Table */}
-      <section className="py-16 px-4 bg-brutal-white border-t-3 border-brutal-black">
+      <section className="border-t-3 border-brutal-black bg-brutal-white px-4 py-16">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-3xl font-bold text-brutal-black text-center mb-12">
+          <h2 className="mb-12 text-center text-3xl font-bold text-brutal-black">
             기능 비교
           </h2>
 
@@ -241,13 +251,13 @@ export default function PricingPage() {
             <table className="w-full border-3 border-brutal-black">
               <thead>
                 <tr className="bg-brutal-black text-brutal-white">
-                  <th className="p-4 text-left font-bold border-r-2 border-brutal-white/20">
+                  <th className="border-r-2 border-brutal-white/20 p-4 text-left font-bold">
                     기능
                   </th>
                   {mainPlans.map((plan) => (
                     <th
                       key={plan.id}
-                      className="p-4 text-center font-bold border-r-2 border-brutal-white/20 last:border-r-0"
+                      className="border-r-2 border-brutal-white/20 p-4 text-center font-bold last:border-r-0"
                     >
                       {plan.nameKo}
                     </th>
@@ -264,9 +274,9 @@ export default function PricingPage() {
                         index % 2 === 0 ? 'bg-brutal-white' : 'bg-gray-50'
                       }
                     >
-                      <td className="p-4 border-r-2 border-brutal-black font-medium">
+                      <td className="border-r-2 border-brutal-black p-4 font-medium">
                         {feature.name}
-                        <p className="text-xs text-brutal-black/50 mt-1">
+                        <p className="mt-1 text-xs text-brutal-black/50">
                           {feature.description}
                         </p>
                       </td>
@@ -277,12 +287,12 @@ export default function PricingPage() {
                         return (
                           <td
                             key={plan.id}
-                            className="p-4 text-center border-r-2 border-brutal-black last:border-r-0"
+                            className="border-r-2 border-brutal-black p-4 text-center last:border-r-0"
                           >
                             {hasFeature ? (
-                              <Check className="w-5 h-5 text-green-600 mx-auto" />
+                              <Check className="mx-auto h-5 w-5 text-green-600" />
                             ) : (
-                              <X className="w-5 h-5 text-brutal-black/30 mx-auto" />
+                              <X className="mx-auto h-5 w-5 text-brutal-black/30" />
                             )}
                           </td>
                         )
@@ -297,9 +307,9 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="py-16 px-4">
+      <section className="px-4 py-16">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-3xl font-bold text-brutal-black text-center mb-12">
+          <h2 className="mb-12 text-center text-3xl font-bold text-brutal-black">
             자주 묻는 질문
           </h2>
 
@@ -328,7 +338,7 @@ export default function PricingPage() {
             ].map((faq, index) => (
               <div
                 key={index}
-                className="border-2 border-brutal-black p-6 bg-brutal-white"
+                className="border-2 border-brutal-black bg-brutal-white p-6"
               >
                 <h3 className="font-bold text-brutal-black">{faq.q}</h3>
                 <p className="mt-2 text-brutal-black/70">{faq.a}</p>
@@ -339,17 +349,18 @@ export default function PricingPage() {
       </section>
 
       {/* CTA */}
-      <section className="py-16 px-4 bg-brutal-yellow border-t-3 border-brutal-black">
+      <section className="border-t-3 border-brutal-black bg-brutal-yellow px-4 py-16">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="text-3xl font-bold text-brutal-black">
             지금 바로 시작하세요
           </h2>
           <p className="mt-4 text-lg text-brutal-black/80">
-            14일 무료 체험으로 나성닭강정 관리 시스템의 모든 기능을 경험해보세요.
+            14일 무료 체험으로 나성닭강정 관리 시스템의 모든 기능을
+            경험해보세요.
           </p>
           <Link
             href="/signup"
-            className="inline-block mt-8 px-8 py-4 text-lg font-bold text-brutal-white bg-brutal-black border-2 border-brutal-black hover:bg-brutal-black/90 transition-colors"
+            className="mt-8 inline-block border-2 border-brutal-black bg-brutal-black px-8 py-4 text-lg font-bold text-brutal-white transition-colors hover:bg-brutal-black/90"
           >
             무료로 시작하기
           </Link>
@@ -357,7 +368,7 @@ export default function PricingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-4 border-t-3 border-brutal-black bg-brutal-white">
+      <footer className="border-t-3 border-brutal-black bg-brutal-white px-4 py-8">
         <div className="mx-auto max-w-7xl text-center text-sm text-brutal-black/70">
           <p>© 2024 나성닭강정. All rights reserved.</p>
         </div>

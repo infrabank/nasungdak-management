@@ -22,7 +22,6 @@ export async function createMenuIngredient(formData: FormData) {
       requiredQuantity: formData.get('requiredQuantity'),
     }
 
-
     const validatedData = menuIngredientSchema.parse(rawData)
 
     // Check if mapping already exists
@@ -71,7 +70,8 @@ export async function createMenuIngredient(formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '매핑 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '매핑 등록에 실패했습니다',
     }
   }
 }
@@ -96,10 +96,12 @@ export async function updateMenuIngredient(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(and(
-        eq(menuIngredients.id, id),
-        eq(menuIngredients.organizationId, organizationId)
-      ))
+      .where(
+        and(
+          eq(menuIngredients.id, id),
+          eq(menuIngredients.organizationId, organizationId)
+        )
+      )
       .returning()
 
     revalidatePath('/dashboard/master-data/menu-ingredients')
@@ -120,7 +122,8 @@ export async function updateMenuIngredient(id: string, formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '매핑 수정에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '매핑 수정에 실패했습니다',
     }
   }
 }
@@ -134,10 +137,12 @@ export async function deleteMenuIngredient(id: string) {
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(and(
-        eq(menuIngredients.id, id),
-        eq(menuIngredients.organizationId, organizationId)
-      ))
+      .where(
+        and(
+          eq(menuIngredients.id, id),
+          eq(menuIngredients.organizationId, organizationId)
+        )
+      )
 
     revalidatePath('/dashboard/master-data/menu-ingredients')
 
@@ -148,7 +153,8 @@ export async function deleteMenuIngredient(id: string) {
     console.error('Failed to delete menu-ingredient mapping:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '매핑 삭제에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '매핑 삭제에 실패했습니다',
     }
   }
 }
@@ -169,10 +175,14 @@ export async function getMenuIngredients() {
       .from(menuIngredients)
       .leftJoin(menuCategories, eq(menuIngredients.menuId, menuCategories.id))
       .leftJoin(ingredients, eq(menuIngredients.ingredientId, ingredients.id))
-      .where(and(
-        isNull(menuIngredients.deletedAt),
-        organizationId ? eq(menuIngredients.organizationId, organizationId) : undefined
-      ))
+      .where(
+        and(
+          isNull(menuIngredients.deletedAt),
+          organizationId
+            ? eq(menuIngredients.organizationId, organizationId)
+            : undefined
+        )
+      )
       .orderBy(menuCategories.menuName, ingredients.ingredientName)
 
     return mappings
@@ -191,11 +201,15 @@ export async function getMenus() {
         menuName: menuCategories.menuName,
       })
       .from(menuCategories)
-      .where(and(
-        isNull(menuCategories.deletedAt),
-        eq(menuCategories.isActive, true),
-        organizationId ? eq(menuCategories.organizationId, organizationId) : undefined
-      ))
+      .where(
+        and(
+          isNull(menuCategories.deletedAt),
+          eq(menuCategories.isActive, true),
+          organizationId
+            ? eq(menuCategories.organizationId, organizationId)
+            : undefined
+        )
+      )
       .orderBy(menuCategories.menuName)
 
     return menus
@@ -215,11 +229,15 @@ export async function getIngredients() {
         unit: ingredients.unit,
       })
       .from(ingredients)
-      .where(and(
-        isNull(ingredients.deletedAt),
-        eq(ingredients.isActive, true),
-        organizationId ? eq(ingredients.organizationId, organizationId) : undefined
-      ))
+      .where(
+        and(
+          isNull(ingredients.deletedAt),
+          eq(ingredients.isActive, true),
+          organizationId
+            ? eq(ingredients.organizationId, organizationId)
+            : undefined
+        )
+      )
       .orderBy(ingredients.ingredientName)
 
     return ingredientsList

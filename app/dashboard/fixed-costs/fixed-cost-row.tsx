@@ -99,18 +99,24 @@ export default function FixedCostRow({ cost }: FixedCostRowProps) {
           <input
             type="date"
             value={editData.costDate}
-            onChange={(e) => setEditData({ ...editData, costDate: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, costDate: e.target.value })
+            }
             className={inputClass}
           />
         </td>
         <td className="whitespace-nowrap px-2 py-2 text-sm">
           <select
             value={editData.costType}
-            onChange={(e) => setEditData({ ...editData, costType: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, costType: e.target.value })
+            }
             className={selectClass}
           >
             {COST_TYPES.map((type) => (
-              <option key={type} value={type}>{type}</option>
+              <option key={type} value={type}>
+                {type}
+              </option>
             ))}
           </select>
         </td>
@@ -118,7 +124,9 @@ export default function FixedCostRow({ cost }: FixedCostRowProps) {
           <input
             type="text"
             value={editData.costName}
-            onChange={(e) => setEditData({ ...editData, costName: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, costName: e.target.value })
+            }
             className={inputClass}
           />
         </td>
@@ -128,32 +136,36 @@ export default function FixedCostRow({ cost }: FixedCostRowProps) {
             min="1"
             step="1"
             value={editData.amount}
-            onChange={(e) => setEditData({ ...editData, amount: e.target.value })}
-            className={`${inputClass} text-right w-28`}
+            onChange={(e) =>
+              setEditData({ ...editData, amount: e.target.value })
+            }
+            className={`${inputClass} w-28 text-right`}
           />
         </td>
         <td className="px-2 py-2 text-sm">
           <input
             type="text"
             value={editData.notes}
-            onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, notes: e.target.value })
+            }
             className={inputClass}
             placeholder="비고"
           />
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm text-right">
-          <div className="flex gap-1 justify-end">
+        <td className="whitespace-nowrap px-2 py-2 text-right text-sm">
+          <div className="flex justify-end gap-1">
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+              className="border-2 border-brutal-black bg-brutal-white px-2 py-1 text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+              className="border-2 border-brutal-black bg-brutal-yellow px-2 py-1 text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
             >
               {isSaving ? '...' : '저장'}
             </button>
@@ -178,25 +190,25 @@ export default function FixedCostRow({ cost }: FixedCostRowProps) {
       <td className="px-3 py-4 text-sm font-medium text-brutal-black">
         {cost.costName}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-bold">
+      <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold text-brutal-black">
         {formatCurrency(Number(cost.amount))}
       </td>
-      <td className="px-3 py-4 text-sm text-brutal-black/70 max-w-xs truncate">
+      <td className="max-w-xs truncate px-3 py-4 text-sm text-brutal-black/70">
         {cost.notes || '-'}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-right">
-        <div className="flex gap-2 justify-end">
+      <td className="whitespace-nowrap px-3 py-4 text-right text-sm">
+        <div className="flex justify-end gap-2">
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="px-3 py-1 text-xs font-bold text-brutal-black bg-brutal-blue border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+            className="border-2 border-brutal-black bg-brutal-blue px-3 py-1 text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="px-3 py-1 text-xs font-bold text-brutal-black bg-brutal-pink border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+            className="border-2 border-brutal-black bg-brutal-pink px-3 py-1 text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:translate-x-0 disabled:translate-y-0 disabled:opacity-50 disabled:shadow-none"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

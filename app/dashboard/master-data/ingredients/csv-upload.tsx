@@ -53,22 +53,24 @@ export default function CSVUpload() {
           setErrors(validationErrors.slice(0, 10)) // Show first 10 errors
         }
       },
-       error: (error) => {
-         toast.error(`CSV 파싱 오류: ${error.message}`)
-       },
-     })
-   }
+      error: (error) => {
+        toast.error(`CSV 파싱 오류: ${error.message}`)
+      },
+    })
+  }
 
-   const handleUpload = async () => {
-     if (!file) {
-       toast.error('파일을 선택해주세요')
-       return
-     }
+  const handleUpload = async () => {
+    if (!file) {
+      toast.error('파일을 선택해주세요')
+      return
+    }
 
-     if (errors.length > 0) {
-       toast.error('CSV 파일에 오류가 있습니다. 오류를 수정한 후 다시 시도해주세요.')
-       return
-     }
+    if (errors.length > 0) {
+      toast.error(
+        'CSV 파일에 오류가 있습니다. 오류를 수정한 후 다시 시도해주세요.'
+      )
+      return
+    }
 
     setIsUploading(true)
 
@@ -80,34 +82,41 @@ export default function CSVUpload() {
         try {
           const result = await bulkCreateIngredients(results.data)
 
-           if (result.success) {
-             toast.success(`성공: ${result.successCount}건 등록, 실패: ${result.failedCount}건`)
-             setIsOpen(false)
-             setFile(null)
-             setPreview([])
-             setErrors([])
-             if (fileInputRef.current) {
-               fileInputRef.current.value = ''
-             }
-           } else {
-             toast.error(`업로드 실패: ${result.error}`)
-           }
-         } catch (error) {
-           toast.error(`업로드 중 오류 발생: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
-         } finally {
-           setIsUploading(false)
-         }
-       },
-       error: (error) => {
-         toast.error(`CSV 파싱 오류: ${error.message}`)
-         setIsUploading(false)
-       },
+          if (result.success) {
+            toast.success(
+              `성공: ${result.successCount}건 등록, 실패: ${result.failedCount}건`
+            )
+            setIsOpen(false)
+            setFile(null)
+            setPreview([])
+            setErrors([])
+            if (fileInputRef.current) {
+              fileInputRef.current.value = ''
+            }
+          } else {
+            toast.error(`업로드 실패: ${result.error}`)
+          }
+        } catch (error) {
+          toast.error(
+            `업로드 중 오류 발생: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+          )
+        } finally {
+          setIsUploading(false)
+        }
+      },
+      error: (error) => {
+        toast.error(`CSV 파싱 오류: ${error.message}`)
+        setIsUploading(false)
+      },
     })
   }
 
   const downloadTemplate = () => {
-    const template = '재료명,단위,설명,활성\n닭고기,kg,신선한 닭고기,true\n고추장,g,매콤한 고추장,true'
-    const blob = new Blob(['\uFEFF' + template], { type: 'text/csv;charset=utf-8;' })
+    const template =
+      '재료명,단위,설명,활성\n닭고기,kg,신선한 닭고기,true\n고추장,g,매콤한 고추장,true'
+    const blob = new Blob(['\uFEFF' + template], {
+      type: 'text/csv;charset=utf-8;',
+    })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
     link.download = '재료_업로드_템플릿.csv'
@@ -119,7 +128,7 @@ export default function CSVUpload() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-green border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+        className="border-2 border-brutal-black bg-brutal-green px-3 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
       >
         CSV 일괄 업로드
       </button>
@@ -132,21 +141,22 @@ export default function CSVUpload() {
               onClick={() => !isUploading && setIsOpen(false)}
             />
 
-            <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
+            <div className="relative transform overflow-hidden border-3 border-brutal-black bg-brutal-white px-4 pb-4 pt-5 text-left shadow-brutal-lg transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
               <div>
-                <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
+                <h3 className="mb-4 text-lg font-semibold leading-6 text-gray-900">
                   재료 CSV 일괄 업로드
                 </h3>
 
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">
-                      CSV 파일 형식: 재료명,단위,설명,활성 (활성: true 또는 false, 기본값: true)
+                    <p className="mb-2 text-sm text-gray-600">
+                      CSV 파일 형식: 재료명,단위,설명,활성 (활성: true 또는
+                      false, 기본값: true)
                     </p>
                     <button
                       type="button"
                       onClick={downloadTemplate}
-                      className="text-sm text-blue-600 hover:text-blue-800 underline"
+                      className="text-sm text-blue-600 underline hover:text-blue-800"
                     >
                       템플릿 다운로드
                     </button>
@@ -158,16 +168,16 @@ export default function CSVUpload() {
                       type="file"
                       accept=".csv"
                       onChange={handleFileChange}
-                      className="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 focus:outline-none p-2"
+                      className="block w-full cursor-pointer rounded-md border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:outline-none"
                     />
                   </div>
 
                   {errors.length > 0 && (
-                    <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                      <p className="text-sm font-semibold text-red-800 mb-2">
+                    <div className="rounded-md border border-red-200 bg-red-50 p-3">
+                      <p className="mb-2 text-sm font-semibold text-red-800">
                         오류가 발견되었습니다:
                       </p>
-                      <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+                      <ul className="list-inside list-disc space-y-1 text-sm text-red-700">
                         {errors.map((error, index) => (
                           <li key={index}>{error}</li>
                         ))}
@@ -177,26 +187,42 @@ export default function CSVUpload() {
 
                   {preview.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-gray-700 mb-2">
+                      <p className="mb-2 text-sm font-semibold text-gray-700">
                         미리보기 (처음 5개 행)
                       </p>
-                      <div className="overflow-x-auto border rounded-md">
+                      <div className="overflow-x-auto rounded-md border">
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                           <thead className="bg-gray-50">
                             <tr>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">재료명</th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">단위</th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">설명</th>
-                              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">활성</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                                재료명
+                              </th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                                단위
+                              </th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                                설명
+                              </th>
+                              <th className="px-3 py-2 text-center text-xs font-medium text-gray-500">
+                                활성
+                              </th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
+                          <tbody className="divide-y divide-gray-200 bg-white">
                             {preview.map((row, index) => (
                               <tr key={index}>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs">{row.재료명}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs">{row.단위}</td>
-                                <td className="px-3 py-2 text-xs">{row.설명 || '-'}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs text-center">{row.활성 || 'true'}</td>
+                                <td className="whitespace-nowrap px-3 py-2 text-xs">
+                                  {row.재료명}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-2 text-xs">
+                                  {row.단위}
+                                </td>
+                                <td className="px-3 py-2 text-xs">
+                                  {row.설명 || '-'}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-2 text-center text-xs">
+                                  {row.활성 || 'true'}
+                                </td>
                               </tr>
                             ))}
                           </tbody>

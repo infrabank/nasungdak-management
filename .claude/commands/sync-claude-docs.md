@@ -21,6 +21,7 @@ If arguments are provided, try to sync only that specific page. Otherwise, sync 
 Run the documentation sync script located at `sync-docs.py` in the current directory.
 
 After syncing, provide a brief summary of:
+
 - How many files were updated
-- Any errors encountered  
+- Any errors encountered
 - Total documentation pages available locally

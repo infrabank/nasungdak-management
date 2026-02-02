@@ -38,15 +38,15 @@ export default function SalesForm({ storeId }: SalesFormProps) {
     })
   }, [])
 
-   const handleQuantityChange = useCallback((skuId: string, value: string) => {
-     // Only allow positive integers or empty string
-     if (value === '' || /^\d+$/.test(value)) {
-       setQuantities((prev) => ({
-         ...prev,
-         [skuId]: value,
-       }))
-     }
-   }, [])
+  const handleQuantityChange = useCallback((skuId: string, value: string) => {
+    // Only allow positive integers or empty string
+    if (value === '' || /^\d+$/.test(value)) {
+      setQuantities((prev) => ({
+        ...prev,
+        [skuId]: value,
+      }))
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -99,20 +99,20 @@ export default function SalesForm({ storeId }: SalesFormProps) {
     }
   }
 
-   const getTotalRevenue = useMemo(() => {
-     return skus.reduce((total, sku) => {
-       const qty = Number(quantities[sku.id] || 0)
-       return total + qty * Number(sku.unitPrice)
-     }, 0)
-   }, [skus, quantities])
+  const getTotalRevenue = useMemo(() => {
+    return skus.reduce((total, sku) => {
+      const qty = Number(quantities[sku.id] || 0)
+      return total + qty * Number(sku.unitPrice)
+    }, 0)
+  }, [skus, quantities])
 
-   const getEnteredCount = useMemo(() => {
-     return Object.values(quantities).filter((q) => q && Number(q) > 0).length
-   }, [quantities])
+  const getEnteredCount = useMemo(() => {
+    return Object.values(quantities).filter((q) => q && Number(q) > 0).length
+  }, [quantities])
 
-   if (isLoading) {
+  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
+      <div className="flex min-h-[400px] items-center justify-center">
         <div className="font-bold text-brutal-black">로딩 중...</div>
       </div>
     )
@@ -120,41 +120,39 @@ export default function SalesForm({ storeId }: SalesFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="pb-32">
-       {/* Date selection */}
-       <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
-         <h3 className="text-sm font-black text-brutal-black uppercase tracking-wide mb-4">
-           판매 정보
-         </h3>
-         <div>
-           <Label htmlFor="saleDate">
-             📅 판매 날짜
-           </Label>
-           <Input
-             type="date"
-             id="saleDate"
-             value={saleDate}
-             onChange={(e) => setSaleDate(e.target.value)}
-             required
-           />
-         </div>
-       </div>
+      {/* Date selection */}
+      <div className="mb-4 border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal">
+        <h3 className="mb-4 text-sm font-black uppercase tracking-wide text-brutal-black">
+          판매 정보
+        </h3>
+        <div>
+          <Label htmlFor="saleDate">📅 판매 날짜</Label>
+          <Input
+            type="date"
+            id="saleDate"
+            value={saleDate}
+            onChange={(e) => setSaleDate(e.target.value)}
+            required
+          />
+        </div>
+      </div>
 
       {/* SKU list */}
       <div className="mb-4">
-         <div className="flex items-center justify-between mb-3 px-1">
-           <h3 className="text-sm font-black text-brutal-black uppercase tracking-wide">
-             SKU별 판매량 입력
-             {getEnteredCount > 0 && (
-               <span className="ml-2 text-brutal-black font-black">
-                 ({getEnteredCount}개 입력됨)
-               </span>
-             )}
-           </h3>
-         </div>
+        <div className="mb-3 flex items-center justify-between px-1">
+          <h3 className="text-sm font-black uppercase tracking-wide text-brutal-black">
+            SKU별 판매량 입력
+            {getEnteredCount > 0 && (
+              <span className="ml-2 font-black text-brutal-black">
+                ({getEnteredCount}개 입력됨)
+              </span>
+            )}
+          </h3>
+        </div>
 
         <div className="space-y-3">
           {skus.length === 0 ? (
-            <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-8 text-center font-medium text-brutal-black">
+            <div className="border-3 border-brutal-black bg-brutal-white p-8 text-center font-medium text-brutal-black shadow-brutal">
               등록된 SKU가 없습니다. 먼저 기초 데이터에서 SKU를 등록해주세요.
             </div>
           ) : (
@@ -166,17 +164,17 @@ export default function SalesForm({ storeId }: SalesFormProps) {
               return (
                 <div
                   key={sku.id}
-                  className={`bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 transition-all ${
+                  className={`border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal transition-all ${
                     hasQuantity ? 'border-brutal-green bg-brutal-green/20' : ''
                   }`}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                     <div className="flex-1">
-                      <div className="flex items-baseline gap-2 flex-wrap">
-                        <h4 className="font-bold text-brutal-black text-lg">
+                      <div className="flex flex-wrap items-baseline gap-2">
+                        <h4 className="text-lg font-bold text-brutal-black">
                           {sku.skuName}
                         </h4>
-                        <span className="text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black px-2 py-0.5">
+                        <span className="border-2 border-brutal-black bg-brutal-yellow px-2 py-0.5 text-sm font-bold text-brutal-black">
                           {sku.menuName}
                         </span>
                       </div>
@@ -185,24 +183,24 @@ export default function SalesForm({ storeId }: SalesFormProps) {
                       </p>
                     </div>
 
-                     <div className="flex items-center justify-between sm:justify-end gap-4">
-                       <div className="flex items-center gap-2">
-                         <Input
-                           type="text"
-                           inputMode="numeric"
-                           value={quantities[sku.id] || ''}
-                           onChange={(e) =>
-                             handleQuantityChange(sku.id, e.target.value)
-                           }
-                           placeholder="0"
-                           className="w-24 text-right font-black text-lg"
-                         />
-                         <span className="text-brutal-black font-bold">개</span>
-                       </div>
+                    <div className="flex items-center justify-between gap-4 sm:justify-end">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="text"
+                          inputMode="numeric"
+                          value={quantities[sku.id] || ''}
+                          onChange={(e) =>
+                            handleQuantityChange(sku.id, e.target.value)
+                          }
+                          placeholder="0"
+                          className="w-24 text-right text-lg font-black"
+                        />
+                        <span className="font-bold text-brutal-black">개</span>
+                      </div>
 
-                      <div className="text-right w-24 sm:w-32">
+                      <div className="w-24 text-right sm:w-32">
                         {hasQuantity ? (
-                          <div className="font-black text-brutal-black text-lg">
+                          <div className="text-lg font-black text-brutal-black">
                             {formatCurrency(revenue)}
                           </div>
                         ) : (
@@ -218,21 +216,23 @@ export default function SalesForm({ storeId }: SalesFormProps) {
         </div>
       </div>
 
-       {/* Total - Sticky */}
-       <div className="sticky bottom-24 z-10">
-         <div className="pt-4 -mx-4 px-4">
-           <div className="bg-brutal-pink border-3 border-brutal-black shadow-brutal p-4 text-center">
-             <span className="text-sm font-bold text-brutal-black">총 매출액</span>
-             <p className="text-2xl font-black text-brutal-black">
-               {formatCurrency(getTotalRevenue)}
-             </p>
-           </div>
-         </div>
-       </div>
+      {/* Total - Sticky */}
+      <div className="sticky bottom-24 z-10">
+        <div className="-mx-4 px-4 pt-4">
+          <div className="border-3 border-brutal-black bg-brutal-pink p-4 text-center shadow-brutal">
+            <span className="text-sm font-bold text-brutal-black">
+              총 매출액
+            </span>
+            <p className="text-2xl font-black text-brutal-black">
+              {formatCurrency(getTotalRevenue)}
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Fixed Bottom Action Bar - positioned above bottom nav on mobile */}
-      <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-brutal-yellow border-t-3 border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4 z-20">
-        <div className="flex gap-3 max-w-lg mx-auto">
+      <div className="fixed bottom-14 left-0 right-0 z-20 border-t-3 border-brutal-black bg-brutal-yellow p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:bottom-0 lg:pb-4">
+        <div className="mx-auto flex max-w-lg gap-3">
           <Button
             type="button"
             variant="secondary"
@@ -244,20 +244,19 @@ export default function SalesForm({ storeId }: SalesFormProps) {
               )
             }
             disabled={isSubmitting}
-            className="flex-1 py-3 text-base h-12"
+            className="h-12 flex-1 py-3 text-base"
           >
             취소
           </Button>
-           <Button
-             type="submit"
-             disabled={isSubmitting || getEnteredCount === 0}
-             className="flex-1 py-3 text-base h-12"
-           >
-             {isSubmitting ? '저장 중...' : '판매 등록'}
-           </Button>
+          <Button
+            type="submit"
+            disabled={isSubmitting || getEnteredCount === 0}
+            className="h-12 flex-1 py-3 text-base"
+          >
+            {isSubmitting ? '저장 중...' : '판매 등록'}
+          </Button>
         </div>
       </div>
     </form>
   )
 }
-

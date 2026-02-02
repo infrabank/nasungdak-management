@@ -55,7 +55,14 @@ export default function SalesCard({
   }, [isEditing, skuList.length])
 
   const handleDelete = async () => {
-    if (!(await confirm({ title: '확인', description: '이 판매 기록을 삭제하시겠습니까?', variant: 'danger' }))) return
+    if (
+      !(await confirm({
+        title: '확인',
+        description: '이 판매 기록을 삭제하시겠습니까?',
+        variant: 'danger',
+      }))
+    )
+      return
 
     setIsDeleting(true)
     const result = await deleteSalesRecord(sale.id)
@@ -105,43 +112,56 @@ export default function SalesCard({
 
   if (isEditing) {
     return (
-      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
-        <div className="p-4 bg-brutal-blue border-b-3 border-brutal-black">
+      <div className="overflow-hidden border-3 border-brutal-black bg-brutal-white shadow-brutal">
+        <div className="border-b-3 border-brutal-black bg-brutal-blue p-4">
           <p className="font-bold text-brutal-black">판매 수정</p>
         </div>
-        <div className="p-4 space-y-3">
+        <div className="space-y-3 p-4">
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">날짜</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              날짜
+            </label>
             <input
               type="date"
               value={editData.saleDate}
-              onChange={(e) => setEditData({ ...editData, saleDate: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, saleDate: e.target.value })
+              }
               className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">SKU</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              SKU
+            </label>
             <select
               value={editData.skuId}
-              onChange={(e) => setEditData({ ...editData, skuId: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, skuId: e.target.value })
+              }
               className={selectClass}
             >
               <option value="">선택하세요</option>
               {skuList.map((sku) => (
                 <option key={sku.id} value={sku.id}>
-                  {sku.menuName} - {sku.skuName} ({formatCurrency(Number(sku.unitPrice))})
+                  {sku.menuName} - {sku.skuName} (
+                  {formatCurrency(Number(sku.unitPrice))})
                 </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">판매량</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              판매량
+            </label>
             <input
               type="number"
               min="1"
               step="1"
               value={editData.quantitySold}
-              onChange={(e) => setEditData({ ...editData, quantitySold: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, quantitySold: e.target.value })
+              }
               className={inputClass}
             />
           </div>
@@ -149,14 +169,14 @@ export default function SalesCard({
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+              className="flex-1 border-2 border-brutal-black bg-brutal-white px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:opacity-50"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+              className="flex-1 border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:opacity-50"
             >
               {isSaving ? '저장 중...' : '저장'}
             </button>
@@ -168,13 +188,13 @@ export default function SalesCard({
 
   return (
     <div
-      className={`bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden transition-all ${
+      className={`overflow-hidden border-3 border-brutal-black bg-brutal-white shadow-brutal transition-all ${
         isSelected ? 'border-brutal-blue' : ''
       } ${isDeleting ? 'opacity-50' : ''}`}
     >
       {/* Card Header */}
       <div
-        className="flex items-center justify-between p-4 bg-brutal-yellow/30 border-b-2 border-brutal-black cursor-pointer"
+        className="flex cursor-pointer items-center justify-between border-b-2 border-brutal-black bg-brutal-yellow/30 p-4"
         onClick={onToggleSelect}
       >
         <div className="flex items-center gap-3">
@@ -183,7 +203,7 @@ export default function SalesCard({
             checked={isSelected}
             onChange={onToggleSelect}
             onClick={(e) => e.stopPropagation()}
-            className="h-5 w-5 border-2 border-brutal-black text-brutal-black focus:ring-brutal-black cursor-pointer"
+            className="h-5 w-5 cursor-pointer border-2 border-brutal-black text-brutal-black focus:ring-brutal-black"
           />
           <div>
             <p className="text-sm font-bold text-brutal-black">
@@ -203,13 +223,15 @@ export default function SalesCard({
           <p className="text-lg font-bold text-brutal-black">
             {sale.menuName || '-'}
           </p>
-          <p className="text-sm font-medium text-brutal-black/70">{sale.skuName || '-'}</p>
+          <p className="text-sm font-medium text-brutal-black/70">
+            {sale.skuName || '-'}
+          </p>
         </div>
 
         {/* Quantity & Price */}
-        <div className="grid grid-cols-2 gap-3 py-3 border-t-2 border-brutal-black/20">
+        <div className="grid grid-cols-2 gap-3 border-t-2 border-brutal-black/20 py-3">
           <div>
-            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">
+            <p className="text-xs font-bold uppercase tracking-wide text-brutal-black/70">
               판매량
             </p>
             <p className="text-base font-bold text-brutal-black">
@@ -217,7 +239,7 @@ export default function SalesCard({
             </p>
           </div>
           <div>
-            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">
+            <p className="text-xs font-bold uppercase tracking-wide text-brutal-black/70">
               단가
             </p>
             <p className="text-base font-bold text-brutal-black">
@@ -227,18 +249,18 @@ export default function SalesCard({
         </div>
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-3 border-t-2 border-brutal-black/20">
+        <div className="flex justify-end gap-2 border-t-2 border-brutal-black/20 pt-3">
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-blue border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="border-2 border-brutal-black bg-brutal-blue px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:cursor-not-allowed disabled:opacity-50"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-pink border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="border-2 border-brutal-black bg-brutal-pink px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

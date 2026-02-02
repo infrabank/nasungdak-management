@@ -15,15 +15,15 @@ interface InventoryItem {
 
 export default function InventoryCard({ item }: { item: InventoryItem }) {
   return (
-    <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
+    <div className="overflow-hidden border-3 border-brutal-black bg-brutal-white shadow-brutal">
       {/* Card Header */}
-      <div className="flex items-center justify-between p-4 bg-brutal-yellow border-b-3 border-brutal-black">
+      <div className="flex items-center justify-between border-b-3 border-brutal-black bg-brutal-yellow p-4">
         <div className="flex items-center gap-2">
           <span className="text-lg font-black text-brutal-black">
             📦 {item.ingredientName}
           </span>
         </div>
-        <span className="inline-flex items-center bg-brutal-blue px-2 py-1 text-xs font-bold text-brutal-black border-2 border-brutal-black">
+        <span className="inline-flex items-center border-2 border-brutal-black bg-brutal-blue px-2 py-1 text-xs font-bold text-brutal-black">
           {item.unit || '-'}
         </span>
       </div>
@@ -39,7 +39,7 @@ export default function InventoryCard({ item }: { item: InventoryItem }) {
         {/* Quantity & Date */}
         <div className="grid grid-cols-2 gap-4 border-t-2 border-brutal-black pt-4">
           <div>
-            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide mb-1">
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-brutal-black/70">
               📊 현재 재고
             </p>
             <p className="text-xl font-black text-brutal-black">
@@ -47,7 +47,7 @@ export default function InventoryCard({ item }: { item: InventoryItem }) {
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide mb-1">
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-brutal-black/70">
               📅 마지막 갱신
             </p>
             <p className="text-sm font-bold text-brutal-black">

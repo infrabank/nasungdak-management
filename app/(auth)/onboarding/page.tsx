@@ -88,7 +88,7 @@ export default function OnboardingPage() {
     <div className="flex min-h-screen flex-col justify-center bg-brutal-white py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-lg">
         <div className="flex justify-center">
-          <div className="border-3 border-brutal-black shadow-brutal-lg p-4 bg-brutal-yellow">
+          <div className="border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal-lg">
             <Image
               src="/images/logo.png"
               alt="나성닭강정 로고"
@@ -111,20 +111,20 @@ export default function OnboardingPage() {
         {/* Progress indicator */}
         <div className="mt-6 flex justify-center gap-3">
           <div
-            className={`w-3 h-3 border-2 border-brutal-black ${
+            className={`h-3 w-3 border-2 border-brutal-black ${
               step === 'organization' ? 'bg-brutal-yellow' : 'bg-brutal-black'
             }`}
           />
           <div
-            className={`w-3 h-3 border-2 border-brutal-black ${
+            className={`h-3 w-3 border-2 border-brutal-black ${
               step === 'store' ? 'bg-brutal-yellow' : 'bg-brutal-white'
             }`}
           />
         </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-lg px-4">
-        <div className="bg-brutal-white px-6 py-8 border-3 border-brutal-black shadow-brutal-lg">
+      <div className="mt-8 px-4 sm:mx-auto sm:w-full sm:max-w-lg">
+        <div className="border-3 border-brutal-black bg-brutal-white px-6 py-8 shadow-brutal-lg">
           {step === 'organization' ? (
             /* Step 1: Organization Form */
             <form action={orgAction} className="space-y-5">
@@ -143,7 +143,7 @@ export default function OnboardingPage() {
                     type="text"
                     required
                     disabled={orgPending}
-                    className="block w-full appearance-none px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm font-medium"
+                    className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
                     placeholder="나성닭강정 본사"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   />
@@ -163,7 +163,7 @@ export default function OnboardingPage() {
                 >
                   URL 슬러그 <span className="text-brutal-red">*</span>
                 </label>
-                <div className="mt-2 relative">
+                <div className="relative mt-2">
                   <input
                     id="slug"
                     name="slug"
@@ -171,7 +171,7 @@ export default function OnboardingPage() {
                     required
                     disabled={orgPending}
                     onChange={handleSlugChange}
-                    className="block w-full appearance-none px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm font-medium"
+                    className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
                     placeholder="nasung-chicken"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   />
@@ -181,12 +181,12 @@ export default function OnboardingPage() {
                     </span>
                   )}
                   {!slugChecking && slugAvailable === true && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-green-600 font-bold">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-bold text-green-600">
                       ✓ 사용 가능
                     </span>
                   )}
                   {!slugChecking && slugAvailable === false && (
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-brutal-red font-bold">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-bold text-brutal-red">
                       ✗ 사용 불가
                     </span>
                   )}
@@ -216,7 +216,7 @@ export default function OnboardingPage() {
                     name="businessNumber"
                     type="text"
                     disabled={orgPending}
-                    className="block w-full appearance-none px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm font-medium"
+                    className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
                     placeholder="123-45-67890"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   />
@@ -238,7 +238,7 @@ export default function OnboardingPage() {
                     name="billingEmail"
                     type="email"
                     disabled={orgPending}
-                    className="block w-full appearance-none px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm font-medium"
+                    className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
                     placeholder="billing@example.com"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   />
@@ -264,7 +264,7 @@ export default function OnboardingPage() {
                 <button
                   type="submit"
                   disabled={orgPending || slugAvailable === false}
-                  className="flex w-full justify-center px-4 py-3 text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-1 hover:-translate-y-1 active:shadow-brutal-active active:translate-x-0.5 active:translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-brutal-yellow/50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+                  className="flex w-full justify-center border-2 border-brutal-black bg-brutal-yellow px-4 py-3 text-base font-bold text-brutal-black shadow-brutal transition-all duration-150 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-brutal-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-brutal-yellow/50 disabled:shadow-none"
                   style={{ minHeight: '48px' }}
                 >
                   {orgPending ? '생성 중...' : '다음 단계로'}
@@ -274,7 +274,11 @@ export default function OnboardingPage() {
           ) : (
             /* Step 2: Store Form */
             <form action={storeAction} className="space-y-5">
-              <input type="hidden" name="organizationId" value={organizationId || ''} />
+              <input
+                type="hidden"
+                name="organizationId"
+                value={organizationId || ''}
+              />
 
               {/* Store Name */}
               <div>
@@ -292,7 +296,7 @@ export default function OnboardingPage() {
                     required
                     disabled={storePending}
                     onChange={handleStoreNameChange}
-                    className="block w-full appearance-none px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm font-medium"
+                    className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
                     placeholder="나성닭강정 강남점"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   />
@@ -320,7 +324,7 @@ export default function OnboardingPage() {
                     required
                     disabled={storePending}
                     onFocus={(e) => (e.target.dataset.touched = 'true')}
-                    className="block w-full appearance-none px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm font-medium uppercase"
+                    className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium uppercase text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
                     placeholder="GN-01"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   />
@@ -349,7 +353,7 @@ export default function OnboardingPage() {
                     name="address"
                     type="text"
                     disabled={storePending}
-                    className="block w-full appearance-none px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm font-medium"
+                    className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
                     placeholder="서울시 강남구 테헤란로 123"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   />
@@ -370,7 +374,7 @@ export default function OnboardingPage() {
                     name="phone"
                     type="tel"
                     disabled={storePending}
-                    className="block w-full appearance-none px-4 py-3 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm placeholder-brutal-black/50 focus:outline-none focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm font-medium"
+                    className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
                     placeholder="02-1234-5678"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   />
@@ -392,7 +396,7 @@ export default function OnboardingPage() {
                   type="button"
                   onClick={() => setStep('organization')}
                   disabled={storePending}
-                  className="flex-1 px-4 py-3 text-base font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-1 hover:-translate-y-1 transition-all duration-150 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex-1 border-2 border-brutal-black bg-brutal-white px-4 py-3 text-base font-bold text-brutal-black shadow-brutal transition-all duration-150 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-brutal-lg disabled:cursor-not-allowed disabled:opacity-50"
                   style={{ minHeight: '48px' }}
                 >
                   이전
@@ -400,7 +404,7 @@ export default function OnboardingPage() {
                 <button
                   type="submit"
                   disabled={storePending}
-                  className="flex-1 px-4 py-3 text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-1 hover:-translate-y-1 active:shadow-brutal-active active:translate-x-0.5 active:translate-y-0.5 transition-all duration-150 disabled:cursor-not-allowed disabled:bg-brutal-yellow/50 disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+                  className="flex-1 border-2 border-brutal-black bg-brutal-yellow px-4 py-3 text-base font-bold text-brutal-black shadow-brutal transition-all duration-150 hover:-translate-x-1 hover:-translate-y-1 hover:shadow-brutal-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active disabled:translate-x-0 disabled:translate-y-0 disabled:cursor-not-allowed disabled:bg-brutal-yellow/50 disabled:shadow-none"
                   style={{ minHeight: '48px' }}
                 >
                   {storePending ? '생성 중...' : '완료'}
@@ -410,7 +414,7 @@ export default function OnboardingPage() {
           )}
 
           {/* Trial info */}
-          <div className="mt-6 p-4 bg-brutal-yellow/20 border-2 border-brutal-black">
+          <div className="mt-6 border-2 border-brutal-black bg-brutal-yellow/20 p-4">
             <p className="text-sm font-medium text-brutal-black">
               🎉 <strong>14일 무료 체험</strong>이 시작됩니다!
               <br />

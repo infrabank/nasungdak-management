@@ -1,7 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createMenuIngredient, updateMenuIngredient, deleteMenuIngredient, getMenus, getIngredients } from './actions'
+import {
+  createMenuIngredient,
+  updateMenuIngredient,
+  deleteMenuIngredient,
+  getMenus,
+  getIngredients,
+} from './actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -21,19 +27,27 @@ interface MenuIngredientFormProps {
   }
 }
 
-export default function MenuIngredientForm({ mapping }: MenuIngredientFormProps) {
+export default function MenuIngredientForm({
+  mapping,
+}: MenuIngredientFormProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [menus, setMenus] = useState<Array<{ id: string; menuName: string }>>([])
-  const [ingredientsList, setIngredientsList] = useState<Array<{ id: string; ingredientName: string; unit: string }>>([])
+  const [menus, setMenus] = useState<Array<{ id: string; menuName: string }>>(
+    []
+  )
+  const [ingredientsList, setIngredientsList] = useState<
+    Array<{ id: string; ingredientName: string; unit: string }>
+  >([])
   const confirm = useConfirm()
 
   useEffect(() => {
     if (isOpen) {
-      Promise.all([getMenus(), getIngredients()]).then(([menusData, ingredientsData]) => {
-        setMenus(menusData)
-        setIngredientsList(ingredientsData)
-      })
+      Promise.all([getMenus(), getIngredients()]).then(
+        ([menusData, ingredientsData]) => {
+          setMenus(menusData)
+          setIngredientsList(ingredientsData)
+        }
+      )
     }
   }, [isOpen])
 
@@ -62,7 +76,14 @@ export default function MenuIngredientForm({ mapping }: MenuIngredientFormProps)
   const handleDelete = async () => {
     if (!mapping) return
 
-    if (!(await confirm({ title: '확인', description: '정말 삭제하시겠습니까?', variant: 'danger' }))) return
+    if (
+      !(await confirm({
+        title: '확인',
+        description: '정말 삭제하시겠습니까?',
+        variant: 'danger',
+      }))
+    )
+      return
 
     setIsSubmitting(true)
     try {
@@ -84,8 +105,8 @@ export default function MenuIngredientForm({ mapping }: MenuIngredientFormProps)
         onClick={() => setIsOpen(true)}
         className={
           mapping
-            ? 'font-bold text-brutal-black underline underline-offset-2 hover:text-brutal-yellow hover:bg-brutal-black px-1 transition-all'
-            : 'px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all'
+            ? 'px-1 font-bold text-brutal-black underline underline-offset-2 transition-all hover:bg-brutal-black hover:text-brutal-yellow'
+            : 'border-2 border-brutal-black bg-brutal-yellow px-3 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg'
         }
       >
         {mapping ? '수정' : '매핑 추가'}
@@ -99,10 +120,10 @@ export default function MenuIngredientForm({ mapping }: MenuIngredientFormProps)
               onClick={() => setIsOpen(false)}
             />
 
-            <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div className="relative transform overflow-hidden border-3 border-brutal-black bg-brutal-white px-4 pb-4 pt-5 text-left shadow-brutal-lg transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
               <form onSubmit={handleSubmit}>
                 <div>
-                  <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
+                  <h3 className="mb-4 text-lg font-semibold leading-6 text-gray-900">
                     {mapping ? '매핑 수정' : '메뉴-재료 매핑 추가'}
                   </h3>
 

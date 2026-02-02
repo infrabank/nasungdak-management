@@ -58,24 +58,27 @@ Represents a product category sold to customers (e.g., "양념치킨", "순살�
 
 **Table**: `menu_categories`
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
-| name | VARCHAR(100) | NOT NULL, UNIQUE | Menu category name (Korean) |
-| display_order | INTEGER | NOT NULL, DEFAULT 0 | Display sort order in UI |
-| is_active | BOOLEAN | NOT NULL, DEFAULT true | Soft delete flag |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Creation timestamp |
-| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Last update timestamp |
+| Column        | Type         | Constraints                             | Description                 |
+| ------------- | ------------ | --------------------------------------- | --------------------------- |
+| id            | UUID         | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier           |
+| name          | VARCHAR(100) | NOT NULL, UNIQUE                        | Menu category name (Korean) |
+| display_order | INTEGER      | NOT NULL, DEFAULT 0                     | Display sort order in UI    |
+| is_active     | BOOLEAN      | NOT NULL, DEFAULT true                  | Soft delete flag            |
+| created_at    | TIMESTAMP    | NOT NULL, DEFAULT NOW()                 | Creation timestamp          |
+| updated_at    | TIMESTAMP    | NOT NULL, DEFAULT NOW()                 | Last update timestamp       |
 
 **Indexes**:
+
 - `idx_menu_categories_name` on `name` (for lookup performance)
 - `idx_menu_categories_active` on `is_active, display_order` (for active list queries)
 
 **Validation Rules**:
+
 - `name` must be unique and non-empty
 - `display_order` must be >= 0
 
 **Sample Data**:
+
 ```sql
 INSERT INTO menu_categories (name, display_order) VALUES
 ('양념치킨', 1),
@@ -91,23 +94,26 @@ Represents a raw material or supply item used in menu preparation.
 
 **Table**: `ingredients`
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
-| name | VARCHAR(200) | NOT NULL, UNIQUE | Ingredient name (Korean) |
-| category | VARCHAR(50) | NULL | Optional categorization (e.g., "육류", "소스", "포장") |
-| is_active | BOOLEAN | NOT NULL, DEFAULT true | Soft delete flag |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Creation timestamp |
-| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Last update timestamp |
+| Column     | Type         | Constraints                             | Description                                            |
+| ---------- | ------------ | --------------------------------------- | ------------------------------------------------------ |
+| id         | UUID         | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier                                      |
+| name       | VARCHAR(200) | NOT NULL, UNIQUE                        | Ingredient name (Korean)                               |
+| category   | VARCHAR(50)  | NULL                                    | Optional categorization (e.g., "육류", "소스", "포장") |
+| is_active  | BOOLEAN      | NOT NULL, DEFAULT true                  | Soft delete flag                                       |
+| created_at | TIMESTAMP    | NOT NULL, DEFAULT NOW()                 | Creation timestamp                                     |
+| updated_at | TIMESTAMP    | NOT NULL, DEFAULT NOW()                 | Last update timestamp                                  |
 
 **Indexes**:
+
 - `idx_ingredients_name` on `name` (for validation lookups)
 - `idx_ingredients_category` on `category, is_active` (for filtered lists)
 
 **Validation Rules**:
+
 - `name` must be unique and non-empty
 
 **Sample Data**:
+
 ```sql
 INSERT INTO ingredients (name, category) VALUES
 ('냉동 닭다리살', '육류'),
@@ -124,24 +130,28 @@ Defines which ingredients are valid for each menu category. Used for purchase en
 
 **Table**: `menu_ingredients`
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
-| menu_id | UUID | NOT NULL, FOREIGN KEY → menu_categories(id) ON DELETE CASCADE | Menu category reference |
-| ingredient_id | UUID | NOT NULL, FOREIGN KEY → ingredients(id) ON DELETE CASCADE | Ingredient reference |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Creation timestamp |
+| Column        | Type      | Constraints                                                   | Description             |
+| ------------- | --------- | ------------------------------------------------------------- | ----------------------- |
+| id            | UUID      | PRIMARY KEY, DEFAULT uuid_generate_v4()                       | Unique identifier       |
+| menu_id       | UUID      | NOT NULL, FOREIGN KEY → menu_categories(id) ON DELETE CASCADE | Menu category reference |
+| ingredient_id | UUID      | NOT NULL, FOREIGN KEY → ingredients(id) ON DELETE CASCADE     | Ingredient reference    |
+| created_at    | TIMESTAMP | NOT NULL, DEFAULT NOW()                                       | Creation timestamp      |
 
 **Constraints**:
+
 - `UNIQUE(menu_id, ingredient_id)` - Prevent duplicate menu-ingredient pairs
 
 **Indexes**:
+
 - `idx_menu_ingredients_lookup` on `(menu_id, ingredient_id)` (for validation queries)
 - `idx_menu_ingredients_menu` on `menu_id` (for menu detail pages)
 
 **Validation Rules**:
+
 - Both `menu_id` and `ingredient_id` must reference existing active records
 
 **Sample Data**:
+
 ```sql
 -- 양념치킨 uses multiple ingredients
 INSERT INTO menu_ingredients (menu_id, ingredient_id)
@@ -159,34 +169,37 @@ Represents a single purchase event of ingredients from suppliers.
 
 **Table**: `purchase_transactions`
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
-| transaction_date | DATE | NOT NULL | Purchase date |
-| menu_id | UUID | NOT NULL, FOREIGN KEY → menu_categories(id) | Menu category for this purchase |
-| ingredient_id | UUID | NOT NULL, FOREIGN KEY → ingredients(id) | Ingredient purchased |
-| supplier_name | VARCHAR(200) | NOT NULL | Supplier/vendor name |
-| quantity | DECIMAL(10,2) | NOT NULL, CHECK (quantity > 0) | Quantity purchased |
-| unit_price | DECIMAL(12,2) | NOT NULL, CHECK (unit_price >= 0) | Price per unit (₩) |
-| unit_description | VARCHAR(100) | NULL | Unit description (e.g., "10KG", "박스") |
-| total_amount | DECIMAL(14,2) | NOT NULL, GENERATED ALWAYS AS (quantity * unit_price) STORED | Calculated total (₩) |
-| is_valid | BOOLEAN | NOT NULL, DEFAULT true | Validation status (menu-ingredient combination) |
-| notes | TEXT | NULL | Optional notes |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Record creation timestamp |
-| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Last update timestamp |
+| Column           | Type          | Constraints                                                   | Description                                     |
+| ---------------- | ------------- | ------------------------------------------------------------- | ----------------------------------------------- |
+| id               | UUID          | PRIMARY KEY, DEFAULT uuid_generate_v4()                       | Unique identifier                               |
+| transaction_date | DATE          | NOT NULL                                                      | Purchase date                                   |
+| menu_id          | UUID          | NOT NULL, FOREIGN KEY → menu_categories(id)                   | Menu category for this purchase                 |
+| ingredient_id    | UUID          | NOT NULL, FOREIGN KEY → ingredients(id)                       | Ingredient purchased                            |
+| supplier_name    | VARCHAR(200)  | NOT NULL                                                      | Supplier/vendor name                            |
+| quantity         | DECIMAL(10,2) | NOT NULL, CHECK (quantity > 0)                                | Quantity purchased                              |
+| unit_price       | DECIMAL(12,2) | NOT NULL, CHECK (unit_price >= 0)                             | Price per unit (₩)                              |
+| unit_description | VARCHAR(100)  | NULL                                                          | Unit description (e.g., "10KG", "박스")         |
+| total_amount     | DECIMAL(14,2) | NOT NULL, GENERATED ALWAYS AS (quantity \* unit_price) STORED | Calculated total (₩)                            |
+| is_valid         | BOOLEAN       | NOT NULL, DEFAULT true                                        | Validation status (menu-ingredient combination) |
+| notes            | TEXT          | NULL                                                          | Optional notes                                  |
+| created_at       | TIMESTAMP     | NOT NULL, DEFAULT NOW()                                       | Record creation timestamp                       |
+| updated_at       | TIMESTAMP     | NOT NULL, DEFAULT NOW()                                       | Last update timestamp                           |
 
 **Indexes**:
+
 - `idx_purchases_date` on `transaction_date DESC` (for history queries)
 - `idx_purchases_menu_date` on `(menu_id, transaction_date)` (for period analysis)
 - `idx_purchases_validation` on `(menu_id, ingredient_id)` (for validation checks)
 
 **Validation Rules**:
+
 - `quantity` must be > 0
 - `unit_price` must be >= 0 (allow zero for promotional items)
 - `total_amount` is auto-calculated and read-only
 - `is_valid` is set based on menu_ingredients table lookup
 
 **Triggers**:
+
 ```sql
 -- Validate menu-ingredient combination on insert/update
 CREATE OR REPLACE FUNCTION validate_purchase_transaction()
@@ -215,29 +228,32 @@ Represents a product sold to customers with pricing and ingredient conversion in
 
 **Table**: `skus`
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
-| sku_code | VARCHAR(100) | NOT NULL, UNIQUE | SKU identifier (e.g., "양념치킨_봉") |
-| menu_id | UUID | NOT NULL, FOREIGN KEY → menu_categories(id) | Menu category |
-| sales_unit_name | VARCHAR(100) | NOT NULL | Display name (e.g., "봉", "박스(대)", "박스(소)") |
-| conversion_factor | DECIMAL(8,4) | NOT NULL, CHECK (conversion_factor > 0) | Conversion to base unit for cost calculation |
-| selling_price | DECIMAL(10,2) | NOT NULL, CHECK (selling_price >= 0) | Sales price (₩) |
-| description | VARCHAR(200) | NULL | Optional description (e.g., "1봉 = 95g 기준") |
-| is_active | BOOLEAN | NOT NULL, DEFAULT true | Soft delete flag |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Creation timestamp |
-| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Last update timestamp |
+| Column            | Type          | Constraints                                 | Description                                       |
+| ----------------- | ------------- | ------------------------------------------- | ------------------------------------------------- |
+| id                | UUID          | PRIMARY KEY, DEFAULT uuid_generate_v4()     | Unique identifier                                 |
+| sku_code          | VARCHAR(100)  | NOT NULL, UNIQUE                            | SKU identifier (e.g., "양념치킨\_봉")             |
+| menu_id           | UUID          | NOT NULL, FOREIGN KEY → menu_categories(id) | Menu category                                     |
+| sales_unit_name   | VARCHAR(100)  | NOT NULL                                    | Display name (e.g., "봉", "박스(대)", "박스(소)") |
+| conversion_factor | DECIMAL(8,4)  | NOT NULL, CHECK (conversion_factor > 0)     | Conversion to base unit for cost calculation      |
+| selling_price     | DECIMAL(10,2) | NOT NULL, CHECK (selling_price >= 0)        | Sales price (₩)                                   |
+| description       | VARCHAR(200)  | NULL                                        | Optional description (e.g., "1봉 = 95g 기준")     |
+| is_active         | BOOLEAN       | NOT NULL, DEFAULT true                      | Soft delete flag                                  |
+| created_at        | TIMESTAMP     | NOT NULL, DEFAULT NOW()                     | Creation timestamp                                |
+| updated_at        | TIMESTAMP     | NOT NULL, DEFAULT NOW()                     | Last update timestamp                             |
 
 **Indexes**:
+
 - `idx_skus_code` on `sku_code` (for sales entry lookups)
 - `idx_skus_menu` on `(menu_id, is_active)` (for menu-specific SKU lists)
 
 **Validation Rules**:
+
 - `sku_code` must be unique
 - `conversion_factor` must be > 0
 - `selling_price` must be >= 0
 
 **Sample Data**:
+
 ```sql
 INSERT INTO skus (sku_code, menu_id, sales_unit_name, conversion_factor, selling_price, description)
 SELECT
@@ -266,28 +282,32 @@ Represents daily sales quantities by SKU.
 
 **Table**: `sales_records`
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
-| sales_date | DATE | NOT NULL | Sales date |
-| sku_id | UUID | NOT NULL, FOREIGN KEY → skus(id) | SKU sold |
-| quantity | DECIMAL(10,2) | NOT NULL, CHECK (quantity >= 0) | Quantity sold |
-| notes | TEXT | NULL | Optional notes |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Record creation timestamp |
-| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Last update timestamp |
+| Column     | Type          | Constraints                             | Description               |
+| ---------- | ------------- | --------------------------------------- | ------------------------- |
+| id         | UUID          | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier         |
+| sales_date | DATE          | NOT NULL                                | Sales date                |
+| sku_id     | UUID          | NOT NULL, FOREIGN KEY → skus(id)        | SKU sold                  |
+| quantity   | DECIMAL(10,2) | NOT NULL, CHECK (quantity >= 0)         | Quantity sold             |
+| notes      | TEXT          | NULL                                    | Optional notes            |
+| created_at | TIMESTAMP     | NOT NULL, DEFAULT NOW()                 | Record creation timestamp |
+| updated_at | TIMESTAMP     | NOT NULL, DEFAULT NOW()                 | Last update timestamp     |
 
 **Constraints**:
+
 - `UNIQUE(sales_date, sku_id)` - One record per SKU per day
 
 **Indexes**:
+
 - `idx_sales_date` on `sales_date DESC` (for history queries)
 - `idx_sales_sku_date` on `(sku_id, sales_date)` (for SKU-specific history)
 
 **Validation Rules**:
+
 - `quantity` must be >= 0 (allow zero for no sales days)
 - Unique combination of `sales_date` and `sku_id`
 
 **Computed Fields** (via joins):
+
 - Daily revenue: `SUM(quantity * skus.selling_price) GROUP BY sales_date`
 - Ingredient equivalent: `quantity * skus.conversion_factor`
 
@@ -299,23 +319,26 @@ Represents the percentage allocation of costs to each menu category for period a
 
 **Table**: `cost_distribution_rules`
 
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| id | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
-| menu_id | UUID | NOT NULL, UNIQUE, FOREIGN KEY → menu_categories(id) | Menu category |
+| Column                  | Type         | Constraints                                                                       | Description              |
+| ----------------------- | ------------ | --------------------------------------------------------------------------------- | ------------------------ |
+| id                      | UUID         | PRIMARY KEY, DEFAULT uuid_generate_v4()                                           | Unique identifier        |
+| menu_id                 | UUID         | NOT NULL, UNIQUE, FOREIGN KEY → menu_categories(id)                               | Menu category            |
 | distribution_percentage | DECIMAL(5,2) | NOT NULL, CHECK (distribution_percentage >= 0 AND distribution_percentage <= 100) | Percentage (0.00-100.00) |
-| created_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Creation timestamp |
-| updated_at | TIMESTAMP | NOT NULL, DEFAULT NOW() | Last update timestamp |
+| created_at              | TIMESTAMP    | NOT NULL, DEFAULT NOW()                                                           | Creation timestamp       |
+| updated_at              | TIMESTAMP    | NOT NULL, DEFAULT NOW()                                                           | Last update timestamp    |
 
 **Indexes**:
+
 - `idx_cost_dist_menu` on `menu_id` (for lookup)
 
 **Validation Rules**:
+
 - `distribution_percentage` must be between 0 and 100
 - One rule per menu category
 - **Business Rule**: SUM of all distribution_percentage values must equal 100.00 (enforced in application logic)
 
 **Sample Data**:
+
 ```sql
 INSERT INTO cost_distribution_rules (menu_id, distribution_percentage)
 SELECT id, percentage FROM (VALUES
@@ -441,6 +464,7 @@ ORDER BY menu_name;
 **File**: `drizzle/0000_initial_schema.sql`
 
 Create all tables, indexes, constraints, and triggers in dependency order:
+
 1. `menu_categories`
 2. `ingredients`
 3. `menu_ingredients`
@@ -454,15 +478,17 @@ Create all tables, indexes, constraints, and triggers in dependency order:
 **File**: `scripts/seed-from-excel.ts`
 
 Import existing Excel data:
+
 1. Parse Excel sheets using `xlsx` package
 2. Insert master data (menus from "메뉴" sheet, ingredients from "재료" sheet)
 3. Create menu-ingredient relationships
 4. Insert SKUs with conversion factors from "환산표" sheet
-5. Insert historical purchases from "매입현황_누적" sheet
-6. Insert historical sales from "판매수량_누적" sheet
+5. Insert historical purchases from "매입현황\_누적" sheet
+6. Insert historical sales from "판매수량\_누적" sheet
 7. Set up cost distribution rules from "기간분석" sheet
 
 **Validation**:
+
 - Compare row counts from Excel vs database
 - Verify calculated totals match Excel formulas
 - Check for any `is_valid = false` purchase records

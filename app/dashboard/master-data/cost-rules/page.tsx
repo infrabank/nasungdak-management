@@ -10,7 +10,9 @@ export default async function CostRulesPage() {
     <div>
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-3xl font-black text-brutal-black">원가 배분 규칙</h1>
+          <h1 className="text-3xl font-black text-brutal-black">
+            원가 배분 규칙
+          </h1>
           <p className="mt-2 text-sm font-medium text-brutal-black/70">
             재료별 원가 배분 비율 설정
           </p>
@@ -22,15 +24,13 @@ export default async function CostRulesPage() {
 
       <div className="mt-8 flow-root">
         {/* Mobile View - Cards */}
-        <div className="md:hidden space-y-4">
+        <div className="space-y-4 md:hidden">
           {rules.length === 0 ? (
-            <div className="text-center py-10 font-medium text-brutal-black bg-brutal-white border-3 border-dashed border-brutal-black">
+            <div className="border-3 border-dashed border-brutal-black bg-brutal-white py-10 text-center font-medium text-brutal-black">
               등록된 원가 배분 규칙이 없습니다
             </div>
           ) : (
-            rules.map((rule) => (
-              <CostRuleCard key={rule.id} rule={rule} />
-            ))
+            rules.map((rule) => <CostRuleCard key={rule.id} rule={rule} />)
           )}
         </div>
 
@@ -38,18 +38,30 @@ export default async function CostRulesPage() {
         <div className="hidden md:block">
           <div className="overflow-hidden border-3 border-brutal-black shadow-brutal">
             <table className="min-w-full">
-              <thead className="bg-brutal-yellow border-b-3 border-brutal-black">
+              <thead className="border-b-3 border-brutal-black bg-brutal-yellow">
                 <tr>
-                  <th scope="col" className="py-3.5 pl-6 pr-3 text-left text-sm font-black text-brutal-black">
+                  <th
+                    scope="col"
+                    className="py-3.5 pl-6 pr-3 text-left text-sm font-black text-brutal-black"
+                  >
                     메뉴
                   </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
+                  <th
+                    scope="col"
+                    className="px-3 py-3.5 text-left text-sm font-black text-brutal-black"
+                  >
                     재료
                   </th>
-                  <th scope="col" className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
+                  <th
+                    scope="col"
+                    className="px-3 py-3.5 text-right text-sm font-black text-brutal-black"
+                  >
                     배분 비율 (%)
                   </th>
-                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
+                  <th
+                    scope="col"
+                    className="px-3 py-3.5 text-left text-sm font-black text-brutal-black"
+                  >
                     유효 기간
                   </th>
                   <th scope="col" className="relative py-3.5 pl-3 pr-6">
@@ -60,7 +72,10 @@ export default async function CostRulesPage() {
               <tbody className="divide-y-2 divide-brutal-black/20 bg-brutal-white">
                 {rules.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-10 text-center text-sm font-medium text-brutal-black">
+                    <td
+                      colSpan={5}
+                      className="py-10 text-center text-sm font-medium text-brutal-black"
+                    >
                       등록된 원가 배분 규칙이 없습니다
                     </td>
                   </tr>
@@ -73,12 +88,13 @@ export default async function CostRulesPage() {
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black">
                         {rule.ingredientName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm font-bold text-brutal-black text-right">
+                      <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold text-brutal-black">
                         {Number(rule.distributionPercent).toFixed(2)}%
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black/70">
                         {formatDate(rule.effectiveFrom, 'yyyy-MM-dd')}
-                        {rule.effectiveTo && ` ~ ${formatDate(rule.effectiveTo, 'yyyy-MM-dd')}`}
+                        {rule.effectiveTo &&
+                          ` ~ ${formatDate(rule.effectiveTo, 'yyyy-MM-dd')}`}
                         {!rule.effectiveTo && ' ~ '}
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-6 text-right text-sm font-medium">

@@ -18,11 +18,11 @@ interface AuditLogParams {
 
 /**
  * 감사 로그 기록
- * 
+ *
  * 사용법:
  * ```typescript
  * import { logAudit } from '@/lib/audit'
- * 
+ *
  * // 생성 시
  * await logAudit({
  *   tableName: 'purchase_transactions',
@@ -31,7 +31,7 @@ interface AuditLogParams {
  *   newValues: newRecord,
  *   storeId: newRecord.storeId,
  * })
- * 
+ *
  * // 수정 시
  * await logAudit({
  *   tableName: 'purchase_transactions',
@@ -41,7 +41,7 @@ interface AuditLogParams {
  *   newValues: newRecord,
  *   storeId: record.storeId,
  * })
- * 
+ *
  * // 삭제 시
  * await logAudit({
  *   tableName: 'purchase_transactions',
@@ -70,20 +70,21 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
     let userAgent: string | null = null
     try {
       const headersList = await headers()
-      ipAddress = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() 
-        || headersList.get('x-real-ip')
-        || null
+      ipAddress =
+        headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+        headersList.get('x-real-ip') ||
+        null
       userAgent = headersList.get('user-agent')
     } catch {
       // 헤더를 가져올 수 없어도 계속 진행
     }
 
     // 민감한 필드 마스킹
-    const sanitizedOldValues = params.oldValues 
-      ? sanitizeValues(params.oldValues) 
+    const sanitizedOldValues = params.oldValues
+      ? sanitizeValues(params.oldValues)
       : null
-    const sanitizedNewValues = params.newValues 
-      ? sanitizeValues(params.newValues) 
+    const sanitizedNewValues = params.newValues
+      ? sanitizeValues(params.newValues)
       : null
 
     await db.insert(auditLogs).values({
@@ -106,7 +107,9 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
 /**
  * 민감한 필드 마스킹
  */
-function sanitizeValues(values: Record<string, unknown>): Record<string, unknown> {
+function sanitizeValues(
+  values: Record<string, unknown>
+): Record<string, unknown> {
   const sensitiveFields = [
     'passwordHash',
     'password_hash',
@@ -174,9 +177,10 @@ export async function logBulkAudit(
     let userAgent: string | null = null
     try {
       const headersList = await headers()
-      ipAddress = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() 
-        || headersList.get('x-real-ip')
-        || null
+      ipAddress =
+        headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+        headersList.get('x-real-ip') ||
+        null
       userAgent = headersList.get('user-agent')
     } catch {
       // 헤더를 가져올 수 없어도 계속 진행
@@ -192,7 +196,9 @@ export async function logBulkAudit(
         tableName,
         recordId: record.id,
         action,
-        newValues: description ? { _bulkOperation: description, _totalCount: records.length } : null,
+        newValues: description
+          ? { _bulkOperation: description, _totalCount: records.length }
+          : null,
         ipAddress,
         userAgent,
       }))
@@ -223,7 +229,7 @@ export async function logBulkAudit(
 
 /**
  * 감사 로그 래퍼 - Server Action에서 사용
- * 
+ *
  * @example
  * ```typescript
  * export async function updatePurchase(id: string, formData: FormData) {
@@ -233,10 +239,10 @@ export async function logBulkAudit(
  *     async () => {
  *       // 기존 레코드 조회
  *       const oldRecord = await db.query.purchaseTransactions.findFirst(...)
- *       
+ *
  *       // 업데이트 실행
  *       const [newRecord] = await db.update(purchaseTransactions)...
- *       
+ *
  *       return {
  *         success: true,
  *         data: newRecord,
@@ -247,14 +253,16 @@ export async function logBulkAudit(
  * }
  * ```
  */
-export async function withAudit<T extends { 
-  success: boolean
-  _audit?: { 
-    oldValues?: Record<string, unknown>
-    newValues?: Record<string, unknown>
-    storeId?: string | null 
-  } 
-}>(
+export async function withAudit<
+  T extends {
+    success: boolean
+    _audit?: {
+      oldValues?: Record<string, unknown>
+      newValues?: Record<string, unknown>
+      storeId?: string | null
+    }
+  },
+>(
   tableName: string,
   recordId: string,
   fn: () => Promise<T>

@@ -27,9 +27,11 @@ Rebase the current branch onto the specified remote upstream branch with automat
 Arguments: $ARGUMENTS
 
 **Expected format:**
+
 - `[target-branch]`: Optional target branch name (e.g., "main", "develop", "feature/example")
 
 **Behavior:**
+
 1. If no arguments provided: rebase onto the remote tracking branch of current branch (e.g., `origin/current-branch`)
 2. If branch name provided: rebase onto `origin/[branch-name]`
 3. Always stash uncommitted changes before rebasing if working directory is dirty
@@ -37,6 +39,7 @@ Arguments: $ARGUMENTS
 5. Pop stash after successful rebase and handle any conflicts
 
 **Process:**
+
 1. Check if there are uncommitted changes and stash them if needed
 2. Fetch from remote to get latest changes
 3. Determine target branch (argument or upstream)
@@ -45,11 +48,13 @@ Arguments: $ARGUMENTS
 6. Handle conflicts at each step with clear guidance
 
 **Examples:**
+
 - `/rebase` - Rebase current branch onto its remote tracking branch
 - `/rebase main` - Rebase current branch onto `origin/main`
 - `/rebase feature/example` - Rebase current branch onto `origin/feature/example`
 
 **Important Requirements:**
+
 - Always fetch before rebasing to ensure you have the latest remote state
 - Stash uncommitted changes to avoid losing work
 - Provide clear feedback at each step
@@ -58,6 +63,7 @@ Arguments: $ARGUMENTS
 - Never proceed if in the middle of an existing rebase operation
 
 **Error Handling:**
+
 - Check for existing rebase in progress before starting
 - Abort if no remote is configured
 - Provide clear instructions if rebase conflicts occur

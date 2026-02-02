@@ -9,10 +9,7 @@ import { attendanceSchema } from '@/lib/utils/validation'
 import { formatDate } from '@/lib/utils/format'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
-export async function createAttendance(
-  prevState: any,
-  formData: FormData
-) {
+export async function createAttendance(prevState: any, formData: FormData) {
   try {
     const rawData = {
       employeeId: formData.get('employeeId'),
@@ -31,10 +28,12 @@ export async function createAttendance(
       const [employee] = await tx
         .select()
         .from(employees)
-        .where(and(
-          eq(employees.id, validatedData.employeeId),
-          isNull(employees.deletedAt)
-        ))
+        .where(
+          and(
+            eq(employees.id, validatedData.employeeId),
+            isNull(employees.deletedAt)
+          )
+        )
         .limit(1)
 
       if (!employee) {
@@ -117,7 +116,10 @@ export async function createAttendance(
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '출퇴근 기록 등록에 실패했습니다',
+      error:
+        error instanceof Error
+          ? error.message
+          : '출퇴근 기록 등록에 실패했습니다',
     }
   }
 }
@@ -178,7 +180,10 @@ export async function updateAttendance(id: string, formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '출퇴근 기록 수정에 실패했습니다',
+      error:
+        error instanceof Error
+          ? error.message
+          : '출퇴근 기록 수정에 실패했습니다',
     }
   }
 }
@@ -203,7 +208,10 @@ export async function deleteAttendance(id: string) {
     console.error('Failed to delete attendance:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '출퇴근 기록 삭제에 실패했습니다',
+      error:
+        error instanceof Error
+          ? error.message
+          : '출퇴근 기록 삭제에 실패했습니다',
     }
   }
 }
@@ -226,14 +234,18 @@ export async function getAttendance(params: GetAttendanceParams) {
 
     // 사용자 권한 확인
     const authorizedStoreIds = await getAuthorizedStoreIds()
-    if (authorizedStoreIds.length === 0 || !authorizedStoreIds.includes(storeId)) {
+    if (
+      authorizedStoreIds.length === 0 ||
+      !authorizedStoreIds.includes(storeId)
+    ) {
       return { records: [], totalSum: 0 }
     }
 
     // Default dates: first day of current month to today
     const today = new Date()
     const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
-    const effectiveStartDate = startDate || formatDate(firstDayOfMonth, 'yyyy-MM-dd')
+    const effectiveStartDate =
+      startDate || formatDate(firstDayOfMonth, 'yyyy-MM-dd')
     const effectiveEndDate = endDate || formatDate(today, 'yyyy-MM-dd')
 
     // Build conditions
@@ -262,19 +274,30 @@ export async function getAttendance(params: GetAttendanceParams) {
         notes: attendanceRecords.notes,
         createdAt: attendanceRecords.createdAt,
         employeeName: employees.employeeName,
-        employeeDeleted: sql<boolean>`${employees.deletedAt} IS NOT NULL`.as('employee_deleted'),
+        employeeDeleted: sql<boolean>`${employees.deletedAt} IS NOT NULL`.as(
+          'employee_deleted'
+        ),
       })
       .from(attendanceRecords)
       .leftJoin(employees, eq(attendanceRecords.employeeId, employees.id))
       .where(and(...conditions))
-      .orderBy(desc(attendanceRecords.workDate), desc(attendanceRecords.createdAt))
+      .orderBy(
+        desc(attendanceRecords.workDate),
+        desc(attendanceRecords.createdAt)
+      )
       .limit(1000)
 
     // Query totals (all filtered records, not just limit 1000)
     const sumResult = await db
       .select({
-        totalSum: sql<string>`COALESCE(SUM(${attendanceRecords.totalPay}), 0)`.as('total_sum'),
-        totalHours: sql<string>`COALESCE(SUM(${attendanceRecords.workHours}), 0)`.as('total_hours'),
+        totalSum:
+          sql<string>`COALESCE(SUM(${attendanceRecords.totalPay}), 0)`.as(
+            'total_sum'
+          ),
+        totalHours:
+          sql<string>`COALESCE(SUM(${attendanceRecords.workHours}), 0)`.as(
+            'total_hours'
+          ),
       })
       .from(attendanceRecords)
       .where(and(...conditions))
@@ -298,18 +321,23 @@ export async function getActiveEmployees(storeId?: string) {
 
     // 사용자 권한 확인
     const authorizedStoreIds = await getAuthorizedStoreIds()
-    if (authorizedStoreIds.length === 0 || !authorizedStoreIds.includes(storeId)) {
+    if (
+      authorizedStoreIds.length === 0 ||
+      !authorizedStoreIds.includes(storeId)
+    ) {
       return []
     }
 
     const records = await db
       .select()
       .from(employees)
-      .where(and(
-        isNull(employees.deletedAt),
-        eq(employees.storeId, storeId),
-        eq(employees.isActive, true)
-      ))
+      .where(
+        and(
+          isNull(employees.deletedAt),
+          eq(employees.storeId, storeId),
+          eq(employees.isActive, true)
+        )
+      )
       .orderBy(employees.employeeName)
       .limit(1000)
 

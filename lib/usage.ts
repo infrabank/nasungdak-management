@@ -8,7 +8,12 @@ import {
   organizationMembers,
 } from '@/lib/db/schema'
 import { eq, and, gte, lte, isNull, sql } from 'drizzle-orm'
-import { PLANS, DEFAULT_PLAN_FEATURES, type PlanType, type FeatureKey } from '@/lib/features'
+import {
+  PLANS,
+  DEFAULT_PLAN_FEATURES,
+  type PlanType,
+  type FeatureKey,
+} from '@/lib/features'
 
 /**
  * Usage tracking and limit enforcement utilities
@@ -27,7 +32,9 @@ interface UsageResult {
 /**
  * Get organization ID from store ID
  */
-async function getOrganizationIdFromStore(storeId: string): Promise<string | null> {
+async function getOrganizationIdFromStore(
+  storeId: string
+): Promise<string | null> {
   const store = await db.query.stores.findFirst({
     where: and(eq(stores.id, storeId), isNull(stores.deletedAt)),
     columns: { organizationId: true },
@@ -41,7 +48,15 @@ async function getOrganizationIdFromStore(storeId: string): Promise<string | nul
 function getCurrentPeriod(): { start: Date; end: Date } {
   const now = new Date()
   const start = new Date(now.getFullYear(), now.getMonth(), 1)
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999)
+  const end = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    0,
+    23,
+    59,
+    59,
+    999
+  )
   return { start, end }
 }
 
@@ -56,7 +71,9 @@ export async function getCurrentUsage(
 
   const result = await db
     .select({
-      total: sql<number>`COALESCE(SUM(${usageMetrics.metricValue}), 0)`.as('total'),
+      total: sql<number>`COALESCE(SUM(${usageMetrics.metricValue}), 0)`.as(
+        'total'
+      ),
     })
     .from(usageMetrics)
     .where(
@@ -74,9 +91,12 @@ export async function getCurrentUsage(
 /**
  * Get limit for a metric based on plan
  */
-export function getMetricLimit(plan: PlanType, metricType: MetricType): number | null {
+export function getMetricLimit(
+  plan: PlanType,
+  metricType: MetricType
+): number | null {
   const planConfig = DEFAULT_PLAN_FEATURES[plan]
-  
+
   // For stores and users, use organization limits
   if (metricType === 'stores') {
     return PLANS[plan].maxStores === -1 ? null : PLANS[plan].maxStores
@@ -84,7 +104,7 @@ export function getMetricLimit(plan: PlanType, metricType: MetricType): number |
   if (metricType === 'users') {
     return PLANS[plan].maxUsers === -1 ? null : PLANS[plan].maxUsers
   }
-  
+
   // For purchases and sales, use feature limits
   return planConfig.limits?.[metricType as FeatureKey] ?? null
 }
@@ -99,12 +119,20 @@ export async function checkUsageLimit(
 ): Promise<UsageResult> {
   // Get organization plan
   const org = await db.query.organizations.findFirst({
-    where: and(eq(organizations.id, organizationId), isNull(organizations.deletedAt)),
+    where: and(
+      eq(organizations.id, organizationId),
+      isNull(organizations.deletedAt)
+    ),
     columns: { plan: true },
   })
 
   if (!org) {
-    return { allowed: false, current: 0, limit: 0, reason: '조직을 찾을 수 없습니다' }
+    return {
+      allowed: false,
+      current: 0,
+      limit: 0,
+      reason: '조직을 찾을 수 없습니다',
+    }
   }
 
   const plan = org.plan as PlanType
@@ -143,14 +171,24 @@ export async function checkUsageLimit(
 /**
  * Check store limit for organization
  */
-export async function checkStoreLimit(organizationId: string): Promise<UsageResult> {
+export async function checkStoreLimit(
+  organizationId: string
+): Promise<UsageResult> {
   const org = await db.query.organizations.findFirst({
-    where: and(eq(organizations.id, organizationId), isNull(organizations.deletedAt)),
+    where: and(
+      eq(organizations.id, organizationId),
+      isNull(organizations.deletedAt)
+    ),
     columns: { plan: true, maxStores: true },
   })
 
   if (!org) {
-    return { allowed: false, current: 0, limit: 0, reason: '조직을 찾을 수 없습니다' }
+    return {
+      allowed: false,
+      current: 0,
+      limit: 0,
+      reason: '조직을 찾을 수 없습니다',
+    }
   }
 
   const limit = org.maxStores
@@ -161,7 +199,9 @@ export async function checkStoreLimit(organizationId: string): Promise<UsageResu
   const storeCount = await db
     .select({ count: sql<number>`COUNT(*)`.as('count') })
     .from(stores)
-    .where(and(eq(stores.organizationId, organizationId), isNull(stores.deletedAt)))
+    .where(
+      and(eq(stores.organizationId, organizationId), isNull(stores.deletedAt))
+    )
 
   const current = Number(storeCount[0]?.count || 0)
   const allowed = current < limit
@@ -181,14 +221,24 @@ export async function checkStoreLimit(organizationId: string): Promise<UsageResu
 /**
  * Check user limit for organization
  */
-export async function checkUserLimit(organizationId: string): Promise<UsageResult> {
+export async function checkUserLimit(
+  organizationId: string
+): Promise<UsageResult> {
   const org = await db.query.organizations.findFirst({
-    where: and(eq(organizations.id, organizationId), isNull(organizations.deletedAt)),
+    where: and(
+      eq(organizations.id, organizationId),
+      isNull(organizations.deletedAt)
+    ),
     columns: { plan: true, maxUsers: true },
   })
 
   if (!org) {
-    return { allowed: false, current: 0, limit: 0, reason: '조직을 찾을 수 없습니다' }
+    return {
+      allowed: false,
+      current: 0,
+      limit: 0,
+      reason: '조직을 찾을 수 없습니다',
+    }
   }
 
   const limit = org.maxUsers
@@ -200,7 +250,10 @@ export async function checkUserLimit(organizationId: string): Promise<UsageResul
     .select({ count: sql<number>`COUNT(*)`.as('count') })
     .from(organizationMembers)
     .where(
-      and(eq(organizationMembers.organizationId, organizationId), isNull(organizationMembers.deletedAt))
+      and(
+        eq(organizationMembers.organizationId, organizationId),
+        isNull(organizationMembers.deletedAt)
+      )
     )
 
   const current = Number(userCount[0]?.count || 0)
@@ -287,9 +340,13 @@ export async function enforceUsageLimit(
  */
 export function withUsageTracking<T extends unknown[], R>(
   metricType: MetricType,
-  action: (...args: T) => Promise<{ success: boolean; storeId?: string; error?: string } & R>
+  action: (
+    ...args: T
+  ) => Promise<{ success: boolean; storeId?: string; error?: string } & R>
 ) {
-  return async (...args: T): Promise<{ success: boolean; error?: string } & Partial<R>> => {
+  return async (
+    ...args: T
+  ): Promise<{ success: boolean; error?: string } & Partial<R>> => {
     const result = await action(...args)
 
     // If successful and we have a storeId, record usage

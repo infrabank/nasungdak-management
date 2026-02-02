@@ -13,7 +13,7 @@ export default function NewPurchasePage() {
         </Link>
       </div>
 
-      <div className="md:flex md:items-center md:justify-between mb-6">
+      <div className="mb-6 md:flex md:items-center md:justify-between">
         <div className="min-w-0 flex-1">
           <h1 className="text-3xl font-bold">새 매입 등록</h1>
         </div>

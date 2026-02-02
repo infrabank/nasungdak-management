@@ -1,5 +1,10 @@
 import { db } from '../lib/db'
-import { menuCategories, ingredients, skus, menuIngredients } from '../lib/db/schema'
+import {
+  menuCategories,
+  ingredients,
+  skus,
+  menuIngredients,
+} from '../lib/db/schema'
 
 async function seed() {
   console.log('🌱 데이터베이스 시드 시작...')
@@ -201,7 +206,7 @@ async function seed() {
         ingredientId: sauce.id,
         requiredQuantity: '0.2',
         createdBy: 'system',
-        },
+      },
       {
         menuId: menu3.id,
         ingredientId: oil.id,

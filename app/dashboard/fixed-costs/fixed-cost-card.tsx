@@ -75,15 +75,30 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
   const getCostTypeStyle = (type: string) => {
     switch (type) {
       case '인건비':
-        return { bg: 'bg-brutal-blue border-2 border-brutal-black text-brutal-black', emoji: '👷' }
+        return {
+          bg: 'bg-brutal-blue border-2 border-brutal-black text-brutal-black',
+          emoji: '👷',
+        }
       case '임대료':
-        return { bg: 'bg-brutal-purple border-2 border-brutal-black text-brutal-black', emoji: '🏠' }
+        return {
+          bg: 'bg-brutal-purple border-2 border-brutal-black text-brutal-black',
+          emoji: '🏠',
+        }
       case '관리비':
-        return { bg: 'bg-brutal-green border-2 border-brutal-black text-brutal-black', emoji: '🔧' }
+        return {
+          bg: 'bg-brutal-green border-2 border-brutal-black text-brutal-black',
+          emoji: '🔧',
+        }
       case '기타':
-        return { bg: 'bg-brutal-white border-2 border-brutal-black text-brutal-black', emoji: '📋' }
+        return {
+          bg: 'bg-brutal-white border-2 border-brutal-black text-brutal-black',
+          emoji: '📋',
+        }
       default:
-        return { bg: 'bg-brutal-white border-2 border-brutal-black text-brutal-black', emoji: '📋' }
+        return {
+          bg: 'bg-brutal-white border-2 border-brutal-black text-brutal-black',
+          emoji: '📋',
+        }
     }
   }
 
@@ -96,58 +111,80 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
 
   if (isEditing) {
     return (
-      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
-        <div className="p-4 bg-brutal-blue border-b-3 border-brutal-black">
+      <div className="overflow-hidden border-3 border-brutal-black bg-brutal-white shadow-brutal">
+        <div className="border-b-3 border-brutal-black bg-brutal-blue p-4">
           <p className="font-black text-brutal-black">고정비 수정</p>
         </div>
-        <div className="p-4 space-y-3">
+        <div className="space-y-3 p-4">
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">날짜</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              날짜
+            </label>
             <input
               type="date"
               value={editData.costDate}
-              onChange={(e) => setEditData({ ...editData, costDate: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, costDate: e.target.value })
+              }
               className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">비용 유형</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              비용 유형
+            </label>
             <select
               value={editData.costType}
-              onChange={(e) => setEditData({ ...editData, costType: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, costType: e.target.value })
+              }
               className={selectClass}
             >
               {COST_TYPES.map((type) => (
-                <option key={type} value={type}>{type}</option>
+                <option key={type} value={type}>
+                  {type}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">비용 항목명</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              비용 항목명
+            </label>
             <input
               type="text"
               value={editData.costName}
-              onChange={(e) => setEditData({ ...editData, costName: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, costName: e.target.value })
+              }
               className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">금액</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              금액
+            </label>
             <input
               type="number"
               min="1"
               step="1"
               value={editData.amount}
-              onChange={(e) => setEditData({ ...editData, amount: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, amount: e.target.value })
+              }
               className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">비고</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              비고
+            </label>
             <input
               type="text"
               value={editData.notes}
-              onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, notes: e.target.value })
+              }
               className={inputClass}
             />
           </div>
@@ -155,14 +192,14 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+              className="flex-1 border-2 border-brutal-black bg-brutal-white px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:opacity-50"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+              className="flex-1 border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:opacity-50"
             >
               {isSaving ? '저장 중...' : '저장'}
             </button>
@@ -174,12 +211,12 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
 
   return (
     <div
-      className={`bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden ${
+      className={`overflow-hidden border-3 border-brutal-black bg-brutal-white shadow-brutal ${
         isDeleting ? 'opacity-50' : ''
       }`}
     >
       {/* Card Header */}
-      <div className="flex items-center justify-between p-4 bg-brutal-yellow border-b-3 border-brutal-black">
+      <div className="flex items-center justify-between border-b-3 border-brutal-black bg-brutal-yellow p-4">
         <div className="flex items-center gap-2">
           <span className="text-sm">📅</span>
           <span className="font-bold text-brutal-black">
@@ -196,13 +233,15 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
       {/* Card Body */}
       <div className="p-4">
         {/* Cost Name */}
-        <p className="text-lg font-black text-brutal-black mb-3">
+        <p className="mb-3 text-lg font-black text-brutal-black">
           {cost.costName}
         </p>
 
         {/* Amount */}
-        <div className="bg-brutal-pink border-2 border-brutal-black p-3 mb-3">
-          <p className="text-xs font-bold text-brutal-black uppercase tracking-wide">금액</p>
+        <div className="mb-3 border-2 border-brutal-black bg-brutal-pink p-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-brutal-black">
+            금액
+          </p>
           <p className="text-2xl font-black text-brutal-black">
             {formatCurrency(Number(cost.amount))}
           </p>
@@ -210,8 +249,8 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
 
         {/* Notes */}
         {cost.notes && (
-          <div className="py-2 border-t-2 border-brutal-black">
-            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide mb-1">
+          <div className="border-t-2 border-brutal-black py-2">
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-brutal-black/70">
               비고
             </p>
             <p className="text-sm text-brutal-black">{cost.notes}</p>
@@ -219,18 +258,18 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-3 border-t-2 border-brutal-black">
+        <div className="flex justify-end gap-2 border-t-2 border-brutal-black pt-3">
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-blue border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="border-2 border-brutal-black bg-brutal-blue px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:cursor-not-allowed disabled:opacity-50"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-pink border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="border-2 border-brutal-black bg-brutal-pink px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

@@ -11,10 +11,10 @@ export default async function SkusPage() {
     <div>
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-           <h1 className="text-3xl font-bold text-brutal-black">SKU 관리</h1>
-           <p className="mt-2 text-sm text-brutal-black/70">
-             SKU(판매 단위) 등록 및 관리
-           </p>
+          <h1 className="text-3xl font-bold text-brutal-black">SKU 관리</h1>
+          <p className="mt-2 text-sm text-brutal-black/70">
+            SKU(판매 단위) 등록 및 관리
+          </p>
         </div>
         <div className="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
           <SkuForm />
@@ -22,9 +22,9 @@ export default async function SkusPage() {
       </div>
 
       {/* Mobile View */}
-      <div className="mt-6 md:hidden space-y-4">
+      <div className="mt-6 space-y-4 md:hidden">
         {skus.length === 0 ? (
-          <div className="text-center py-10 font-medium text-brutal-black/70 bg-brutal-white border-3 border-dashed border-brutal-black">
+          <div className="border-3 border-dashed border-brutal-black bg-brutal-white py-10 text-center font-medium text-brutal-black/70">
             등록된 SKU가 없습니다
           </div>
         ) : (
@@ -33,24 +33,39 @@ export default async function SkusPage() {
       </div>
 
       {/* Desktop View */}
-      <div className="hidden md:block mt-8">
+      <div className="mt-8 hidden md:block">
         <div className="overflow-hidden border-3 border-brutal-black shadow-brutal">
           <table className="min-w-full">
-            <thead className="bg-brutal-yellow border-b-3 border-brutal-black">
+            <thead className="border-b-3 border-brutal-black bg-brutal-yellow">
               <tr>
-                <th scope="col" className="py-3.5 pl-6 pr-3 text-left text-sm font-black text-brutal-black">
+                <th
+                  scope="col"
+                  className="py-3.5 pl-6 pr-3 text-left text-sm font-black text-brutal-black"
+                >
                   SKU명
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
+                <th
+                  scope="col"
+                  className="px-3 py-3.5 text-left text-sm font-black text-brutal-black"
+                >
                   메뉴
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
+                <th
+                  scope="col"
+                  className="px-3 py-3.5 text-right text-sm font-black text-brutal-black"
+                >
                   판매 단가
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
+                <th
+                  scope="col"
+                  className="px-3 py-3.5 text-left text-sm font-black text-brutal-black"
+                >
                   설명
                 </th>
-                <th scope="col" className="px-3 py-3.5 text-center text-sm font-black text-brutal-black">
+                <th
+                  scope="col"
+                  className="px-3 py-3.5 text-center text-sm font-black text-brutal-black"
+                >
                   활성
                 </th>
                 <th scope="col" className="relative py-3.5 pl-3 pr-6">
@@ -61,7 +76,10 @@ export default async function SkusPage() {
             <tbody className="divide-y-2 divide-brutal-black/20 bg-brutal-white">
               {skus.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-10 text-center text-sm font-medium text-brutal-black">
+                  <td
+                    colSpan={6}
+                    className="py-10 text-center text-sm font-medium text-brutal-black"
+                  >
                     등록된 SKU가 없습니다
                   </td>
                 </tr>
@@ -74,18 +92,18 @@ export default async function SkusPage() {
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black">
                       {sku.menuName}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm font-bold text-brutal-black text-right">
+                    <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold text-brutal-black">
                       {formatCurrency(Number(sku.unitPrice))}
                     </td>
                     <td className="px-3 py-4 text-sm text-brutal-black/70">
                       {sku.description}
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-center">
+                    <td className="whitespace-nowrap px-3 py-4 text-center text-sm">
                       <span
-                        className={`inline-flex px-2 py-1 text-xs font-bold border-2 ${
+                        className={`inline-flex border-2 px-2 py-1 text-xs font-bold ${
                           sku.isActive
-                            ? 'bg-brutal-green border-brutal-black text-brutal-black'
-                            : 'bg-brutal-white border-brutal-black text-brutal-black'
+                            ? 'border-brutal-black bg-brutal-green text-brutal-black'
+                            : 'border-brutal-black bg-brutal-white text-brutal-black'
                         }`}
                       >
                         {sku.isActive ? '활성' : '비활성'}

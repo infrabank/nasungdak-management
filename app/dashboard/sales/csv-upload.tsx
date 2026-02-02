@@ -51,16 +51,17 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
         results.data.forEach((row, index) => {
           if (!row.날짜) validationErrors.push(`${index + 1}행: 날짜 누락`)
           if (!row.SKU) validationErrors.push(`${index + 1}행: SKU 누락`)
-          if (!row.판매수량) validationErrors.push(`${index + 1}행: 판매수량 누락`)
+          if (!row.판매수량)
+            validationErrors.push(`${index + 1}행: 판매수량 누락`)
         })
 
         if (validationErrors.length > 0) {
           setErrors(validationErrors.slice(0, 10)) // Show first 10 errors
         }
       },
-       error: (error) => {
-         toast.error(`CSV 파싱 오류: ${error.message}`)
-       },
+      error: (error) => {
+        toast.error(`CSV 파싱 오류: ${error.message}`)
+      },
     })
   }
 
@@ -71,7 +72,9 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
     }
 
     if (errors.length > 0) {
-      toast.error('CSV 파일에 오류가 있습니다. 오류를 수정한 후 다시 시도해주세요.')
+      toast.error(
+        'CSV 파일에 오류가 있습니다. 오류를 수정한 후 다시 시도해주세요.'
+      )
       return
     }
 
@@ -84,33 +87,40 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
       complete: async (results) => {
         try {
           // Server Action에 직렬화 가능한 데이터로 전달
-          const result = await bulkCreateSales(JSON.parse(JSON.stringify(results.data)), storeId)
+          const result = await bulkCreateSales(
+            JSON.parse(JSON.stringify(results.data)),
+            storeId
+          )
 
-           if (result.success) {
-             toast.success(`성공: ${result.successCount}건 등록, 실패: ${result.failedCount}건`)
-             if (result.errors && result.errors.length > 0) {
-               toast.error(`오류:\n${result.errors.join('\n')}`)
-             }
-             setIsOpen(false)
-             setFile(null)
-             setPreview([])
-             setErrors([])
-             if (fileInputRef.current) {
-               fileInputRef.current.value = ''
-             }
-           } else {
-             toast.error(`업로드 실패: ${result.error}`)
-           }
-         } catch (error) {
-           toast.error(`업로드 중 오류 발생: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
-         } finally {
-           setIsUploading(false)
-         }
-       },
-       error: (error) => {
-         toast.error(`CSV 파싱 오류: ${error.message}`)
-         setIsUploading(false)
-       },
+          if (result.success) {
+            toast.success(
+              `성공: ${result.successCount}건 등록, 실패: ${result.failedCount}건`
+            )
+            if (result.errors && result.errors.length > 0) {
+              toast.error(`오류:\n${result.errors.join('\n')}`)
+            }
+            setIsOpen(false)
+            setFile(null)
+            setPreview([])
+            setErrors([])
+            if (fileInputRef.current) {
+              fileInputRef.current.value = ''
+            }
+          } else {
+            toast.error(`업로드 실패: ${result.error}`)
+          }
+        } catch (error) {
+          toast.error(
+            `업로드 중 오류 발생: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+          )
+        } finally {
+          setIsUploading(false)
+        }
+      },
+      error: (error) => {
+        toast.error(`CSV 파싱 오류: ${error.message}`)
+        setIsUploading(false)
+      },
     })
   }
 
@@ -121,7 +131,9 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
 2024-01-01,닭강정-소-001,20,할인 판매
 2024-01-02,닭강정-대-001,45,
 2024-01-02,닭강정-중-001,35,`
-    const blob = new Blob(['\uFEFF' + template], { type: 'text/csv;charset=utf-8;' })
+    const blob = new Blob(['\uFEFF' + template], {
+      type: 'text/csv;charset=utf-8;',
+    })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
     link.download = '판매_업로드_템플릿.csv'
@@ -133,7 +145,7 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-green border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+        className="border-2 border-brutal-black bg-brutal-green px-3 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
       >
         CSV 일괄 업로드
       </button>
@@ -146,21 +158,21 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
               onClick={() => !isUploading && setIsOpen(false)}
             />
 
-            <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
+            <div className="relative transform overflow-hidden border-3 border-brutal-black bg-brutal-white px-4 pb-4 pt-5 text-left shadow-brutal-lg transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
               <div>
-                <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
+                <h3 className="mb-4 text-lg font-semibold leading-6 text-gray-900">
                   판매 CSV 일괄 업로드
                 </h3>
 
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm text-gray-600 mb-2">
+                    <p className="mb-2 text-sm text-gray-600">
                       CSV 파일 형식: 날짜,SKU,판매수량,비고
                     </p>
                     <button
                       type="button"
                       onClick={downloadTemplate}
-                      className="text-sm text-blue-600 hover:text-blue-800 underline"
+                      className="text-sm text-blue-600 underline hover:text-blue-800"
                     >
                       템플릿 다운로드
                     </button>
@@ -172,16 +184,16 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
                       type="file"
                       accept=".csv"
                       onChange={handleFileChange}
-                      className="block w-full text-sm text-gray-900 border border-gray-300 rounded-md cursor-pointer bg-gray-50 focus:outline-none p-2"
+                      className="block w-full cursor-pointer rounded-md border border-gray-300 bg-gray-50 p-2 text-sm text-gray-900 focus:outline-none"
                     />
                   </div>
 
                   {errors.length > 0 && (
-                    <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                      <p className="text-sm font-semibold text-red-800 mb-2">
+                    <div className="rounded-md border border-red-200 bg-red-50 p-3">
+                      <p className="mb-2 text-sm font-semibold text-red-800">
                         오류가 발견되었습니다:
                       </p>
-                      <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+                      <ul className="list-inside list-disc space-y-1 text-sm text-red-700">
                         {errors.map((error, index) => (
                           <li key={index}>{error}</li>
                         ))}
@@ -191,26 +203,42 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
 
                   {preview.length > 0 && (
                     <div>
-                      <p className="text-sm font-semibold text-gray-700 mb-2">
+                      <p className="mb-2 text-sm font-semibold text-gray-700">
                         미리보기 (처음 5개 행)
                       </p>
-                      <div className="overflow-x-auto border rounded-md">
+                      <div className="overflow-x-auto rounded-md border">
                         <table className="min-w-full divide-y divide-gray-200 text-sm">
                           <thead className="bg-gray-50">
                             <tr>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">날짜</th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">SKU</th>
-                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">판매수량</th>
-                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">비고</th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                                날짜
+                              </th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                                SKU
+                              </th>
+                              <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">
+                                판매수량
+                              </th>
+                              <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                                비고
+                              </th>
                             </tr>
                           </thead>
-                          <tbody className="bg-white divide-y divide-gray-200">
+                          <tbody className="divide-y divide-gray-200 bg-white">
                             {preview.map((row, index) => (
                               <tr key={index}>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs">{row.날짜}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs">{row.SKU}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs text-right">{row.판매수량}</td>
-                                <td className="px-3 py-2 whitespace-nowrap text-xs">{row.비고 || '-'}</td>
+                                <td className="whitespace-nowrap px-3 py-2 text-xs">
+                                  {row.날짜}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-2 text-xs">
+                                  {row.SKU}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-2 text-right text-xs">
+                                  {row.판매수량}
+                                </td>
+                                <td className="whitespace-nowrap px-3 py-2 text-xs">
+                                  {row.비고 || '-'}
+                                </td>
                               </tr>
                             ))}
                           </tbody>

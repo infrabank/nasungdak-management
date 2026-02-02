@@ -1,6 +1,12 @@
 'use client'
 
-import { useState, useCallback, createContext, useContext, ReactNode } from 'react'
+import {
+  useState,
+  useCallback,
+  createContext,
+  useContext,
+  ReactNode,
+} from 'react'
 
 interface ConfirmOptions {
   title: string
@@ -31,7 +37,9 @@ interface ConfirmProviderProps {
 export function ConfirmProvider({ children }: ConfirmProviderProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [options, setOptions] = useState<ConfirmOptions | null>(null)
-  const [resolveRef, setResolveRef] = useState<((value: boolean) => void) | null>(null)
+  const [resolveRef, setResolveRef] = useState<
+    ((value: boolean) => void) | null
+  >(null)
 
   const confirm = useCallback((opts: ConfirmOptions): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -67,25 +75,25 @@ export function ConfirmProvider({ children }: ConfirmProviderProps) {
           aria-labelledby="confirm-title"
         >
           <div
-            className="w-full max-w-md mx-4 p-6 bg-brutal-white border-3 border-brutal-black shadow-brutal-lg"
+            className="mx-4 w-full max-w-md border-3 border-brutal-black bg-brutal-white p-6 shadow-brutal-lg"
             onClick={(e) => e.stopPropagation()}
           >
             <h2
               id="confirm-title"
-              className="text-lg font-bold text-brutal-black mb-2"
+              className="mb-2 text-lg font-bold text-brutal-black"
             >
               {options.title}
             </h2>
             {options.description && (
-              <p className="text-sm text-brutal-black/80 mb-6">
+              <p className="mb-6 text-sm text-brutal-black/80">
                 {options.description}
               </p>
             )}
-            <div className="flex gap-3 justify-end">
+            <div className="flex justify-end gap-3">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-4 py-2 font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer"
+                className="cursor-pointer border-2 border-brutal-black bg-brutal-white px-4 py-2 font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal"
                 aria-label={options.cancelText || '취소'}
               >
                 {options.cancelText || '취소'}
@@ -93,8 +101,10 @@ export function ConfirmProvider({ children }: ConfirmProviderProps) {
               <button
                 type="button"
                 onClick={handleConfirm}
-                className={`px-4 py-2 font-bold text-brutal-black border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all cursor-pointer ${
-                  options.variant === 'danger' ? 'bg-brutal-pink' : 'bg-brutal-yellow'
+                className={`cursor-pointer border-2 border-brutal-black px-4 py-2 font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal ${
+                  options.variant === 'danger'
+                    ? 'bg-brutal-pink'
+                    : 'bg-brutal-yellow'
                 }`}
                 aria-label={options.confirmText || '확인'}
               >

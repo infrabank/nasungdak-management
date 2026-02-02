@@ -78,10 +78,12 @@ export async function updateIngredient(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(and(
-        eq(ingredients.id, id),
-        eq(ingredients.organizationId, organizationId)
-      ))
+      .where(
+        and(
+          eq(ingredients.id, id),
+          eq(ingredients.organizationId, organizationId)
+        )
+      )
       .returning()
 
     revalidatePath('/dashboard/master-data/ingredients')
@@ -117,10 +119,12 @@ export async function deleteIngredient(id: string) {
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(and(
-        eq(ingredients.id, id),
-        eq(ingredients.organizationId, organizationId)
-      ))
+      .where(
+        and(
+          eq(ingredients.id, id),
+          eq(ingredients.organizationId, organizationId)
+        )
+      )
 
     revalidatePath('/dashboard/master-data/ingredients')
     revalidateTag('ingredients:active')
@@ -143,10 +147,14 @@ export async function getIngredients() {
     const items = await db
       .select()
       .from(ingredients)
-      .where(and(
-        isNull(ingredients.deletedAt),
-        organizationId ? eq(ingredients.organizationId, organizationId) : undefined
-      ))
+      .where(
+        and(
+          isNull(ingredients.deletedAt),
+          organizationId
+            ? eq(ingredients.organizationId, organizationId)
+            : undefined
+        )
+      )
       .orderBy(ingredients.ingredientName)
 
     return items
@@ -179,7 +187,8 @@ export async function bulkCreateIngredients(rows: CSVRow[]) {
         let isActive = true
         if (row.활성 !== undefined && row.활성 !== '') {
           const activeStr = String(row.활성).toLowerCase().trim()
-          isActive = activeStr === 'true' || activeStr === '1' || activeStr === 'yes'
+          isActive =
+            activeStr === 'true' || activeStr === '1' || activeStr === 'yes'
         }
 
         // Validate data
@@ -191,13 +200,11 @@ export async function bulkCreateIngredients(rows: CSVRow[]) {
         })
 
         // Insert ingredient
-        await db
-          .insert(ingredients)
-          .values({
-            ...validatedData,
-            organizationId,
-            createdBy: 'system',
-          })
+        await db.insert(ingredients).values({
+          ...validatedData,
+          organizationId,
+          createdBy: 'system',
+        })
 
         successCount++
       } catch (error) {
@@ -205,7 +212,9 @@ export async function bulkCreateIngredients(rows: CSVRow[]) {
         if (error instanceof z.ZodError) {
           errors.push(`${rowNum}행: ${error.errors[0].message}`)
         } else {
-          errors.push(`${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+          errors.push(
+            `${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+          )
         }
       }
     }
@@ -225,7 +234,8 @@ export async function bulkCreateIngredients(rows: CSVRow[]) {
       success: false,
       successCount,
       failedCount,
-      error: error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
     }
   }
 }

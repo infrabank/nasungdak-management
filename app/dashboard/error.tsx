@@ -2,7 +2,7 @@
 
 /**
  * Dashboard Error Boundary
- * 
+ *
  * Neo-Brutalism styled error page that catches and displays errors
  * gracefully within the dashboard layout.
  */
@@ -22,11 +22,11 @@ export default function DashboardError({ error, reset }: ErrorProps) {
   }, [error])
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] px-4">
+    <div className="flex min-h-[50vh] flex-col items-center justify-center px-4">
       {/* Error Icon */}
-      <div className="w-20 h-20 bg-brutal-pink border-3 border-brutal-black shadow-brutal flex items-center justify-center mb-6">
+      <div className="mb-6 flex h-20 w-20 items-center justify-center border-3 border-brutal-black bg-brutal-pink shadow-brutal">
         <svg
-          className="w-10 h-10 text-brutal-black"
+          className="h-10 w-10 text-brutal-black"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -41,11 +41,11 @@ export default function DashboardError({ error, reset }: ErrorProps) {
       </div>
 
       {/* Error Message */}
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-black text-brutal-black mb-2">
+      <div className="mb-8 text-center">
+        <h2 className="mb-2 text-2xl font-black text-brutal-black">
           문제가 발생했습니다
         </h2>
-        <p className="text-sm font-medium text-brutal-black/70 max-w-md">
+        <p className="max-w-md text-sm font-medium text-brutal-black/70">
           페이지를 불러오는 중 오류가 발생했습니다.
           <br />
           잠시 후 다시 시도해주세요.
@@ -54,13 +54,13 @@ export default function DashboardError({ error, reset }: ErrorProps) {
 
       {/* Error Details (development only) */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="w-full max-w-lg mb-6">
-          <div className="bg-brutal-yellow/30 border-3 border-brutal-black p-4 overflow-auto">
-            <p className="text-xs font-mono font-bold text-brutal-black break-all">
+        <div className="mb-6 w-full max-w-lg">
+          <div className="overflow-auto border-3 border-brutal-black bg-brutal-yellow/30 p-4">
+            <p className="break-all font-mono text-xs font-bold text-brutal-black">
               {error.message}
             </p>
             {error.digest && (
-              <p className="mt-2 text-xs font-mono text-brutal-black/60">
+              <p className="mt-2 font-mono text-xs text-brutal-black/60">
                 Digest: {error.digest}
               </p>
             )}
@@ -72,13 +72,11 @@ export default function DashboardError({ error, reset }: ErrorProps) {
       <div className="flex gap-3">
         <Button
           variant="secondary"
-          onClick={() => window.location.href = '/dashboard'}
+          onClick={() => (window.location.href = '/dashboard')}
         >
           홈으로
         </Button>
-        <Button onClick={reset}>
-          다시 시도
-        </Button>
+        <Button onClick={reset}>다시 시도</Button>
       </div>
     </div>
   )

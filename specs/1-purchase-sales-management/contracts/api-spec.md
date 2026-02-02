@@ -21,6 +21,7 @@ This application uses Next.js Server Actions for data mutations and Server Compo
 **Method**: Cookie-based session tokens stored in Vercel KV
 
 **Flow**:
+
 1. User enters password on login page
 2. Server validates password
 3. Creates session token in Vercel KV
@@ -43,24 +44,27 @@ This application uses Next.js Server Actions for data mutations and Server Compo
 **File**: `app/master-data/menus/page.tsx`
 
 **Query**:
+
 ```typescript
 const menus = await db
   .select()
   .from(menuCategories)
   .where(eq(menuCategories.isActive, true))
-  .orderBy(menuCategories.displayOrder);
+  .orderBy(menuCategories.displayOrder)
 ```
 
 **Response**:
+
 ```typescript
 {
-  id: string;
-  name: string;
-  displayOrder: number;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}[]
+  id: string
+  name: string
+  displayOrder: number
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+;[]
 ```
 
 #### Create Menu
@@ -71,22 +75,25 @@ const menus = await db
 **Action**: `createMenu(formData: FormData)`
 
 **Input**:
+
 ```typescript
 {
-  name: string;          // Required, unique
-  displayOrder: number;  // Optional, defaults to max + 1
+  name: string // Required, unique
+  displayOrder: number // Optional, defaults to max + 1
 }
 ```
 
 **Validation** (Zod):
+
 ```typescript
 const createMenuSchema = z.object({
   name: z.string().min(1).max(100),
   displayOrder: z.number().int().min(0).optional(),
-});
+})
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -103,6 +110,7 @@ const createMenuSchema = z.object({
 **Action**: `updateMenu(id: string, formData: FormData)`
 
 **Input**:
+
 ```typescript
 {
   id: string;            // Required
@@ -124,24 +132,27 @@ const createMenuSchema = z.object({
 **File**: `app/master-data/ingredients/page.tsx`
 
 **Query**:
+
 ```typescript
 const ingredients = await db
   .select()
   .from(ingredients)
   .where(eq(ingredients.isActive, true))
-  .orderBy(ingredients.name);
+  .orderBy(ingredients.name)
 ```
 
 **Response**:
+
 ```typescript
 {
-  id: string;
-  name: string;
-  category: string | null;
-  isActive: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}[]
+  id: string
+  name: string
+  category: string | null
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+;[]
 ```
 
 #### Create Ingredient
@@ -152,6 +163,7 @@ const ingredients = await db
 **Action**: `createIngredient(formData: FormData)`
 
 **Input**:
+
 ```typescript
 {
   name: string;       // Required, unique
@@ -160,14 +172,16 @@ const ingredients = await db
 ```
 
 **Validation**:
+
 ```typescript
 const createIngredientSchema = z.object({
   name: z.string().min(1).max(200),
   category: z.string().max(50).optional(),
-});
+})
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -186,6 +200,7 @@ const createIngredientSchema = z.object({
 **File**: `app/master-data/menu-ingredients/page.tsx`
 
 **Query**:
+
 ```typescript
 const menuIngredients = await db
   .select({
@@ -195,16 +210,18 @@ const menuIngredients = await db
   })
   .from(menuIngredients)
   .innerJoin(menuCategories, eq(menuIngredients.menuId, menuCategories.id))
-  .innerJoin(ingredients, eq(menuIngredients.ingredientId, ingredients.id));
+  .innerJoin(ingredients, eq(menuIngredients.ingredientId, ingredients.id))
 ```
 
 **Response**:
+
 ```typescript
 {
-  id: string;
-  menuName: string;
-  ingredientName: string;
-}[]
+  id: string
+  menuName: string
+  ingredientName: string
+}
+;[]
 ```
 
 #### Add Menu-Ingredient Link
@@ -215,22 +232,25 @@ const menuIngredients = await db
 **Action**: `linkMenuIngredient(formData: FormData)`
 
 **Input**:
+
 ```typescript
 {
-  menuId: string;       // Required, FK to menu_categories
-  ingredientId: string; // Required, FK to ingredients
+  menuId: string // Required, FK to menu_categories
+  ingredientId: string // Required, FK to ingredients
 }
 ```
 
 **Validation**:
+
 ```typescript
 const linkSchema = z.object({
   menuId: z.string().uuid(),
   ingredientId: z.string().uuid(),
-});
+})
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -260,6 +280,7 @@ const linkSchema = z.object({
 **File**: `app/master-data/skus/page.tsx`
 
 **Query**:
+
 ```typescript
 const skus = await db
   .select({
@@ -274,20 +295,22 @@ const skus = await db
   .from(skus)
   .innerJoin(menuCategories, eq(skus.menuId, menuCategories.id))
   .where(eq(skus.isActive, true))
-  .orderBy(menuCategories.displayOrder, skus.salesUnitName);
+  .orderBy(menuCategories.displayOrder, skus.salesUnitName)
 ```
 
 **Response**:
+
 ```typescript
 {
-  id: string;
-  skuCode: string;
-  menuName: string;
-  salesUnitName: string;
-  conversionFactor: number; // Decimal(8,4)
-  sellingPrice: number;     // Decimal(10,2)
-  description: string | null;
-}[]
+  id: string
+  skuCode: string
+  menuName: string
+  salesUnitName: string
+  conversionFactor: number // Decimal(8,4)
+  sellingPrice: number // Decimal(10,2)
+  description: string | null
+}
+;[]
 ```
 
 #### Create SKU
@@ -298,6 +321,7 @@ const skus = await db
 **Action**: `createSku(formData: FormData)`
 
 **Input**:
+
 ```typescript
 {
   skuCode: string;           // Required, unique
@@ -310,6 +334,7 @@ const skus = await db
 ```
 
 **Validation**:
+
 ```typescript
 const createSkuSchema = z.object({
   skuCode: z.string().min(1).max(100),
@@ -318,10 +343,11 @@ const createSkuSchema = z.object({
   conversionFactor: z.number().positive().max(9999.9999),
   sellingPrice: z.number().nonnegative().max(99999999.99),
   description: z.string().max(200).optional(),
-});
+})
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -351,6 +377,7 @@ const createSkuSchema = z.object({
 **File**: `app/master-data/cost-distribution/page.tsx`
 
 **Query**:
+
 ```typescript
 const rules = await db
   .select({
@@ -359,17 +386,22 @@ const rules = await db
     distributionPercentage: costDistributionRules.distributionPercentage,
   })
   .from(costDistributionRules)
-  .innerJoin(menuCategories, eq(costDistributionRules.menuId, menuCategories.id))
-  .orderBy(menuCategories.displayOrder);
+  .innerJoin(
+    menuCategories,
+    eq(costDistributionRules.menuId, menuCategories.id)
+  )
+  .orderBy(menuCategories.displayOrder)
 ```
 
 **Response**:
+
 ```typescript
 {
-  id: string;
-  menuName: string;
-  distributionPercentage: number; // Decimal(5,2), 0.00-100.00
-}[]
+  id: string
+  menuName: string
+  distributionPercentage: number // Decimal(5,2), 0.00-100.00
+}
+;[]
 ```
 
 #### Update Distribution Rules (Batch)
@@ -380,34 +412,39 @@ const rules = await db
 **Action**: `updateDistributionRules(formData: FormData)`
 
 **Input**:
+
 ```typescript
 {
   rules: Array<{
-    menuId: string;
-    distributionPercentage: number;
-  }>;
+    menuId: string
+    distributionPercentage: number
+  }>
 }
 ```
 
 **Validation**:
+
 ```typescript
 const updateRulesSchema = z.object({
-  rules: z.array(
-    z.object({
-      menuId: z.string().uuid(),
-      distributionPercentage: z.number().min(0).max(100),
-    })
-  ).refine(
-    (rules) => {
-      const sum = rules.reduce((acc, r) => acc + r.distributionPercentage, 0);
-      return Math.abs(sum - 100) < 0.01; // Allow floating point tolerance
-    },
-    { message: "Distribution percentages must sum to 100%" }
-  ),
-});
+  rules: z
+    .array(
+      z.object({
+        menuId: z.string().uuid(),
+        distributionPercentage: z.number().min(0).max(100),
+      })
+    )
+    .refine(
+      (rules) => {
+        const sum = rules.reduce((acc, r) => acc + r.distributionPercentage, 0)
+        return Math.abs(sum - 100) < 0.01 // Allow floating point tolerance
+      },
+      { message: 'Distribution percentages must sum to 100%' }
+    ),
+})
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -426,6 +463,7 @@ const updateRulesSchema = z.object({
 **File**: `app/purchases/page.tsx`
 
 **Query Parameters**:
+
 ```typescript
 {
   page?: number;      // Default: 1
@@ -437,6 +475,7 @@ const updateRulesSchema = z.object({
 ```
 
 **Query**:
+
 ```typescript
 const purchases = await db
   .select({
@@ -458,31 +497,33 @@ const purchases = await db
   .where(/* date range and menu filters */)
   .orderBy(desc(purchaseTransactions.transactionDate))
   .limit(pageSize)
-  .offset((page - 1) * pageSize);
+  .offset((page - 1) * pageSize)
 ```
 
 **Response**:
+
 ```typescript
 {
   data: {
-    id: string;
-    transactionDate: string; // ISO date
-    menuName: string;
-    ingredientName: string;
-    supplierName: string;
-    quantity: number;
-    unitPrice: number;
-    unitDescription: string | null;
-    totalAmount: number;
-    isValid: boolean;
-    notes: string | null;
-  }[];
+    id: string
+    transactionDate: string // ISO date
+    menuName: string
+    ingredientName: string
+    supplierName: string
+    quantity: number
+    unitPrice: number
+    unitDescription: string | null
+    totalAmount: number
+    isValid: boolean
+    notes: string | null
+  }
+  ;[]
   pagination: {
-    page: number;
-    pageSize: number;
-    totalCount: number;
-    totalPages: number;
-  };
+    page: number
+    pageSize: number
+    totalCount: number
+    totalPages: number
+  }
 }
 ```
 
@@ -494,6 +535,7 @@ const purchases = await db
 **Action**: `createPurchase(formData: FormData)`
 
 **Input**:
+
 ```typescript
 {
   transactionDate: string; // ISO date
@@ -508,6 +550,7 @@ const purchases = await db
 ```
 
 **Validation**:
+
 ```typescript
 const createPurchaseSchema = z.object({
   transactionDate: z.string().date(),
@@ -518,10 +561,11 @@ const createPurchaseSchema = z.object({
   unitPrice: z.number().nonnegative().max(999999999.99),
   unitDescription: z.string().max(100).optional(),
   notes: z.string().optional(),
-});
+})
 ```
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -555,6 +599,7 @@ const createPurchaseSchema = z.object({
 **Input**: Purchase ID (UUID)
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -572,6 +617,7 @@ const createPurchaseSchema = z.object({
 **File**: `app/sales/page.tsx`
 
 **Query Parameters**:
+
 ```typescript
 {
   page?: number;
@@ -583,6 +629,7 @@ const createPurchaseSchema = z.object({
 ```
 
 **Query**:
+
 ```typescript
 const sales = await db
   .select({
@@ -602,24 +649,28 @@ const sales = await db
   .where(/* filters */)
   .orderBy(desc(salesRecords.salesDate))
   .limit(pageSize)
-  .offset((page - 1) * pageSize);
+  .offset((page - 1) * pageSize)
 ```
 
 **Response**:
+
 ```typescript
 {
   data: {
-    id: string;
-    salesDate: string;
-    skuCode: string;
-    menuName: string;
-    salesUnitName: string;
-    quantity: number;
-    sellingPrice: number;
-    revenue: number; // Calculated
-    notes: string | null;
-  }[];
-  pagination: { /* same as purchases */ };
+    id: string
+    salesDate: string
+    skuCode: string
+    menuName: string
+    salesUnitName: string
+    quantity: number
+    sellingPrice: number
+    revenue: number // Calculated
+    notes: string | null
+  }
+  ;[]
+  pagination: {
+    /* same as purchases */
+  }
 }
 ```
 
@@ -631,6 +682,7 @@ const sales = await db
 **Action**: `saveDailySales(formData: FormData)`
 
 **Input**:
+
 ```typescript
 {
   salesDate: string; // ISO date
@@ -643,6 +695,7 @@ const sales = await db
 ```
 
 **Validation**:
+
 ```typescript
 const saveDailySalesSchema = z.object({
   salesDate: z.string().date(),
@@ -653,15 +706,17 @@ const saveDailySalesSchema = z.object({
     })
   ),
   notes: z.string().optional(),
-});
+})
 ```
 
 **Logic**:
+
 - Use UPSERT (ON CONFLICT UPDATE) for each SKU
 - Update existing record if (salesDate, skuId) exists
 - Insert new record otherwise
 
 **Response**:
+
 ```typescript
 {
   success: boolean;
@@ -683,41 +738,44 @@ const saveDailySalesSchema = z.object({
 **File**: `app/analysis/page.tsx`
 
 **Query Parameters**:
+
 ```typescript
 {
-  startDate: string; // Required, ISO date
-  endDate: string;   // Required, ISO date
+  startDate: string // Required, ISO date
+  endDate: string // Required, ISO date
 }
 ```
 
 **Complex Query** (see data-model.md for full SQL):
 
 Returns:
+
 ```typescript
 {
   period: {
-    startDate: string;
-    endDate: string;
-  };
+    startDate: string
+    endDate: string
+  }
   summary: {
-    totalPurchases: number;
-    totalRevenue: number;
-    totalProfit: number;
-    overallMargin: number; // Percentage
-  };
+    totalPurchases: number
+    totalRevenue: number
+    totalProfit: number
+    overallMargin: number // Percentage
+  }
   menuAnalysis: Array<{
-    menuName: string;
-    purchaseCost: number;      // Direct purchases for this menu
-    allocatedCost: number;     // Cost after distribution %
-    distributionPercentage: number;
-    revenue: number;
-    profit: number;            // revenue - allocatedCost
-    marginPercentage: number;  // (profit / revenue) * 100
-  }>;
+    menuName: string
+    purchaseCost: number // Direct purchases for this menu
+    allocatedCost: number // Cost after distribution %
+    distributionPercentage: number
+    revenue: number
+    profit: number // revenue - allocatedCost
+    marginPercentage: number // (profit / revenue) * 100
+  }>
 }
 ```
 
 **Server Component**:
+
 ```typescript
 export default async function AnalysisPage({
   searchParams,
@@ -740,6 +798,7 @@ export default async function AnalysisPage({
 ### Standard Error Response
 
 All Server Actions return:
+
 ```typescript
 {
   success: boolean;
@@ -760,12 +819,12 @@ All Server Actions return:
 
 ```typescript
 const errorMessages = {
-  NOT_FOUND: "데이터를 찾을 수 없습니다.",
-  DUPLICATE: "중복된 데이터가 있습니다.",
-  VALIDATION_FAILED: "입력 값이 올바르지 않습니다.",
-  INVALID_MENU_INGREDIENT: "메뉴와 재료 조합이 올바르지 않습니다.",
-  DISTRIBUTION_SUM_ERROR: "배분 비율의 합계가 100%가 아닙니다.",
-};
+  NOT_FOUND: '데이터를 찾을 수 없습니다.',
+  DUPLICATE: '중복된 데이터가 있습니다.',
+  VALIDATION_FAILED: '입력 값이 올바르지 않습니다.',
+  INVALID_MENU_INGREDIENT: '메뉴와 재료 조합이 올바르지 않습니다.',
+  DISTRIBUTION_SUM_ERROR: '배분 비율의 합계가 100%가 아닙니다.',
+}
 ```
 
 ---
@@ -798,14 +857,14 @@ All types are generated from Drizzle schema:
 
 ```typescript
 // Generated by drizzle-kit
-import { InferSelectModel, InferInsertModel } from 'drizzle-orm';
-import * as schema from './schema';
+import { InferSelectModel, InferInsertModel } from 'drizzle-orm'
+import * as schema from './schema'
 
-export type MenuCategory = InferSelectModel<typeof schema.menuCategories>;
-export type NewMenuCategory = InferInsertModel<typeof schema.menuCategories>;
+export type MenuCategory = InferSelectModel<typeof schema.menuCategories>
+export type NewMenuCategory = InferInsertModel<typeof schema.menuCategories>
 
-export type Ingredient = InferSelectModel<typeof schema.ingredients>;
-export type NewIngredient = InferInsertModel<typeof schema.ingredients>;
+export type Ingredient = InferSelectModel<typeof schema.ingredients>
+export type NewIngredient = InferInsertModel<typeof schema.ingredients>
 
 // ... (similar for all entities)
 ```
@@ -819,24 +878,25 @@ export type NewIngredient = InferInsertModel<typeof schema.ingredients>;
 ```typescript
 // Example: test purchase creation
 test('createPurchase validates menu-ingredient combination', async () => {
-  const formData = new FormData();
-  formData.append('transactionDate', '2026-01-04');
-  formData.append('menuId', validMenuId);
-  formData.append('ingredientId', invalidIngredientId); // Not linked
-  formData.append('supplierName', 'Test Supplier');
-  formData.append('quantity', '10');
-  formData.append('unitPrice', '1000');
+  const formData = new FormData()
+  formData.append('transactionDate', '2026-01-04')
+  formData.append('menuId', validMenuId)
+  formData.append('ingredientId', invalidIngredientId) // Not linked
+  formData.append('supplierName', 'Test Supplier')
+  formData.append('quantity', '10')
+  formData.append('unitPrice', '1000')
 
-  const result = await createPurchase(formData);
+  const result = await createPurchase(formData)
 
-  expect(result.success).toBe(true);
-  expect(result.data?.isValid).toBe(false); // Trigger sets this
-});
+  expect(result.success).toBe(true)
+  expect(result.data?.isValid).toBe(false) // Trigger sets this
+})
 ```
 
 ### API Integration Tests
 
 Use test database with seeded data:
+
 1. Create test menu, ingredients, and links
 2. Call Server Action
 3. Verify database state
@@ -851,6 +911,7 @@ Use test database with seeded data:
 **File**: `scripts/import-excel.ts`
 
 **Process**:
+
 1. Parse Excel file using `xlsx`
 2. Insert master data
 3. Insert historical transactions

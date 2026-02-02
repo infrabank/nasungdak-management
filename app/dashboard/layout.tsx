@@ -16,7 +16,7 @@ export default async function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-brutal-white pb-[env(safe-area-inset-bottom)] lg:pb-0">
-      <nav className="bg-brutal-yellow border-b-3 border-brutal-black">
+      <nav className="border-b-3 border-brutal-black bg-brutal-yellow">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Mobile Header */}
           <div className="flex h-14 items-center justify-between lg:hidden">
@@ -67,10 +67,8 @@ export default async function DashboardLayout({
         </div>
       </nav>
 
-      <main className="py-10 mb-14 lg:mb-0">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {children}
-        </div>
+      <main className="mb-14 py-10 lg:mb-0">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
       </main>
 
       <MobileBottomNav />

@@ -30,7 +30,11 @@ interface SalesRowProps {
   onToggleSelect: () => void
 }
 
-export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowProps) {
+export default function SalesRow({
+  sale,
+  isSelected,
+  onToggleSelect,
+}: SalesRowProps) {
   const confirm = useConfirm()
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -51,7 +55,14 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
   }, [isEditing, skuList.length])
 
   const handleDelete = async () => {
-    if (!(await confirm({ title: '확인', description: '이 판매 기록을 삭제하시겠습니까?', variant: 'danger' }))) return
+    if (
+      !(await confirm({
+        title: '확인',
+        description: '이 판매 기록을 삭제하시겠습니까?',
+        variant: 'danger',
+      }))
+    )
+      return
 
     setIsDeleting(true)
     const result = await deleteSalesRecord(sale.id)
@@ -115,7 +126,9 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
           <input
             type="date"
             value={editData.saleDate}
-            onChange={(e) => setEditData({ ...editData, saleDate: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, saleDate: e.target.value })
+            }
             className={inputClass}
           />
         </td>
@@ -125,7 +138,9 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
         <td className="whitespace-nowrap px-2 py-2 text-sm">
           <select
             value={editData.skuId}
-            onChange={(e) => setEditData({ ...editData, skuId: e.target.value })}
+            onChange={(e) =>
+              setEditData({ ...editData, skuId: e.target.value })
+            }
             className={selectClass}
           >
             <option value="">선택</option>
@@ -142,29 +157,31 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
             min="1"
             step="1"
             value={editData.quantitySold}
-            onChange={(e) => setEditData({ ...editData, quantitySold: e.target.value })}
-            className={`${inputClass} text-right w-20`}
+            onChange={(e) =>
+              setEditData({ ...editData, quantitySold: e.target.value })
+            }
+            className={`${inputClass} w-20 text-right`}
           />
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm text-brutal-black/50 text-right">
+        <td className="whitespace-nowrap px-2 py-2 text-right text-sm text-brutal-black/50">
           -
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm text-brutal-black/50 text-right">
+        <td className="whitespace-nowrap px-2 py-2 text-right text-sm text-brutal-black/50">
           -
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm text-right">
-          <div className="flex gap-1 justify-end">
+        <td className="whitespace-nowrap px-2 py-2 text-right text-sm">
+          <div className="flex justify-end gap-1">
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal transition-all disabled:opacity-50"
+              className="border-2 border-brutal-black bg-brutal-white px-2 py-1 text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:shadow-brutal disabled:opacity-50"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-2 py-1 text-xs font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal transition-all disabled:opacity-50"
+              className="border-2 border-brutal-black bg-brutal-yellow px-2 py-1 text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:shadow-brutal disabled:opacity-50"
             >
               {isSaving ? '...' : '저장'}
             </button>
@@ -175,13 +192,15 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
   }
 
   return (
-    <tr className={`hover:bg-brutal-yellow/20 transition-colors ${isDeleting ? 'opacity-50' : ''}`}>
+    <tr
+      className={`transition-colors hover:bg-brutal-yellow/20 ${isDeleting ? 'opacity-50' : ''}`}
+    >
       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
         <input
           type="checkbox"
           checked={isSelected}
           onChange={onToggleSelect}
-          className="h-4 w-4 border-2 border-brutal-black text-brutal-black focus:ring-brutal-black cursor-pointer"
+          className="h-4 w-4 cursor-pointer border-2 border-brutal-black text-brutal-black focus:ring-brutal-black"
         />
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm font-bold text-brutal-black">
@@ -193,28 +212,28 @@ export default function SalesRow({ sale, isSelected, onToggleSelect }: SalesRowP
       <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black">
         {sale.skuName}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black text-right">
+      <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-medium text-brutal-black">
         {sale.quantitySold}개
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black text-right">
+      <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-medium text-brutal-black">
         {formatCurrency(Number(sale.unitPrice))}
       </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-bold">
+      <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold text-brutal-black">
         {formatCurrency(Number(sale.totalRevenue))}
       </td>
       <td className="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm sm:pr-6">
-        <div className="flex gap-2 justify-end">
+        <div className="flex justify-end gap-2">
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="font-bold text-brutal-black underline underline-offset-2 hover:bg-brutal-blue px-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-1 font-bold text-brutal-black underline underline-offset-2 transition-colors hover:bg-brutal-blue disabled:cursor-not-allowed disabled:opacity-50"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="font-bold text-brutal-black underline underline-offset-2 hover:bg-brutal-pink px-1 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-1 font-bold text-brutal-black underline underline-offset-2 transition-colors hover:bg-brutal-pink disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

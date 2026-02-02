@@ -9,12 +9,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commit Authorship
 
 When committing code changes:
+
 - Never add Claude as a commit author.
 - Always commit as using the default git settings
 
 ## Documentation Style
 
 When creating or updating markdown documentation files:
+
 - **Never create .md files unless explicitly instructed.**
 - **Be extremely concise** - engineers scan, they don't read novels
 - **Only include essential information** - what they need to know, not what's possible to explain
@@ -32,6 +34,7 @@ Default to 1-2 sentence explanations. Only expand when complexity absolutely req
 ## Development Commands
 
 ### Core Development
+
 ```bash
 npm run dev              # Start dev server (localhost:3000)
 npm run build            # Production build
@@ -42,6 +45,7 @@ npm run format           # Prettier formatting
 ```
 
 ### Database Operations
+
 ```bash
 npm run db:generate      # Generate migration files from schema
 npm run db:migrate       # Apply migrations to database
@@ -51,6 +55,7 @@ npm run import:excel     # Import data from Excel (scripts/import-excel.ts)
 ```
 
 ### Testing
+
 ```bash
 npm run test             # Run Vitest unit tests
 npm run test:e2e         # Run Playwright E2E tests
@@ -59,6 +64,7 @@ npm run test:e2e         # Run Playwright E2E tests
 ## Architecture Overview
 
 ### Tech Stack
+
 - **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS
 - **Backend**: Next.js Server Actions (serverless)
 - **Database**: Vercel Postgres (PostgreSQL) with Drizzle ORM
@@ -81,6 +87,7 @@ app/
 ```
 
 **URL Paths:**
+
 - `/login` - Login page (public)
 - `/dashboard` - Dashboard home (protected)
 - `/dashboard/purchases` - Purchase management (protected)
@@ -94,12 +101,14 @@ All routes except `/login` and static assets are protected by middleware (middle
 ### Database Schema Pattern
 
 All tables follow a consistent pattern:
+
 - **Primary Key**: `id` (UUID, auto-generated)
 - **Audit Fields**: `createdAt`, `updatedAt`, `createdBy`, `updatedBy`
 - **Soft Delete**: `deletedAt`, `deletedBy` (never hard delete records)
 - **Active Status**: `isActive` boolean (where applicable)
 
 Key tables:
+
 - `menu_categories` - Menu items
 - `ingredients` - Ingredient master data
 - `skus` - Stock keeping units (sales items linked to menus)
@@ -118,6 +127,7 @@ Each feature area has an `actions.ts` file with CRUD operations following this s
 **Location**: `app/dashboard/[feature]/actions.ts`
 
 **Standard Structure**:
+
 ```typescript
 'use server'
 
@@ -136,6 +146,7 @@ export async function create[Entity](formData: FormData) {
 ```
 
 **Key Conventions**:
+
 - All server actions use `FormData` as input (not JSON)
 - Use Zod schemas from `lib/utils/validation.ts` for validation
 - Always call `revalidatePath()` after mutations
@@ -145,12 +156,14 @@ export async function create[Entity](formData: FormData) {
 ### Authentication System
 
 **Single-password authentication** (not multi-user):
+
 - Password stored as bcrypt hash in `AUTH_PASSWORD_HASH` env variable
 - JWT tokens created with `jose` library, signed with `SESSION_SECRET`
 - Tokens stored in HTTP-only cookies (7-day expiration)
 - Middleware validates all requests except `/login` and static files
 
 **Key Files**:
+
 - `app/(auth)/login/actions.ts` - Login/logout server actions
 - `middleware.ts` - JWT verification and redirect logic
 - `app/dashboard/logout-button.tsx` - Logout client component
@@ -160,6 +173,7 @@ export async function create[Entity](formData: FormData) {
 Forms are client components that submit to server actions:
 
 **Pattern**:
+
 ```typescript
 'use client'
 
@@ -176,6 +190,7 @@ export default function [Entity]Form() {
 ```
 
 **Notes**:
+
 - Uses React 19's `useActionState` hook (not react-hook-form in most places)
 - Server actions receive raw FormData
 - Forms use native HTML inputs styled with Tailwind
@@ -184,6 +199,7 @@ export default function [Entity]Form() {
 ### Data Fetching
 
 **Server Components** (default):
+
 ```typescript
 export default async function [Entity]Page() {
   const data = await get[Entities]()  // Direct async/await in component
@@ -192,6 +208,7 @@ export default async function [Entity]Page() {
 ```
 
 **Client Components** (when needed):
+
 ```typescript
 useEffect(() => {
   get[Entities]().then(setData)
@@ -199,6 +216,7 @@ useEffect(() => {
 ```
 
 **Query Patterns**:
+
 - Use Drizzle's query builder with explicit joins
 - Always filter out soft-deleted records: `where(isNull(table.deletedAt))`
 - Limit queries to 100 records (no pagination implemented yet)
@@ -209,15 +227,18 @@ useEffect(() => {
 **Location**: `lib/utils/validation.ts`
 
 **Custom Number Transform** (important for decimal fields):
+
 ```typescript
-const decimalSchema = z.union([
-  z.number(),
-  z.string().transform((val) => {
-    const num = parseFloat(val)
-    if (isNaN(num)) throw new Error('Invalid number')
-    return num
-  })
-]).pipe(z.number().positive())
+const decimalSchema = z
+  .union([
+    z.number(),
+    z.string().transform((val) => {
+      const num = parseFloat(val)
+      if (isNaN(num)) throw new Error('Invalid number')
+      return num
+    }),
+  ])
+  .pipe(z.number().positive())
 ```
 
 This pattern handles both string and numeric inputs from forms and ensures positive numbers.
@@ -249,6 +270,7 @@ This ensures purchases match expected ingredient usage for each menu item.
 ### Cost Distribution Rules
 
 Cost distribution rules define how to allocate purchase costs to menus:
+
 - Must have `effective_from` and optional `effective_to` dates
 - Sum of `distribution_percent` for same menu + date range must equal 100%
 - Used in period analysis queries to calculate cost of goods sold
@@ -256,6 +278,7 @@ Cost distribution rules define how to allocate purchase costs to menus:
 ### Fixed Costs Management
 
 Fixed costs (고정비) track recurring expenses that don't vary with production:
+
 - **Cost Types**: Labor costs (인건비), Rent (임대료), Management fees (관리비), Other (기타)
 - **Date-Based**: Each cost record is associated with a specific date for period-based analysis
 - **Margin Calculation**: Fixed costs are added to variable costs (ingredient costs) when calculating net profit
@@ -267,6 +290,7 @@ Fixed costs are accessible via quick action button on the dashboard and have the
 ### Sales Bulk Operations
 
 Sales management includes bulk operations for efficiency:
+
 - **Bulk Selection**: Checkbox-based selection with "Select All" functionality
 - **Bulk Delete**: Soft-delete multiple sales records at once
 - **Client-side State**: Selection state managed in client component (`SalesList`)
@@ -276,6 +300,7 @@ Sales management includes bulk operations for efficiency:
 ### CSV Import Auto-Pricing
 
 When uploading sales data via CSV:
+
 - CSV files contain only: date, SKU name, and quantity (no prices)
 - Unit prices are automatically fetched from SKU master data during import
 - System creates a Map of `SKU name → {id, unitPrice}` for fast lookup
@@ -289,6 +314,7 @@ When uploading sales data via CSV:
 ### Database-Computed Fields
 
 **Never insert/update these generated columns**:
+
 - `purchase_transactions.total_amount` = `quantity * unit_price`
 - `sales_records.total_revenue` = `quantity_sold * (SELECT unit_price FROM skus WHERE id = sku_id)`
 
@@ -297,9 +323,11 @@ The database computes these automatically using `generatedAlwaysAs()`.
 ## Common Patterns
 
 ### Soft Delete Pattern
+
 ```typescript
 // Soft delete (correct)
-await db.update(table)
+await db
+  .update(table)
   .set({ deletedAt: new Date(), deletedBy: 'user-id' })
   .where(eq(table.id, id))
 
@@ -308,6 +336,7 @@ await db.delete(table).where(eq(table.id, id))
 ```
 
 ### Query with Joins
+
 ```typescript
 const results = await db
   .select({
@@ -323,9 +352,10 @@ const results = await db
 ```
 
 ### Revalidation After Mutations
+
 ```typescript
 await db.insert(table).values(data)
-revalidatePath('/dashboard/[feature]')  // Clear Next.js cache
+revalidatePath('/dashboard/[feature]') // Clear Next.js cache
 ```
 
 ## Environment Variables
@@ -345,6 +375,7 @@ AUTH_PASSWORD_HASH=      # Bcrypt hash of login password
 ```
 
 To generate password hash:
+
 ```typescript
 import bcrypt from 'bcryptjs'
 const hash = await bcrypt.hash('your-password', 10)
@@ -362,6 +393,7 @@ When modifying schema in `lib/db/schema.ts`:
 ## Type Safety
 
 **Drizzle Type Inference**:
+
 ```typescript
 export type MenuCategory = typeof menuCategories.$inferSelect
 export type NewMenuCategory = typeof menuCategories.$inferInsert
@@ -370,6 +402,7 @@ export type NewMenuCategory = typeof menuCategories.$inferInsert
 Use `$inferSelect` for read types and `$inferInsert` for create/update types.
 
 **Decimal Fields**: Database decimal columns are returned as strings by the Postgres driver. Convert to numbers for calculations:
+
 ```typescript
 const amount = Number(record.totalAmount)
 ```
@@ -385,6 +418,7 @@ const amount = Number(record.totalAmount)
 ## Documentation
 
 Detailed specs and planning docs in `specs/1-purchase-sales-management/`:
+
 - `spec.md` - Feature specifications
 - `data-model.md` - Database schema documentation
 - `plan.md` - Implementation plan

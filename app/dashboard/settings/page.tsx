@@ -25,7 +25,7 @@ export default async function SettingsPage() {
       <div className="mt-8 space-y-8">
         {/* General Settings */}
         <section className="border-3 border-brutal-black bg-brutal-white">
-          <div className="border-b-2 border-brutal-black px-6 py-4 bg-brutal-yellow/20">
+          <div className="border-b-2 border-brutal-black bg-brutal-yellow/20 px-6 py-4">
             <h2 className="text-lg font-bold text-brutal-black">기본 정보</h2>
           </div>
           <div className="p-6">
@@ -38,7 +38,7 @@ export default async function SettingsPage() {
 
         {/* Billing */}
         <section className="border-3 border-brutal-black bg-brutal-white">
-          <div className="border-b-2 border-brutal-black px-6 py-4 bg-brutal-yellow/20">
+          <div className="border-b-2 border-brutal-black bg-brutal-yellow/20 px-6 py-4">
             <h2 className="text-lg font-bold text-brutal-black">구독 & 결제</h2>
           </div>
           <div className="p-6">
@@ -53,7 +53,7 @@ export default async function SettingsPage() {
 
         {/* Members */}
         <section className="border-3 border-brutal-black bg-brutal-white">
-          <div className="border-b-2 border-brutal-black px-6 py-4 bg-brutal-yellow/20">
+          <div className="border-b-2 border-brutal-black bg-brutal-yellow/20 px-6 py-4">
             <h2 className="text-lg font-bold text-brutal-black">팀 멤버</h2>
           </div>
           <div className="p-6">

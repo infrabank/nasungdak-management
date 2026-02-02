@@ -19,17 +19,20 @@ Create git commit(s) intelligently based on the request and conversation context
 ### Behavior Based on Arguments
 
 **No arguments (`/commit`):**
+
 - ONLY commit files that are directly related to our recent conversation work
 - Review recent conversation messages to identify which files we've been working on together
 - Exclude any unrelated changes that happen to be in the working tree
 - If unclear which files are "current work", ask the user for clarification
 
 **With description (`/commit [description]`):**
+
 - ONLY commit files that match the provided description
 - Use the description to filter which changed files should be included
 - Example: `/commit updates to slash commands` → only commit files in commands/ directory
 
 **Multi-commit request (`/commit do two commits for X and Y`):**
+
 - Parse the request to understand how many commits are needed
 - Create separate commits for each described change set
 - Example: `/commit do two commits, one for slash commands and one for skill-creator` → create 2 commits

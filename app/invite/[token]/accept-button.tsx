@@ -34,7 +34,7 @@ export default function AcceptInviteButton({ token }: Props) {
     <button
       onClick={handleAccept}
       disabled={isLoading}
-      className="flex w-full justify-center px-4 py-3 text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      className="flex w-full justify-center border-2 border-brutal-black bg-brutal-yellow px-4 py-3 text-base font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg disabled:cursor-not-allowed disabled:opacity-50"
     >
       {isLoading ? '참여 중...' : '초대 수락'}
     </button>

@@ -47,9 +47,9 @@ export default async function InvitePage({ params }: Props) {
 
   if (!invitation) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-brutal-white py-12 px-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-brutal-white px-4 py-12">
         <div className="w-full max-w-md text-center">
-          <div className="border-3 border-brutal-black shadow-brutal-lg p-8 bg-brutal-white">
+          <div className="border-3 border-brutal-black bg-brutal-white p-8 shadow-brutal-lg">
             <h1 className="text-2xl font-bold text-brutal-black">
               유효하지 않은 초대
             </h1>
@@ -58,7 +58,7 @@ export default async function InvitePage({ params }: Props) {
             </p>
             <Link
               href="/login"
-              className="mt-6 inline-block px-6 py-3 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg transition-all"
+              className="mt-6 inline-block border-2 border-brutal-black bg-brutal-yellow px-6 py-3 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:shadow-brutal-lg"
             >
               로그인 페이지로
             </Link>
@@ -100,10 +100,10 @@ export default async function InvitePage({ params }: Props) {
     }
 
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-brutal-white py-12 px-4">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-brutal-white px-4 py-12">
         <div className="w-full max-w-md">
-          <div className="flex justify-center mb-8">
-            <div className="border-3 border-brutal-black shadow-brutal-lg p-4 bg-brutal-yellow">
+          <div className="mb-8 flex justify-center">
+            <div className="border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal-lg">
               <Image
                 src="/images/logo.png"
                 alt="나성닭강정 로고"
@@ -115,30 +115,32 @@ export default async function InvitePage({ params }: Props) {
             </div>
           </div>
 
-          <div className="border-3 border-brutal-black shadow-brutal-lg p-8 bg-brutal-white">
-            <h1 className="text-2xl font-bold text-brutal-black text-center">
+          <div className="border-3 border-brutal-black bg-brutal-white p-8 shadow-brutal-lg">
+            <h1 className="text-center text-2xl font-bold text-brutal-black">
               조직 초대
             </h1>
 
-            <div className="mt-6 p-4 border-2 border-brutal-black bg-brutal-yellow/10">
+            <div className="mt-6 border-2 border-brutal-black bg-brutal-yellow/10 p-4">
               <p className="text-sm text-brutal-black/70">초대받은 조직</p>
               <p className="text-xl font-bold text-brutal-black">{org.name}</p>
               <p className="mt-2 text-sm text-brutal-black/70">
-                역할: <span className="font-bold">{invitation.role === 'admin' ? '관리자' : '멤버'}</span>
+                역할:{' '}
+                <span className="font-bold">
+                  {invitation.role === 'admin' ? '관리자' : '멤버'}
+                </span>
               </p>
             </div>
 
-            <p className="mt-4 text-sm text-brutal-black/70 text-center">
+            <p className="mt-4 text-center text-sm text-brutal-black/70">
               <strong>{user?.name}</strong>님으로 로그인되어 있습니다.
-              <br />
-              이 조직에 참여하시겠습니까?
+              <br />이 조직에 참여하시겠습니까?
             </p>
 
             <div className="mt-6">
               <AcceptInviteButton token={token} />
             </div>
 
-            <p className="mt-4 text-xs text-brutal-black/50 text-center">
+            <p className="mt-4 text-center text-xs text-brutal-black/50">
               다른 계정으로 참여하려면{' '}
               <Link href="/login" className="underline">
                 로그아웃
@@ -153,10 +155,10 @@ export default async function InvitePage({ params }: Props) {
 
   // Not logged in - show signup/login options
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-brutal-white py-12 px-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-brutal-white px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="flex justify-center mb-8">
-          <div className="border-3 border-brutal-black shadow-brutal-lg p-4 bg-brutal-yellow">
+        <div className="mb-8 flex justify-center">
+          <div className="border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal-lg">
             <Image
               src="/images/logo.png"
               alt="나성닭강정 로고"
@@ -168,43 +170,48 @@ export default async function InvitePage({ params }: Props) {
           </div>
         </div>
 
-        <div className="border-3 border-brutal-black shadow-brutal-lg p-8 bg-brutal-white">
-          <h1 className="text-2xl font-bold text-brutal-black text-center">
+        <div className="border-3 border-brutal-black bg-brutal-white p-8 shadow-brutal-lg">
+          <h1 className="text-center text-2xl font-bold text-brutal-black">
             조직 초대
           </h1>
 
-          <div className="mt-6 p-4 border-2 border-brutal-black bg-brutal-yellow/10">
+          <div className="mt-6 border-2 border-brutal-black bg-brutal-yellow/10 p-4">
             <p className="text-sm text-brutal-black/70">초대받은 조직</p>
             <p className="text-xl font-bold text-brutal-black">{org.name}</p>
             <p className="mt-2 text-sm text-brutal-black/70">
               초대 이메일: <span className="font-bold">{invitation.email}</span>
             </p>
             <p className="text-sm text-brutal-black/70">
-              역할: <span className="font-bold">{invitation.role === 'admin' ? '관리자' : '멤버'}</span>
+              역할:{' '}
+              <span className="font-bold">
+                {invitation.role === 'admin' ? '관리자' : '멤버'}
+              </span>
             </p>
           </div>
 
-          <p className="mt-4 text-sm text-brutal-black/70 text-center">
+          <p className="mt-4 text-center text-sm text-brutal-black/70">
             초대를 수락하려면 로그인하거나 회원가입하세요.
           </p>
 
           <div className="mt-6 space-y-3">
             <Link
               href={`/signup?invite=${token}&email=${encodeURIComponent(invitation.email)}`}
-              className="flex w-full justify-center px-4 py-3 text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+              className="flex w-full justify-center border-2 border-brutal-black bg-brutal-yellow px-4 py-3 text-base font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
             >
               회원가입
             </Link>
             <Link
               href={`/login?invite=${token}`}
-              className="flex w-full justify-center px-4 py-3 text-base font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+              className="flex w-full justify-center border-2 border-brutal-black bg-brutal-white px-4 py-3 text-base font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
             >
               로그인
             </Link>
           </div>
 
-          <p className="mt-4 text-xs text-brutal-black/50 text-center">
-            이 초대는 {new Date(invitation.expiresAt).toLocaleDateString('ko-KR')}까지 유효합니다.
+          <p className="mt-4 text-center text-xs text-brutal-black/50">
+            이 초대는{' '}
+            {new Date(invitation.expiresAt).toLocaleDateString('ko-KR')}까지
+            유효합니다.
           </p>
         </div>
       </div>

@@ -23,7 +23,6 @@ export async function createMenu(formData: FormData) {
       isActive: formData.get('isActive') === 'true',
     }
 
-
     const validatedData = menuSchema.parse(rawData)
 
     const [menu] = await db
@@ -55,7 +54,8 @@ export async function createMenu(formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '메뉴 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '메뉴 등록에 실패했습니다',
     }
   }
 }
@@ -78,10 +78,12 @@ export async function updateMenu(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(and(
-        eq(menuCategories.id, id),
-        eq(menuCategories.organizationId, organizationId)
-      ))
+      .where(
+        and(
+          eq(menuCategories.id, id),
+          eq(menuCategories.organizationId, organizationId)
+        )
+      )
       .returning()
 
     revalidatePath('/dashboard/master-data/menus')
@@ -117,10 +119,12 @@ export async function deleteMenu(id: string) {
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(and(
-        eq(menuCategories.id, id),
-        eq(menuCategories.organizationId, organizationId)
-      ))
+      .where(
+        and(
+          eq(menuCategories.id, id),
+          eq(menuCategories.organizationId, organizationId)
+        )
+      )
 
     revalidatePath('/dashboard/master-data/menus')
     revalidateTag('menus:active')
@@ -143,10 +147,14 @@ export async function getMenus() {
     const menus = await db
       .select()
       .from(menuCategories)
-      .where(and(
-        isNull(menuCategories.deletedAt),
-        organizationId ? eq(menuCategories.organizationId, organizationId) : undefined
-      ))
+      .where(
+        and(
+          isNull(menuCategories.deletedAt),
+          organizationId
+            ? eq(menuCategories.organizationId, organizationId)
+            : undefined
+        )
+      )
       .orderBy(menuCategories.menuName)
 
     return menus
@@ -178,7 +186,8 @@ export async function bulkCreateMenus(rows: CSVRow[]) {
         let isActive = true
         if (row.활성 !== undefined && row.활성 !== '') {
           const activeStr = String(row.활성).toLowerCase().trim()
-          isActive = activeStr === 'true' || activeStr === '1' || activeStr === 'yes'
+          isActive =
+            activeStr === 'true' || activeStr === '1' || activeStr === 'yes'
         }
 
         // Validate data
@@ -189,13 +198,11 @@ export async function bulkCreateMenus(rows: CSVRow[]) {
         })
 
         // Insert menu
-        await db
-          .insert(menuCategories)
-          .values({
-            ...validatedData,
-            organizationId,
-            createdBy: 'system',
-          })
+        await db.insert(menuCategories).values({
+          ...validatedData,
+          organizationId,
+          createdBy: 'system',
+        })
 
         successCount++
       } catch (error) {
@@ -203,7 +210,9 @@ export async function bulkCreateMenus(rows: CSVRow[]) {
         if (error instanceof z.ZodError) {
           errors.push(`${rowNum}행: ${error.errors[0].message}`)
         } else {
-          errors.push(`${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+          errors.push(
+            `${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+          )
         }
       }
     }
@@ -223,7 +232,8 @@ export async function bulkCreateMenus(rows: CSVRow[]) {
       success: false,
       successCount,
       failedCount,
-      error: error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
     }
   }
 }

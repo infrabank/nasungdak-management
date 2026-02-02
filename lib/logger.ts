@@ -1,14 +1,14 @@
 /**
  * 구조화된 로깅 시스템
- * 
+ *
  * 환경별 로그 레벨:
  * - development: debug
  * - production: info
- * 
+ *
  * 사용법:
  * ```typescript
  * import { logger } from '@/lib/logger'
- * 
+ *
  * logger.info('사용자 로그인', { userId: '123', email: 'user@example.com' })
  * logger.error('데이터베이스 오류', { error: err.message, query: 'SELECT ...' })
  * ```
@@ -43,14 +43,19 @@ class Logger {
 
   constructor() {
     const envLevel = process.env.LOG_LEVEL as LogLevel | undefined
-    this.minLevel = envLevel || (process.env.NODE_ENV === 'production' ? 'info' : 'debug')
+    this.minLevel =
+      envLevel || (process.env.NODE_ENV === 'production' ? 'info' : 'debug')
   }
 
   private shouldLog(level: LogLevel): boolean {
     return LOG_LEVELS[level] >= LOG_LEVELS[this.minLevel]
   }
 
-  private formatEntry(level: LogLevel, message: string, context?: LogContext): LogEntry {
+  private formatEntry(
+    level: LogLevel,
+    message: string,
+    context?: LogContext
+  ): LogEntry {
     return {
       timestamp: new Date().toISOString(),
       level,
@@ -145,7 +150,11 @@ export const logger = new Logger()
 /**
  * Server Action에서 사용할 로거 생성
  */
-export function createActionLogger(actionName: string, storeId?: string, userId?: string) {
+export function createActionLogger(
+  actionName: string,
+  storeId?: string,
+  userId?: string
+) {
   return logger.withContext({
     action: actionName,
     ...(storeId && { storeId }),
@@ -161,7 +170,8 @@ export function errorToContext(error: unknown): LogContext {
     return {
       errorName: error.name,
       errorMessage: error.message,
-      errorStack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      errorStack:
+        process.env.NODE_ENV === 'development' ? error.stack : undefined,
     }
   }
   return { error: String(error) }
@@ -170,7 +180,12 @@ export function errorToContext(error: unknown): LogContext {
 /**
  * 데이터베이스 쿼리 로깅
  */
-export function logQuery(operation: string, table: string, duration?: number, context?: LogContext): void {
+export function logQuery(
+  operation: string,
+  table: string,
+  duration?: number,
+  context?: LogContext
+): void {
   logger.debug(`DB ${operation}`, {
     table,
     ...(duration !== undefined && { durationMs: duration }),
@@ -188,7 +203,8 @@ export function logRequest(
   duration: number,
   context?: LogContext
 ): void {
-  const level = statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info'
+  const level =
+    statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info'
   logger[level](`${method} ${path}`, {
     statusCode,
     durationMs: duration,

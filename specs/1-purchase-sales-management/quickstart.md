@@ -31,6 +31,7 @@ npm install
 ```
 
 **Key Dependencies**:
+
 - `next@15` - Framework
 - `react@19` - UI library
 - `drizzle-orm` - Database ORM
@@ -60,6 +61,7 @@ vercel env pull .env.local
 ```
 
 This will:
+
 - Create a Vercel project
 - Provision a Vercel Postgres database
 - Download environment variables to `.env.local`
@@ -93,6 +95,7 @@ npm run db:migrate
 ```
 
 **Migrations Create**:
+
 - All tables (menu_categories, ingredients, skus, etc.)
 - Indexes for performance
 - Triggers for validation
@@ -106,15 +109,17 @@ npm run db:seed
 ```
 
 **This imports**:
+
 - Menu categories from Excel "메뉴" sheet
 - Ingredients from Excel "재료" sheet
 - Menu-ingredient relationships
 - SKUs with conversion factors from "환산표"
 - Cost distribution rules from "기간분석"
-- Historical purchase transactions from "매입현황_누적"
-- Historical sales records from "판매수량_누적"
+- Historical purchase transactions from "매입현황\_누적"
+- Historical sales records from "판매수량\_누적"
 
 **Verify seeding**:
+
 ```bash
 # Open Drizzle Studio to inspect data
 npm run db:studio
@@ -129,6 +134,7 @@ npm run dev
 Open [http://localhost:3000](http://localhost:3000)
 
 **Default Login**: (Set during first run)
+
 - Password: `admin` (change in production)
 
 ---
@@ -213,6 +219,7 @@ Open [http://localhost:3000](http://localhost:3000)
 4. Style with Tailwind CSS
 
 Example:
+
 ```typescript
 // app/(dashboard)/my-page/page.tsx
 import { db } from '@/lib/db';
@@ -242,32 +249,30 @@ export default async function MyPage() {
 4. Return standardized response
 
 Example:
+
 ```typescript
 // app/(dashboard)/my-page/actions.ts
-'use server';
+'use server'
 
-import { z } from 'zod';
-import { db } from '@/lib/db';
-import { menuCategories } from '@/lib/db/schema';
+import { z } from 'zod'
+import { db } from '@/lib/db'
+import { menuCategories } from '@/lib/db/schema'
 
 const schema = z.object({
   name: z.string().min(1),
-});
+})
 
 export async function createMenu(formData: FormData) {
   try {
     const data = schema.parse({
       name: formData.get('name'),
-    });
+    })
 
-    const [menu] = await db
-      .insert(menuCategories)
-      .values(data)
-      .returning();
+    const [menu] = await db.insert(menuCategories).values(data).returning()
 
-    return { success: true, data: menu };
+    return { success: true, data: menu }
   } catch (error) {
-    return { success: false, error: error.message };
+    return { success: false, error: error.message }
   }
 }
 ```
@@ -285,14 +290,15 @@ export async function createMenu(formData: FormData) {
 Use Tailwind utility classes:
 
 ```tsx
-<div className="flex flex-col md:flex-row gap-4 p-6 bg-white rounded-lg shadow">
-  <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+<div className="flex flex-col gap-4 rounded-lg bg-white p-6 shadow md:flex-row">
+  <button className="rounded bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700">
     버튼
   </button>
 </div>
 ```
 
 **Responsive Breakpoints**:
+
 - `sm:` - 640px+ (mobile)
 - `md:` - 768px+ (tablet)
 - `lg:` - 1024px+ (desktop)
@@ -303,9 +309,9 @@ Use Tailwind utility classes:
 Use Framer Motion for transitions:
 
 ```tsx
-'use client';
+'use client'
 
-import { motion } from 'framer-motion';
+import { motion } from 'framer-motion'
 
 export function AnimatedCard({ children }) {
   return (
@@ -316,7 +322,7 @@ export function AnimatedCard({ children }) {
     >
       {children}
     </motion.div>
-  );
+  )
 }
 ```
 
@@ -334,12 +340,12 @@ Test validation logic, utilities, and pure functions:
 
 ```typescript
 // lib/utils/__tests__/format.test.ts
-import { formatCurrency } from '../format';
+import { formatCurrency } from '../format'
 
 test('formatCurrency formats Korean Won correctly', () => {
-  expect(formatCurrency(1000)).toBe('₩1,000');
-  expect(formatCurrency(1234567)).toBe('₩1,234,567');
-});
+  expect(formatCurrency(1000)).toBe('₩1,000')
+  expect(formatCurrency(1234567)).toBe('₩1,234,567')
+})
 ```
 
 ### Integration Tests
@@ -348,16 +354,16 @@ Test Server Actions with test database:
 
 ```typescript
 // app/(dashboard)/purchases/__tests__/actions.test.ts
-import { createPurchase } from '../actions';
+import { createPurchase } from '../actions'
 
 test('createPurchase validates menu-ingredient combination', async () => {
-  const formData = new FormData();
+  const formData = new FormData()
   // ... set form data
 
-  const result = await createPurchase(formData);
+  const result = await createPurchase(formData)
 
-  expect(result.success).toBe(true);
-});
+  expect(result.success).toBe(true)
+})
 ```
 
 ### E2E Tests
@@ -370,17 +376,17 @@ Test critical user flows with Playwright:
 
 ```typescript
 // tests/e2e/purchase-flow.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect } from '@playwright/test'
 
 test('user can create purchase transaction', async ({ page }) => {
-  await page.goto('/login');
-  await page.fill('input[name="password"]', 'admin');
-  await page.click('button[type="submit"]');
+  await page.goto('/login')
+  await page.fill('input[name="password"]', 'admin')
+  await page.click('button[type="submit"]')
 
-  await page.goto('/purchases/new');
+  await page.goto('/purchases/new')
   // ... fill form and submit
-  await expect(page).toHaveURL('/purchases');
-});
+  await expect(page).toHaveURL('/purchases')
+})
 ```
 
 ---
@@ -399,6 +405,7 @@ test('user can create purchase transaction', async ({ page }) => {
 6. Deploy
 
 **Automatic deployments**:
+
 - Push to `main` → Production
 - Push to other branches → Preview deployment
 
@@ -494,6 +501,7 @@ npm run format
 **Problem**: `Error: Connection terminated unexpectedly`
 
 **Solution**:
+
 1. Check `.env.local` has correct Postgres credentials
 2. Verify database is running in Vercel dashboard
 3. Check network/firewall settings
@@ -504,6 +512,7 @@ npm run format
 **Problem**: `relation "table_name" already exists`
 
 **Solution**:
+
 ```bash
 # Drop and recreate
 npm run db:drop
@@ -515,6 +524,7 @@ npm run db:migrate
 **Problem**: TypeScript complains about missing types
 
 **Solution**:
+
 ```bash
 # Regenerate Drizzle types
 npm run db:generate
@@ -525,6 +535,7 @@ npm run db:generate
 **Problem**: Import script fails with validation errors
 
 **Solution**:
+
 1. Check Excel file format matches expected structure
 2. Review error report in console
 3. Manually fix data in Excel
@@ -535,6 +546,7 @@ npm run db:generate
 **Problem**: Build fails on Vercel
 
 **Solution**:
+
 1. Check build logs in Vercel dashboard
 2. Ensure all env vars are set
 3. Run `npm run build` locally to reproduce
@@ -553,6 +565,7 @@ npm run start
 ```
 
 Check:
+
 - Page load times
 - Database query duration
 - Bundle sizes: `.next/analyze/`
@@ -560,6 +573,7 @@ Check:
 ### Vercel Analytics
 
 Enable in Vercel dashboard:
+
 - Web Vitals (LCP, FID, CLS)
 - Edge Function performance
 - Database query metrics
@@ -597,6 +611,7 @@ Enable in Vercel dashboard:
 ## Support
 
 For issues or questions:
+
 1. Check this guide and documentation
 2. Review error messages and logs
 3. Search GitHub issues

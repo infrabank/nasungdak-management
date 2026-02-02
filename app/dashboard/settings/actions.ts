@@ -26,7 +26,11 @@ const SESSION_SECRET = new TextEncoder().encode(
 const updateOrgSchema = z.object({
   name: z.string().min(1, '조직명을 입력해주세요').max(200),
   businessNumber: z.string().optional().nullable(),
-  billingEmail: z.string().email('올바른 이메일 형식이 아닙니다').optional().or(z.literal('')),
+  billingEmail: z
+    .string()
+    .email('올바른 이메일 형식이 아닙니다')
+    .optional()
+    .or(z.literal('')),
   billingName: z.string().optional().nullable(),
 })
 
@@ -200,9 +204,9 @@ export async function updateOrganization(
 
     const rawData = {
       name: formData.get('name') as string,
-      businessNumber: formData.get('businessNumber') as string || null,
-      billingEmail: formData.get('billingEmail') as string || '',
-      billingName: formData.get('billingName') as string || null,
+      businessNumber: (formData.get('businessNumber') as string) || null,
+      billingEmail: (formData.get('billingEmail') as string) || '',
+      billingName: (formData.get('billingName') as string) || null,
     }
 
     const result = updateOrgSchema.safeParse(rawData)
@@ -340,7 +344,9 @@ export async function inviteMember(
 /**
  * Cancel an invitation
  */
-export async function cancelInvitation(invitationId: string): Promise<ActionResult> {
+export async function cancelInvitation(
+  invitationId: string
+): Promise<ActionResult> {
   try {
     const userId = await getCurrentUserId()
     if (!userId) return { success: false, error: '로그인이 필요합니다' }

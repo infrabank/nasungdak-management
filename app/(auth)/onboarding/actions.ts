@@ -53,7 +53,10 @@ const storeSchema = z.object({
     .string()
     .min(1, '매장 코드를 입력해주세요')
     .max(20, '매장 코드가 너무 깁니다')
-    .regex(/^[A-Z0-9-]+$/, '매장 코드는 영문 대문자, 숫자, 하이픈만 사용할 수 있습니다'),
+    .regex(
+      /^[A-Z0-9-]+$/,
+      '매장 코드는 영문 대문자, 숫자, 하이픈만 사용할 수 있습니다'
+    ),
   address: z
     .string()
     .optional()

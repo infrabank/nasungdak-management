@@ -12,7 +12,10 @@ const signupSchema = z
       .string()
       .min(1, '이메일을 입력해주세요')
       .email('올바른 이메일 형식이 아닙니다'),
-    name: z.string().min(1, '이름을 입력해주세요').max(100, '이름이 너무 깁니다'),
+    name: z
+      .string()
+      .min(1, '이름을 입력해주세요')
+      .max(100, '이름이 너무 깁니다'),
     phone: z
       .string()
       .optional()

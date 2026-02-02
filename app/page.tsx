@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-brutal-white">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-brutal-white p-24">
       <div className="max-w-2xl text-center">
         <h1 className="mb-8 text-4xl font-black text-brutal-black">
           나성닭강정 관리 시스템
@@ -13,7 +13,7 @@ export default function HomePage() {
         <div className="flex justify-center">
           <Link
             href="/login"
-            className="px-6 py-3 text-brutal-black bg-brutal-yellow border-2 border-brutal-black font-bold shadow-brutal hover:shadow-brutal-lg hover:-translate-x-1 hover:-translate-y-1 transition-all"
+            className="border-2 border-brutal-black bg-brutal-yellow px-6 py-3 font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-brutal-lg"
           >
             로그인
           </Link>

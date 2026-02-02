@@ -23,13 +23,15 @@ Default remote branch: !`git remote show origin 2>/dev/null | grep "HEAD branch"
 Create a new git worktree with an auto-generated branch name that tracks the remote default branch.
 
 **Behavior:**
+
 1. Determine the default remote branch (origin/main or origin/master)
 2. Find all existing branches named `worktree*` to determine the next available number
 3. Create a new branch named `worktreeN` where N is the next sequential number (starting at 1)
-4. Create the worktree at a path like `/worktreeN` 
+4. Create the worktree at a path like `/worktreeN`
 5. Set the new local branch to track the remote default branch as upstream (i.e. `origin/main`)
 
 **Process:**
+
 1. Fetch latest changes from remote: `git fetch origin`
 2. Determine the default remote branch:
    - First, try `git remote show origin | grep "HEAD branch"` to find the repository's default branch name
@@ -54,10 +56,12 @@ Create a new git worktree with an auto-generated branch name that tracks the rem
    - Confirmation that tracking is set up correctly
 
 **Examples:**
+
 - `/worktree` - Creates worktree1 at /worktree1 tracking origin/main (or origin/master)
 - `/worktree` (when worktree1 exists) - Creates worktree2 at /worktree2 tracking origin/main (or origin/master)
 
 **Important Notes:**
+
 - The command takes NO arguments - branch names are always auto-generated
 - The new branch always tracks the remote default branch (origin/main or origin/master)
 - Each worktree gets a numbered branch name starting from 1

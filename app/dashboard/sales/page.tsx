@@ -93,9 +93,9 @@ export default async function SalesPage({
   return (
     <div className="pb-24 md:pb-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-brutal-black">
+          <h1 className="text-2xl font-black text-brutal-black sm:text-3xl">
             판매 관리
           </h1>
           <p className="mt-1 text-sm font-medium text-brutal-black">
@@ -108,7 +108,7 @@ export default async function SalesPage({
           <CSVUpload storeId={storeId} />
           <Link
             href={dailySalesUrl}
-            className="block bg-brutal-yellow border-2 border-brutal-black px-4 py-2 text-center text-sm font-bold text-brutal-black shadow-brutal hover:shadow-brutal-hover hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+            className="block border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-center text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-hover"
           >
             일일 판매 입력
           </Link>
@@ -118,11 +118,11 @@ export default async function SalesPage({
       {/* Filters */}
       <form
         method="GET"
-        className="mt-4 bg-brutal-white border-3 border-brutal-black shadow-brutal p-4"
+        className="mt-4 border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal"
       >
         {storeId && <input type="hidden" name="storeId" value={storeId} />}
 
-        <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-4">
+        <div className="space-y-4 md:grid md:grid-cols-3 md:gap-4 md:space-y-0">
           {/* Start Date */}
           <div>
             <label htmlFor="startDate" className={labelClass}>
@@ -188,7 +188,7 @@ export default async function SalesPage({
         </div>
 
         {/* Filter Actions */}
-        <div className="flex items-center justify-between mt-4 pt-4 border-t-2 border-brutal-black/20">
+        <div className="mt-4 flex items-center justify-between border-t-2 border-brutal-black/20 pt-4">
           <p className="text-sm font-medium text-brutal-black">
             페이지 {page} · {sales.length}건 표시
             {hasMore ? ' (더 있음)' : ''}
@@ -201,13 +201,13 @@ export default async function SalesPage({
                   ? `/dashboard/sales?storeId=${storeId}`
                   : '/dashboard/sales'
               }
-              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+              className="border-2 border-brutal-black bg-brutal-white px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal"
             >
               초기화
             </a>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+              className="border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal"
             >
               조회
             </button>
@@ -229,16 +229,18 @@ export default async function SalesPage({
           {page > 1 && (
             <Link
               href={buildPageUrl(page - 1)}
-              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+              className="border-2 border-brutal-black bg-brutal-white px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal"
             >
               ← 이전
             </Link>
           )}
-          <span className="text-sm font-bold text-brutal-black">페이지 {page}</span>
+          <span className="text-sm font-bold text-brutal-black">
+            페이지 {page}
+          </span>
           {hasMore && (
             <Link
               href={buildPageUrl(page + 1)}
-              className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+              className="border-2 border-brutal-black bg-brutal-white px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal"
             >
               다음 →
             </Link>
@@ -247,12 +249,12 @@ export default async function SalesPage({
       )}
 
       {/* Mobile: Fixed Bottom Action Bar - positioned above bottom nav */}
-      <div className="fixed bottom-14 left-0 right-0 bg-brutal-yellow border-t-3 border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 lg:hidden">
+      <div className="fixed bottom-14 left-0 right-0 z-20 border-t-3 border-brutal-black bg-brutal-yellow p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:hidden">
         <div className="flex gap-3">
           <CSVUploadTranspose storeId={storeId} />
           <Link
             href={dailySalesUrl}
-            className="flex-1 bg-brutal-white border-3 border-brutal-black py-3 text-center text-base font-bold text-brutal-black shadow-brutal hover:shadow-brutal-hover hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+            className="flex-1 border-3 border-brutal-black bg-brutal-white py-3 text-center text-base font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-hover"
           >
             + 일일 판매 입력
           </Link>

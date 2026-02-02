@@ -16,7 +16,10 @@ interface AttendanceFormProps {
   employees: Employee[]
 }
 
-export default function AttendanceForm({ storeId, employees }: AttendanceFormProps) {
+export default function AttendanceForm({
+  storeId,
+  employees,
+}: AttendanceFormProps) {
   const router = useRouter()
   const [state, formAction, isPending] = useActionState(createAttendance, null)
 
@@ -27,7 +30,11 @@ export default function AttendanceForm({ storeId, employees }: AttendanceFormPro
 
   // Redirect on success
   if (state?.success) {
-    router.push(storeId ? `/dashboard/attendance?storeId=${storeId}` : '/dashboard/attendance')
+    router.push(
+      storeId
+        ? `/dashboard/attendance?storeId=${storeId}`
+        : '/dashboard/attendance'
+    )
   }
 
   // Auto-fill hourlyRate when employee is selected
@@ -59,7 +66,7 @@ export default function AttendanceForm({ storeId, employees }: AttendanceFormPro
 
       {/* No Store Warning */}
       {!storeId && (
-        <div className="mb-4 bg-brutal-yellow border-3 border-brutal-black shadow-brutal p-4">
+        <div className="mb-4 border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal">
           <p className="text-sm font-bold text-brutal-black">
             상단에서 매장을 선택해주세요
           </p>
@@ -68,7 +75,7 @@ export default function AttendanceForm({ storeId, employees }: AttendanceFormPro
 
       {/* No Employees Warning */}
       {storeId && employees.length === 0 && (
-        <div className="mb-4 bg-brutal-pink border-3 border-brutal-black shadow-brutal p-4">
+        <div className="mb-4 border-3 border-brutal-black bg-brutal-pink p-4 shadow-brutal">
           <p className="text-sm font-bold text-brutal-black">
             등록된 재직 직원이 없습니다. 먼저 직원을 등록해주세요.
           </p>
@@ -77,22 +84,20 @@ export default function AttendanceForm({ storeId, employees }: AttendanceFormPro
 
       {/* Error Message */}
       {state?.error && (
-        <div className="mb-4 bg-brutal-red/10 border-3 border-brutal-red p-4">
+        <div className="mb-4 border-3 border-brutal-red bg-brutal-red/10 p-4">
           <p className="text-sm font-bold text-brutal-red">{state.error}</p>
         </div>
       )}
 
-      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
-        <h3 className="text-sm font-black text-brutal-black uppercase tracking-wide mb-4">
+      <div className="mb-4 border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal">
+        <h3 className="mb-4 text-sm font-black uppercase tracking-wide text-brutal-black">
           출퇴근 기록
         </h3>
 
         <div className="space-y-4">
           {/* Employee */}
           <div>
-            <Label htmlFor="employeeId">
-              👤 직원 *
-            </Label>
+            <Label htmlFor="employeeId">👤 직원 *</Label>
             <Select
               id="employeeId"
               name="employeeId"
@@ -112,9 +117,7 @@ export default function AttendanceForm({ storeId, employees }: AttendanceFormPro
 
           {/* Work Date */}
           <div>
-            <Label htmlFor="workDate">
-              📅 근무일 *
-            </Label>
+            <Label htmlFor="workDate">📅 근무일 *</Label>
             <Input
               type="date"
               name="workDate"
@@ -126,9 +129,7 @@ export default function AttendanceForm({ storeId, employees }: AttendanceFormPro
 
           {/* Work Hours */}
           <div>
-            <Label htmlFor="workHours">
-              🕐 근무시간 *
-            </Label>
+            <Label htmlFor="workHours">🕐 근무시간 *</Label>
             <Input
               type="number"
               name="workHours"
@@ -148,9 +149,7 @@ export default function AttendanceForm({ storeId, employees }: AttendanceFormPro
 
           {/* Hourly Rate */}
           <div>
-            <Label htmlFor="hourlyRate">
-              💰 시급 (원) *
-            </Label>
+            <Label htmlFor="hourlyRate">💰 시급 (원) *</Label>
             <Input
               type="number"
               name="hourlyRate"
@@ -166,9 +165,7 @@ export default function AttendanceForm({ storeId, employees }: AttendanceFormPro
 
           {/* Total Pay */}
           <div>
-            <Label htmlFor="totalPay">
-              💵 지급액 (원)
-            </Label>
+            <Label htmlFor="totalPay">💵 지급액 (원)</Label>
             <Input
               type="number"
               name="totalPay"
@@ -186,9 +183,7 @@ export default function AttendanceForm({ storeId, employees }: AttendanceFormPro
 
           {/* Notes */}
           <div>
-            <Label htmlFor="notes">
-              📝 비고
-            </Label>
+            <Label htmlFor="notes">📝 비고</Label>
             <Textarea
               id="notes"
               name="notes"
@@ -200,8 +195,8 @@ export default function AttendanceForm({ storeId, employees }: AttendanceFormPro
       </div>
 
       {/* Fixed Bottom Action Bar */}
-      <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-brutal-white border-t border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4 z-20">
-        <div className="flex gap-3 max-w-lg mx-auto">
+      <div className="fixed bottom-14 left-0 right-0 z-20 border-t border-brutal-black bg-brutal-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:bottom-0 lg:pb-4">
+        <div className="mx-auto flex max-w-lg gap-3">
           <Button
             type="button"
             variant="secondary"

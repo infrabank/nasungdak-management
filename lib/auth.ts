@@ -84,10 +84,10 @@ export async function getAuthContext(): Promise<AuthContext> {
 export async function hasStoreAccess(storeId: string): Promise<boolean> {
   const auth = await getAuthContext()
   if (!auth.isAuthenticated) return false
-  
+
   // 'all'은 모든 접근 가능한 매장을 의미
   if (storeId === 'all') return auth.storeIds.length > 0
-  
+
   return auth.storeIds.includes(storeId)
 }
 
@@ -100,27 +100,29 @@ export async function hasPermission(
 ): Promise<boolean> {
   const auth = await getAuthContext()
   if (!auth.isAuthenticated) return false
-  
+
   const resourcePermissions = auth.permissions[resource]
   if (!resourcePermissions) return false
-  
+
   return resourcePermissions.includes(action)
 }
 
 /**
  * 매장 접근 권한을 검증하고 없으면 에러를 throw합니다.
  */
-export async function requireStoreAccess(storeId: string): Promise<AuthContext> {
+export async function requireStoreAccess(
+  storeId: string
+): Promise<AuthContext> {
   const auth = await getAuthContext()
-  
+
   if (!auth.isAuthenticated) {
     throw new Error('로그인이 필요합니다')
   }
-  
+
   if (storeId !== 'all' && !auth.storeIds.includes(storeId)) {
     throw new Error('해당 매장에 대한 접근 권한이 없습니다')
   }
-  
+
   return auth
 }
 
@@ -142,13 +144,19 @@ export async function authenticateUser(
     })
 
     if (!user) {
-      return { success: false, error: '이메일 또는 비밀번호가 올바르지 않습니다' }
+      return {
+        success: false,
+        error: '이메일 또는 비밀번호가 올바르지 않습니다',
+      }
     }
 
     // 비밀번호 검증
     const isValid = await bcrypt.compare(password, user.passwordHash)
     if (!isValid) {
-      return { success: false, error: '이메일 또는 비밀번호가 올바르지 않습니다' }
+      return {
+        success: false,
+        error: '이메일 또는 비밀번호가 올바르지 않습니다',
+      }
     }
 
     // 사용자의 매장 할당 및 역할 조회
@@ -166,8 +174,8 @@ export async function authenticateUser(
         )
       )
 
-    const storeIds = assignments.map(a => a.storeId)
-    
+    const storeIds = assignments.map((a) => a.storeId)
+
     // 권한 병합 (여러 역할이 있을 경우)
     const mergedPermissions: Record<string, string[]> = {}
     for (const assignment of assignments) {
@@ -240,28 +248,30 @@ export async function getUserStoreIds(userId: string): Promise<string[]> {
         isNull(userStoreAssignments.deletedAt)
       )
     )
-  
-  return assignments.map(a => a.storeId)
+
+  return assignments.map((a) => a.storeId)
 }
 
 /**
  * storeId 필터를 적용할 때 사용자의 접근 가능한 매장으로 제한합니다.
  * 'all'인 경우 사용자의 모든 매장 ID를 반환합니다.
  */
-export async function getFilteredStoreIds(requestedStoreId: string): Promise<string[]> {
+export async function getFilteredStoreIds(
+  requestedStoreId: string
+): Promise<string[]> {
   const auth = await getAuthContext()
-  
+
   if (!auth.isAuthenticated) {
     return []
   }
-  
+
   if (requestedStoreId === 'all') {
     return auth.storeIds
   }
-  
+
   if (auth.storeIds.includes(requestedStoreId)) {
     return [requestedStoreId]
   }
-  
+
   return [] // 권한 없음
 }

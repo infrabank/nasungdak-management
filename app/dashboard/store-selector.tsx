@@ -18,7 +18,7 @@ export default function StoreSelector({ stores, mobile }: StoreSelectorProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  
+
   const currentStoreId = searchParams.get('storeId') || ''
   const [selectedStore, setSelectedStore] = useState(currentStoreId)
 
@@ -37,7 +37,9 @@ export default function StoreSelector({ stores, mobile }: StoreSelectorProps) {
       params.delete('storeId')
     }
 
-    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname
+    const newUrl = params.toString()
+      ? `${pathname}?${params.toString()}`
+      : pathname
     router.push(newUrl)
   }
 
@@ -53,7 +55,7 @@ export default function StoreSelector({ stores, mobile }: StoreSelectorProps) {
         value={selectedStore}
         onChange={handleChange}
         aria-label="매장 선택"
-        className="py-2 pl-3 pr-8 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none transition-all duration-150 cursor-pointer max-w-[140px] truncate"
+        className="max-w-[140px] cursor-pointer truncate border-2 border-brutal-black bg-brutal-white py-2 pl-3 pr-8 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none"
       >
         <option value="">🏪 매장선택</option>
         {stores.map((store) => (
@@ -68,14 +70,17 @@ export default function StoreSelector({ stores, mobile }: StoreSelectorProps) {
   // Desktop: full selector with label
   return (
     <div className="flex items-center gap-2">
-      <label htmlFor="storeSelector" className="text-sm font-bold text-brutal-black">
+      <label
+        htmlFor="storeSelector"
+        className="text-sm font-bold text-brutal-black"
+      >
         매장:
       </label>
       <select
         id="storeSelector"
         value={selectedStore}
         onChange={handleChange}
-        className="py-1.5 pl-3 pr-8 text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 focus:outline-none transition-all duration-150 sm:text-sm font-medium cursor-pointer"
+        className="cursor-pointer border-2 border-brutal-black bg-brutal-white py-1.5 pl-3 pr-8 font-medium text-brutal-black shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none sm:text-sm"
       >
         <option value="">전체 매장</option>
         {stores.map((store) => (

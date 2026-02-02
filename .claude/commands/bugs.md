@@ -22,6 +22,7 @@ $ARGUMENTS
 Use the bug-finder agent to perform a thorough bug hunt and code analysis.
 
 The bug-finder agent will:
+
 - Hunt for logical errors and runtime issues
 - Identify race conditions and concurrency problems
 - Find unhandled edge cases and error conditions
@@ -31,12 +32,14 @@ The bug-finder agent will:
 - Check for resource leaks and memory issues
 
 **Focus Area:**
+
 - If arguments are provided, focus the analysis on the specified files, directories, or functions
 - If no arguments provided, analyze recent changes from git diff and staged files
 - If no recent changes, perform a broader analysis of critical code paths
 
 **Analysis Scope:**
 The agent will go beyond syntax and style to focus on:
+
 - Logic correctness and potential runtime behavior
 - Edge cases that could cause failures
 - Error handling completeness

@@ -20,15 +20,16 @@ Build a responsive web application to replace an Excel-based workflow for managi
 **Target Platform**: Modern web browsers (Chrome, Safari, Edge, Firefox); Mobile/tablet/desktop responsive
 **Project Type**: Web application (full-stack Next.js, single codebase)
 **Performance Goals**:
+
 - First Contentful Paint < 1.5s on 3G
 - Period analysis query < 500ms for 1 year of data
 - Purchase entry form response < 100ms
-**Constraints**:
+  **Constraints**:
 - Mobile-first design (must work on 375px+ screens)
 - Korean language only (UTF-8 encoding)
 - Offline not required (assumes internet connectivity)
 - Single-user initially (simple password protection)
-**Scale/Scope**:
+  **Scale/Scope**:
 - ~600 purchase transactions/year
 - ~3,600 sales records/year
 - <100 master data records
@@ -38,7 +39,7 @@ Build a responsive web application to replace an Excel-based workflow for managi
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+_GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
 **Status**: ✅ NO CONSTITUTION FILE DEFINED
 
@@ -152,6 +153,7 @@ Configuration:
 ✅ **COMPLETED** - See [research.md](research.md)
 
 **Key Decisions**:
+
 - Next.js 15 with App Router
 - Vercel Postgres + Drizzle ORM
 - Tailwind CSS + Framer Motion
@@ -165,17 +167,20 @@ Configuration:
 ✅ **COMPLETED**
 
 **Data Model**: [data-model.md](data-model.md)
+
 - 7 core tables with relationships
 - UUID primary keys, soft deletes
 - Automated validation triggers
 - Optimized indexes
 
 **API Contracts**: [contracts/api-spec.md](contracts/api-spec.md)
+
 - Server Actions (primary)
 - Zod validation
 - Type-safe responses
 
 **Quickstart**: [quickstart.md](quickstart.md)
+
 - 10-minute setup guide
 - Database seeding
 - Development workflow
@@ -193,6 +198,7 @@ Configuration:
 Run `/speckit.tasks` to generate detailed implementation tasks.
 
 **Documentation Status**:
+
 - ✅ Specification ([spec.md](spec.md))
 - ✅ Research ([research.md](research.md))
 - ✅ Data Model ([data-model.md](data-model.md))

@@ -255,13 +255,21 @@ describe('inventoryEventSchema', () => {
     })
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.errors[0].message).toBe('수량 변동은 0이 아니어야 합니다')
+      expect(result.error.errors[0].message).toBe(
+        '수량 변동은 0이 아니어야 합니다'
+      )
     }
   })
 
   it('accepts all valid event types', () => {
-    const eventTypes = ['purchase', 'sale', 'waste', 'audit', 'adjustment'] as const
-    
+    const eventTypes = [
+      'purchase',
+      'sale',
+      'waste',
+      'audit',
+      'adjustment',
+    ] as const
+
     for (const eventType of eventTypes) {
       const result = inventoryEventSchema.safeParse({
         ...validData,

@@ -73,10 +73,7 @@
       "Bash(git rebase:*)",
       "Bash(git -c core.editor=true rebase --continue)"
     ],
-    "deny": [
-      "Bash(git -C:*)",
-      "Bash(git --no-pager:*)"
-    ],
+    "deny": ["Bash(git -C:*)", "Bash(git --no-pager:*)"],
     "ask": [
       "Bash(python:*)",
       "Bash(py:*)",

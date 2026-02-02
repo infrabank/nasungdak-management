@@ -40,7 +40,7 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-green border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+        className="border-2 border-brutal-black bg-brutal-green px-3 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
       >
         알림 규칙 설정
       </button>
@@ -52,10 +52,10 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
             onClick={() => setIsOpen(false)}
           />
 
-          <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+          <div className="relative transform overflow-hidden border-3 border-brutal-black bg-brutal-white px-4 pb-4 pt-5 text-left shadow-brutal-lg transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
             <form onSubmit={handleSubmit}>
               <div>
-                <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
+                <h3 className="mb-4 text-lg font-semibold leading-6 text-gray-900">
                   재고 알림 규칙 설정
                 </h3>
 
@@ -69,7 +69,9 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
                       defaultValue={rule?.storeId || ''}
                       placeholder="매장 ID"
                     />
-                    <p className="mt-1 text-xs text-gray-500">빈 값이면 전체 매장에 적용됩니다</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      빈 값이면 전체 매장에 적용됩니다
+                    </p>
                   </div>
 
                   <div>
@@ -85,7 +87,9 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
                   </div>
 
                   <div>
-                    <Label htmlFor="alertThresholdDays">알림 임계값 (잔여일) *</Label>
+                    <Label htmlFor="alertThresholdDays">
+                      알림 임계값 (잔여일) *
+                    </Label>
                     <Input
                       type="number"
                       name="alertThresholdDays"
@@ -94,11 +98,15 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
                       min="1"
                       defaultValue={rule?.alertThresholdDays || 3}
                     />
-                    <p className="mt-1 text-xs text-gray-500">잔여일이 이 값 이하면 알림 발송 (기본: 3일)</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      잔여일이 이 값 이하면 알림 발송 (기본: 3일)
+                    </p>
                   </div>
 
                   <div>
-                    <Label htmlFor="predictionPeriodDays">예측 기간 (일) *</Label>
+                    <Label htmlFor="predictionPeriodDays">
+                      예측 기간 (일) *
+                    </Label>
                     <Input
                       type="number"
                       name="predictionPeriodDays"
@@ -108,7 +116,9 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
                       max="90"
                       defaultValue={rule?.predictionPeriodDays || 30}
                     />
-                    <p className="mt-1 text-xs text-gray-500">최근 N일간의 판매량으로 평균을 계산 (기본: 30일)</p>
+                    <p className="mt-1 text-xs text-gray-500">
+                      최근 N일간의 판매량으로 평균을 계산 (기본: 30일)
+                    </p>
                   </div>
 
                   <div className="flex items-center">
@@ -120,7 +130,10 @@ export default function AlertRuleForm({ rule }: AlertRuleFormProps) {
                       defaultChecked={rule?.isActive ?? true}
                       className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-600"
                     />
-                    <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+                    <label
+                      htmlFor="isActive"
+                      className="ml-2 block text-sm text-gray-900"
+                    >
                       활성
                     </label>
                   </div>

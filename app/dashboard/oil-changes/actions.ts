@@ -8,17 +8,17 @@ import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
-export async function createOilChange(
-  prevState: any,
-  formData: FormData
-) {
+export async function createOilChange(prevState: any, formData: FormData) {
   try {
     const storeId = formData.get('storeId') as string | null
     const notes = formData.get('notes')
     const rawData = {
       changeDate: formData.get('changeDate'),
       fryerType: formData.get('fryerType'),
-      notes: notes && typeof notes === 'string' && notes.trim() ? notes.trim() : null,
+      notes:
+        notes && typeof notes === 'string' && notes.trim()
+          ? notes.trim()
+          : null,
     }
 
     const validatedData = oilChangeSchema.parse(rawData)
@@ -26,7 +26,7 @@ export async function createOilChange(
     // Build conditions for finding last change
     const lastChangeConditions = [
       eq(oilChangeHistory.fryerType, validatedData.fryerType),
-      isNull(oilChangeHistory.deletedAt)
+      isNull(oilChangeHistory.deletedAt),
     ]
     if (storeId) {
       lastChangeConditions.push(eq(oilChangeHistory.storeId, storeId))
@@ -41,8 +41,9 @@ export async function createOilChange(
     let usageDays = 0
     if (lastChange && lastChange.changeDate) {
       const daysDiff = Math.floor(
-        (new Date(validatedData.changeDate).getTime() - new Date(lastChange.changeDate).getTime()) /
-        (1000 * 60 * 60 * 24)
+        (new Date(validatedData.changeDate).getTime() -
+          new Date(lastChange.changeDate).getTime()) /
+          (1000 * 60 * 60 * 24)
       )
       usageDays = Math.max(0, daysDiff)
     }
@@ -68,7 +69,10 @@ export async function createOilChange(
       return { success: false, error: error.errors[0].message }
     }
     console.error('Error creating oil change:', error)
-    return { success: false, error: '기름 교체 이력 등록 중 오류가 발생했습니다' }
+    return {
+      success: false,
+      error: '기름 교체 이력 등록 중 오류가 발생했습니다',
+    }
   }
 }
 
@@ -91,7 +95,9 @@ export async function getOilChanges(filters?: {
     conditions.push(inArray(oilChangeHistory.storeId, authorizedStoreIds))
 
     if (filters?.startDate) {
-      conditions.push(sql`oil_change_history.change_date >= ${filters.startDate}`)
+      conditions.push(
+        sql`oil_change_history.change_date >= ${filters.startDate}`
+      )
     }
 
     if (filters?.endDate) {
@@ -124,7 +130,10 @@ export async function getOilChanges(filters?: {
 export async function getOilChangeById(id: string) {
   try {
     const result = await db.query.oilChangeHistory.findFirst({
-      where: and(eq(oilChangeHistory.id, id), isNull(oilChangeHistory.deletedAt)),
+      where: and(
+        eq(oilChangeHistory.id, id),
+        isNull(oilChangeHistory.deletedAt)
+      ),
     })
     return result
   } catch (error) {
@@ -187,7 +196,10 @@ export async function updateOilChange(id: string, formData: FormData) {
       return { success: false, error: error.errors[0].message }
     }
     console.error('Error updating oil change:', error)
-    return { success: false, error: '기름 교체 이력 수정 중 오류가 발생했습니다' }
+    return {
+      success: false,
+      error: '기름 교체 이력 수정 중 오류가 발생했습니다',
+    }
   }
 }
 
@@ -205,7 +217,10 @@ export async function deleteOilChange(id: string) {
     return { success: true, error: undefined }
   } catch (error) {
     console.error('Error deleting oil change:', error)
-    return { success: false, error: '기름 교체 이력 삭제 중 오류가 발생했습니다' }
+    return {
+      success: false,
+      error: '기름 교체 이력 삭제 중 오류가 발생했습니다',
+    }
   }
 }
 
@@ -227,7 +242,7 @@ export async function getOilChangeStats(storeId?: string) {
     const recentConditions = [
       isNull(oilChangeHistory.deletedAt),
       sql`oil_change_history.change_date >= ${thirtyDaysAgo.toISOString().split('T')[0]}`,
-      inArray(oilChangeHistory.storeId, authorizedStoreIds)
+      inArray(oilChangeHistory.storeId, authorizedStoreIds),
     ]
 
     if (storeId && authorizedStoreIds.includes(storeId)) {
@@ -244,7 +259,7 @@ export async function getOilChangeStats(storeId?: string) {
     // Get last change date for each fryer type
     const lastChangeConditions = [
       isNull(oilChangeHistory.deletedAt),
-      inArray(oilChangeHistory.storeId, authorizedStoreIds)
+      inArray(oilChangeHistory.storeId, authorizedStoreIds),
     ]
     if (storeId && authorizedStoreIds.includes(storeId)) {
       lastChangeConditions.push(eq(oilChangeHistory.storeId, storeId))
@@ -256,12 +271,19 @@ export async function getOilChangeStats(storeId?: string) {
       limit: 10,
     })
 
-    const lastChangeByFryer = lastChanges.reduce((acc, change) => {
-      if (!acc[change.fryerType] || new Date(change.changeDate) > new Date(acc[change.fryerType].changeDate)) {
-        acc[change.fryerType] = change
-      }
-      return acc
-    }, {} as Record<string, any>)
+    const lastChangeByFryer = lastChanges.reduce(
+      (acc, change) => {
+        if (
+          !acc[change.fryerType] ||
+          new Date(change.changeDate) >
+            new Date(acc[change.fryerType].changeDate)
+        ) {
+          acc[change.fryerType] = change
+        }
+        return acc
+      },
+      {} as Record<string, any>
+    )
 
     return {
       recentChanges: recentChanges[0] || { count: 0 },

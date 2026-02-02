@@ -64,9 +64,9 @@ export default async function FixedCostsPage({
   return (
     <div className="pb-24 md:pb-0">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-brutal-black">
+          <h1 className="text-2xl font-black text-brutal-black sm:text-3xl">
             고정비 관리
           </h1>
           <p className="mt-1 text-sm font-medium text-brutal-black/70">
@@ -76,7 +76,7 @@ export default async function FixedCostsPage({
         {/* Desktop button */}
         <Link
           href={newFixedCostUrl}
-          className="hidden sm:block px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+          className="hidden border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg sm:block"
         >
           새 고정비 등록
         </Link>
@@ -85,8 +85,8 @@ export default async function FixedCostsPage({
       {/* Summary - Sticky on Mobile */}
       {costs.length > 0 && (
         <div className="sticky top-0 z-10 mt-4 md:static">
-          <div className="bg-brutal-pink border-3 border-brutal-black shadow-brutal p-4">
-            <div className="flex items-center justify-between mb-3">
+          <div className="border-3 border-brutal-black bg-brutal-pink p-4 shadow-brutal">
+            <div className="mb-3 flex items-center justify-between">
               <p className="text-sm font-bold text-brutal-black">
                 총 {costs.length}건 ({startDate} ~ {endDate})
               </p>
@@ -99,10 +99,9 @@ export default async function FixedCostsPage({
               {Object.entries(totalsByType).map(([type, amount]) => (
                 <span
                   key={type}
-                  className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold bg-brutal-white border-2 border-brutal-black text-brutal-black"
+                  className="inline-flex items-center gap-1 border-2 border-brutal-black bg-brutal-white px-3 py-1 text-xs font-bold text-brutal-black"
                 >
-                  {typeEmoji[type] || '📋'} {type}:{' '}
-                  {formatCurrency(amount)}
+                  {typeEmoji[type] || '📋'} {type}: {formatCurrency(amount)}
                 </span>
               ))}
             </div>
@@ -113,11 +112,11 @@ export default async function FixedCostsPage({
       {/* Filters */}
       <form
         method="GET"
-        className="mt-4 bg-brutal-white border-3 border-brutal-black shadow-brutal p-4"
+        className="mt-4 border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal"
       >
         {storeId && <input type="hidden" name="storeId" value={storeId} />}
 
-        <div className="space-y-4 md:space-y-0 md:grid md:grid-cols-3 md:gap-4">
+        <div className="space-y-4 md:grid md:grid-cols-3 md:gap-4 md:space-y-0">
           {/* Start Date */}
           <div>
             <label htmlFor="startDate" className={labelClass}>
@@ -150,7 +149,7 @@ export default async function FixedCostsPage({
           <div className="flex items-end">
             <button
               type="submit"
-              className="w-full px-4 py-3 text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              className="w-full border-2 border-brutal-black bg-brutal-yellow px-4 py-3 text-base font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-sm"
             >
               조회
             </button>
@@ -161,11 +160,13 @@ export default async function FixedCostsPage({
       {/* Mobile: Card List */}
       <div className="mt-4 md:hidden">
         {costs.length === 0 ? (
-          <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-8 text-center">
-            <p className="font-bold text-brutal-black">고정비 데이터가 없습니다.</p>
+          <div className="border-3 border-brutal-black bg-brutal-white p-8 text-center shadow-brutal">
+            <p className="font-bold text-brutal-black">
+              고정비 데이터가 없습니다.
+            </p>
             <Link
               href={newFixedCostUrl}
-              className="inline-block mt-4 font-bold text-brutal-black underline"
+              className="mt-4 inline-block font-bold text-brutal-black underline"
             >
               새 고정비 등록하기 →
             </Link>
@@ -183,7 +184,7 @@ export default async function FixedCostsPage({
       <div className="mt-6 hidden md:block">
         <div className="overflow-hidden border-3 border-brutal-black shadow-brutal">
           <table className="min-w-full">
-            <thead className="bg-brutal-yellow border-b-3 border-brutal-black">
+            <thead className="border-b-3 border-brutal-black bg-brutal-yellow">
               <tr>
                 <th className="py-3.5 pl-4 pr-3 text-left text-sm font-black text-brutal-black sm:pl-6">
                   날짜
@@ -218,15 +219,17 @@ export default async function FixedCostsPage({
                 </tr>
               ) : (
                 <>
-                  {costs.map((cost) => <FixedCostRow key={cost.id} cost={cost} />)}
-                  <tr className="bg-brutal-pink/50 font-bold border-t-3 border-brutal-black">
+                  {costs.map((cost) => (
+                    <FixedCostRow key={cost.id} cost={cost} />
+                  ))}
+                  <tr className="border-t-3 border-brutal-black bg-brutal-pink/50 font-bold">
                     <td
                       colSpan={3}
-                      className="py-4 pl-4 pr-3 text-sm text-right font-black text-brutal-black sm:pl-6"
+                      className="py-4 pl-4 pr-3 text-right text-sm font-black text-brutal-black sm:pl-6"
                     >
                       총 합계 ({costs.length}건)
                     </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black text-right font-black">
+                    <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-black text-brutal-black">
                       {formatCurrency(grandTotal)}
                     </td>
                     <td colSpan={2}></td>
@@ -239,10 +242,10 @@ export default async function FixedCostsPage({
       </div>
 
       {/* Mobile: Fixed Bottom Action Bar - positioned above bottom nav */}
-      <div className="fixed bottom-14 left-0 right-0 bg-brutal-white border-t-3 border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] z-20 lg:hidden">
+      <div className="fixed bottom-14 left-0 right-0 z-20 border-t-3 border-brutal-black bg-brutal-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:hidden">
         <Link
           href={newFixedCostUrl}
-          className="block w-full py-3 text-center text-base font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+          className="block w-full border-2 border-brutal-black bg-brutal-yellow py-3 text-center text-base font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
         >
           + 새 고정비 등록
         </Link>

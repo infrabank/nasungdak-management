@@ -37,7 +37,7 @@ export default function EventForm() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-orange border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+        className="border-2 border-brutal-black bg-brutal-orange px-3 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
       >
         + 폐기/조정
       </button>
@@ -50,10 +50,10 @@ export default function EventForm() {
               onClick={() => setIsOpen(false)}
             />
 
-            <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div className="relative transform overflow-hidden border-3 border-brutal-black bg-brutal-white px-4 pb-4 pt-5 text-left shadow-brutal-lg transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
               <form onSubmit={handleSubmit}>
                 <div>
-                  <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
+                  <h3 className="mb-4 text-lg font-semibold leading-6 text-gray-900">
                     재고 이벤트 등록
                   </h3>
 
@@ -82,11 +82,7 @@ export default function EventForm() {
 
                     <div>
                       <Label htmlFor="eventType">이벤트 유형 *</Label>
-                      <Select
-                        name="eventType"
-                        id="eventType"
-                        required
-                      >
+                      <Select name="eventType" id="eventType" required>
                         <option value="">선택하세요</option>
                         <option value="purchase">매입 (재고 증가)</option>
                         <option value="sale">판매 (재고 감소)</option>

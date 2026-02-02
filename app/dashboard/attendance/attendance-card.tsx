@@ -49,7 +49,12 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
   }, [editData.workHours, editData.hourlyRate, isEditing])
 
   const handleDelete = async () => {
-    if (!confirm('이 출퇴근 기록을 삭제하시겠습니까?\n(연결된 고정비 기록은 삭제되지 않습니다)')) return
+    if (
+      !confirm(
+        '이 출퇴근 기록을 삭제하시겠습니까?\n(연결된 고정비 기록은 삭제되지 않습니다)'
+      )
+    )
+      return
 
     setIsDeleting(true)
     const result = await deleteAttendance(record.id)
@@ -109,61 +114,81 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
 
   if (isEditing) {
     return (
-      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden">
-        <div className="p-4 bg-brutal-blue border-b-3 border-brutal-black">
+      <div className="overflow-hidden border-3 border-brutal-black bg-brutal-white shadow-brutal">
+        <div className="border-b-3 border-brutal-black bg-brutal-blue p-4">
           <p className="font-black text-brutal-black">출퇴근 기록 수정</p>
           <p className="text-sm text-brutal-black/70">{displayName}</p>
         </div>
-        <div className="p-4 space-y-3">
+        <div className="space-y-3 p-4">
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">근무일</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              근무일
+            </label>
             <input
               type="date"
               value={editData.workDate}
-              onChange={(e) => setEditData({ ...editData, workDate: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, workDate: e.target.value })
+              }
               className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">근무시간</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              근무시간
+            </label>
             <input
               type="number"
               min="0.5"
               max="24"
               step="0.5"
               value={editData.workHours}
-              onChange={(e) => setEditData({ ...editData, workHours: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, workHours: e.target.value })
+              }
               className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">시급 (원)</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              시급 (원)
+            </label>
             <input
               type="number"
               min="0"
               step="10"
               value={editData.hourlyRate}
-              onChange={(e) => setEditData({ ...editData, hourlyRate: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, hourlyRate: e.target.value })
+              }
               className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">지급액 (원)</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              지급액 (원)
+            </label>
             <input
               type="number"
               min="0"
               step="1"
               value={editData.totalPay}
-              onChange={(e) => setEditData({ ...editData, totalPay: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, totalPay: e.target.value })
+              }
               className={inputClass}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-brutal-black mb-1">비고</label>
+            <label className="mb-1 block text-xs font-bold text-brutal-black">
+              비고
+            </label>
             <input
               type="text"
               value={editData.notes}
-              onChange={(e) => setEditData({ ...editData, notes: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, notes: e.target.value })
+              }
               className={inputClass}
             />
           </div>
@@ -171,14 +196,14 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
             <button
               onClick={handleCancel}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+              className="flex-1 border-2 border-brutal-black bg-brutal-white px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:opacity-50"
             >
               취소
             </button>
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="flex-1 px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50"
+              className="flex-1 border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:opacity-50"
             >
               {isSaving ? '저장 중...' : '저장'}
             </button>
@@ -190,28 +215,28 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
 
   return (
     <div
-      className={`bg-brutal-white border-3 border-brutal-black shadow-brutal overflow-hidden ${
+      className={`overflow-hidden border-3 border-brutal-black bg-brutal-white shadow-brutal ${
         isDeleting ? 'opacity-50' : ''
       } ${record.employeeDeleted ? 'opacity-70' : ''}`}
     >
       {/* Card Header */}
-      <div className="flex items-center justify-between p-4 bg-brutal-yellow border-b-3 border-brutal-black">
+      <div className="flex items-center justify-between border-b-3 border-brutal-black bg-brutal-yellow p-4">
         <div className="flex items-center gap-2">
           <span className="text-sm">📅</span>
           <span className="font-bold text-brutal-black">
             {formatDate(new Date(record.workDate), 'yyyy-MM-dd')}
           </span>
         </div>
-        <span className="font-bold text-brutal-black">
-          👤 {displayName}
-        </span>
+        <span className="font-bold text-brutal-black">👤 {displayName}</span>
       </div>
 
       {/* Card Body */}
       <div className="p-4">
         {/* Total Pay */}
-        <div className="bg-brutal-pink border-2 border-brutal-black p-3 mb-3">
-          <p className="text-xs font-bold text-brutal-black uppercase tracking-wide">지급액</p>
+        <div className="mb-3 border-2 border-brutal-black bg-brutal-pink p-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-brutal-black">
+            지급액
+          </p>
           <p className="text-2xl font-black text-brutal-black">
             {formatCurrency(Number(record.totalPay))}
           </p>
@@ -220,19 +245,27 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
         {/* Info Grid */}
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div>
-            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">근무시간</p>
-            <p className="font-medium text-brutal-black">{Number(record.workHours)}시간</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-brutal-black/70">
+              근무시간
+            </p>
+            <p className="font-medium text-brutal-black">
+              {Number(record.workHours)}시간
+            </p>
           </div>
           <div>
-            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide">시급</p>
-            <p className="font-medium text-brutal-black">{formatCurrency(Number(record.hourlyRate))}</p>
+            <p className="text-xs font-bold uppercase tracking-wide text-brutal-black/70">
+              시급
+            </p>
+            <p className="font-medium text-brutal-black">
+              {formatCurrency(Number(record.hourlyRate))}
+            </p>
           </div>
         </div>
 
         {/* Notes */}
         {record.notes && (
-          <div className="py-2 mt-3 border-t-2 border-brutal-black">
-            <p className="text-xs font-bold text-brutal-black/70 uppercase tracking-wide mb-1">
+          <div className="mt-3 border-t-2 border-brutal-black py-2">
+            <p className="mb-1 text-xs font-bold uppercase tracking-wide text-brutal-black/70">
               비고
             </p>
             <p className="text-sm text-brutal-black">{record.notes}</p>
@@ -240,18 +273,18 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-2 pt-3 mt-3 border-t-2 border-brutal-black">
+        <div className="mt-3 flex justify-end gap-2 border-t-2 border-brutal-black pt-3">
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-blue border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="border-2 border-brutal-black bg-brutal-blue px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:cursor-not-allowed disabled:opacity-50"
           >
             수정
           </button>
           <button
             onClick={handleDelete}
             disabled={isDeleting}
-            className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-pink border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="border-2 border-brutal-black bg-brutal-pink px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>

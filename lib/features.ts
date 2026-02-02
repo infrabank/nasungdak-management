@@ -5,7 +5,7 @@ import { unstable_cache } from 'next/cache'
 
 /**
  * SaaS 기능 플래그 시스템
- * 
+ *
  * 플랜별 기능 제한을 관리합니다.
  */
 
@@ -66,25 +66,25 @@ export const FEATURES = {
   purchases: { name: '매입 관리', description: '매입 등록 및 조회' },
   sales: { name: '판매 관리', description: '판매 등록 및 조회' },
   'master-data': { name: '기초 데이터', description: '메뉴, 재료, SKU 관리' },
-  
+
   // 확장 기능
   inventory: { name: '재고 관리', description: '실시간 재고 추적' },
   employees: { name: '직원 관리', description: '직원 및 출퇴근 관리' },
   'fixed-costs': { name: '고정비용', description: '고정비용 관리' },
   'oil-changes': { name: '기름 교체', description: '기름 교체 이력 관리' },
-  
+
   // 고급 기능
   analytics: { name: '분석', description: '매출 및 원가 분석' },
   alerts: { name: '알림', description: '재고 부족 알림 (카카오)' },
   'csv-import': { name: 'CSV 가져오기', description: '대량 데이터 업로드' },
   'csv-export': { name: 'CSV 내보내기', description: '데이터 내보내기' },
-  
+
   // 프리미엄 기능
   'multi-store': { name: '다매장', description: '여러 매장 통합 관리' },
   'api-access': { name: 'API 접근', description: 'REST API 사용' },
   'custom-reports': { name: '맞춤 리포트', description: '사용자 정의 리포트' },
   webhooks: { name: '웹훅', description: '외부 시스템 연동' },
-  
+
   // 엔터프라이즈 기능
   'white-label': { name: '화이트 라벨', description: '브랜딩 커스터마이징' },
   sso: { name: 'SSO', description: '싱글 사인온' },
@@ -94,7 +94,10 @@ export const FEATURES = {
 export type FeatureKey = keyof typeof FEATURES
 
 // 플랜별 기본 기능 설정
-export const DEFAULT_PLAN_FEATURES: Record<PlanType, { features: FeatureKey[]; limits?: Partial<Record<FeatureKey, number>> }> = {
+export const DEFAULT_PLAN_FEATURES: Record<
+  PlanType,
+  { features: FeatureKey[]; limits?: Partial<Record<FeatureKey, number>> }
+> = {
   free: {
     features: ['purchases', 'sales', 'master-data'],
     limits: {
@@ -103,7 +106,14 @@ export const DEFAULT_PLAN_FEATURES: Record<PlanType, { features: FeatureKey[]; l
     },
   },
   basic: {
-    features: ['purchases', 'sales', 'master-data', 'inventory', 'analytics', 'csv-import'],
+    features: [
+      'purchases',
+      'sales',
+      'master-data',
+      'inventory',
+      'analytics',
+      'csv-import',
+    ],
     limits: {
       purchases: 1000,
       sales: 1000,
@@ -111,17 +121,37 @@ export const DEFAULT_PLAN_FEATURES: Record<PlanType, { features: FeatureKey[]; l
   },
   standard: {
     features: [
-      'purchases', 'sales', 'master-data', 'inventory', 'employees',
-      'fixed-costs', 'oil-changes', 'analytics', 'alerts',
-      'csv-import', 'csv-export', 'multi-store',
+      'purchases',
+      'sales',
+      'master-data',
+      'inventory',
+      'employees',
+      'fixed-costs',
+      'oil-changes',
+      'analytics',
+      'alerts',
+      'csv-import',
+      'csv-export',
+      'multi-store',
     ],
   },
   premium: {
     features: [
-      'purchases', 'sales', 'master-data', 'inventory', 'employees',
-      'fixed-costs', 'oil-changes', 'analytics', 'alerts',
-      'csv-import', 'csv-export', 'multi-store',
-      'api-access', 'custom-reports', 'webhooks',
+      'purchases',
+      'sales',
+      'master-data',
+      'inventory',
+      'employees',
+      'fixed-costs',
+      'oil-changes',
+      'analytics',
+      'alerts',
+      'csv-import',
+      'csv-export',
+      'multi-store',
+      'api-access',
+      'custom-reports',
+      'webhooks',
     ],
   },
   enterprise: {
@@ -132,7 +162,9 @@ export const DEFAULT_PLAN_FEATURES: Record<PlanType, { features: FeatureKey[]; l
 /**
  * 조직의 현재 플랜 조회
  */
-async function fetchOrganizationPlan(organizationId: string): Promise<PlanType> {
+async function fetchOrganizationPlan(
+  organizationId: string
+): Promise<PlanType> {
   const org = await db.query.organizations.findFirst({
     where: and(
       eq(organizations.id, organizationId),
@@ -147,7 +179,9 @@ async function fetchOrganizationPlan(organizationId: string): Promise<PlanType> 
 /**
  * 조직의 플랜 조회 (캐시됨)
  */
-export async function getOrganizationPlan(organizationId: string): Promise<PlanType> {
+export async function getOrganizationPlan(
+  organizationId: string
+): Promise<PlanType> {
   const getCached = unstable_cache(
     () => fetchOrganizationPlan(organizationId),
     ['org-plan', organizationId],
@@ -159,7 +193,10 @@ export async function getOrganizationPlan(organizationId: string): Promise<PlanT
 /**
  * 특정 기능이 플랜에서 사용 가능한지 확인
  */
-export function isPlanFeatureEnabled(plan: PlanType, feature: FeatureKey): boolean {
+export function isPlanFeatureEnabled(
+  plan: PlanType,
+  feature: FeatureKey
+): boolean {
   const planConfig = DEFAULT_PLAN_FEATURES[plan]
   return planConfig.features.includes(feature)
 }
@@ -167,7 +204,10 @@ export function isPlanFeatureEnabled(plan: PlanType, feature: FeatureKey): boole
 /**
  * 기능의 사용 한도 조회
  */
-export function getPlanFeatureLimit(plan: PlanType, feature: FeatureKey): number | null {
+export function getPlanFeatureLimit(
+  plan: PlanType,
+  feature: FeatureKey
+): number | null {
   const planConfig = DEFAULT_PLAN_FEATURES[plan]
   return planConfig.limits?.[feature] ?? null // null = 무제한
 }
@@ -213,7 +253,7 @@ export async function requireFeature(
   feature: FeatureKey
 ): Promise<void> {
   const result = await canUseFeature(organizationId, feature)
-  
+
   if (!result.allowed) {
     throw new Error(result.reason || '이 기능을 사용할 수 없습니다.')
   }
@@ -240,18 +280,29 @@ export function getAllPlans() {
   return Object.entries(PLANS).map(([key, plan]) => ({
     id: key as PlanType,
     ...plan,
-    features: DEFAULT_PLAN_FEATURES[key as PlanType].features.map((featureKey) => ({
-      key: featureKey,
-      ...FEATURES[featureKey],
-    })),
+    features: DEFAULT_PLAN_FEATURES[key as PlanType].features.map(
+      (featureKey) => ({
+        key: featureKey,
+        ...FEATURES[featureKey],
+      })
+    ),
   }))
 }
 
 /**
  * 플랜 업그레이드 가능 여부
  */
-export function canUpgradeTo(currentPlan: PlanType, targetPlan: PlanType): boolean {
-  const planOrder: PlanType[] = ['free', 'basic', 'standard', 'premium', 'enterprise']
+export function canUpgradeTo(
+  currentPlan: PlanType,
+  targetPlan: PlanType
+): boolean {
+  const planOrder: PlanType[] = [
+    'free',
+    'basic',
+    'standard',
+    'premium',
+    'enterprise',
+  ]
   return planOrder.indexOf(targetPlan) > planOrder.indexOf(currentPlan)
 }
 
@@ -265,14 +316,20 @@ export function canDowngradeTo(
 ): { allowed: boolean; reason?: string } {
   const targetConfig = PLANS[targetPlan]
 
-  if (targetConfig.maxStores !== -1 && currentUsage.stores > targetConfig.maxStores) {
+  if (
+    targetConfig.maxStores !== -1 &&
+    currentUsage.stores > targetConfig.maxStores
+  ) {
     return {
       allowed: false,
       reason: `${targetConfig.nameKo} 플랜은 최대 ${targetConfig.maxStores}개 매장만 지원합니다. 현재 ${currentUsage.stores}개 매장을 사용 중입니다.`,
     }
   }
 
-  if (targetConfig.maxUsers !== -1 && currentUsage.users > targetConfig.maxUsers) {
+  if (
+    targetConfig.maxUsers !== -1 &&
+    currentUsage.users > targetConfig.maxUsers
+  ) {
     return {
       allowed: false,
       reason: `${targetConfig.nameKo} 플랜은 최대 ${targetConfig.maxUsers}명 사용자만 지원합니다. 현재 ${currentUsage.users}명이 사용 중입니다.`,

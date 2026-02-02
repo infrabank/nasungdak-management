@@ -2,7 +2,11 @@ import Link from 'next/link'
 import { cookies } from 'next/headers'
 import { jwtVerify } from 'jose'
 import { db } from '@/lib/db'
-import { organizationMembers, organizations, subscriptions } from '@/lib/db/schema'
+import {
+  organizationMembers,
+  organizations,
+  subscriptions,
+} from '@/lib/db/schema'
 import { eq, and, isNull, desc } from 'drizzle-orm'
 import { PLANS, type PlanType } from '@/lib/features'
 import { CreditCard, AlertTriangle, ArrowRight } from 'lucide-react'
@@ -55,7 +59,8 @@ async function getBillingInfo() {
   const isTrial = org.trialEndsAt && new Date(org.trialEndsAt) > new Date()
   const trialDaysLeft = isTrial
     ? Math.ceil(
-        (new Date(org.trialEndsAt!).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        (new Date(org.trialEndsAt!).getTime() - Date.now()) /
+          (1000 * 60 * 60 * 24)
       )
     : 0
 
@@ -82,7 +87,7 @@ export default async function BillingWidget() {
 
   return (
     <div
-      className={`border-3 border-brutal-black shadow-brutal p-4 ${
+      className={`border-3 border-brutal-black p-4 shadow-brutal ${
         showTrialWarning || showCancelWarning
           ? 'bg-brutal-yellow'
           : 'bg-brutal-white'
@@ -90,8 +95,8 @@ export default async function BillingWidget() {
     >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 border-2 border-brutal-black bg-brutal-yellow/50">
-            <CreditCard className="w-5 h-5 text-brutal-black" />
+          <div className="border-2 border-brutal-black bg-brutal-yellow/50 p-2">
+            <CreditCard className="h-5 w-5 text-brutal-black" />
           </div>
           <div>
             <p className="text-sm font-bold text-brutal-black">
@@ -115,24 +120,21 @@ export default async function BillingWidget() {
             href="/dashboard/settings"
             className="flex items-center gap-1 text-sm font-bold text-brutal-black hover:underline"
           >
-            관리 <ArrowRight className="w-4 h-4" />
+            관리 <ArrowRight className="h-4 w-4" />
           </Link>
         )}
       </div>
 
       {showTrialWarning && (
-        <div className="mt-3 flex items-start gap-2 p-2 bg-brutal-white border-2 border-brutal-black">
-          <AlertTriangle className="w-4 h-4 text-brutal-black flex-shrink-0 mt-0.5" />
+        <div className="mt-3 flex items-start gap-2 border-2 border-brutal-black bg-brutal-white p-2">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-brutal-black" />
           <div>
             <p className="text-xs font-bold text-brutal-black">
               무료 체험이 곧 종료됩니다
             </p>
             <p className="text-xs text-brutal-black/70">
               {billing.trialDaysLeft}일 후 종료 ·{' '}
-              <Link
-                href="/pricing"
-                className="font-bold underline"
-              >
+              <Link href="/pricing" className="font-bold underline">
                 플랜 선택
               </Link>
             </p>
@@ -141,12 +143,10 @@ export default async function BillingWidget() {
       )}
 
       {showCancelWarning && (
-        <div className="mt-3 flex items-start gap-2 p-2 bg-brutal-white border-2 border-brutal-black">
-          <AlertTriangle className="w-4 h-4 text-brutal-red flex-shrink-0 mt-0.5" />
+        <div className="mt-3 flex items-start gap-2 border-2 border-brutal-black bg-brutal-white p-2">
+          <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0 text-brutal-red" />
           <div>
-            <p className="text-xs font-bold text-brutal-red">
-              구독 해지 예정
-            </p>
+            <p className="text-xs font-bold text-brutal-red">구독 해지 예정</p>
             <p className="text-xs text-brutal-black/70">
               기간 종료 후 무료 플랜으로 전환됩니다
             </p>
@@ -158,7 +158,7 @@ export default async function BillingWidget() {
         <div className="mt-3">
           <Link
             href="/pricing"
-            className="block w-full text-center px-3 py-2 text-xs font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal transition-all"
+            className="block w-full border-2 border-brutal-black bg-brutal-yellow px-3 py-2 text-center text-xs font-bold text-brutal-black shadow-brutal-sm transition-all hover:shadow-brutal"
           >
             업그레이드
           </Link>

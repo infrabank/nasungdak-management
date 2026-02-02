@@ -17,7 +17,7 @@ export default function LogoutButton({
     return (
       <button
         onClick={handleLogout}
-        className={`flex w-full items-center gap-3 p-3 text-left text-base font-bold text-brutal-black border-2 border-brutal-black bg-brutal-white shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-active active:translate-x-0.5 active:translate-y-0.5 transition-all duration-150 ${className}`}
+        className={`flex w-full items-center gap-3 border-2 border-brutal-black bg-brutal-white p-3 text-left text-base font-bold text-brutal-black shadow-brutal-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active ${className}`}
       >
         <svg
           className="h-6 w-6 text-brutal-black"
@@ -40,7 +40,7 @@ export default function LogoutButton({
   return (
     <button
       onClick={handleLogout}
-      className="px-4 py-2 text-sm font-bold text-brutal-black bg-brutal-white border-2 border-brutal-black shadow-brutal-sm hover:shadow-brutal hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-active active:translate-x-0.5 active:translate-y-0.5 transition-all duration-150"
+      className="border-2 border-brutal-black bg-brutal-white px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal-sm transition-all duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-active"
     >
       로그아웃
     </button>

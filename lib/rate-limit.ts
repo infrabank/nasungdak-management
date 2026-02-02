@@ -1,21 +1,21 @@
 /**
  * Rate Limiting 유틸리티
- * 
+ *
  * In-memory 방식 (서버리스 환경에서는 Upstash Redis 권장)
- * 
+ *
  * 사용법:
  * ```typescript
  * import { rateLimit, RateLimitError } from '@/lib/rate-limit'
- * 
+ *
  * // Server Action에서 사용
  * export async function createPurchase(formData: FormData) {
  *   const ip = headers().get('x-forwarded-for') || 'unknown'
  *   const { success, remaining } = await rateLimit.check(ip, 'purchases:create')
- *   
+ *
  *   if (!success) {
  *     return { success: false, error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' }
  *   }
- *   
+ *
  *   // ... 실제 로직
  * }
  * ```
@@ -27,8 +27,8 @@ interface RateLimitEntry {
 }
 
 interface RateLimitConfig {
-  maxRequests: number  // 허용 요청 수
-  windowMs: number     // 시간 윈도우 (밀리초)
+  maxRequests: number // 허용 요청 수
+  windowMs: number // 시간 윈도우 (밀리초)
 }
 
 interface RateLimitResult {
@@ -40,25 +40,25 @@ interface RateLimitResult {
 // 기본 설정
 const DEFAULT_CONFIGS: Record<string, RateLimitConfig> = {
   // 일반 읽기 작업
-  'default:read': { maxRequests: 100, windowMs: 60 * 1000 },      // 분당 100회
-  
+  'default:read': { maxRequests: 100, windowMs: 60 * 1000 }, // 분당 100회
+
   // 쓰기 작업
-  'default:write': { maxRequests: 30, windowMs: 60 * 1000 },      // 분당 30회
-  
+  'default:write': { maxRequests: 30, windowMs: 60 * 1000 }, // 분당 30회
+
   // 로그인 시도
-  'auth:login': { maxRequests: 5, windowMs: 15 * 60 * 1000 },     // 15분당 5회
-  
+  'auth:login': { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 15분당 5회
+
   // 벌크 업로드
-  'bulk:upload': { maxRequests: 5, windowMs: 60 * 1000 },         // 분당 5회
-  
+  'bulk:upload': { maxRequests: 5, windowMs: 60 * 1000 }, // 분당 5회
+
   // 분석 쿼리 (무거운 작업)
-  'analysis:query': { maxRequests: 10, windowMs: 60 * 1000 },     // 분당 10회
+  'analysis:query': { maxRequests: 10, windowMs: 60 * 1000 }, // 분당 10회
 
   // 매입 등록
-  'purchases:create': { maxRequests: 50, windowMs: 60 * 1000 },   // 분당 50회
+  'purchases:create': { maxRequests: 50, windowMs: 60 * 1000 }, // 분당 50회
 
   // 판매 등록
-  'sales:create': { maxRequests: 50, windowMs: 60 * 1000 },       // 분당 50회
+  'sales:create': { maxRequests: 50, windowMs: 60 * 1000 }, // 분당 50회
 }
 
 class InMemoryRateLimiter {
@@ -92,7 +92,7 @@ class InMemoryRateLimiter {
         resetAt: now + config.windowMs,
       }
       this.store.set(key, newEntry)
-      
+
       return {
         success: true,
         remaining: config.maxRequests - 1,
@@ -102,7 +102,7 @@ class InMemoryRateLimiter {
 
     // 기존 윈도우에서 카운트 증가
     entry.count++
-    
+
     if (entry.count > config.maxRequests) {
       return {
         success: false,
@@ -185,9 +185,12 @@ export class RateLimitError extends Error {
 /**
  * Rate limit 체크 후 실패 시 에러 throw
  */
-export function checkRateLimit(identifier: string, action: string = 'default:read'): void {
+export function checkRateLimit(
+  identifier: string,
+  action: string = 'default:read'
+): void {
   const result = rateLimit.check(identifier, action)
-  
+
   if (!result.success) {
     throw new RateLimitError(result.resetAt, result.remaining)
   }
@@ -195,7 +198,7 @@ export function checkRateLimit(identifier: string, action: string = 'default:rea
 
 /**
  * Server Action용 rate limit 래퍼
- * 
+ *
  * @example
  * ```typescript
  * export async function createPurchase(formData: FormData) {
@@ -215,7 +218,7 @@ export async function withRateLimit<T>(
   fn: () => Promise<T>
 ): Promise<T | { success: false; error: string; retryAfter?: number }> {
   const result = rateLimit.check(identifier, action)
-  
+
   if (!result.success) {
     const retryAfter = Math.ceil((result.resetAt - Date.now()) / 1000)
     return {
@@ -224,7 +227,7 @@ export async function withRateLimit<T>(
       retryAfter,
     }
   }
-  
+
   return fn()
 }
 
@@ -237,12 +240,12 @@ export function getClientIP(headersList: Headers): string {
   if (forwardedFor) {
     return forwardedFor.split(',')[0].trim()
   }
-  
+
   // 기타 프록시 헤더
   const realIP = headersList.get('x-real-ip')
   if (realIP) {
     return realIP
   }
-  
+
   return 'unknown'
 }

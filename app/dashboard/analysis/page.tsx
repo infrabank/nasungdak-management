@@ -49,7 +49,8 @@ export default async function AnalysisPage({
   const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
 
   // Normalize parameters: dates have defaults, storeId uses undefined for "no filter"
-  const startDate = params.startDate || formatDate(firstDayOfMonth, 'yyyy-MM-dd')
+  const startDate =
+    params.startDate || formatDate(firstDayOfMonth, 'yyyy-MM-dd')
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
   const storeId = normalizeOptionalParam(params.storeId)
 
@@ -63,12 +64,18 @@ export default async function AnalysisPage({
       </div>
 
       {/* Date Range Filter - renders immediately */}
-      <form method="GET" className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-6 mb-6">
+      <form
+        method="GET"
+        className="mb-6 border-3 border-brutal-black bg-brutal-white p-6 shadow-brutal"
+      >
         {/* Preserve storeId from URL */}
         {storeId && <input type="hidden" name="storeId" value={storeId} />}
         <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-6">
           <div className="sm:col-span-2">
-            <label htmlFor="startDate" className="block text-sm font-bold text-brutal-black">
+            <label
+              htmlFor="startDate"
+              className="block text-sm font-bold text-brutal-black"
+            >
               시작 날짜
             </label>
             <div className="mt-2">
@@ -77,13 +84,16 @@ export default async function AnalysisPage({
                 name="startDate"
                 id="startDate"
                 defaultValue={startDate}
-                className="block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all"
+                className="block w-full border-2 border-brutal-black bg-brutal-white px-4 py-3 text-base font-medium text-brutal-black shadow-brutal-sm transition-all focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal"
               />
             </div>
           </div>
 
           <div className="sm:col-span-2">
-            <label htmlFor="endDate" className="block text-sm font-bold text-brutal-black">
+            <label
+              htmlFor="endDate"
+              className="block text-sm font-bold text-brutal-black"
+            >
               종료 날짜
             </label>
             <div className="mt-2">
@@ -92,15 +102,15 @@ export default async function AnalysisPage({
                 name="endDate"
                 id="endDate"
                 defaultValue={endDate}
-                className="block w-full border-2 border-brutal-black py-3 px-4 text-base font-medium text-brutal-black bg-brutal-white shadow-brutal-sm focus:shadow-brutal focus:-translate-x-0.5 focus:-translate-y-0.5 transition-all"
+                className="block w-full border-2 border-brutal-black bg-brutal-white px-4 py-3 text-base font-medium text-brutal-black shadow-brutal-sm transition-all focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal"
               />
             </div>
           </div>
 
-          <div className="sm:col-span-2 flex items-end">
+          <div className="flex items-end sm:col-span-2">
             <button
               type="submit"
-              className="w-full bg-brutal-yellow border-3 border-brutal-black px-4 py-3 text-base font-black text-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 active:shadow-brutal-sm active:translate-x-0.5 active:translate-y-0.5 transition-all"
+              className="w-full border-3 border-brutal-black bg-brutal-yellow px-4 py-3 text-base font-black text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-sm"
             >
               조회
             </button>

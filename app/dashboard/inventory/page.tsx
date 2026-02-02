@@ -37,7 +37,9 @@ export default async function InventoryPage({
       <div className="mt-6 space-y-4 md:hidden">
         {inventoryList.length === 0 ? (
           <div className="border-3 border-dashed border-brutal-black bg-brutal-white p-12 text-center">
-            <p className="text-sm font-medium text-brutal-black/70">재고 데이터가 없습니다</p>
+            <p className="text-sm font-medium text-brutal-black/70">
+              재고 데이터가 없습니다
+            </p>
           </div>
         ) : (
           inventoryList.map((item) => (
@@ -55,7 +57,7 @@ export default async function InventoryPage({
       </div>
 
       {/* Desktop View - Table */}
-      <div className="hidden mt-8 flow-root md:block">
+      <div className="mt-8 flow-root hidden md:block">
         <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
             <table className="min-w-full divide-y divide-gray-300">
@@ -81,7 +83,10 @@ export default async function InventoryPage({
               <tbody className="divide-y divide-gray-200">
                 {inventoryList.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="py-10 text-center text-sm text-gray-500">
+                    <td
+                      colSpan={6}
+                      className="py-10 text-center text-sm text-gray-500"
+                    >
                       재고 데이터가 없습니다
                     </td>
                   </tr>
@@ -94,14 +99,18 @@ export default async function InventoryPage({
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {item.storeName}
                       </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 text-right">
+                      <td className="whitespace-nowrap px-3 py-4 text-right text-sm text-gray-900">
                         {Number(item.currentQuantity).toFixed(2)}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                         {item.unit || '-'}
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {item.lastUpdated ? new Date(item.lastUpdated).toLocaleDateString('ko-KR') : '-'}
+                        {item.lastUpdated
+                          ? new Date(item.lastUpdated).toLocaleDateString(
+                              'ko-KR'
+                            )
+                          : '-'}
                       </td>
                     </tr>
                   ))

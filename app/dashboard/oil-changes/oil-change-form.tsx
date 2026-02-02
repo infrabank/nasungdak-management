@@ -19,74 +19,64 @@ export default function OilChangeForm({ storeId }: OilChangeFormProps) {
 
   // Redirect on success
   if (state?.success) {
-    router.push(storeId ? `/dashboard/oil-changes?storeId=${storeId}` : '/dashboard/oil-changes')
+    router.push(
+      storeId
+        ? `/dashboard/oil-changes?storeId=${storeId}`
+        : '/dashboard/oil-changes'
+    )
   }
 
-   return (
-    <form action={formAction} className="pb-32 max-w-2xl mx-auto">
+  return (
+    <form action={formAction} className="mx-auto max-w-2xl pb-32">
       {/* Hidden storeId */}
       {storeId && <input type="hidden" name="storeId" value={storeId} />}
 
-       {/* Error Message */}
-       {state?.error && (
-         <div className="bg-brutal-red/10 p-4 mb-4">
-           <p className="text-sm text-brutal-red">{state.error}</p>
-         </div>
-       )}
+      {/* Error Message */}
+      {state?.error && (
+        <div className="mb-4 bg-brutal-red/10 p-4">
+          <p className="text-sm text-brutal-red">{state.error}</p>
+        </div>
+      )}
 
-       {/* Form Fields Card */}
-       <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
-         <div className="space-y-4">
-           <div>
-             <Label>
-               📅 교체일 <span className="text-red-500">*</span>
-             </Label>
-             <Input
-               type="date"
-               name="changeDate"
-               required
-             />
-           </div>
+      {/* Form Fields Card */}
+      <div className="mb-4 border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal">
+        <div className="space-y-4">
+          <div>
+            <Label>
+              📅 교체일 <span className="text-red-500">*</span>
+            </Label>
+            <Input type="date" name="changeDate" required />
+          </div>
 
-           <div>
-             <Label>
-               🛢️ 튀김기 종류 <span className="text-red-500">*</span>
-             </Label>
-             <Select
-               name="fryerType"
-               required
-               defaultValue=""
-             >
-               <option value="">선택하세요</option>
-               <option value="초벌">초벌</option>
-               <option value="재벌">재벌</option>
-             </Select>
-           </div>
-         </div>
-       </div>
+          <div>
+            <Label>
+              🛢️ 튀김기 종류 <span className="text-red-500">*</span>
+            </Label>
+            <Select name="fryerType" required defaultValue="">
+              <option value="">선택하세요</option>
+              <option value="초벌">초벌</option>
+              <option value="재벌">재벌</option>
+            </Select>
+          </div>
+        </div>
+      </div>
 
-      <div className="bg-brutal-blue border-3 border-brutal-black shadow-brutal p-4 mb-4">
+      <div className="mb-4 border-3 border-brutal-black bg-brutal-blue p-4 shadow-brutal">
         <p className="text-sm font-bold text-brutal-black">
           사용 기간은 이전 기름 교체 이력을 참조하여 자동으로 계산됩니다.
         </p>
       </div>
 
-       <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
-         <div>
-           <Label>
-             📝 비고
-           </Label>
-           <Textarea
-             name="notes"
-             rows={3}
-             placeholder="특이사항을 입력하세요"
-           />
-         </div>
-       </div>
+      <div className="mb-4 border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal">
+        <div>
+          <Label>📝 비고</Label>
+          <Textarea name="notes" rows={3} placeholder="특이사항을 입력하세요" />
+        </div>
+      </div>
 
-       {/* Fixed Bottom Action Bar - positioned above bottom nav on mobile */}
-       <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-brutal-white border-t border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4 z-20">
-        <div className="flex gap-3 max-w-lg mx-auto">
+      {/* Fixed Bottom Action Bar - positioned above bottom nav on mobile */}
+      <div className="fixed bottom-14 left-0 right-0 z-20 border-t border-brutal-black bg-brutal-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:bottom-0 lg:pb-4">
+        <div className="mx-auto flex max-w-lg gap-3">
           <Button
             type="button"
             variant="secondary"

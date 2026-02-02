@@ -12,6 +12,7 @@ This task list implements a web-based purchase, sales, and cost management syste
 **Technology Stack**: Next.js 15, Drizzle ORM, Vercel Postgres, Tailwind CSS, Framer Motion
 
 **User Stories** (from spec.md):
+
 - **US1 (P1)**: Record Purchase Transactions
 - **US2 (P1)**: Record Daily Sales Quantities
 - **US3 (P2)**: View Period-Based Cost and Margin Analysis
@@ -24,6 +25,7 @@ This task list implements a web-based purchase, sales, and cost management syste
 ### MVP Scope (Minimum Viable Product)
 
 **Deliver First**: User Story 1 (US1) - Purchase Transaction Management
+
 - Complete database setup
 - Purchase entry with validation
 - Purchase history view
@@ -63,6 +65,7 @@ Tasks marked with **[P]** can be executed in parallel with other **[P]** tasks i
 - [ ] T014 Create project directory structure per plan.md (app/, components/, lib/, etc.)
 
 **Completion Criteria**:
+
 - ✅ `npm run dev` starts development server successfully
 - ✅ Tailwind CSS styles apply correctly
 - ✅ Database connection string configured in `.env.local`
@@ -101,6 +104,7 @@ Tasks marked with **[P]** can be executed in parallel with other **[P]** tasks i
 - [ ] T035 Run seed script to populate menu_categories, ingredients, menu_ingredients, skus, cost_distribution_rules
 
 **Completion Criteria**:
+
 - ✅ Database has all 7 tables with correct schema
 - ✅ User can log in and see dashboard
 - ✅ Master data (menus, ingredients, SKUs) exists in database
@@ -154,10 +158,12 @@ Tasks marked with **[P]** can be executed in parallel with other **[P]** tasks i
 - [ ] T054 [US1] Verify validation trigger marks invalid menu-ingredient combinations
 
 **Parallel Opportunities within US1**:
+
 - T037, T038 (form component + validation schema)
 - T043, T048 (list query + edit page)
 
 **Story Completion Criteria**:
+
 - ✅ Operator can enter purchase in <30 seconds
 - ✅ Invalid menu/ingredient combos show "부적합" warning
 - ✅ All purchases appear in history with correct totals
@@ -206,10 +212,12 @@ Tasks marked with **[P]** can be executed in parallel with other **[P]** tasks i
 - [ ] T070 [US2] Verify upsert logic (updating existing date's sales vs creating new)
 
 **Parallel Opportunities within US2**:
+
 - T056, T057 (form component + validation schema)
 - T062 (sales query - independent of form)
 
 **Story Completion Criteria**:
+
 - ✅ Operator can enter daily sales for all SKUs in <2 minutes
 - ✅ System calculates revenue automatically (quantity × price)
 - ✅ Sales history shows all entries with revenue
@@ -254,10 +262,12 @@ Tasks marked with **[P]** can be executed in parallel with other **[P]** tasks i
 - [ ] T085 [US3] Verify distribution % validation prevents calculation if sum ≠ 100%
 
 **Parallel Opportunities within US3**:
+
 - T071, T072 (purchase query + revenue query - independent)
 - T075, T081, T082 (UI components - independent of main page)
 
 **Story Completion Criteria**:
+
 - ✅ Analysis displays for any date range in <3 seconds
 - ✅ Purchase costs correctly grouped by menu
 - ✅ Cost allocation applies distribution percentages correctly
@@ -272,7 +282,7 @@ Tasks marked with **[P]** can be executed in parallel with other **[P]** tasks i
 
 **Story Goal**: Operators can manage menu categories, ingredients, menu-ingredient relationships, SKU prices/conversions, and cost distribution percentages.
 
-**Independent Test**: Add new menu "신메뉴" with 3 ingredients. Create SKU "신메뉴_봉" with conversion factor 1.5 and price ₩15,000. Verify: (1) purchase entry validates new menu-ingredient combos, (2) sales form shows new SKU, (3) revenue calculates using new price.
+**Independent Test**: Add new menu "신메뉴" with 3 ingredients. Create SKU "신메뉴\_봉" with conversion factor 1.5 and price ₩15,000. Verify: (1) purchase entry validates new menu-ingredient combos, (2) sales form shows new SKU, (3) revenue calculates using new price.
 
 **Dependencies**: Phase 2 (Foundational) must be complete. Independent of US1, US2, US3 (but enhances them).
 
@@ -328,10 +338,12 @@ Tasks marked with **[P]** can be executed in parallel with other **[P]** tasks i
 - [ ] T116 [US4] Verify changes to master data reflect immediately in purchase/sales pages
 
 **Parallel Opportunities within US4**:
+
 - T086-T087, T092-T093, T098, T103-T104, T109-T110 (all form components + validation schemas)
 - T088, T094, T099, T105, T111 (all management pages - work on different routes)
 
 **Story Completion Criteria**:
+
 - ✅ Can add/edit/delete menus, ingredients, SKUs
 - ✅ Can link/unlink menu-ingredient relationships
 - ✅ Can update SKU prices and conversion factors
@@ -387,6 +399,7 @@ Tasks marked with **[P]** can be executed in parallel with other **[P]** tasks i
 - [ ] T137 [P] Create operator training materials (screenshots + workflow)
 
 **Completion Criteria**:
+
 - ✅ All pages responsive on mobile/tablet/desktop
 - ✅ Smooth animations without performance impact
 - ✅ User-friendly error messages in Korean
@@ -433,6 +446,7 @@ Tasks marked with **[P]** can be executed in parallel with other **[P]** tasks i
 - [ ] T154 Load test with 1 year of data (verify <500ms query times)
 
 **Completion Criteria**:
+
 - ✅ 80%+ test coverage for utilities and business logic
 - ✅ All E2E tests pass on mobile, tablet, desktop
 - ✅ Manual QA checklist complete
@@ -478,6 +492,7 @@ Tasks marked with **[P]** can be executed in parallel with other **[P]** tasks i
 - [ ] T171 Collect user feedback and create backlog for v2
 
 **Completion Criteria**:
+
 - ✅ Application deployed to Vercel production
 - ✅ Historical data imported successfully
 - ✅ All operators trained and onboarded
@@ -508,11 +523,13 @@ Phase 2 (Foundational)
 ## Parallel Execution Examples
 
 ### Within Phase 2 (Foundational):
+
 - T019-T022 (all utilities - independent files)
 - T023-T025 (UI components + styles - independent)
 - T030-T031 (navigation components - independent)
 
 ### Within Phase 3 (US1):
+
 ```
 Start together:
 - T037 (purchase form component)
@@ -526,6 +543,7 @@ Then in parallel:
 ```
 
 ### Across User Stories:
+
 ```
 After Phase 2 complete, start in parallel:
 - Team A: Phase 3 (US1 - Purchases)
@@ -540,6 +558,7 @@ After Phase 2 complete, start in parallel:
 
 **Total Tasks**: 171
 **Breakdown by Phase**:
+
 - Phase 1 (Setup): 14 tasks
 - Phase 2 (Foundational): 21 tasks
 - Phase 3 (US1 - Purchases): 19 tasks
@@ -554,6 +573,7 @@ After Phase 2 complete, start in parallel:
 **Tasks with [US#] (Story-specific)**: 81 tasks
 
 **Estimated Completion Time** (single developer):
+
 - MVP (US1): ~3-4 weeks
 - MVP + US2 + US3: ~6-8 weeks
 - Full system (US1-US4 + Polish): ~10-12 weeks
@@ -563,6 +583,7 @@ After Phase 2 complete, start in parallel:
 ## Independent Test Criteria by User Story
 
 ### US1 (Purchases)
+
 ✅ Create purchase with menu "양념치킨" + ingredient "닭다리살" → validation shows "OK"
 ✅ Create purchase with invalid combo → validation shows "부적합"
 ✅ View purchase history → all entries display with calculated totals
@@ -570,12 +591,14 @@ After Phase 2 complete, start in parallel:
 ✅ Edit purchase → changes saved and visible in history
 
 ### US2 (Sales)
-✅ Enter sales: 양념치킨_봉 (15 qty) at ₩15,000 → revenue shows ₩225,000
+
+✅ Enter sales: 양념치킨\_봉 (15 qty) at ₩15,000 → revenue shows ₩225,000
 ✅ View sales history → all daily entries shown with revenue
 ✅ Re-enter same date → upsert updates instead of creating duplicate
 ✅ Filter by SKU → only selected SKU's sales shown
 
 ### US3 (Analysis)
+
 ✅ Select period 2025-12-01 to 2025-12-31 → analysis displays
 ✅ Purchase costs grouped by menu → totals match
 ✅ Distribution % (양념치킨: 40%, 순살치킨: 25%) applied → allocated costs correct
@@ -583,9 +606,10 @@ After Phase 2 complete, start in parallel:
 ✅ Change distribution % to sum ≠ 100% → system prevents calculation
 
 ### US4 (Master Data)
+
 ✅ Add menu "신메뉴" → appears in menu list and purchase form
 ✅ Link ingredient "재료A" to "신메뉴" → purchase validation allows this combo
-✅ Create SKU "신메뉴_봉" with price ₩15,000 → appears in sales form
+✅ Create SKU "신메뉴\_봉" with price ₩15,000 → appears in sales form
 ✅ Update SKU price → new price used in revenue calculation
 ✅ Update distribution % → changes reflected in analysis
 

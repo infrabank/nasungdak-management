@@ -81,7 +81,8 @@ export async function createSalesRecord(formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '판매 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '판매 등록에 실패했습니다',
     }
   }
 }
@@ -131,7 +132,8 @@ export async function updateSalesRecord(id: string, formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '판매 수정에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '판매 수정에 실패했습니다',
     }
   }
 }
@@ -168,7 +170,8 @@ export async function deleteSalesRecord(id: string) {
     console.error('Failed to delete sales record:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '판매 삭제에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '판매 삭제에 실패했습니다',
     }
   }
 }
@@ -188,7 +191,9 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
       .from(salesRecords)
       .where(inArray(salesRecords.id, ids))
 
-    const storeIds = new Set(existingRecords.map(r => r.storeId).filter(Boolean))
+    const storeIds = new Set(
+      existingRecords.map((r) => r.storeId).filter(Boolean)
+    )
 
     // Perform bulk soft delete - SINGLE QUERY
     const result = await db
@@ -219,7 +224,8 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
     console.error('Failed to bulk delete sales records:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '일괄 삭제에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '일괄 삭제에 실패했습니다',
     }
   }
 }
@@ -313,15 +319,24 @@ export async function getSalesRecords(
     const storeKey = authorizedStoreIds.sort().join(',')
 
     const getCachedSalesRecords = unstable_cache(
-      () => fetchSalesRecords(
+      () =>
+        fetchSalesRecords(
+          normalizedStartDate,
+          normalizedEndDate,
+          normalizedSkuId,
+          normalizedStoreId,
+          normalizedPage,
+          authorizedStoreIds
+        ),
+      [
+        'sales:list',
+        storeKey,
         normalizedStartDate,
         normalizedEndDate,
         normalizedSkuId,
         normalizedStoreId,
-        normalizedPage,
-        authorizedStoreIds
-      ),
-      ['sales:list', storeKey, normalizedStartDate, normalizedEndDate, normalizedSkuId, normalizedStoreId, String(normalizedPage)],
+        String(normalizedPage),
+      ],
       { tags: [`sales:${normalizedStoreId}`] }
     )
 
@@ -398,7 +413,11 @@ interface DailySaleInput {
   quantitySold: string
 }
 
-export async function createDailySales(saleDate: string, sales: DailySaleInput[], storeId?: string) {
+export async function createDailySales(
+  saleDate: string,
+  sales: DailySaleInput[],
+  storeId?: string
+) {
   'use server'
 
   let successCount = 0
@@ -407,7 +426,12 @@ export async function createDailySales(saleDate: string, sales: DailySaleInput[]
 
   try {
     // Filter out entries with no quantity
-    const validSales = sales.filter(s => s.quantitySold && s.quantitySold.trim() !== '' && Number(s.quantitySold) > 0)
+    const validSales = sales.filter(
+      (s) =>
+        s.quantitySold &&
+        s.quantitySold.trim() !== '' &&
+        Number(s.quantitySold) > 0
+    )
 
     if (validSales.length === 0) {
       return {
@@ -426,7 +450,7 @@ export async function createDailySales(saleDate: string, sales: DailySaleInput[]
       .from(skus)
       .where(isNull(skus.deletedAt))
 
-    const skuMap = new Map(skuList.map(s => [s.id, s]))
+    const skuMap = new Map(skuList.map((s) => [s.id, s]))
 
     // Use transaction for atomicity
     await db.transaction(async (tx) => {
@@ -450,14 +474,12 @@ export async function createDailySales(saleDate: string, sales: DailySaleInput[]
           })
 
           // Insert sales record using transaction context
-          await tx
-            .insert(salesRecords)
-            .values({
-              ...validatedData,
-              storeId: storeId || null,
-              unitPrice: sku.unitPrice,
-              createdBy: 'system',
-            })
+          await tx.insert(salesRecords).values({
+            ...validatedData,
+            storeId: storeId || null,
+            unitPrice: sku.unitPrice,
+            createdBy: 'system',
+          })
 
           successCount++
         } catch (error) {
@@ -465,7 +487,9 @@ export async function createDailySales(saleDate: string, sales: DailySaleInput[]
           if (error instanceof z.ZodError) {
             errors.push(`${error.errors[0].message}`)
           } else {
-            errors.push(`${error instanceof Error ? error.message : '알 수 없는 오류'}`)
+            errors.push(
+              `${error instanceof Error ? error.message : '알 수 없는 오류'}`
+            )
           }
         }
       }
@@ -492,7 +516,8 @@ export async function createDailySales(saleDate: string, sales: DailySaleInput[]
       success: false,
       successCount,
       failedCount,
-      error: error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
     }
   }
 }
@@ -593,7 +618,8 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
       success: false,
       successCount,
       failedCount,
-      error: error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
     }
   }
 }
@@ -667,13 +693,14 @@ export async function getSalesTotals(
     const storeKey = authorizedStoreIds.sort().join(',')
 
     const getCachedSalesTotals = unstable_cache(
-      () => fetchSalesTotals(
-        normalizedStartDate,
-        normalizedEndDate,
-        normalizedSkuId,
-        normalizedStoreId,
-        authorizedStoreIds
-      ),
+      () =>
+        fetchSalesTotals(
+          normalizedStartDate,
+          normalizedEndDate,
+          normalizedSkuId,
+          normalizedStoreId,
+          authorizedStoreIds
+        ),
       [
         'sales:totals',
         storeKey,

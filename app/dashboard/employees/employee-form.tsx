@@ -18,7 +18,11 @@ export default function EmployeeForm({ storeId }: EmployeeFormProps) {
 
   // Redirect on success
   if (state?.success) {
-    router.push(storeId ? `/dashboard/employees?storeId=${storeId}` : '/dashboard/employees')
+    router.push(
+      storeId
+        ? `/dashboard/employees?storeId=${storeId}`
+        : '/dashboard/employees'
+    )
   }
 
   const today = formatDate(new Date(), 'yyyy-MM-dd')
@@ -30,7 +34,7 @@ export default function EmployeeForm({ storeId }: EmployeeFormProps) {
 
       {/* No Store Warning */}
       {!storeId && (
-        <div className="mb-4 bg-brutal-yellow border-3 border-brutal-black shadow-brutal p-4">
+        <div className="mb-4 border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal">
           <p className="text-sm font-bold text-brutal-black">
             상단에서 매장을 선택해주세요
           </p>
@@ -39,22 +43,20 @@ export default function EmployeeForm({ storeId }: EmployeeFormProps) {
 
       {/* Error Message */}
       {state?.error && (
-        <div className="mb-4 bg-brutal-red/10 border-3 border-brutal-red p-4">
+        <div className="mb-4 border-3 border-brutal-red bg-brutal-red/10 p-4">
           <p className="text-sm font-bold text-brutal-red">{state.error}</p>
         </div>
       )}
 
-      <div className="bg-brutal-white border-3 border-brutal-black shadow-brutal p-4 mb-4">
-        <h3 className="text-sm font-black text-brutal-black uppercase tracking-wide mb-4">
+      <div className="mb-4 border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal">
+        <h3 className="mb-4 text-sm font-black uppercase tracking-wide text-brutal-black">
           직원 정보
         </h3>
 
         <div className="space-y-4">
           {/* Employee Name */}
           <div>
-            <Label htmlFor="employeeName">
-              👤 직원명 *
-            </Label>
+            <Label htmlFor="employeeName">👤 직원명 *</Label>
             <Input
               type="text"
               name="employeeName"
@@ -67,9 +69,7 @@ export default function EmployeeForm({ storeId }: EmployeeFormProps) {
 
           {/* Hourly Rate */}
           <div>
-            <Label htmlFor="hourlyRate">
-              💰 시급 (원) *
-            </Label>
+            <Label htmlFor="hourlyRate">💰 시급 (원) *</Label>
             <Input
               type="number"
               name="hourlyRate"
@@ -83,9 +83,7 @@ export default function EmployeeForm({ storeId }: EmployeeFormProps) {
 
           {/* Phone */}
           <div>
-            <Label htmlFor="phone">
-              📱 연락처
-            </Label>
+            <Label htmlFor="phone">📱 연락처</Label>
             <Input
               type="tel"
               name="phone"
@@ -97,9 +95,7 @@ export default function EmployeeForm({ storeId }: EmployeeFormProps) {
 
           {/* Hire Date */}
           <div>
-            <Label htmlFor="hireDate">
-              📅 입사일
-            </Label>
+            <Label htmlFor="hireDate">📅 입사일</Label>
             <Input
               type="date"
               name="hireDate"
@@ -115,7 +111,7 @@ export default function EmployeeForm({ storeId }: EmployeeFormProps) {
               name="isActive"
               id="isActive"
               defaultChecked={true}
-              className="w-5 h-5 border-2 border-brutal-black accent-brutal-yellow"
+              className="h-5 w-5 border-2 border-brutal-black accent-brutal-yellow"
             />
             <Label htmlFor="isActive" className="mb-0 cursor-pointer">
               재직 중
@@ -125,8 +121,8 @@ export default function EmployeeForm({ storeId }: EmployeeFormProps) {
       </div>
 
       {/* Fixed Bottom Action Bar */}
-      <div className="fixed bottom-14 lg:bottom-0 left-0 right-0 bg-brutal-white border-t border-brutal-black p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:pb-4 z-20">
-        <div className="flex gap-3 max-w-lg mx-auto">
+      <div className="fixed bottom-14 left-0 right-0 z-20 border-t border-brutal-black bg-brutal-white p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:bottom-0 lg:pb-4">
+        <div className="mx-auto flex max-w-lg gap-3">
           <Button
             type="button"
             variant="secondary"

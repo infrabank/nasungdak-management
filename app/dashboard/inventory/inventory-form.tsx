@@ -40,7 +40,7 @@ export default function InventoryForm({ inventory }: InventoryFormProps) {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="px-3 py-2 text-sm font-bold text-brutal-black bg-brutal-yellow border-2 border-brutal-black shadow-brutal hover:shadow-brutal-lg hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+        className="border-2 border-brutal-black bg-brutal-yellow px-3 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
       >
         재고 조정
       </button>
@@ -52,10 +52,10 @@ export default function InventoryForm({ inventory }: InventoryFormProps) {
             onClick={() => setIsOpen(false)}
           />
 
-          <div className="relative transform overflow-hidden bg-brutal-white border-3 border-brutal-black shadow-brutal-lg px-4 pb-4 pt-5 text-left transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+          <div className="relative transform overflow-hidden border-3 border-brutal-black bg-brutal-white px-4 pb-4 pt-5 text-left shadow-brutal-lg transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
             <form onSubmit={handleSubmit}>
               <div>
-                <h3 className="text-lg font-semibold leading-6 text-gray-900 mb-4">
+                <h3 className="mb-4 text-lg font-semibold leading-6 text-gray-900">
                   재고 조정
                 </h3>
 
@@ -93,7 +93,11 @@ export default function InventoryForm({ inventory }: InventoryFormProps) {
                       required
                       min="0"
                       step="0.01"
-                      defaultValue={inventory?.currentQuantity ? String(inventory.currentQuantity) : ''}
+                      defaultValue={
+                        inventory?.currentQuantity
+                          ? String(inventory.currentQuantity)
+                          : ''
+                      }
                       placeholder="0.00"
                     />
                   </div>

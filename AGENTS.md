@@ -31,10 +31,11 @@ npm run test:e2e           # Playwright E2E tests
 **Prettier config**: No semicolons, single quotes, 2-space indent, trailing commas (ES5), 80 char width
 
 **Import order**: External libs → `@/*` internal modules
+
 ```typescript
-import { useState, useEffect } from 'react'        // External
-import { z } from 'zod'                            // External
-import { db } from '@/lib/db'                      // Internal
+import { useState, useEffect } from 'react' // External
+import { z } from 'zod' // External
+import { db } from '@/lib/db' // Internal
 import { purchaseSchema } from '@/lib/utils/validation'
 ```
 
@@ -93,9 +94,13 @@ export async function createEntity(formData: FormData) {
 // READ - Use unstable_cache with tags
 export async function getData(storeId: string) {
   const getCached = unstable_cache(
-    () => db.select().from(tableName).where(
-      and(eq(tableName.storeId, storeId), isNull(tableName.deletedAt))
-    ),
+    () =>
+      db
+        .select()
+        .from(tableName)
+        .where(
+          and(eq(tableName.storeId, storeId), isNull(tableName.deletedAt))
+        ),
     ['feature:list', storeId],
     { tags: [`feature:${storeId}`] }
   )
@@ -113,19 +118,22 @@ import { createEntity } from './actions'
 
 export default function EntityForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  
-  const handleSubmit = useCallback(async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    const result = await createEntity(new FormData(e.currentTarget))
-    setIsSubmitting(false)
-    
-    if (result.success) {
-      toast.success('저장되었습니다')
-    } else {
-      toast.error(result.error || '오류가 발생했습니다')
-    }
-  }, [])
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      setIsSubmitting(true)
+      const result = await createEntity(new FormData(e.currentTarget))
+      setIsSubmitting(false)
+
+      if (result.success) {
+        toast.success('저장되었습니다')
+      } else {
+        toast.error(result.error || '오류가 발생했습니다')
+      }
+    },
+    []
+  )
   // ...
 }
 ```
@@ -133,6 +141,7 @@ export default function EntityForm() {
 ## Database Patterns
 
 **Soft Delete (NEVER hard delete)**:
+
 ```typescript
 await db.update(table).set({ deletedAt: new Date() }).where(eq(table.id, id))
 // Always filter: .where(isNull(table.deletedAt))
@@ -141,6 +150,7 @@ await db.update(table).set({ deletedAt: new Date() }).where(eq(table.id, id))
 **Generated Columns (NEVER insert/update)**: `total_amount`, `total_revenue`, `total_cost`
 
 **Transactions for Bulk**:
+
 ```typescript
 await db.transaction(async (tx) => {
   for (const item of items) await tx.insert(table).values(item)
@@ -148,8 +158,9 @@ await db.transaction(async (tx) => {
 ```
 
 **Type Inference**:
+
 ```typescript
-type Entity = typeof table.$inferSelect    // For reads
+type Entity = typeof table.$inferSelect // For reads
 type NewEntity = typeof table.$inferInsert // For inserts
 // Decimal columns return strings - convert with Number()
 ```
@@ -161,10 +172,13 @@ type NewEntity = typeof table.$inferInsert // For inserts
 quantity: z.coerce.string().transform((val, ctx) => {
   const num = Number(val)
   if (isNaN(num) || num <= 0) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: '수량은 0보다 커야 합니다' })
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: '수량은 0보다 커야 합니다',
+    })
     return z.NEVER
   }
-  return val  // Return string for decimal columns
+  return val // Return string for decimal columns
 })
 ```
 
@@ -186,8 +200,8 @@ quantity: z.coerce.string().transform((val, ctx) => {
 
 ```typescript
 import { formatCurrency, formatDate } from '@/lib/utils/format'
-formatCurrency(15000)           // "₩15,000"
-formatDate(new Date(), 'yyyy-MM-dd')  // "2026-01-30"
+formatCurrency(15000) // "₩15,000"
+formatDate(new Date(), 'yyyy-MM-dd') // "2026-01-30"
 ```
 
 ## Multi-Store & Auth

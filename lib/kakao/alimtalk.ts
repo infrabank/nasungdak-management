@@ -106,13 +106,11 @@ export async function sendInventoryLowAlert(params: {
   })
 
   // 실제 발송 상태로 업데이트
-  await db.update(alertHistory)
-    .set({
-      status: result.success ? 'logged' : 'failed',
-      externalId: result.messageId,
-      sentAt: result.success ? new Date() : null,
-    })
-    .where(sql`id = (
+  await db.update(alertHistory).set({
+    status: result.success ? 'logged' : 'failed',
+    externalId: result.messageId,
+    sentAt: result.success ? new Date() : null,
+  }).where(sql`id = (
       SELECT id FROM alert_history 
       WHERE store_id = ${params.storeId} 
         AND alert_type = 'inventory_low' 
@@ -173,13 +171,11 @@ export async function sendSyncFailedAlert(params: {
   })
 
   // 실제 발송 상태로 업데이트
-  await db.update(alertHistory)
-    .set({
-      status: result.success ? 'logged' : 'failed',
-      externalId: result.messageId,
-      sentAt: result.success ? new Date() : null,
-    })
-    .where(sql`id = (
+  await db.update(alertHistory).set({
+    status: result.success ? 'logged' : 'failed',
+    externalId: result.messageId,
+    sentAt: result.success ? new Date() : null,
+  }).where(sql`id = (
       SELECT id FROM alert_history 
       WHERE store_id = ${params.storeId} 
         AND alert_type = 'sync_failed' 

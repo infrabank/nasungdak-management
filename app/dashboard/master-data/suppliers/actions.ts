@@ -11,7 +11,13 @@ const supplierSchema = z.object({
   supplierName: z.string().min(1, '공급업체명을 입력해주세요').max(200),
   contactName: z.string().max(100).optional().nullable(),
   phone: z.string().max(20).optional().nullable(),
-  email: z.string().email('유효한 이메일 형식이 아닙니다').max(100).optional().nullable().or(z.literal('')),
+  email: z
+    .string()
+    .email('유효한 이메일 형식이 아닙니다')
+    .max(100)
+    .optional()
+    .nullable()
+    .or(z.literal('')),
   address: z.string().optional().nullable(),
   businessNumber: z.string().max(20).optional().nullable(),
   notes: z.string().optional().nullable(),
@@ -91,10 +97,9 @@ export async function updateSupplier(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(and(
-        eq(suppliers.id, id),
-        eq(suppliers.organizationId, organizationId)
-      ))
+      .where(
+        and(eq(suppliers.id, id), eq(suppliers.organizationId, organizationId))
+      )
       .returning()
 
     revalidatePath('/dashboard/master-data/suppliers')
@@ -129,10 +134,9 @@ export async function deleteSupplier(id: string) {
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(and(
-        eq(suppliers.id, id),
-        eq(suppliers.organizationId, organizationId)
-      ))
+      .where(
+        and(eq(suppliers.id, id), eq(suppliers.organizationId, organizationId))
+      )
 
     revalidatePath('/dashboard/master-data/suppliers')
 
@@ -154,10 +158,14 @@ export async function getSuppliers() {
     const items = await db
       .select()
       .from(suppliers)
-      .where(and(
-        isNull(suppliers.deletedAt),
-        organizationId ? eq(suppliers.organizationId, organizationId) : undefined
-      ))
+      .where(
+        and(
+          isNull(suppliers.deletedAt),
+          organizationId
+            ? eq(suppliers.organizationId, organizationId)
+            : undefined
+        )
+      )
       .orderBy(suppliers.supplierName)
 
     return items
@@ -176,10 +184,14 @@ export async function getActiveSuppliers() {
         supplierName: suppliers.supplierName,
       })
       .from(suppliers)
-      .where(and(
-        isNull(suppliers.deletedAt),
-        organizationId ? eq(suppliers.organizationId, organizationId) : undefined
-      ))
+      .where(
+        and(
+          isNull(suppliers.deletedAt),
+          organizationId
+            ? eq(suppliers.organizationId, organizationId)
+            : undefined
+        )
+      )
       .orderBy(suppliers.supplierName)
 
     return items

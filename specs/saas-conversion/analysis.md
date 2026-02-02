@@ -5,19 +5,20 @@
 
 ## Executive Summary
 
-| 항목 | 현재 상태 | SaaS 준비도 |
-|------|----------|-------------|
-| **전체 SaaS 준비도** | 개인용/단일 회사용 | **35/100** |
-| **데이터베이스** | 부분적 멀티테넌시 | 6/10 |
-| **인증/보안** | 단일 비밀번호 | 3/10 |
-| **API 격리** | URL 파라미터 기반 | 4/10 |
-| **배포/운영** | 최소 구성 | 3/10 |
+| 항목                 | 현재 상태          | SaaS 준비도 |
+| -------------------- | ------------------ | ----------- |
+| **전체 SaaS 준비도** | 개인용/단일 회사용 | **35/100**  |
+| **데이터베이스**     | 부분적 멀티테넌시  | 6/10        |
+| **인증/보안**        | 단일 비밀번호      | 3/10        |
+| **API 격리**         | URL 파라미터 기반  | 4/10        |
+| **배포/운영**        | 최소 구성          | 3/10        |
 
 ---
 
 ## 1. 현재 아키텍처 분석
 
 ### 1.1 기술 스택
+
 - **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS
 - **Backend**: Next.js Server Actions
 - **Database**: Vercel Postgres + Drizzle ORM
@@ -27,29 +28,31 @@
 ### 1.2 데이터베이스 스키마 (17 테이블)
 
 #### 테넌트 격리 상태
-| 테이블 | storeId | 상태 |
-|--------|---------|------|
-| stores | N/A (테넌트 루트) | ✅ |
-| purchase_transactions | ✅ 있음 | ✅ |
-| sales_records | ✅ 있음 | ✅ |
-| fixed_costs | ✅ 있음 | ✅ |
-| oil_change_history | ✅ 있음 | ✅ |
-| employees | ✅ 있음 | ✅ |
-| attendance_records | ✅ 있음 | ✅ |
-| inventory | ✅ 있음 | ✅ |
-| inventory_events | ✅ 있음 | ✅ |
-| **suppliers** | ❌ 없음 | 🔴 격리 실패 |
-| **menu_categories** | ❌ 없음 | 🔴 격리 실패 |
-| **ingredients** | ❌ 없음 | 🔴 격리 실패 |
-| **skus** | ❌ 없음 | 🔴 격리 실패 |
-| **menu_ingredients** | ❌ 없음 | 🔴 격리 실패 |
-| **cost_distribution_rules** | ❌ 없음 | 🔴 격리 실패 |
-| inventory_alert_rules | ⚠️ Nullable | ⚠️ 부분 |
-| alert_history | ⚠️ Nullable | ⚠️ 부분 |
+
+| 테이블                      | storeId           | 상태         |
+| --------------------------- | ----------------- | ------------ |
+| stores                      | N/A (테넌트 루트) | ✅           |
+| purchase_transactions       | ✅ 있음           | ✅           |
+| sales_records               | ✅ 있음           | ✅           |
+| fixed_costs                 | ✅ 있음           | ✅           |
+| oil_change_history          | ✅ 있음           | ✅           |
+| employees                   | ✅ 있음           | ✅           |
+| attendance_records          | ✅ 있음           | ✅           |
+| inventory                   | ✅ 있음           | ✅           |
+| inventory_events            | ✅ 있음           | ✅           |
+| **suppliers**               | ❌ 없음           | 🔴 격리 실패 |
+| **menu_categories**         | ❌ 없음           | 🔴 격리 실패 |
+| **ingredients**             | ❌ 없음           | 🔴 격리 실패 |
+| **skus**                    | ❌ 없음           | 🔴 격리 실패 |
+| **menu_ingredients**        | ❌ 없음           | 🔴 격리 실패 |
+| **cost_distribution_rules** | ❌ 없음           | 🔴 격리 실패 |
+| inventory_alert_rules       | ⚠️ Nullable       | ⚠️ 부분      |
+| alert_history               | ⚠️ Nullable       | ⚠️ 부분      |
 
 ### 1.3 인증 시스템
 
 **현재 구현:**
+
 ```typescript
 // 단일 비밀번호 인증
 const passwordHash = process.env.AUTH_PASSWORD_HASH
@@ -62,6 +65,7 @@ const token = await new SignJWT({ authenticated: true })
 ```
 
 **문제점:**
+
 - 사용자 계정 없음 (users 테이블 없음)
 - 역할(Role) 시스템 없음
 - JWT에 사용자/매장 정보 없음
@@ -70,11 +74,12 @@ const token = await new SignJWT({ authenticated: true })
 ### 1.4 API 보안
 
 **현재 구현:**
+
 ```typescript
 // Server Action에서 storeId가 URL 파라미터로 전달됨
 export async function getPurchases(
   startDate?: string,
-  storeId?: string,  // 클라이언트가 제공
+  storeId?: string // 클라이언트가 제공
 ) {
   if (storeId !== 'all') {
     conditions.push(eq(purchaseTransactions.storeId, storeId))
@@ -84,6 +89,7 @@ export async function getPurchases(
 ```
 
 **취약점:**
+
 - storeId가 클라이언트 제어
 - 다른 매장 데이터 접근 가능
 - 서버사이드 권한 검증 없음
@@ -95,6 +101,7 @@ export async function getPurchases(
 ### 2.1 사용자 관리 시스템 부재
 
 **필요한 테이블:**
+
 ```sql
 -- users: 사용자 계정
 CREATE TABLE users (
@@ -131,12 +138,13 @@ CREATE TABLE user_store_assignments (
 ### 2.2 테넌트 격리 보안 취약점
 
 **해결 방법:**
+
 ```typescript
 // 1. JWT에 사용자 정보 포함
 const token = await new SignJWT({
   userId: user.id,
   storeIds: user.allowedStores,
-  role: user.role
+  role: user.role,
 }).sign(SECRET)
 
 // 2. 권한 검증 유틸리티
@@ -173,6 +181,7 @@ export async function getPurchases(storeId: string) {
 ### 3.1 구독/결제 시스템
 
 **필요한 테이블:**
+
 ```sql
 CREATE TABLE organizations (
   id UUID PRIMARY KEY,
@@ -199,6 +208,7 @@ CREATE TABLE subscriptions (
 **현재:** `console.error()` 만 사용
 
 **필요:**
+
 - Sentry (에러 트래킹)
 - 구조화된 로깅 (Pino)
 - APM (Datadog/Vercel Analytics)
@@ -207,6 +217,7 @@ CREATE TABLE subscriptions (
 ### 3.3 보안 헤더
 
 **필요한 vercel.json:**
+
 ```json
 {
   "headers": [
@@ -226,6 +237,7 @@ CREATE TABLE subscriptions (
 ### 3.4 Rate Limiting
 
 **필요:**
+
 - API 요청 제한
 - 테넌트별 quota
 - DDoS 방어
@@ -235,6 +247,7 @@ CREATE TABLE subscriptions (
 ## 4. MEDIUM PRIORITY (런칭 후)
 
 ### 4.1 감사 로깅
+
 ```sql
 CREATE TABLE audit_logs (
   id UUID PRIMARY KEY,
@@ -251,11 +264,19 @@ CREATE TABLE audit_logs (
 ```
 
 ### 4.2 기능 플래그
+
 ```typescript
 const features = {
   BASIC: ['purchases', 'sales'],
   STANDARD: ['purchases', 'sales', 'inventory', 'employees'],
-  PREMIUM: ['purchases', 'sales', 'inventory', 'employees', 'analytics', 'alerts']
+  PREMIUM: [
+    'purchases',
+    'sales',
+    'inventory',
+    'employees',
+    'analytics',
+    'alerts',
+  ],
 }
 ```
 
@@ -263,22 +284,23 @@ const features = {
 
 ## 5. 현재 강점 (유지해야 할 것)
 
-| 강점 | 설명 |
-|------|------|
+| 강점                  | 설명                          |
+| --------------------- | ----------------------------- |
 | Next.js 15 App Router | 최신 아키텍처, Server Actions |
-| Drizzle ORM | 타입 안전성, 성능 |
-| Soft Delete 패턴 | 모든 테이블에 deletedAt |
-| Decimal 정밀도 | 재무 데이터 정확성 |
-| 인덱스 최적화 | 30+ 인덱스 설정 |
-| Zod 검증 | 강력한 입력 검증 |
-| 캐싱 전략 | unstable_cache + 태그 기반 |
-| 반응형 UI | 모바일/태블릿 지원 |
+| Drizzle ORM           | 타입 안전성, 성능             |
+| Soft Delete 패턴      | 모든 테이블에 deletedAt       |
+| Decimal 정밀도        | 재무 데이터 정확성            |
+| 인덱스 최적화         | 30+ 인덱스 설정               |
+| Zod 검증              | 강력한 입력 검증              |
+| 캐싱 전략             | unstable_cache + 태그 기반    |
+| 반응형 UI             | 모바일/태블릿 지원            |
 
 ---
 
 ## 6. 구현 로드맵
 
 ### Phase 1: 보안 강화 (2주)
+
 - [ ] 사용자 테이블 생성
 - [ ] JWT에 사용자 정보 포함
 - [ ] Server Actions 권한 검증
@@ -286,6 +308,7 @@ const features = {
 - [ ] 보안 헤더 추가
 
 ### Phase 2: 운영 인프라 (2주)
+
 - [ ] Sentry 에러 트래킹
 - [ ] 구조화된 로깅
 - [ ] Rate Limiting
@@ -293,6 +316,7 @@ const features = {
 - [ ] 헬스체크 엔드포인트
 
 ### Phase 3: SaaS 기능 (3주)
+
 - [ ] 조직/구독 스키마
 - [ ] 결제 연동 (Stripe/토스)
 - [ ] 기능 플래그 시스템
@@ -300,6 +324,7 @@ const features = {
 - [ ] 온보딩 플로우
 
 ### Phase 4: 고급 기능 (지속)
+
 - [ ] 화이트 라벨링
 - [ ] API 키 발급
 - [ ] 웹훅 시스템
@@ -309,10 +334,10 @@ const features = {
 
 ## 7. SaaS 요금제 제안
 
-| 플랜 | 가격 | 매장 수 | 사용자 | 기능 |
-|------|------|--------|--------|------|
-| Free | ₩0 | 1 | 1 | 매입/판매 기본 |
-| Basic | ₩29,000/월 | 1 | 3 | + 재고관리, 분석 |
-| Standard | ₩79,000/월 | 3 | 10 | + 직원관리, 알림 |
-| Premium | ₩199,000/월 | 무제한 | 무제한 | + API, 맞춤 리포트 |
-| Enterprise | 협의 | 맞춤 | 맞춤 | + 화이트라벨, SLA |
+| 플랜       | 가격        | 매장 수 | 사용자 | 기능               |
+| ---------- | ----------- | ------- | ------ | ------------------ |
+| Free       | ₩0          | 1       | 1      | 매입/판매 기본     |
+| Basic      | ₩29,000/월  | 1       | 3      | + 재고관리, 분석   |
+| Standard   | ₩79,000/월  | 3       | 10     | + 직원관리, 알림   |
+| Premium    | ₩199,000/월 | 무제한  | 무제한 | + API, 맞춤 리포트 |
+| Enterprise | 협의        | 맞춤    | 맞춤   | + 화이트라벨, SLA  |
