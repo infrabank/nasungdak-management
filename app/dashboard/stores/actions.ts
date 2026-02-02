@@ -14,10 +14,12 @@ import {
 import { eq, and, isNull, desc, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { getAuthorizedStoreIds, getUserContext } from '@/lib/auth-context'
-
-const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
-)
+import {
+  SESSION_SECRET,
+  SESSION_DURATION,
+  JWT_EXPIRATION,
+  SESSION_COOKIE_NAME,
+} from '@/lib/auth/constants'
 
 export async function createStore(formData: FormData) {
   try {
@@ -148,7 +150,7 @@ async function updateSessionWithNewStore(
 ): Promise<void> {
   try {
     const cookieStore = await cookies()
-    const token = cookieStore.get('session')?.value
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value
     if (!token) return
 
     const { payload } = await jwtVerify(token, SESSION_SECRET)
@@ -173,14 +175,14 @@ async function updateSessionWithNewStore(
       })
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
-        .setExpirationTime('7d')
+        .setExpirationTime(JWT_EXPIRATION)
         .sign(SESSION_SECRET)
 
-      cookieStore.set('session', newToken, {
+      cookieStore.set(SESSION_COOKIE_NAME, newToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60,
+        maxAge: SESSION_DURATION / 1000,
         path: '/',
       })
     }

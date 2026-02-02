@@ -1,17 +1,23 @@
 'use server'
 
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import bcrypt from 'bcryptjs'
 import { SignJWT, jwtVerify } from 'jose'
 import { db } from '@/lib/db'
-import { users, organizationMembers, userStoreAssignments } from '@/lib/db/schema'
+import {
+  users,
+  organizationMembers,
+  userStoreAssignments,
+} from '@/lib/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
-
-const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
-)
-const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
+import {
+  SESSION_SECRET,
+  SESSION_DURATION,
+  JWT_EXPIRATION,
+  SESSION_COOKIE_NAME,
+} from '@/lib/auth/constants'
+import { rateLimit, getClientIP } from '@/lib/rate-limit'
 
 // JWT Payload 타입
 interface JWTPayload {
@@ -33,6 +39,21 @@ export async function login(
   formData: FormData
 ): Promise<LoginState> {
   try {
+    // Rate limiting 체크 (15분당 5회)
+    const headersList = await headers()
+    const clientIP = getClientIP(headersList)
+    const rateLimitResult = rateLimit.check(clientIP, 'auth:login')
+
+    if (!rateLimitResult.success) {
+      const retryAfter = Math.ceil(
+        (rateLimitResult.resetAt - Date.now()) / 1000 / 60
+      )
+      return {
+        success: false,
+        error: `로그인 시도가 너무 많습니다. ${retryAfter}분 후에 다시 시도해주세요.`,
+      }
+    }
+
     const email = formData.get('email') as string
     const password = formData.get('password') as string
 
@@ -52,10 +73,7 @@ export async function login(
 
     // Find user by email
     const user = await db.query.users.findFirst({
-      where: and(
-        eq(users.email, email.toLowerCase()),
-        isNull(users.deletedAt)
-      ),
+      where: and(eq(users.email, email.toLowerCase()), isNull(users.deletedAt)),
     })
 
     if (!user) {
@@ -109,12 +127,12 @@ export async function login(
     const token = await new SignJWT(payload)
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
-      .setExpirationTime('7d')
+      .setExpirationTime(JWT_EXPIRATION)
       .sign(SESSION_SECRET)
 
     // Set session cookie
     const cookieStore = await cookies()
-    cookieStore.set('session', token, {
+    cookieStore.set(SESSION_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -142,13 +160,13 @@ export async function login(
 
 export async function logout() {
   const cookieStore = await cookies()
-  cookieStore.delete('session')
+  cookieStore.delete(SESSION_COOKIE_NAME)
   redirect('/login')
 }
 
 export async function verifySession() {
   const cookieStore = await cookies()
-  const token = cookieStore.get('session')?.value
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value
 
   if (!token) {
     return { authenticated: false }

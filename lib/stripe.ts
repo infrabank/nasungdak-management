@@ -1,8 +1,8 @@
 /**
  * Stripe 결제 연동 유틸리티
- * 
+ *
  * 설치 필요: npm install stripe
- * 
+ *
  * 환경변수:
  * - STRIPE_SECRET_KEY: Stripe 시크릿 키
  * - STRIPE_WEBHOOK_SECRET: 웹훅 시크릿
@@ -11,8 +11,15 @@
 
 import Stripe from 'stripe'
 import { db } from '@/lib/db'
-import { organizations, subscriptions, invoices } from '@/lib/db/schema'
-import { eq } from 'drizzle-orm'
+import {
+  organizations,
+  subscriptions,
+  invoices,
+  alertHistory,
+  organizationMembers,
+  users,
+} from '@/lib/db/schema'
+import { eq, and, isNull } from 'drizzle-orm'
 import { PLANS, type PlanType } from '@/lib/features'
 import { revalidateTag } from 'next/cache'
 
@@ -41,7 +48,10 @@ export const stripe = new Proxy({} as Stripe, {
 })
 
 // Stripe Price ID 매핑 (Stripe Dashboard에서 생성 후 설정)
-export const STRIPE_PRICE_IDS: Record<PlanType, { monthly?: string; yearly?: string }> = {
+export const STRIPE_PRICE_IDS: Record<
+  PlanType,
+  { monthly?: string; yearly?: string }
+> = {
   free: {},
   basic: {
     monthly: process.env.STRIPE_PRICE_BASIC_MONTHLY,
@@ -107,16 +117,28 @@ export async function createCheckoutSession(params: {
   cancelUrl: string
   customerEmail: string
 }): Promise<{ url: string | null }> {
-  const { organizationId, plan, billingCycle, successUrl, cancelUrl, customerEmail } = params
+  const {
+    organizationId,
+    plan,
+    billingCycle,
+    successUrl,
+    cancelUrl,
+    customerEmail,
+  } = params
 
   // Price ID 조회
   const priceId = STRIPE_PRICE_IDS[plan]?.[billingCycle]
   if (!priceId) {
-    throw new Error(`플랜 ${plan}의 ${billingCycle} 가격이 설정되지 않았습니다.`)
+    throw new Error(
+      `플랜 ${plan}의 ${billingCycle} 가격이 설정되지 않았습니다.`
+    )
   }
 
   // 고객 생성/조회
-  const customerId = await getOrCreateStripeCustomer(organizationId, customerEmail)
+  const customerId = await getOrCreateStripeCustomer(
+    organizationId,
+    customerEmail
+  )
 
   // Checkout 세션 생성
   const session = await stripe.checkout.sessions.create({
@@ -234,7 +256,9 @@ export async function handleStripeWebhook(
   // 이벤트 타입별 처리
   switch (event.type) {
     case 'checkout.session.completed':
-      await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session)
+      await handleCheckoutCompleted(
+        event.data.object as Stripe.Checkout.Session
+      )
       break
 
     case 'customer.subscription.created':
@@ -372,7 +396,10 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   if (!invoice.subscription) return
 
   const sub = await db.query.subscriptions.findFirst({
-    where: eq(subscriptions.stripeSubscriptionId, invoice.subscription as string),
+    where: eq(
+      subscriptions.stripeSubscriptionId,
+      invoice.subscription as string
+    ),
   })
 
   if (!sub) return
@@ -401,6 +428,19 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   if (!invoice.subscription) return
 
+  // 구독 정보 조회
+  const sub = await db.query.subscriptions.findFirst({
+    where: eq(
+      subscriptions.stripeSubscriptionId,
+      invoice.subscription as string
+    ),
+  })
+
+  if (!sub) {
+    console.error(`Subscription not found for invoice: ${invoice.id}`)
+    return
+  }
+
   // 구독 상태를 past_due로 업데이트
   await db
     .update(subscriptions)
@@ -408,7 +448,52 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
       status: 'past_due',
       updatedAt: new Date(),
     })
-    .where(eq(subscriptions.stripeSubscriptionId, invoice.subscription as string))
+    .where(
+      eq(subscriptions.stripeSubscriptionId, invoice.subscription as string)
+    )
 
-  // TODO: 관리자에게 알림 발송
+  // 조직의 관리자 목록 조회
+  const orgAdmins = await db
+    .select({
+      userId: organizationMembers.userId,
+      email: users.email,
+      name: users.name,
+    })
+    .from(organizationMembers)
+    .innerJoin(users, eq(organizationMembers.userId, users.id))
+    .where(
+      and(
+        eq(organizationMembers.organizationId, sub.organizationId),
+        eq(organizationMembers.role, 'owner'),
+        isNull(organizationMembers.deletedAt),
+        isNull(users.deletedAt)
+      )
+    )
+
+  // 결제 실패 알림 기록 생성
+  const failureMessage = `결제 실패: ${invoice.amount_due ? `₩${(invoice.amount_due / 100).toLocaleString()}` : '금액 미상'} - ${invoice.billing_reason || '정기 결제'}`
+
+  await db.insert(alertHistory).values({
+    alertType: 'payment_failed',
+    message: failureMessage,
+    channel: 'system',
+    recipient: orgAdmins.map((a) => a.email).join(', ') || 'unknown',
+    status: 'pending',
+    externalId: invoice.id,
+    sentAt: null,
+  })
+
+  // 콘솔에 경고 로그 (프로덕션에서는 이메일/슬랙 등으로 대체)
+  console.warn(`[PAYMENT FAILED] Organization: ${sub.organizationId}`)
+  console.warn(`  Invoice ID: ${invoice.id}`)
+  console.warn(
+    `  Amount: ₩${invoice.amount_due ? (invoice.amount_due / 100).toLocaleString() : 'N/A'}`
+  )
+  console.warn(
+    `  Admins to notify: ${orgAdmins.map((a) => a.email).join(', ') || 'none found'}`
+  )
+
+  // TODO: 실제 이메일/슬랙 알림 통합 시 아래 코드 활성화
+  // await sendPaymentFailureEmail(orgAdmins, invoice)
+  // await sendSlackNotification(failureMessage)
 }

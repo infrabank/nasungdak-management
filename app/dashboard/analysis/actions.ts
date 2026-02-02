@@ -343,11 +343,11 @@ async function fetchAnalysis(
     `),
     // Total variable costs (all valid purchases - same as dashboard)
     db.execute(sql`
-      SELECT COALESCE(SUM(total_amount), 0) AS total_variable_cost
-      FROM purchase_transactions
-      WHERE transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
-        AND deleted_at IS NULL
-        AND is_valid = true
+      SELECT COALESCE(SUM(pt.total_amount), 0) AS total_variable_cost
+      FROM purchase_transactions pt
+      WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
+        AND pt.deleted_at IS NULL
+        AND pt.is_valid = true
         ${purchaseStoreFilter}
     `),
     // Get fixed costs for the period

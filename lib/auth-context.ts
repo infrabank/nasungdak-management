@@ -5,10 +5,7 @@ import { jwtVerify } from 'jose'
 import { db } from '@/lib/db'
 import { userStoreAssignments, organizationMembers } from '@/lib/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
-
-const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
-)
+import { SESSION_SECRET, SESSION_COOKIE_NAME } from '@/lib/auth/constants'
 
 export interface UserContext {
   userId: string
@@ -35,7 +32,7 @@ export async function getUserContext(): Promise<UserContext> {
 
   try {
     const cookieStore = await cookies()
-    const token = cookieStore.get('session')?.value
+    const token = cookieStore.get(SESSION_COOKIE_NAME)?.value
 
     if (!token) {
       return defaultContext
