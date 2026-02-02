@@ -240,7 +240,7 @@ export async function getDashboardStats() {
 
     const getCachedDashboardStats = unstable_cache(
       () => fetchDashboardStats(startDate, endDate, authorizedStoreIds),
-      ['dashboard:stats', storeKey, startDate, endDate],
+      ['dashboard:stats:v2', storeKey, startDate, endDate],
       { tags: ['dashboard:stats'] }
     )
 

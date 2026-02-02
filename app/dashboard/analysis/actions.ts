@@ -227,7 +227,7 @@ export async function getMonthlyAnalysis(
           normalizedStoreId,
           authorizedStoreIds
         ),
-      ['analysis:monthly', storeKey, startDate, endDate, normalizedStoreId],
+      ['analysis:monthly:v2', storeKey, startDate, endDate, normalizedStoreId],
       { tags: ['analysis:monthly'] }
     )
 
@@ -436,7 +436,7 @@ export async function getAnalysis(
           normalizedStoreId,
           authorizedStoreIds
         ),
-      ['analysis:sku', storeKey, startDate, endDate, normalizedStoreId],
+      ['analysis:sku:v2', storeKey, startDate, endDate, normalizedStoreId],
       { tags: ['analysis:sku'] }
     )
 
