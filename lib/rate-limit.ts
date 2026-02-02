@@ -46,7 +46,7 @@ const DEFAULT_CONFIGS: Record<string, RateLimitConfig> = {
   'default:write': { maxRequests: 30, windowMs: 60 * 1000 }, // 분당 30회
 
   // 로그인 시도
-  'auth:login': { maxRequests: 5, windowMs: 15 * 60 * 1000 }, // 15분당 5회
+  'auth:login': { maxRequests: 20, windowMs: 5 * 60 * 1000 }, // 5분당 20회
 
   // 벌크 업로드
   'bulk:upload': { maxRequests: 5, windowMs: 60 * 1000 }, // 분당 5회
