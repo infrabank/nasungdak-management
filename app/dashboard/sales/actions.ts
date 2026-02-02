@@ -25,7 +25,13 @@ const salesRecordSchema = z.object({
 
 export async function createSalesRecord(formData: FormData) {
   try {
-    const storeId = formData.get('storeId') as string | null
+    // Get storeId from form or use user's first authorized store
+    let storeId = formData.get('storeId') as string | null
+    if (!storeId) {
+      const authorizedStoreIds = await getAuthorizedStoreIds()
+      storeId = authorizedStoreIds[0] || null
+    }
+
     const rawData = {
       saleDate: formData.get('saleDate'),
       skuId: formData.get('skuId'),
@@ -50,7 +56,7 @@ export async function createSalesRecord(formData: FormData) {
       .insert(salesRecords)
       .values({
         ...validatedData,
-        storeId: storeId || null,
+        storeId,
         unitPrice: sku.unitPrice,
         createdBy: 'system',
       })

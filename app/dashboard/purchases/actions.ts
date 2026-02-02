@@ -15,6 +15,13 @@ import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 export async function createPurchase(formData: FormData) {
   try {
+    // Get storeId from form or use user's first authorized store
+    let storeId = formData.get('storeId') as string | null
+    if (!storeId) {
+      const authorizedStoreIds = await getAuthorizedStoreIds()
+      storeId = authorizedStoreIds[0] || null
+    }
+
     const notes = formData.get('notes')
     const rawData = {
       transactionDate: formData.get('transactionDate'),
@@ -46,6 +53,7 @@ export async function createPurchase(formData: FormData) {
       .insert(purchaseTransactions)
       .values({
         ...validatedData,
+        storeId,
         isValid,
         createdBy: 'system',
       })
