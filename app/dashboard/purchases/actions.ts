@@ -367,7 +367,7 @@ export async function getPurchases(
           authorizedStoreIds
         ),
       [
-        'purchases:list:v2', // Cache version bump
+        'purchases:list:v3', // Cache version bump
         storeKey,
         normalizedStartDate,
         normalizedEndDate,
