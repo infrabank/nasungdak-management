@@ -329,7 +329,7 @@ export async function getSalesRecords(
           authorizedStoreIds
         ),
       [
-        'sales:list',
+        'sales:list:v2', // Cache version bump
         storeKey,
         normalizedStartDate,
         normalizedEndDate,
