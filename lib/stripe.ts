@@ -18,8 +18,10 @@ import {
   alertHistory,
   organizationMembers,
   users,
+  stores,
+  webhookEvents,
 } from '@/lib/db/schema'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and, isNull, sql } from 'drizzle-orm'
 import { PLANS, type PlanType } from '@/lib/features'
 import { revalidateTag } from 'next/cache'
 
@@ -197,6 +199,211 @@ export async function createBillingPortalSession(
 }
 
 /**
+ * 조직의 현재 사용량 조회
+ */
+export async function getOrganizationUsage(
+  organizationId: string
+): Promise<{ stores: number; users: number }> {
+  const [storeCount, userCount] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(stores)
+      .where(
+        and(eq(stores.organizationId, organizationId), isNull(stores.deletedAt))
+      )
+      .then((r) => Number(r[0]?.count || 0)),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(organizationMembers)
+      .where(
+        and(
+          eq(organizationMembers.organizationId, organizationId),
+          isNull(organizationMembers.deletedAt)
+        )
+      )
+      .then((r) => Number(r[0]?.count || 0)),
+  ])
+
+  return { stores: storeCount, users: userCount }
+}
+
+/**
+ * 플랜 다운그레이드 검증 및 실행
+ */
+export async function downgradePlan(params: {
+  organizationId: string
+  targetPlan: PlanType
+  billingCycle?: 'monthly' | 'yearly'
+}): Promise<{
+  success: boolean
+  error?: string
+  details?: {
+    stores: number
+    users: number
+    maxStores: number
+    maxUsers: number
+  }
+}> {
+  const { organizationId, targetPlan, billingCycle = 'monthly' } = params
+
+  // 현재 조직 및 구독 정보 조회
+  const org = await db.query.organizations.findFirst({
+    where: eq(organizations.id, organizationId),
+  })
+
+  if (!org) {
+    return { success: false, error: '조직을 찾을 수 없습니다.' }
+  }
+
+  const currentPlan = org.plan as PlanType
+
+  // 같은 플랜이면 에러
+  if (currentPlan === targetPlan) {
+    return { success: false, error: '이미 해당 플랜을 사용 중입니다.' }
+  }
+
+  // 업그레이드는 이 함수가 아닌 createCheckoutSession 사용
+  const planOrder: PlanType[] = [
+    'free',
+    'basic',
+    'standard',
+    'premium',
+    'enterprise',
+  ]
+  if (planOrder.indexOf(targetPlan) > planOrder.indexOf(currentPlan)) {
+    return { success: false, error: '업그레이드는 결제 페이지를 이용해주세요.' }
+  }
+
+  // 현재 사용량 확인
+  const usage = await getOrganizationUsage(organizationId)
+  const targetConfig = PLANS[targetPlan]
+
+  // 다운그레이드 가능 여부 확인
+  if (targetConfig.maxStores !== -1 && usage.stores > targetConfig.maxStores) {
+    return {
+      success: false,
+      error: `${targetConfig.nameKo} 플랜은 최대 ${targetConfig.maxStores}개 매장만 지원합니다. 다운그레이드 전에 매장을 ${usage.stores - targetConfig.maxStores}개 삭제해주세요.`,
+      details: {
+        stores: usage.stores,
+        users: usage.users,
+        maxStores: targetConfig.maxStores as number,
+        maxUsers:
+          (targetConfig.maxUsers as number) === -1
+            ? 999
+            : (targetConfig.maxUsers as number),
+      },
+    }
+  }
+
+  if (
+    (targetConfig.maxUsers as number) !== -1 &&
+    usage.users > targetConfig.maxUsers
+  ) {
+    return {
+      success: false,
+      error: `${targetConfig.nameKo} 플랜은 최대 ${targetConfig.maxUsers}명 사용자만 지원합니다. 다운그레이드 전에 사용자를 ${usage.users - targetConfig.maxUsers}명 삭제해주세요.`,
+      details: {
+        stores: usage.stores,
+        users: usage.users,
+        maxStores:
+          (targetConfig.maxStores as number) === -1
+            ? 999
+            : (targetConfig.maxStores as number),
+        maxUsers: targetConfig.maxUsers as number,
+      },
+    }
+  }
+
+  // Free 플랜으로 다운그레이드 - 구독 취소
+  if (targetPlan === 'free') {
+    const sub = await db.query.subscriptions.findFirst({
+      where: and(
+        eq(subscriptions.organizationId, organizationId),
+        eq(subscriptions.status, 'active')
+      ),
+    })
+
+    if (sub?.stripeSubscriptionId) {
+      // Stripe 구독 취소 (기간 종료 시)
+      await stripe.subscriptions.update(sub.stripeSubscriptionId, {
+        cancel_at_period_end: true,
+      })
+
+      await db
+        .update(subscriptions)
+        .set({ cancelAtPeriodEnd: true, updatedAt: new Date() })
+        .where(eq(subscriptions.id, sub.id))
+    }
+
+    // 조직 플랜 업데이트는 웹훅에서 처리 (기간 종료 시)
+    return { success: true }
+  }
+
+  // 유료 플랜 간 다운그레이드 - Stripe 구독 변경
+  const priceId = STRIPE_PRICE_IDS[targetPlan]?.[billingCycle]
+  if (!priceId) {
+    return {
+      success: false,
+      error: `${targetPlan} 플랜의 가격 정보가 없습니다.`,
+    }
+  }
+
+  const sub = await db.query.subscriptions.findFirst({
+    where: and(
+      eq(subscriptions.organizationId, organizationId),
+      eq(subscriptions.status, 'active')
+    ),
+  })
+
+  if (!sub?.stripeSubscriptionId) {
+    return { success: false, error: '활성 구독이 없습니다.' }
+  }
+
+  // Stripe 구독 업데이트
+  const stripeSubscription = await stripe.subscriptions.retrieve(
+    sub.stripeSubscriptionId
+  )
+  const itemId = stripeSubscription.items.data[0]?.id
+
+  if (!itemId) {
+    return { success: false, error: 'Stripe 구독 항목을 찾을 수 없습니다.' }
+  }
+
+  await stripe.subscriptions.update(sub.stripeSubscriptionId, {
+    items: [{ id: itemId, price: priceId }],
+    proration_behavior: 'create_prorations', // 비례 계산
+    metadata: { plan: targetPlan },
+  })
+
+  // DB 업데이트
+  await Promise.all([
+    db
+      .update(organizations)
+      .set({
+        plan: targetPlan,
+        maxStores: targetConfig.maxStores === -1 ? 999 : targetConfig.maxStores,
+        maxUsers: targetConfig.maxUsers === -1 ? 999 : targetConfig.maxUsers,
+        updatedAt: new Date(),
+      })
+      .where(eq(organizations.id, organizationId)),
+    db
+      .update(subscriptions)
+      .set({
+        plan: targetPlan,
+        stripePriceId: priceId,
+        priceMonthly: targetConfig.priceMonthly,
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptions.id, sub.id)),
+  ])
+
+  revalidateTag(`org:${organizationId}`)
+  revalidateTag('plans')
+
+  return { success: true }
+}
+
+/**
  * 구독 취소
  */
 export async function cancelSubscription(
@@ -233,12 +440,12 @@ export async function cancelSubscription(
 }
 
 /**
- * 웹훅 이벤트 처리
+ * 웹훅 이벤트 처리 (멱등성 보장)
  */
 export async function handleStripeWebhook(
   body: string,
   signature: string
-): Promise<{ received: boolean }> {
+): Promise<{ received: boolean; duplicate?: boolean }> {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
   if (!webhookSecret) {
@@ -253,33 +460,85 @@ export async function handleStripeWebhook(
     throw new Error(`웹훅 서명 검증 실패: ${err}`)
   }
 
+  // 멱등성 체크: 이미 처리된 이벤트인지 확인
+  const existingEvent = await db.query.webhookEvents.findFirst({
+    where: eq(webhookEvents.eventId, event.id),
+  })
+
+  if (existingEvent) {
+    console.log(`Duplicate webhook event skipped: ${event.id} (${event.type})`)
+    return { received: true, duplicate: true }
+  }
+
+  // 이벤트 처리 시작 전에 기록 (처리 중 상태)
+  try {
+    await db.insert(webhookEvents).values({
+      eventId: event.id,
+      eventType: event.type,
+      status: 'processing',
+      payload: event.data.object as unknown as Record<string, unknown>,
+    })
+  } catch (insertError) {
+    // 동시에 같은 이벤트가 들어온 경우 (race condition)
+    // unique constraint 에러면 중복으로 간주
+    console.log(`Concurrent webhook event, skipping: ${event.id}`)
+    return { received: true, duplicate: true }
+  }
+
   // 이벤트 타입별 처리
-  switch (event.type) {
-    case 'checkout.session.completed':
-      await handleCheckoutCompleted(
-        event.data.object as Stripe.Checkout.Session
-      )
-      break
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed':
+        await handleCheckoutCompleted(
+          event.data.object as Stripe.Checkout.Session
+        )
+        break
 
-    case 'customer.subscription.created':
-    case 'customer.subscription.updated':
-      await handleSubscriptionUpdated(event.data.object as Stripe.Subscription)
-      break
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(
+          event.data.object as Stripe.Subscription
+        )
+        break
 
-    case 'customer.subscription.deleted':
-      await handleSubscriptionDeleted(event.data.object as Stripe.Subscription)
-      break
+      case 'customer.subscription.deleted':
+        await handleSubscriptionDeleted(
+          event.data.object as Stripe.Subscription
+        )
+        break
 
-    case 'invoice.paid':
-      await handleInvoicePaid(event.data.object as Stripe.Invoice)
-      break
+      case 'invoice.paid':
+        await handleInvoicePaid(event.data.object as Stripe.Invoice)
+        break
 
-    case 'invoice.payment_failed':
-      await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
-      break
+      case 'invoice.payment_failed':
+        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice)
+        break
 
-    default:
-      console.log(`Unhandled event type: ${event.type}`)
+      default:
+        console.log(`Unhandled event type: ${event.type}`)
+    }
+
+    // 처리 완료 상태로 업데이트
+    await db
+      .update(webhookEvents)
+      .set({ status: 'processed', processedAt: new Date() })
+      .where(eq(webhookEvents.eventId, event.id))
+  } catch (processingError) {
+    // 처리 실패 기록
+    await db
+      .update(webhookEvents)
+      .set({
+        status: 'failed',
+        errorMessage:
+          processingError instanceof Error
+            ? processingError.message
+            : String(processingError),
+        retryCount: sql`${webhookEvents.retryCount} + 1`,
+      })
+      .where(eq(webhookEvents.eventId, event.id))
+
+    throw processingError // 에러 재발생 (Stripe가 재시도하도록)
   }
 
   return { received: true }

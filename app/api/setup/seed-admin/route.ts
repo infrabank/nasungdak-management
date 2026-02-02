@@ -28,6 +28,7 @@ import {
 import { eq } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
 import { rateLimit, getClientIP } from '@/lib/rate-limit'
+import { passwordSchema, emailSchema } from '@/lib/utils/validation'
 
 // Rate limit 설정: 15분당 3회
 const RATE_LIMIT_CONFIG = {
@@ -100,19 +101,24 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // 이메일 형식 검증
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!emailRegex.test(email)) {
+  // 이메일 형식 검증 (Zod 스키마 사용)
+  const emailResult = emailSchema.safeParse(email)
+  if (!emailResult.success) {
     return NextResponse.json(
-      { error: '올바른 이메일 형식이 아닙니다' },
+      { error: emailResult.error.errors[0].message },
       { status: 400 }
     )
   }
+  const validatedEmail = emailResult.data
 
-  // 비밀번호 강도 검증
-  if (password.length < 8) {
+  // 비밀번호 강도 검증 (Zod 스키마 사용)
+  const passwordResult = passwordSchema.safeParse(password)
+  if (!passwordResult.success) {
     return NextResponse.json(
-      { error: '비밀번호는 최소 8자 이상이어야 합니다' },
+      {
+        error: '비밀번호 강도가 부족합니다',
+        details: passwordResult.error.errors.map((e) => e.message),
+      },
       { status: 400 }
     )
   }
@@ -120,7 +126,7 @@ export async function POST(request: NextRequest) {
   try {
     // 1. 이미 존재하는지 확인
     const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, email.toLowerCase()),
+      where: eq(users.email, validatedEmail),
     })
 
     if (existingUser) {
@@ -183,7 +189,7 @@ export async function POST(request: NextRequest) {
     const [user] = await db
       .insert(users)
       .values({
-        email: email.toLowerCase(),
+        email: validatedEmail,
         name,
         passwordHash,
         isActive: true,

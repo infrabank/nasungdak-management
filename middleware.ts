@@ -2,9 +2,15 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 
+// 환경 변수에서 직접 읽기 (middleware는 Edge Runtime에서 실행)
 const SESSION_SECRET = new TextEncoder().encode(
   process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
 )
+
+// Constants (lib/auth/constants.ts와 동일하게 유지)
+const SESSION_COOKIE_NAME = 'session'
+const REFRESH_COOKIE_NAME = 'refresh_token'
+const TOKEN_REFRESH_THRESHOLD = 5 * 60 * 1000 // 5분
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = [
@@ -16,6 +22,7 @@ const PUBLIC_ROUTES = [
   '/api/webhooks',
   '/api/health',
   '/api/setup',
+  '/api/auth/refresh', // Refresh endpoint
 ]
 
 export async function middleware(request: NextRequest) {
@@ -27,27 +34,66 @@ export async function middleware(request: NextRequest) {
   }
 
   // Check for session token
-  const token = request.cookies.get('session')?.value
+  const accessToken = request.cookies.get(SESSION_COOKIE_NAME)?.value
+  const refreshToken = request.cookies.get(REFRESH_COOKIE_NAME)?.value
 
-  if (!token) {
-    // Redirect to login if no token
+  // No tokens at all - redirect to login
+  if (!accessToken && !refreshToken) {
     const loginUrl = new URL('/login', request.url)
     return NextResponse.redirect(loginUrl)
   }
 
-  try {
-    // Verify the token
-    await jwtVerify(token, SESSION_SECRET)
-    return NextResponse.next()
-  } catch (error) {
-    console.error('Token verification failed:', error)
-    // Redirect to login if token is invalid
-    const loginUrl = new URL('/login', request.url)
-    const response = NextResponse.redirect(loginUrl)
-    // Clear the invalid session cookie
-    response.cookies.delete('session')
-    return response
+  // Try to verify access token
+  if (accessToken) {
+    try {
+      const verified = await jwtVerify(accessToken, SESSION_SECRET)
+
+      // Check if token is about to expire (within threshold)
+      const exp = verified.payload.exp
+      if (exp) {
+        const expiresAt = exp * 1000
+        const now = Date.now()
+        const timeUntilExpiry = expiresAt - now
+
+        // If token expires soon and we have refresh token, trigger background refresh
+        if (timeUntilExpiry < TOKEN_REFRESH_THRESHOLD && refreshToken) {
+          // Token still valid but will expire soon
+          // Let request proceed and set header to trigger client-side refresh
+          const response = NextResponse.next()
+          response.headers.set('X-Token-Refresh-Needed', 'true')
+          return response
+        }
+      }
+
+      return NextResponse.next()
+    } catch (error) {
+      // Access token invalid/expired, check refresh token
+      if (!refreshToken) {
+        console.error('Token verification failed, no refresh token:', error)
+        const loginUrl = new URL('/login', request.url)
+        const response = NextResponse.redirect(loginUrl)
+        response.cookies.delete(SESSION_COOKIE_NAME)
+        return response
+      }
+
+      // Has refresh token - redirect to refresh endpoint
+      // For Edge Runtime, we can't access DB directly, so redirect to API
+      const refreshUrl = new URL('/api/auth/refresh', request.url)
+      refreshUrl.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(refreshUrl)
+    }
   }
+
+  // No access token but has refresh token - redirect to refresh
+  if (refreshToken) {
+    const refreshUrl = new URL('/api/auth/refresh', request.url)
+    refreshUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(refreshUrl)
+  }
+
+  // Fallback - redirect to login
+  const loginUrl = new URL('/login', request.url)
+  return NextResponse.redirect(loginUrl)
 }
 
 export const config = {

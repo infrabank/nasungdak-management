@@ -32,18 +32,37 @@ function getSessionSecret(): Uint8Array {
 export const SESSION_SECRET = getSessionSecret()
 
 /**
- * 세션 유효 기간 (밀리초)
- * 기본값: 7일
+ * Access Token 설정 (짧은 수명)
  */
-export const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000
+export const ACCESS_TOKEN_EXPIRATION = '15m' // 15분
+export const ACCESS_TOKEN_DURATION = 15 * 60 * 1000 // 15분 (밀리초)
 
 /**
- * JWT 만료 시간 (jose 포맷)
+ * Refresh Token 설정 (긴 수명)
  */
-export const JWT_EXPIRATION = '7d'
+export const REFRESH_TOKEN_EXPIRATION = '7d' // 7일
+export const REFRESH_TOKEN_DURATION = 7 * 24 * 60 * 60 * 1000 // 7일 (밀리초)
+
+/**
+ * 세션 유효 기간 (밀리초) - Refresh Token과 동일
+ * @deprecated Use REFRESH_TOKEN_DURATION instead
+ */
+export const SESSION_DURATION = REFRESH_TOKEN_DURATION
+
+/**
+ * JWT 만료 시간 (jose 포맷) - Access Token과 동일
+ * @deprecated Use ACCESS_TOKEN_EXPIRATION instead
+ */
+export const JWT_EXPIRATION = ACCESS_TOKEN_EXPIRATION
 
 /**
  * 쿠키 이름
  */
 export const SESSION_COOKIE_NAME = 'session'
+export const REFRESH_COOKIE_NAME = 'refresh_token'
 export const ADMIN_SESSION_COOKIE_NAME = 'admin_session'
+
+/**
+ * Token 갱신 임계값 (만료 5분 전에 갱신)
+ */
+export const TOKEN_REFRESH_THRESHOLD = 5 * 60 * 1000 // 5분 (밀리초)

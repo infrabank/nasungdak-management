@@ -485,6 +485,29 @@ export const users = pgTable(
   ]
 )
 
+// User Sessions Table (Refresh Token 저장)
+export const userSessions = pgTable(
+  'user_sessions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    refreshToken: varchar('refresh_token', { length: 500 }).notNull(),
+    deviceInfo: varchar('device_info', { length: 255 }), // User-Agent 정보
+    ipAddress: varchar('ip_address', { length: 45 }), // IPv4/IPv6
+    expiresAt: timestamp('expires_at').notNull(),
+    lastUsedAt: timestamp('last_used_at'),
+    revokedAt: timestamp('revoked_at'), // null이면 유효, 값이 있으면 폐기됨
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('user_sessions_user_id_idx').on(table.userId),
+    index('user_sessions_refresh_token_idx').on(table.refreshToken),
+    index('user_sessions_expires_at_idx').on(table.expiresAt),
+  ]
+)
+
 // Roles Table (역할 정의)
 export const roles = pgTable('roles', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -641,6 +664,27 @@ export const invoices = pgTable(
   ]
 )
 
+// Webhook Events Table (멱등성을 위한 이벤트 추적)
+export const webhookEvents = pgTable(
+  'webhook_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    eventId: varchar('event_id', { length: 255 }).notNull().unique(), // Stripe 이벤트 ID
+    eventType: varchar('event_type', { length: 100 }).notNull(), // 'checkout.session.completed', etc.
+    processedAt: timestamp('processed_at').notNull().defaultNow(),
+    status: varchar('status', { length: 20 }).notNull().default('processed'), // 'processed', 'failed'
+    errorMessage: text('error_message'),
+    retryCount: integer('retry_count').notNull().default(0),
+    payload: jsonb('payload'), // 이벤트 원본 데이터 (디버깅용)
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('we_event_id_idx').on(table.eventId),
+    index('we_event_type_idx').on(table.eventType),
+    index('we_processed_at_idx').on(table.processedAt),
+  ]
+)
+
 // Usage Metrics Table (사용량 추적)
 export const usageMetrics = pgTable(
   'usage_metrics',
@@ -780,6 +824,9 @@ export type NewAttendanceRecord = typeof attendanceRecords.$inferInsert
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 
+export type UserSession = typeof userSessions.$inferSelect
+export type NewUserSession = typeof userSessions.$inferInsert
+
 export type Role = typeof roles.$inferSelect
 export type NewRole = typeof roles.$inferInsert
 
@@ -810,6 +857,9 @@ export type NewOrganizationMember = typeof organizationMembers.$inferInsert
 export type OrganizationInvitation = typeof organizationInvitations.$inferSelect
 export type NewOrganizationInvitation =
   typeof organizationInvitations.$inferInsert
+
+export type WebhookEvent = typeof webhookEvents.$inferSelect
+export type NewWebhookEvent = typeof webhookEvents.$inferInsert
 
 // =================
 // Drizzle Relations
