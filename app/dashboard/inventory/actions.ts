@@ -1,9 +1,19 @@
 'use server'
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
-import { inventorySchema, inventoryEventSchema, inventoryAlertRuleSchema } from '@/lib/utils/validation'
+import {
+  inventorySchema,
+  inventoryEventSchema,
+  inventoryAlertRuleSchema,
+} from '@/lib/utils/validation'
 import { db } from '@/lib/db'
-import { inventory, inventoryEvents, inventoryAlertRules, ingredients, stores } from '@/lib/db/schema'
+import {
+  inventory,
+  inventoryEvents,
+  inventoryAlertRules,
+  ingredients,
+  stores,
+} from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { subDays, format } from 'date-fns'
@@ -15,8 +25,19 @@ import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 export async function createInventory(formData: FormData) {
   try {
+    // 권한 검사
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    const storeId = formData.get('storeId') as string
+
+    if (!authorizedStoreIds.includes(storeId)) {
+      return {
+        success: false,
+        error: '해당 매장에 대한 권한이 없습니다',
+      }
+    }
+
     const rawData = {
-      storeId: formData.get('storeId'),
+      storeId,
       ingredientId: formData.get('ingredientId'),
       currentQuantity: formData.get('currentQuantity'),
       unit: formData.get('unit') || null,
@@ -81,13 +102,23 @@ export async function createInventory(formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '재고 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '재고 등록에 실패했습니다',
     }
   }
 }
 
 export async function updateInventory(id: string, formData: FormData) {
   try {
+    // 권한 검사
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return {
+        success: false,
+        error: '권한이 없습니다',
+      }
+    }
+
     const rawData = {
       storeId: formData.get('storeId'),
       ingredientId: formData.get('ingredientId'),
@@ -103,8 +134,20 @@ export async function updateInventory(id: string, formData: FormData) {
         ...validatedData,
         lastUpdated: new Date(),
       })
-      .where(eq(inventory.id, id))
+      .where(
+        and(
+          eq(inventory.id, id),
+          inArray(inventory.storeId, authorizedStoreIds)
+        )
+      )
       .returning()
+
+    if (!updated) {
+      return {
+        success: false,
+        error: '수정할 레코드를 찾을 수 없거나 권한이 없습니다',
+      }
+    }
 
     revalidatePath('/dashboard/inventory')
     revalidateTag(`inventory:${validatedData.storeId}`)
@@ -126,16 +169,39 @@ export async function updateInventory(id: string, formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '재고 수정에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '재고 수정에 실패했습니다',
     }
   }
 }
 
 export async function deleteInventory(id: string) {
   try {
-    await db
+    // 권한 검사
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return {
+        success: false,
+        error: '권한이 없습니다',
+      }
+    }
+
+    const result = await db
       .delete(inventory)
-      .where(eq(inventory.id, id))
+      .where(
+        and(
+          eq(inventory.id, id),
+          inArray(inventory.storeId, authorizedStoreIds)
+        )
+      )
+      .returning({ id: inventory.id })
+
+    if (result.length === 0) {
+      return {
+        success: false,
+        error: '삭제할 레코드를 찾을 수 없거나 권한이 없습니다',
+      }
+    }
 
     revalidatePath('/dashboard/inventory')
     revalidateTag('inventory:all')
@@ -147,7 +213,8 @@ export async function deleteInventory(id: string) {
     console.error('Failed to delete inventory:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '재고 삭제에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '재고 삭제에 실패했습니다',
     }
   }
 }
@@ -215,8 +282,19 @@ export async function getInventory(storeId?: string) {
 
 export async function createInventoryEvent(formData: FormData) {
   try {
+    // 권한 검사
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    const storeId = formData.get('storeId') as string
+
+    if (!authorizedStoreIds.includes(storeId)) {
+      return {
+        success: false,
+        error: '해당 매장에 대한 권한이 없습니다',
+      }
+    }
+
     const rawData = {
-      storeId: formData.get('storeId'),
+      storeId,
       ingredientId: formData.get('ingredientId'),
       eventType: formData.get('eventType'),
       quantityChange: formData.get('quantityChange'),
@@ -244,9 +322,13 @@ export async function createInventoryEvent(formData: FormData) {
     })
 
     if (currentInventory) {
-      const newQuantity = validatedData.eventType === 'waste' || validatedData.eventType === 'sale'
-        ? Number(currentInventory.currentQuantity) - Number(validatedData.quantityChange)
-        : Number(currentInventory.currentQuantity) + Number(validatedData.quantityChange)
+      const newQuantity =
+        validatedData.eventType === 'waste' ||
+        validatedData.eventType === 'sale'
+          ? Number(currentInventory.currentQuantity) -
+            Number(validatedData.quantityChange)
+          : Number(currentInventory.currentQuantity) +
+            Number(validatedData.quantityChange)
 
       await db
         .update(inventory)
@@ -277,12 +359,18 @@ export async function createInventoryEvent(formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '재고 이벤트 등록에 실패했습니다',
+      error:
+        error instanceof Error
+          ? error.message
+          : '재고 이벤트 등록에 실패했습니다',
     }
   }
 }
 
-export async function getInventoryEvents(storeId?: string, ingredientId?: string) {
+export async function getInventoryEvents(
+  storeId?: string,
+  ingredientId?: string
+) {
   try {
     // 사용자 권한 확인
     const authorizedStoreIds = await getAuthorizedStoreIds()
@@ -330,8 +418,20 @@ export async function getInventoryEvents(storeId?: string, ingredientId?: string
 
 export async function createAlertRule(formData: FormData) {
   try {
+    // 권한 검사
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    const storeId = formData.get('storeId') as string | null
+
+    // storeId가 제공된 경우 권한 확인
+    if (storeId && !authorizedStoreIds.includes(storeId)) {
+      return {
+        success: false,
+        error: '해당 매장에 대한 권한이 없습니다',
+      }
+    }
+
     const rawData = {
-      storeId: formData.get('storeId') || null,
+      storeId: storeId || null,
       ingredientId: formData.get('ingredientId'),
       alertThresholdDays: formData.get('alertThresholdDays'),
       predictionPeriodDays: formData.get('predictionPeriodDays'),
@@ -383,13 +483,25 @@ export async function createAlertRule(formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '알림 규칙 등록에 실패했습니다',
+      error:
+        error instanceof Error
+          ? error.message
+          : '알림 규칙 등록에 실패했습니다',
     }
   }
 }
 
 export async function updateAlertRule(id: string, formData: FormData) {
   try {
+    // 권한 검사
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return {
+        success: false,
+        error: '권한이 없습니다',
+      }
+    }
+
     const rawData = {
       storeId: formData.get('storeId') || null,
       ingredientId: formData.get('ingredientId'),
@@ -400,6 +512,7 @@ export async function updateAlertRule(id: string, formData: FormData) {
 
     const validatedData = inventoryAlertRuleSchema.parse(rawData)
 
+    // 레코드가 권한 있는 매장 소속인지 확인하면서 업데이트
     const [rule] = await db
       .update(inventoryAlertRules)
       .set({
@@ -407,8 +520,20 @@ export async function updateAlertRule(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(eq(inventoryAlertRules.id, id))
+      .where(
+        and(
+          eq(inventoryAlertRules.id, id),
+          inArray(inventoryAlertRules.storeId, authorizedStoreIds)
+        )
+      )
       .returning()
+
+    if (!rule) {
+      return {
+        success: false,
+        error: '수정할 레코드를 찾을 수 없거나 권한이 없습니다',
+      }
+    }
 
     revalidatePath('/dashboard/inventory')
     revalidateTag(`inventory:alerts:${validatedData.storeId ?? 'all'}`)
@@ -430,20 +555,45 @@ export async function updateAlertRule(id: string, formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '알림 규칙 수정에 실패했습니다',
+      error:
+        error instanceof Error
+          ? error.message
+          : '알림 규칙 수정에 실패했습니다',
     }
   }
 }
 
 export async function deleteAlertRule(id: string) {
   try {
-    await db
+    // 권한 검사
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return {
+        success: false,
+        error: '권한이 없습니다',
+      }
+    }
+
+    const result = await db
       .update(inventoryAlertRules)
       .set({
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(eq(inventoryAlertRules.id, id))
+      .where(
+        and(
+          eq(inventoryAlertRules.id, id),
+          inArray(inventoryAlertRules.storeId, authorizedStoreIds)
+        )
+      )
+      .returning({ id: inventoryAlertRules.id })
+
+    if (result.length === 0) {
+      return {
+        success: false,
+        error: '삭제할 레코드를 찾을 수 없거나 권한이 없습니다',
+      }
+    }
 
     revalidatePath('/dashboard/inventory')
     revalidateTag('inventory:alerts:all')
@@ -455,7 +605,10 @@ export async function deleteAlertRule(id: string) {
     console.error('Failed to delete alert rule:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '알림 규칙 삭제에 실패했습니다',
+      error:
+        error instanceof Error
+          ? error.message
+          : '알림 규칙 삭제에 실패했습니다',
     }
   }
 }
@@ -467,7 +620,7 @@ async function fetchAlertRules(storeId: string, authorizedStoreIds: string[]) {
 
   const conditions = [
     isNull(inventoryAlertRules.deletedAt),
-    inArray(inventoryAlertRules.storeId, authorizedStoreIds)
+    inArray(inventoryAlertRules.storeId, authorizedStoreIds),
   ]
 
   if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
@@ -485,7 +638,10 @@ async function fetchAlertRules(storeId: string, authorizedStoreIds: string[]) {
       ingredientName: ingredients.ingredientName,
     })
     .from(inventoryAlertRules)
-    .innerJoin(ingredients, eq(inventoryAlertRules.ingredientId, ingredients.id))
+    .innerJoin(
+      ingredients,
+      eq(inventoryAlertRules.ingredientId, ingredients.id)
+    )
     .where(and(...conditions))
     .orderBy(ingredients.ingredientName)
 
@@ -546,7 +702,10 @@ export async function calculateDaysRemaining(
     }
 
     // Get sales history for the prediction period
-    const startDate = format(subDays(new Date(), predictionPeriodDays), 'yyyy-MM-dd')
+    const startDate = format(
+      subDays(new Date(), predictionPeriodDays),
+      'yyyy-MM-dd'
+    )
 
     // Calculate total quantity sold in the month period (30-day default)
     const salesResult = await db.execute(sql`
@@ -614,7 +773,10 @@ export async function checkInventoryAlerts(storeId: string): Promise<{
         ingredientName: ingredients.ingredientName,
       })
       .from(inventoryAlertRules)
-      .innerJoin(ingredients, eq(inventoryAlertRules.ingredientId, ingredients.id))
+      .innerJoin(
+        ingredients,
+        eq(inventoryAlertRules.ingredientId, ingredients.id)
+      )
       .where(
         and(
           eq(inventoryAlertRules.isActive, true),
@@ -632,7 +794,10 @@ export async function checkInventoryAlerts(storeId: string): Promise<{
         rule.predictionPeriodDays
       )
 
-      if (daysRemaining <= rule.alertThresholdDays && daysRemaining !== Infinity) {
+      if (
+        daysRemaining <= rule.alertThresholdDays &&
+        daysRemaining !== Infinity
+      ) {
         alerts.push({
           ingredientId: rule.ingredientId,
           ingredientName: rule.ingredientName,

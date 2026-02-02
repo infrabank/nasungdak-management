@@ -2,8 +2,14 @@
 
 import { unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
-import { sql } from 'drizzle-orm'
+import { sql, inArray } from 'drizzle-orm'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import {
+  salesRecords,
+  purchaseTransactions,
+  fixedCosts,
+  skus,
+} from '@/lib/db/schema'
 
 export interface AnalysisResult {
   success: boolean
@@ -42,6 +48,28 @@ export interface MonthlyAnalysisResult {
   error?: string
 }
 
+/**
+ * 월별 분석을 위한 매장 ID 필터 생성
+ * SQL Injection 방지를 위해 parameterized query 사용
+ */
+function buildStoreFilter(
+  storeId: string,
+  authorizedStoreIds: string[],
+  tableAlias: 'sr' | 'pt' | 'fc'
+): ReturnType<typeof sql> {
+  // 특정 매장 선택 시 (권한 있는 경우)
+  if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
+    return sql`AND ${sql.identifier(tableAlias)}.store_id = ${storeId}`
+  }
+
+  // 전체 매장 선택 시 - 권한 있는 매장들로 필터
+  // Drizzle의 sql 태그를 사용한 parameterized IN clause
+  const placeholders = authorizedStoreIds.map(
+    (_, i) => sql`${authorizedStoreIds[i]}`
+  )
+  return sql`AND ${sql.identifier(tableAlias)}.store_id IN (${sql.join(placeholders, sql`, `)})`
+}
+
 async function fetchMonthlyAnalysis(
   startDate: string,
   endDate: string,
@@ -53,27 +81,27 @@ async function fetchMonthlyAnalysis(
     return { success: true, data: [] }
   }
 
-  // Build store filter condition - always filter by authorized stores
-  const storeIdList = authorizedStoreIds.map(id => `'${id}'`).join(',')
-  const baseStoreFilter = sql`AND sr.store_id IN (${sql.raw(storeIdList)})`
-  const basePurchaseFilter = sql`AND pt.store_id IN (${sql.raw(storeIdList)})`
-  const baseFixedCostFilter = sql`AND fc.store_id IN (${sql.raw(storeIdList)})`
-
-  const salesStoreFilter = storeId !== 'all' && authorizedStoreIds.includes(storeId)
-    ? sql`AND sr.store_id = ${storeId}`
-    : baseStoreFilter
-  const purchaseStoreFilter = storeId !== 'all' && authorizedStoreIds.includes(storeId)
-    ? sql`AND pt.store_id = ${storeId}`
-    : basePurchaseFilter
-  const fixedCostStoreFilter = storeId !== 'all' && authorizedStoreIds.includes(storeId)
-    ? sql`AND fc.store_id = ${storeId}`
-    : baseFixedCostFilter
+  // Build store filter conditions using parameterized queries
+  const salesStoreFilter = buildStoreFilter(storeId, authorizedStoreIds, 'sr')
+  const purchaseStoreFilter = buildStoreFilter(
+    storeId,
+    authorizedStoreIds,
+    'pt'
+  )
+  const fixedCostStoreFilter = buildStoreFilter(
+    storeId,
+    authorizedStoreIds,
+    'fc'
+  )
 
   // Execute all queries in parallel for better performance
-  const [monthlyRevenueResult, monthlyVariableCostResult, monthlyFixedCostResult] =
-    await Promise.all([
-      // Get monthly revenue from sales
-      db.execute(sql`
+  const [
+    monthlyRevenueResult,
+    monthlyVariableCostResult,
+    monthlyFixedCostResult,
+  ] = await Promise.all([
+    // Get monthly revenue from sales
+    db.execute(sql`
         SELECT
           TO_CHAR(sr.sale_date, 'YYYY-MM') AS month,
           SUM(sr.total_revenue) AS total_revenue
@@ -84,8 +112,8 @@ async function fetchMonthlyAnalysis(
         GROUP BY TO_CHAR(sr.sale_date, 'YYYY-MM')
         ORDER BY month
       `),
-      // Get monthly variable costs (ingredient costs)
-      db.execute(sql`
+    // Get monthly variable costs (ingredient costs)
+    db.execute(sql`
         SELECT
           TO_CHAR(pt.transaction_date, 'YYYY-MM') AS month,
           SUM(pt.total_amount) AS total_variable_cost
@@ -97,8 +125,8 @@ async function fetchMonthlyAnalysis(
         GROUP BY TO_CHAR(pt.transaction_date, 'YYYY-MM')
         ORDER BY month
       `),
-      // Get monthly fixed costs
-      db.execute(sql`
+    // Get monthly fixed costs
+    db.execute(sql`
         SELECT
           TO_CHAR(fc.cost_date, 'YYYY-MM') AS month,
           SUM(fc.amount) AS total_fixed_cost
@@ -109,14 +137,17 @@ async function fetchMonthlyAnalysis(
         GROUP BY TO_CHAR(fc.cost_date, 'YYYY-MM')
         ORDER BY month
       `),
-    ])
+  ])
 
   // Combine all months
-  const monthsMap = new Map<string, {
-    revenue: number
-    variableCost: number
-    fixedCost: number
-  }>()
+  const monthsMap = new Map<
+    string,
+    {
+      revenue: number
+      variableCost: number
+      fixedCost: number
+    }
+  >()
 
   // Add revenue data
   monthlyRevenueResult.rows.forEach((row: any) => {
@@ -151,7 +182,8 @@ async function fetchMonthlyAnalysis(
     .map(([month, data]) => {
       const totalCost = data.variableCost + data.fixedCost
       const netProfit = data.revenue - totalCost
-      const marginPercent = data.revenue > 0 ? (netProfit / data.revenue) * 100 : 0
+      const marginPercent =
+        data.revenue > 0 ? (netProfit / data.revenue) * 100 : 0
 
       return {
         month,
@@ -188,7 +220,13 @@ export async function getMonthlyAnalysis(
     const storeKey = authorizedStoreIds.sort().join(',')
 
     const getCachedMonthlyAnalysis = unstable_cache(
-      () => fetchMonthlyAnalysis(startDate, endDate, normalizedStoreId, authorizedStoreIds),
+      () =>
+        fetchMonthlyAnalysis(
+          startDate,
+          endDate,
+          normalizedStoreId,
+          authorizedStoreIds
+        ),
       ['analysis:monthly', storeKey, startDate, endDate, normalizedStoreId],
       { tags: ['analysis:monthly'] }
     )
@@ -201,6 +239,23 @@ export async function getMonthlyAnalysis(
       error: '월별 분석 데이터를 가져오는데 실패했습니다',
     }
   }
+}
+
+/**
+ * 고정비용 테이블용 매장 필터 (별도 alias 없음)
+ */
+function buildFixedCostStoreFilter(
+  storeId: string,
+  authorizedStoreIds: string[]
+): ReturnType<typeof sql> {
+  if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
+    return sql`AND store_id = ${storeId}`
+  }
+
+  const placeholders = authorizedStoreIds.map(
+    (_, i) => sql`${authorizedStoreIds[i]}`
+  )
+  return sql`AND store_id IN (${sql.join(placeholders, sql`, `)})`
 }
 
 async function fetchAnalysis(
@@ -227,21 +282,17 @@ async function fetchAnalysis(
     }
   }
 
-  // Build store filter conditions - always filter by authorized stores
-  const storeIdList = authorizedStoreIds.map(id => `'${id}'`).join(',')
-  const baseStoreFilter = sql`AND sr.store_id IN (${sql.raw(storeIdList)})`
-  const basePurchaseFilter = sql`AND pt.store_id IN (${sql.raw(storeIdList)})`
-  const baseFixedCostFilter = sql`AND store_id IN (${sql.raw(storeIdList)})`
-
-  const salesStoreFilter = storeId !== 'all' && authorizedStoreIds.includes(storeId)
-    ? sql`AND sr.store_id = ${storeId}`
-    : baseStoreFilter
-  const purchaseStoreFilter = storeId !== 'all' && authorizedStoreIds.includes(storeId)
-    ? sql`AND pt.store_id = ${storeId}`
-    : basePurchaseFilter
-  const fixedCostStoreFilter = storeId !== 'all' && authorizedStoreIds.includes(storeId)
-    ? sql`AND store_id = ${storeId}`
-    : baseFixedCostFilter
+  // Build store filter conditions using parameterized queries
+  const salesStoreFilter = buildStoreFilter(storeId, authorizedStoreIds, 'sr')
+  const purchaseStoreFilter = buildStoreFilter(
+    storeId,
+    authorizedStoreIds,
+    'pt'
+  )
+  const fixedCostStoreFilter = buildFixedCostStoreFilter(
+    storeId,
+    authorizedStoreIds
+  )
 
   // Execute queries in parallel for better performance
   // Uses direct purchase costs (same as dashboard) instead of distribution rules
@@ -321,7 +372,9 @@ async function fetchAnalysis(
 
   // Calculate totals using direct purchase costs (same as dashboard)
   const totalRevenue = skuAnalysis.reduce((sum, item) => sum + item.revenue, 0)
-  const totalVariableCost = Number(totalCostsResult.rows[0]?.total_variable_cost || 0)
+  const totalVariableCost = Number(
+    totalCostsResult.rows[0]?.total_variable_cost || 0
+  )
   const totalFixedCost = Number(fixedCostsResult.rows[0]?.total_fixed_cost || 0)
 
   // Calculate total costs and profit
@@ -376,7 +429,13 @@ export async function getAnalysis(
     const storeKey = authorizedStoreIds.sort().join(',')
 
     const getCachedAnalysis = unstable_cache(
-      () => fetchAnalysis(startDate, endDate, normalizedStoreId, authorizedStoreIds),
+      () =>
+        fetchAnalysis(
+          startDate,
+          endDate,
+          normalizedStoreId,
+          authorizedStoreIds
+        ),
       ['analysis:sku', storeKey, startDate, endDate, normalizedStoreId],
       { tags: ['analysis:sku'] }
     )

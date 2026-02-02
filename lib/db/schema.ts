@@ -1,284 +1,390 @@
-import { pgTable, uuid, varchar, decimal, date, timestamp, boolean, text, integer, unique, jsonb, index } from 'drizzle-orm/pg-core'
+import {
+  pgTable,
+  uuid,
+  varchar,
+  decimal,
+  date,
+  timestamp,
+  boolean,
+  text,
+  integer,
+  unique,
+  jsonb,
+  index,
+} from 'drizzle-orm/pg-core'
 import { relations, sql } from 'drizzle-orm'
 
 // Stores Table (다매장 지원)
-export const stores = pgTable('stores', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id'), // FK는 마이그레이션에서 추가 (organizations 테이블 생성 후)
-  storeName: varchar('store_name', { length: 100 }).notNull(),
-  storeCode: varchar('store_code', { length: 20 }).notNull().unique(),
-  address: text('address'),
-  phone: varchar('phone', { length: 20 }),
-  managerPhone: varchar('manager_phone', { length: 20 }),
-  isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-}, (table) => [
-  index('stores_org_id_idx').on(table.organizationId),
-])
+export const stores = pgTable(
+  'stores',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id'), // FK는 마이그레이션에서 추가 (organizations 테이블 생성 후)
+    storeName: varchar('store_name', { length: 100 }).notNull(),
+    storeCode: varchar('store_code', { length: 20 }).notNull().unique(),
+    address: text('address'),
+    phone: varchar('phone', { length: 20 }),
+    managerPhone: varchar('manager_phone', { length: 20 }),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [index('stores_org_id_idx').on(table.organizationId)]
+)
 
 // Suppliers Table (공급업체)
-export const suppliers = pgTable('suppliers', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  supplierName: varchar('supplier_name', { length: 200 }).notNull(),
-  contactName: varchar('contact_name', { length: 100 }),
-  phone: varchar('phone', { length: 20 }),
-  email: varchar('email', { length: 100 }),
-  address: text('address'),
-  businessNumber: varchar('business_number', { length: 20 }), // 사업자등록번호
-  notes: text('notes'),
-  isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-})
+export const suppliers = pgTable(
+  'suppliers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id), // Multi-tenancy 지원
+    supplierName: varchar('supplier_name', { length: 200 }).notNull(),
+    contactName: varchar('contact_name', { length: 100 }),
+    phone: varchar('phone', { length: 20 }),
+    email: varchar('email', { length: 100 }),
+    address: text('address'),
+    businessNumber: varchar('business_number', { length: 20 }), // 사업자등록번호
+    notes: text('notes'),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [index('suppliers_org_id_idx').on(table.organizationId)]
+)
 
 // Menu Categories Table
-export const menuCategories = pgTable('menu_categories', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  menuName: varchar('menu_name', { length: 100 }).notNull(),
-  description: varchar('description', { length: 500 }),
-  isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-})
+export const menuCategories = pgTable(
+  'menu_categories',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id), // Multi-tenancy 지원
+    menuName: varchar('menu_name', { length: 100 }).notNull(),
+    description: varchar('description', { length: 500 }),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [index('menu_categories_org_id_idx').on(table.organizationId)]
+)
 
 // Ingredients Table
-export const ingredients = pgTable('ingredients', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  ingredientName: varchar('ingredient_name', { length: 100 }).notNull(),
-  unit: varchar('unit', { length: 20 }).notNull(),
-  description: varchar('description', { length: 500 }),
-  isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-})
+export const ingredients = pgTable(
+  'ingredients',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id), // Multi-tenancy 지원
+    ingredientName: varchar('ingredient_name', { length: 100 }).notNull(),
+    unit: varchar('unit', { length: 20 }).notNull(),
+    description: varchar('description', { length: 500 }),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [index('ingredients_org_id_idx').on(table.organizationId)]
+)
 
 // SKUs (Stock Keeping Units) Table
-export const skus = pgTable('skus', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  skuName: varchar('sku_name', { length: 100 }).notNull(),
-  menuId: uuid('menu_id').notNull().references(() => menuCategories.id),
-  unitPrice: decimal('unit_price', { precision: 10, scale: 2 }).notNull(),
-  description: varchar('description', { length: 500 }),
-  isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-}, (table) => [
-  index('skus_deleted_at_idx').on(table.deletedAt),
-  index('skus_menu_id_idx').on(table.menuId),
-])
+export const skus = pgTable(
+  'skus',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id), // Multi-tenancy 지원
+    skuName: varchar('sku_name', { length: 100 }).notNull(),
+    menuId: uuid('menu_id')
+      .notNull()
+      .references(() => menuCategories.id),
+    unitPrice: decimal('unit_price', { precision: 10, scale: 2 }).notNull(),
+    description: varchar('description', { length: 500 }),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('skus_deleted_at_idx').on(table.deletedAt),
+    index('skus_menu_id_idx').on(table.menuId),
+    index('skus_org_id_idx').on(table.organizationId),
+  ]
+)
 
 // Menu-Ingredient Junction Table
-export const menuIngredients = pgTable('menu_ingredients', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  menuId: uuid('menu_id').notNull().references(() => menuCategories.id),
-  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id),
-  requiredQuantity: decimal('required_quantity', { precision: 10, scale: 2 }).notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-}, (table) => [
-  index('mi_deleted_at_idx').on(table.deletedAt),
-  // Composite index for menu-ingredient lookup (used for validation)
-  index('mi_menu_ingredient_idx').on(table.menuId, table.ingredientId),
-])
+export const menuIngredients = pgTable(
+  'menu_ingredients',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id), // Multi-tenancy 지원
+    menuId: uuid('menu_id')
+      .notNull()
+      .references(() => menuCategories.id),
+    ingredientId: uuid('ingredient_id')
+      .notNull()
+      .references(() => ingredients.id),
+    requiredQuantity: decimal('required_quantity', {
+      precision: 10,
+      scale: 2,
+    }).notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('mi_deleted_at_idx').on(table.deletedAt),
+    // Composite index for menu-ingredient lookup (used for validation)
+    index('mi_menu_ingredient_idx').on(table.menuId, table.ingredientId),
+    index('mi_org_id_idx').on(table.organizationId),
+  ]
+)
 
 // Purchase Transactions Table
-export const purchaseTransactions = pgTable('purchase_transactions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
-  transactionDate: date('transaction_date').notNull(),
-  menuId: uuid('menu_id').notNull().references(() => menuCategories.id),
-  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id),
-  supplierName: varchar('supplier_name', { length: 200 }).notNull(),
-  quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(),
-  unitPrice: decimal('unit_price', { precision: 12, scale: 2 }).notNull(),
-  totalAmount: decimal('total_amount', { precision: 14, scale: 2 }).generatedAlwaysAs(
-    sql`quantity * unit_price`
-  ),
-  isValid: boolean('is_valid').notNull().default(true),
-  notes: text('notes'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-}, (table) => [
-  // Performance indexes for common queries
-  index('pt_deleted_at_idx').on(table.deletedAt),
-  index('pt_store_id_idx').on(table.storeId),
-  index('pt_transaction_date_idx').on(table.transactionDate.desc()),
-  index('pt_menu_id_idx').on(table.menuId),
-  index('pt_ingredient_id_idx').on(table.ingredientId),
-  // Composite index for date range + store filtering (most common query pattern)
-  index('pt_store_date_idx').on(table.storeId, table.transactionDate.desc()),
-])
+export const purchaseTransactions = pgTable(
+  'purchase_transactions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
+    transactionDate: date('transaction_date').notNull(),
+    menuId: uuid('menu_id')
+      .notNull()
+      .references(() => menuCategories.id),
+    ingredientId: uuid('ingredient_id')
+      .notNull()
+      .references(() => ingredients.id),
+    supplierName: varchar('supplier_name', { length: 200 }).notNull(),
+    quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(),
+    unitPrice: decimal('unit_price', { precision: 12, scale: 2 }).notNull(),
+    totalAmount: decimal('total_amount', {
+      precision: 14,
+      scale: 2,
+    }).generatedAlwaysAs(sql`quantity * unit_price`),
+    isValid: boolean('is_valid').notNull().default(true),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    // Performance indexes for common queries
+    index('pt_deleted_at_idx').on(table.deletedAt),
+    index('pt_store_id_idx').on(table.storeId),
+    index('pt_transaction_date_idx').on(table.transactionDate.desc()),
+    index('pt_menu_id_idx').on(table.menuId),
+    index('pt_ingredient_id_idx').on(table.ingredientId),
+    // Composite index for date range + store filtering (most common query pattern)
+    index('pt_store_date_idx').on(table.storeId, table.transactionDate.desc()),
+  ]
+)
 
 // Sales Records Table
-export const salesRecords = pgTable('sales_records', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
-  saleDate: date('sale_date').notNull(),
-  skuId: uuid('sku_id').notNull().references(() => skus.id),
-  quantitySold: decimal('quantity_sold', { precision: 10, scale: 2 }).notNull(),
-  unitPrice: decimal('unit_price', { precision: 10, scale: 2 }).notNull(),
-  totalRevenue: decimal('total_revenue', { precision: 14, scale: 2 }).generatedAlwaysAs(
-    sql`quantity_sold * unit_price`
-  ),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-}, (table) => [
-  // Performance indexes for common queries
-  index('sr_deleted_at_idx').on(table.deletedAt),
-  index('sr_store_id_idx').on(table.storeId),
-  index('sr_sale_date_idx').on(table.saleDate.desc()),
-  index('sr_sku_id_idx').on(table.skuId),
-  // Composite index for date range + store filtering (most common query pattern)
-  index('sr_store_date_idx').on(table.storeId, table.saleDate.desc()),
-])
+export const salesRecords = pgTable(
+  'sales_records',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
+    saleDate: date('sale_date').notNull(),
+    skuId: uuid('sku_id')
+      .notNull()
+      .references(() => skus.id),
+    quantitySold: decimal('quantity_sold', {
+      precision: 10,
+      scale: 2,
+    }).notNull(),
+    unitPrice: decimal('unit_price', { precision: 10, scale: 2 }).notNull(),
+    totalRevenue: decimal('total_revenue', {
+      precision: 14,
+      scale: 2,
+    }).generatedAlwaysAs(sql`quantity_sold * unit_price`),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    // Performance indexes for common queries
+    index('sr_deleted_at_idx').on(table.deletedAt),
+    index('sr_store_id_idx').on(table.storeId),
+    index('sr_sale_date_idx').on(table.saleDate.desc()),
+    index('sr_sku_id_idx').on(table.skuId),
+    // Composite index for date range + store filtering (most common query pattern)
+    index('sr_store_date_idx').on(table.storeId, table.saleDate.desc()),
+  ]
+)
 
 // Cost Distribution Rules Table
-export const costDistributionRules = pgTable('cost_distribution_rules', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  menuId: uuid('menu_id').notNull().references(() => menuCategories.id),
-  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id),
-  distributionPercent: decimal('distribution_percent', { precision: 5, scale: 2 }).notNull(),
-  effectiveFrom: date('effective_from').notNull(),
-  effectiveTo: date('effective_to'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-})
+export const costDistributionRules = pgTable(
+  'cost_distribution_rules',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id), // Multi-tenancy 지원
+    menuId: uuid('menu_id')
+      .notNull()
+      .references(() => menuCategories.id),
+    ingredientId: uuid('ingredient_id')
+      .notNull()
+      .references(() => ingredients.id),
+    distributionPercent: decimal('distribution_percent', {
+      precision: 5,
+      scale: 2,
+    }).notNull(),
+    effectiveFrom: date('effective_from').notNull(),
+    effectiveTo: date('effective_to'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [index('cdr_org_id_idx').on(table.organizationId)]
+)
 
 // Fixed Costs Table
-export const fixedCosts = pgTable('fixed_costs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
-  costDate: date('cost_date').notNull(),
-  costType: varchar('cost_type', { length: 50 }).notNull(), // 인건비, 임대료, 관리비, 기타
-  costName: varchar('cost_name', { length: 200 }).notNull(),
-  amount: decimal('amount', { precision: 14, scale: 2 }).notNull(),
-  notes: text('notes'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-}, (table) => [
-  index('fc_deleted_at_idx').on(table.deletedAt),
-  index('fc_store_id_idx').on(table.storeId),
-  index('fc_cost_date_idx').on(table.costDate.desc()),
-])
+export const fixedCosts = pgTable(
+  'fixed_costs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
+    costDate: date('cost_date').notNull(),
+    costType: varchar('cost_type', { length: 50 }).notNull(), // 인건비, 임대료, 관리비, 기타
+    costName: varchar('cost_name', { length: 200 }).notNull(),
+    amount: decimal('amount', { precision: 14, scale: 2 }).notNull(),
+    notes: text('notes'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('fc_deleted_at_idx').on(table.deletedAt),
+    index('fc_store_id_idx').on(table.storeId),
+    index('fc_cost_date_idx').on(table.costDate.desc()),
+  ]
+)
 
 // Oil Change History Table
-export const oilChangeHistory = pgTable('oil_change_history', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
-  changeDate: date('change_date').notNull(),
-  fryerType: varchar('fryer_type', { length: 20 }).notNull(), // '초벌', '재벌'
-  oilType: varchar('oil_type', { length: 50 }).notNull().default('해바라기씨유'),
-  quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(), // 교체된 기름 양 (L)
-  supplierName: varchar('supplier_name', { length: 200 }).notNull(),
-  unitPrice: decimal('unit_price', { precision: 12, scale: 2 }).notNull(), // 단가 (원/L)
-  totalCost: decimal('total_cost', { precision: 14, scale: 2 }).generatedAlwaysAs(
-    sql`quantity * unit_price`
-  ),
-  previousOilUsage: decimal('previous_oil_usage', { precision: 10, scale: 2 }), // 이전 기름 사용량 (L)
-  usageDays: integer('usage_days'), // 사용 기간 (일)
-  notes: text('notes'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-}, (table) => [
-  index('och_deleted_at_idx').on(table.deletedAt),
-  index('och_store_id_idx').on(table.storeId),
-  index('och_change_date_idx').on(table.changeDate.desc()),
-])
+export const oilChangeHistory = pgTable(
+  'oil_change_history',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
+    changeDate: date('change_date').notNull(),
+    fryerType: varchar('fryer_type', { length: 20 }).notNull(), // '초벌', '재벌'
+    oilType: varchar('oil_type', { length: 50 })
+      .notNull()
+      .default('해바라기씨유'),
+    quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(), // 교체된 기름 양 (L)
+    supplierName: varchar('supplier_name', { length: 200 }).notNull(),
+    unitPrice: decimal('unit_price', { precision: 12, scale: 2 }).notNull(), // 단가 (원/L)
+    totalCost: decimal('total_cost', {
+      precision: 14,
+      scale: 2,
+    }).generatedAlwaysAs(sql`quantity * unit_price`),
+    previousOilUsage: decimal('previous_oil_usage', {
+      precision: 10,
+      scale: 2,
+    }), // 이전 기름 사용량 (L)
+    usageDays: integer('usage_days'), // 사용 기간 (일)
+    notes: text('notes'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('och_deleted_at_idx').on(table.deletedAt),
+    index('och_store_id_idx').on(table.storeId),
+    index('och_change_date_idx').on(table.changeDate.desc()),
+  ]
+)
 
 // =====================
 // 직원 관리 & 출퇴근 기록
 // =====================
 
 // Employees Table (직원)
-export const employees = pgTable('employees', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  storeId: uuid('store_id').references(() => stores.id), // 다매장 지원 (nullable in DB, app enforces required)
-  employeeName: varchar('employee_name', { length: 100 }).notNull(),
-  hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(),
-  phone: varchar('phone', { length: 20 }),
-  hireDate: date('hire_date'),
-  isActive: boolean('is_active').notNull().default(true),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-}, (table) => [
-  index('emp_deleted_at_idx').on(table.deletedAt),
-  index('emp_store_id_idx').on(table.storeId),
-])
+export const employees = pgTable(
+  'employees',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    storeId: uuid('store_id').references(() => stores.id), // 다매장 지원 (nullable in DB, app enforces required)
+    employeeName: varchar('employee_name', { length: 100 }).notNull(),
+    hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(),
+    phone: varchar('phone', { length: 20 }),
+    hireDate: date('hire_date'),
+    isActive: boolean('is_active').notNull().default(true),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('emp_deleted_at_idx').on(table.deletedAt),
+    index('emp_store_id_idx').on(table.storeId),
+  ]
+)
 
 // Attendance Records Table (출퇴근 기록)
-export const attendanceRecords = pgTable('attendance_records', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  storeId: uuid('store_id').references(() => stores.id), // 다매장 지원 (employee.storeId와 동일하게 설정)
-  employeeId: uuid('employee_id').notNull().references(() => employees.id),
-  workDate: date('work_date').notNull(),
-  workHours: decimal('work_hours', { precision: 5, scale: 2 }).notNull(),
-  hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(), // 스냅샷 (직원 시급 변경에 영향 안 받음)
-  totalPay: decimal('total_pay', { precision: 14, scale: 2 }).notNull(), // application 계산, NOT generated (수정 가능)
-  fixedCostId: uuid('fixed_cost_id').references(() => fixedCosts.id), // 고정비 연동 추적
-  notes: text('notes'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  createdBy: varchar('created_by', { length: 100 }),
-  updatedBy: varchar('updated_by', { length: 100 }),
-  deletedAt: timestamp('deleted_at'),
-  deletedBy: varchar('deleted_by', { length: 100 }),
-}, (table) => [
-  index('ar_deleted_at_idx').on(table.deletedAt),
-  index('ar_store_id_idx').on(table.storeId),
-  index('ar_employee_id_idx').on(table.employeeId),
-  index('ar_work_date_idx').on(table.workDate.desc()),
-  // Composite index for store + date filtering (common query pattern)
-  index('ar_store_date_idx').on(table.storeId, table.workDate.desc()),
-])
+export const attendanceRecords = pgTable(
+  'attendance_records',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    storeId: uuid('store_id').references(() => stores.id), // 다매장 지원 (employee.storeId와 동일하게 설정)
+    employeeId: uuid('employee_id')
+      .notNull()
+      .references(() => employees.id),
+    workDate: date('work_date').notNull(),
+    workHours: decimal('work_hours', { precision: 5, scale: 2 }).notNull(),
+    hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(), // 스냅샷 (직원 시급 변경에 영향 안 받음)
+    totalPay: decimal('total_pay', { precision: 14, scale: 2 }).notNull(), // application 계산, NOT generated (수정 가능)
+    fixedCostId: uuid('fixed_cost_id').references(() => fixedCosts.id), // 고정비 연동 추적
+    notes: text('notes'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('ar_deleted_at_idx').on(table.deletedAt),
+    index('ar_store_id_idx').on(table.storeId),
+    index('ar_employee_id_idx').on(table.employeeId),
+    index('ar_work_date_idx').on(table.workDate.desc()),
+    // Composite index for store + date filtering (common query pattern)
+    index('ar_store_date_idx').on(table.storeId, table.workDate.desc()),
+  ]
+)
 
 // =====================
 // 재고 관리 & 알림
@@ -287,9 +393,15 @@ export const attendanceRecords = pgTable('attendance_records', {
 // 재고 테이블 (매장별 현재 재고)
 export const inventory = pgTable('inventory', {
   id: uuid('id').primaryKey().defaultRandom(),
-  storeId: uuid('store_id').notNull().references(() => stores.id),
-  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id),
-  currentQuantity: decimal('current_quantity', { precision: 10, scale: 2 }).notNull().default('0'),
+  storeId: uuid('store_id')
+    .notNull()
+    .references(() => stores.id),
+  ingredientId: uuid('ingredient_id')
+    .notNull()
+    .references(() => ingredients.id),
+  currentQuantity: decimal('current_quantity', { precision: 10, scale: 2 })
+    .notNull()
+    .default('0'),
   unit: varchar('unit', { length: 20 }),
   lastUpdated: timestamp('last_updated').notNull().defaultNow(),
 })
@@ -298,7 +410,9 @@ export const inventory = pgTable('inventory', {
 export const inventoryAlertRules = pgTable('inventory_alert_rules', {
   id: uuid('id').primaryKey().defaultRandom(),
   storeId: uuid('store_id').references(() => stores.id), // NULL이면 전체 매장 적용
-  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id),
+  ingredientId: uuid('ingredient_id')
+    .notNull()
+    .references(() => ingredients.id),
   alertThresholdDays: integer('alert_threshold_days').notNull().default(3), // 알림 임계값 (잔여일)
   predictionPeriodDays: integer('prediction_period_days').notNull().default(30), // 예측 기간 (30일)
   isActive: boolean('is_active').notNull().default(true),
@@ -313,10 +427,17 @@ export const inventoryAlertRules = pgTable('inventory_alert_rules', {
 // 재고 이벤트 테이블 (폐기/실사/조정)
 export const inventoryEvents = pgTable('inventory_events', {
   id: uuid('id').primaryKey().defaultRandom(),
-  storeId: uuid('store_id').notNull().references(() => stores.id),
-  ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id),
+  storeId: uuid('store_id')
+    .notNull()
+    .references(() => stores.id),
+  ingredientId: uuid('ingredient_id')
+    .notNull()
+    .references(() => ingredients.id),
   eventType: varchar('event_type', { length: 20 }).notNull(), // 'purchase' | 'sale' | 'waste' | 'audit' | 'adjustment'
-  quantityChange: decimal('quantity_change', { precision: 10, scale: 2 }).notNull(), // 양수: 증가, 음수: 감소
+  quantityChange: decimal('quantity_change', {
+    precision: 10,
+    scale: 2,
+  }).notNull(), // 양수: 증가, 음수: 감소
   reason: text('reason'),
   eventDate: date('event_date').notNull(),
   referenceId: uuid('reference_id'), // 매입/판매 ID 참조
@@ -344,21 +465,25 @@ export const alertHistory = pgTable('alert_history', {
 // =====================
 
 // Users Table (사용자 계정)
-export const users = pgTable('users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: 255 }).notNull().unique(),
-  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
-  name: varchar('name', { length: 100 }).notNull(),
-  phone: varchar('phone', { length: 20 }),
-  isActive: boolean('is_active').notNull().default(true),
-  lastLoginAt: timestamp('last_login_at'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  deletedAt: timestamp('deleted_at'),
-}, (table) => [
-  index('users_email_idx').on(table.email),
-  index('users_deleted_at_idx').on(table.deletedAt),
-])
+export const users = pgTable(
+  'users',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+    name: varchar('name', { length: 100 }).notNull(),
+    phone: varchar('phone', { length: 20 }),
+    isActive: boolean('is_active').notNull().default(true),
+    lastLoginAt: timestamp('last_login_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at'),
+  },
+  (table) => [
+    index('users_email_idx').on(table.email),
+    index('users_deleted_at_idx').on(table.deletedAt),
+  ]
+)
 
 // Roles Table (역할 정의)
 export const roles = pgTable('roles', {
@@ -372,180 +497,238 @@ export const roles = pgTable('roles', {
 })
 
 // User-Store Assignments Table (사용자-매장 매핑)
-export const userStoreAssignments = pgTable('user_store_assignments', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  userId: uuid('user_id').notNull().references(() => users.id),
-  storeId: uuid('store_id').notNull().references(() => stores.id),
-  roleId: uuid('role_id').notNull().references(() => roles.id),
-  assignedAt: timestamp('assigned_at').notNull().defaultNow(),
-  assignedBy: uuid('assigned_by').references(() => users.id),
-  deletedAt: timestamp('deleted_at'),
-}, (table) => [
-  index('usa_user_id_idx').on(table.userId),
-  index('usa_store_id_idx').on(table.storeId),
-  index('usa_deleted_at_idx').on(table.deletedAt),
-  unique('usa_user_store_unique').on(table.userId, table.storeId),
-])
+export const userStoreAssignments = pgTable(
+  'user_store_assignments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    storeId: uuid('store_id')
+      .notNull()
+      .references(() => stores.id),
+    roleId: uuid('role_id')
+      .notNull()
+      .references(() => roles.id),
+    assignedAt: timestamp('assigned_at').notNull().defaultNow(),
+    assignedBy: uuid('assigned_by').references(() => users.id),
+    deletedAt: timestamp('deleted_at'),
+  },
+  (table) => [
+    index('usa_user_id_idx').on(table.userId),
+    index('usa_store_id_idx').on(table.storeId),
+    index('usa_deleted_at_idx').on(table.deletedAt),
+    unique('usa_user_store_unique').on(table.userId, table.storeId),
+  ]
+)
 
 // Audit Logs Table (감사 로그)
-export const auditLogs = pgTable('audit_logs', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  storeId: uuid('store_id').references(() => stores.id),
-  userId: uuid('user_id').references(() => users.id),
-  tableName: varchar('table_name', { length: 100 }).notNull(),
-  recordId: uuid('record_id'),
-  action: varchar('action', { length: 20 }).notNull(), // 'CREATE' | 'UPDATE' | 'DELETE'
-  oldValues: jsonb('old_values'),
-  newValues: jsonb('new_values'),
-  ipAddress: varchar('ip_address', { length: 45 }),
-  userAgent: text('user_agent'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-}, (table) => [
-  index('al_store_id_idx').on(table.storeId),
-  index('al_user_id_idx').on(table.userId),
-  index('al_table_name_idx').on(table.tableName),
-  index('al_created_at_idx').on(table.createdAt.desc()),
-])
+export const auditLogs = pgTable(
+  'audit_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    storeId: uuid('store_id').references(() => stores.id),
+    userId: uuid('user_id').references(() => users.id),
+    tableName: varchar('table_name', { length: 100 }).notNull(),
+    recordId: uuid('record_id'),
+    action: varchar('action', { length: 20 }).notNull(), // 'CREATE' | 'UPDATE' | 'DELETE'
+    oldValues: jsonb('old_values'),
+    newValues: jsonb('new_values'),
+    ipAddress: varchar('ip_address', { length: 45 }),
+    userAgent: text('user_agent'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('al_store_id_idx').on(table.storeId),
+    index('al_user_id_idx').on(table.userId),
+    index('al_table_name_idx').on(table.tableName),
+    index('al_created_at_idx').on(table.createdAt.desc()),
+  ]
+)
 
 // =====================
 // SaaS: 조직 & 구독 관리
 // =====================
 
 // Organizations Table (조직/회사)
-export const organizations = pgTable('organizations', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: varchar('name', { length: 200 }).notNull(),
-  slug: varchar('slug', { length: 100 }).notNull().unique(), // URL용 슬러그
-  plan: varchar('plan', { length: 50 }).notNull().default('free'), // 'free', 'basic', 'standard', 'premium', 'enterprise'
-  maxStores: integer('max_stores').notNull().default(1),
-  maxUsers: integer('max_users').notNull().default(3),
-  billingEmail: varchar('billing_email', { length: 255 }),
-  billingName: varchar('billing_name', { length: 200 }),
-  businessNumber: varchar('business_number', { length: 20 }), // 사업자등록번호
-  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
-  logoUrl: varchar('logo_url', { length: 500 }),
-  settings: jsonb('settings'), // 조직 설정
-  isActive: boolean('is_active').notNull().default(true),
-  trialEndsAt: timestamp('trial_ends_at'), // 무료 체험 종료일
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  deletedAt: timestamp('deleted_at'),
-}, (table) => [
-  index('org_slug_idx').on(table.slug),
-  index('org_stripe_customer_idx').on(table.stripeCustomerId),
-  index('org_deleted_at_idx').on(table.deletedAt),
-])
+export const organizations = pgTable(
+  'organizations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    name: varchar('name', { length: 200 }).notNull(),
+    slug: varchar('slug', { length: 100 }).notNull().unique(), // URL용 슬러그
+    plan: varchar('plan', { length: 50 }).notNull().default('free'), // 'free', 'basic', 'standard', 'premium', 'enterprise'
+    maxStores: integer('max_stores').notNull().default(1),
+    maxUsers: integer('max_users').notNull().default(3),
+    billingEmail: varchar('billing_email', { length: 255 }),
+    billingName: varchar('billing_name', { length: 200 }),
+    businessNumber: varchar('business_number', { length: 20 }), // 사업자등록번호
+    stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+    logoUrl: varchar('logo_url', { length: 500 }),
+    settings: jsonb('settings'), // 조직 설정
+    isActive: boolean('is_active').notNull().default(true),
+    trialEndsAt: timestamp('trial_ends_at'), // 무료 체험 종료일
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at'),
+  },
+  (table) => [
+    index('org_slug_idx').on(table.slug),
+    index('org_stripe_customer_idx').on(table.stripeCustomerId),
+    index('org_deleted_at_idx').on(table.deletedAt),
+  ]
+)
 
 // Subscriptions Table (구독)
-export const subscriptions = pgTable('subscriptions', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
-  plan: varchar('plan', { length: 50 }).notNull(), // 'basic', 'standard', 'premium', 'enterprise'
-  status: varchar('status', { length: 30 }).notNull().default('active'), // 'active', 'past_due', 'canceled', 'trialing', 'paused'
-  priceMonthly: integer('price_monthly').notNull(), // 월 금액 (원)
-  priceYearly: integer('price_yearly'), // 연 금액 (원)
-  billingCycle: varchar('billing_cycle', { length: 20 }).notNull().default('monthly'), // 'monthly', 'yearly'
-  stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
-  stripePriceId: varchar('stripe_price_id', { length: 255 }),
-  currentPeriodStart: timestamp('current_period_start'),
-  currentPeriodEnd: timestamp('current_period_end'),
-  cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
-  canceledAt: timestamp('canceled_at'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (table) => [
-  index('sub_org_id_idx').on(table.organizationId),
-  index('sub_stripe_id_idx').on(table.stripeSubscriptionId),
-  index('sub_status_idx').on(table.status),
-])
+export const subscriptions = pgTable(
+  'subscriptions',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    plan: varchar('plan', { length: 50 }).notNull(), // 'basic', 'standard', 'premium', 'enterprise'
+    status: varchar('status', { length: 30 }).notNull().default('active'), // 'active', 'past_due', 'canceled', 'trialing', 'paused'
+    priceMonthly: integer('price_monthly').notNull(), // 월 금액 (원)
+    priceYearly: integer('price_yearly'), // 연 금액 (원)
+    billingCycle: varchar('billing_cycle', { length: 20 })
+      .notNull()
+      .default('monthly'), // 'monthly', 'yearly'
+    stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
+    stripePriceId: varchar('stripe_price_id', { length: 255 }),
+    currentPeriodStart: timestamp('current_period_start'),
+    currentPeriodEnd: timestamp('current_period_end'),
+    cancelAtPeriodEnd: boolean('cancel_at_period_end').notNull().default(false),
+    canceledAt: timestamp('canceled_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('sub_org_id_idx').on(table.organizationId),
+    index('sub_stripe_id_idx').on(table.stripeSubscriptionId),
+    index('sub_status_idx').on(table.status),
+  ]
+)
 
 // Invoices Table (청구서)
-export const invoices = pgTable('invoices', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
-  subscriptionId: uuid('subscription_id').references(() => subscriptions.id),
-  invoiceNumber: varchar('invoice_number', { length: 50 }).notNull().unique(),
-  status: varchar('status', { length: 20 }).notNull().default('draft'), // 'draft', 'pending', 'paid', 'failed', 'void'
-  amount: integer('amount').notNull(), // 금액 (원)
-  tax: integer('tax').notNull().default(0), // 세금 (원)
-  total: integer('total').notNull(), // 총액 (원)
-  currency: varchar('currency', { length: 10 }).notNull().default('KRW'),
-  stripeInvoiceId: varchar('stripe_invoice_id', { length: 255 }),
-  stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }),
-  paidAt: timestamp('paid_at'),
-  dueDate: date('due_date'),
-  invoiceUrl: varchar('invoice_url', { length: 500 }),
-  pdfUrl: varchar('pdf_url', { length: 500 }),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (table) => [
-  index('inv_org_id_idx').on(table.organizationId),
-  index('inv_stripe_id_idx').on(table.stripeInvoiceId),
-  index('inv_status_idx').on(table.status),
-])
+export const invoices = pgTable(
+  'invoices',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    subscriptionId: uuid('subscription_id').references(() => subscriptions.id),
+    invoiceNumber: varchar('invoice_number', { length: 50 }).notNull().unique(),
+    status: varchar('status', { length: 20 }).notNull().default('draft'), // 'draft', 'pending', 'paid', 'failed', 'void'
+    amount: integer('amount').notNull(), // 금액 (원)
+    tax: integer('tax').notNull().default(0), // 세금 (원)
+    total: integer('total').notNull(), // 총액 (원)
+    currency: varchar('currency', { length: 10 }).notNull().default('KRW'),
+    stripeInvoiceId: varchar('stripe_invoice_id', { length: 255 }),
+    stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }),
+    paidAt: timestamp('paid_at'),
+    dueDate: date('due_date'),
+    invoiceUrl: varchar('invoice_url', { length: 500 }),
+    pdfUrl: varchar('pdf_url', { length: 500 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('inv_org_id_idx').on(table.organizationId),
+    index('inv_stripe_id_idx').on(table.stripeInvoiceId),
+    index('inv_status_idx').on(table.status),
+  ]
+)
 
 // Usage Metrics Table (사용량 추적)
-export const usageMetrics = pgTable('usage_metrics', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
-  metricType: varchar('metric_type', { length: 50 }).notNull(), // 'api_calls', 'storage', 'active_users', 'stores'
-  metricValue: integer('metric_value').notNull(),
-  periodStart: timestamp('period_start').notNull(),
-  periodEnd: timestamp('period_end').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-}, (table) => [
-  index('um_org_id_idx').on(table.organizationId),
-  index('um_type_idx').on(table.metricType),
-  index('um_period_idx').on(table.periodStart, table.periodEnd),
-])
+export const usageMetrics = pgTable(
+  'usage_metrics',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    metricType: varchar('metric_type', { length: 50 }).notNull(), // 'api_calls', 'storage', 'active_users', 'stores'
+    metricValue: integer('metric_value').notNull(),
+    periodStart: timestamp('period_start').notNull(),
+    periodEnd: timestamp('period_end').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('um_org_id_idx').on(table.organizationId),
+    index('um_type_idx').on(table.metricType),
+    index('um_period_idx').on(table.periodStart, table.periodEnd),
+  ]
+)
 
 // Plan Features Table (플랜별 기능)
-export const planFeatures = pgTable('plan_features', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  plan: varchar('plan', { length: 50 }).notNull(), // 'free', 'basic', 'standard', 'premium', 'enterprise'
-  featureKey: varchar('feature_key', { length: 100 }).notNull(), // 'purchases', 'sales', 'inventory', 'analytics', etc.
-  enabled: boolean('enabled').notNull().default(true),
-  limit: integer('limit'), // null = 무제한
-  description: varchar('description', { length: 500 }),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (table) => [
-  index('pf_plan_idx').on(table.plan),
-  unique('pf_plan_feature_unique').on(table.plan, table.featureKey),
-])
+export const planFeatures = pgTable(
+  'plan_features',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    plan: varchar('plan', { length: 50 }).notNull(), // 'free', 'basic', 'standard', 'premium', 'enterprise'
+    featureKey: varchar('feature_key', { length: 100 }).notNull(), // 'purchases', 'sales', 'inventory', 'analytics', etc.
+    enabled: boolean('enabled').notNull().default(true),
+    limit: integer('limit'), // null = 무제한
+    description: varchar('description', { length: 500 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('pf_plan_idx').on(table.plan),
+    unique('pf_plan_feature_unique').on(table.plan, table.featureKey),
+  ]
+)
 
 // Organization Members Table (조직 멤버)
-export const organizationMembers = pgTable('organization_members', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
-  userId: uuid('user_id').notNull().references(() => users.id),
-  role: varchar('role', { length: 30 }).notNull().default('member'), // 'owner', 'admin', 'member'
-  invitedBy: uuid('invited_by').references(() => users.id),
-  invitedAt: timestamp('invited_at').notNull().defaultNow(),
-  joinedAt: timestamp('joined_at'),
-  deletedAt: timestamp('deleted_at'),
-}, (table) => [
-  index('om_org_id_idx').on(table.organizationId),
-  index('om_user_id_idx').on(table.userId),
-  unique('om_org_user_unique').on(table.organizationId, table.userId),
-])
+export const organizationMembers = pgTable(
+  'organization_members',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    role: varchar('role', { length: 30 }).notNull().default('member'), // 'owner', 'admin', 'member'
+    invitedBy: uuid('invited_by').references(() => users.id),
+    invitedAt: timestamp('invited_at').notNull().defaultNow(),
+    joinedAt: timestamp('joined_at'),
+    deletedAt: timestamp('deleted_at'),
+  },
+  (table) => [
+    index('om_org_id_idx').on(table.organizationId),
+    index('om_user_id_idx').on(table.userId),
+    unique('om_org_user_unique').on(table.organizationId, table.userId),
+  ]
+)
 
 // Organization Invitations Table (초대)
-export const organizationInvitations = pgTable('organization_invitations', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  organizationId: uuid('organization_id').notNull().references(() => organizations.id),
-  email: varchar('email', { length: 255 }).notNull(),
-  role: varchar('role', { length: 30 }).notNull().default('member'),
-  token: varchar('token', { length: 100 }).notNull().unique(),
-  invitedBy: uuid('invited_by').notNull().references(() => users.id),
-  expiresAt: timestamp('expires_at').notNull(),
-  acceptedAt: timestamp('accepted_at'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-}, (table) => [
-  index('oi_org_id_idx').on(table.organizationId),
-  index('oi_token_idx').on(table.token),
-  index('oi_email_idx').on(table.email),
-])
+export const organizationInvitations = pgTable(
+  'organization_invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    email: varchar('email', { length: 255 }).notNull(),
+    role: varchar('role', { length: 30 }).notNull().default('member'),
+    token: varchar('token', { length: 100 }).notNull().unique(),
+    invitedBy: uuid('invited_by')
+      .notNull()
+      .references(() => users.id),
+    expiresAt: timestamp('expires_at').notNull(),
+    acceptedAt: timestamp('accepted_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('oi_org_id_idx').on(table.organizationId),
+    index('oi_token_idx').on(table.token),
+    index('oi_email_idx').on(table.email),
+  ]
+)
 
 export type Store = typeof stores.$inferSelect
 export type NewStore = typeof stores.$inferInsert
@@ -625,27 +808,31 @@ export type OrganizationMember = typeof organizationMembers.$inferSelect
 export type NewOrganizationMember = typeof organizationMembers.$inferInsert
 
 export type OrganizationInvitation = typeof organizationInvitations.$inferSelect
-export type NewOrganizationInvitation = typeof organizationInvitations.$inferInsert
+export type NewOrganizationInvitation =
+  typeof organizationInvitations.$inferInsert
 
 // =================
 // Drizzle Relations
 // =================
 
 // Organization Members Relations
-export const organizationMembersRelations = relations(organizationMembers, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [organizationMembers.organizationId],
-    references: [organizations.id],
-  }),
-  user: one(users, {
-    fields: [organizationMembers.userId],
-    references: [users.id],
-  }),
-  invitedByUser: one(users, {
-    fields: [organizationMembers.invitedBy],
-    references: [users.id],
-  }),
-}))
+export const organizationMembersRelations = relations(
+  organizationMembers,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [organizationMembers.organizationId],
+      references: [organizations.id],
+    }),
+    user: one(users, {
+      fields: [organizationMembers.userId],
+      references: [users.id],
+    }),
+    invitedByUser: one(users, {
+      fields: [organizationMembers.invitedBy],
+      references: [users.id],
+    }),
+  })
+)
 
 // Organizations Relations
 export const organizationsRelations = relations(organizations, ({ many }) => ({
@@ -670,16 +857,19 @@ export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
 }))
 
 // Organization Invitations Relations
-export const organizationInvitationsRelations = relations(organizationInvitations, ({ one }) => ({
-  organization: one(organizations, {
-    fields: [organizationInvitations.organizationId],
-    references: [organizations.id],
-  }),
-  invitedByUser: one(users, {
-    fields: [organizationInvitations.invitedBy],
-    references: [users.id],
-  }),
-}))
+export const organizationInvitationsRelations = relations(
+  organizationInvitations,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [organizationInvitations.organizationId],
+      references: [organizations.id],
+    }),
+    invitedByUser: one(users, {
+      fields: [organizationInvitations.invitedBy],
+      references: [users.id],
+    }),
+  })
+)
 
 // Stores Relations
 export const storesRelations = relations(stores, ({ one }) => ({
@@ -690,13 +880,16 @@ export const storesRelations = relations(stores, ({ one }) => ({
 }))
 
 // User Store Assignments Relations
-export const userStoreAssignmentsRelations = relations(userStoreAssignments, ({ one }) => ({
-  user: one(users, {
-    fields: [userStoreAssignments.userId],
-    references: [users.id],
-  }),
-  store: one(stores, {
-    fields: [userStoreAssignments.storeId],
-    references: [stores.id],
-  }),
-}))
+export const userStoreAssignmentsRelations = relations(
+  userStoreAssignments,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userStoreAssignments.userId],
+      references: [users.id],
+    }),
+    store: one(stores, {
+      fields: [userStoreAssignments.storeId],
+      references: [stores.id],
+    }),
+  })
+)

@@ -106,3 +106,24 @@ export async function getAuthorizedStoreIds(): Promise<string[]> {
   const context = await getUserContext()
   return context.storeIds
 }
+
+/**
+ * 사용자의 조직 ID를 반환합니다.
+ * 인증되지 않았거나 조직이 없으면 null을 반환합니다.
+ */
+export async function getOrganizationId(): Promise<string | null> {
+  const context = await getUserContext()
+  return context.organizationId
+}
+
+/**
+ * 사용자의 조직 ID를 반환합니다.
+ * 조직이 없으면 에러를 throw합니다.
+ */
+export async function requireOrganizationId(): Promise<string> {
+  const orgId = await getOrganizationId()
+  if (!orgId) {
+    throw new Error('조직 정보가 없습니다. 다시 로그인해주세요.')
+  }
+  return orgId
+}

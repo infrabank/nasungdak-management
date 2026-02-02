@@ -3,8 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import { suppliers } from '@/lib/db/schema'
-import { eq, isNull } from 'drizzle-orm'
+import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
+import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
 
 const supplierSchema = z.object({
   supplierName: z.string().min(1, '공급업체명을 입력해주세요').max(200),
@@ -19,6 +20,7 @@ const supplierSchema = z.object({
 
 export async function createSupplier(formData: FormData) {
   try {
+    const organizationId = await requireOrganizationId()
     const rawData = {
       supplierName: formData.get('supplierName'),
       contactName: formData.get('contactName') || null,
@@ -36,6 +38,7 @@ export async function createSupplier(formData: FormData) {
       .insert(suppliers)
       .values({
         ...validatedData,
+        organizationId,
         email: validatedData.email || null,
         createdBy: 'system',
       })
@@ -66,6 +69,7 @@ export async function createSupplier(formData: FormData) {
 
 export async function updateSupplier(id: string, formData: FormData) {
   try {
+    const organizationId = await requireOrganizationId()
     const rawData = {
       supplierName: formData.get('supplierName'),
       contactName: formData.get('contactName') || null,
@@ -87,7 +91,10 @@ export async function updateSupplier(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(eq(suppliers.id, id))
+      .where(and(
+        eq(suppliers.id, id),
+        eq(suppliers.organizationId, organizationId)
+      ))
       .returning()
 
     revalidatePath('/dashboard/master-data/suppliers')
@@ -115,13 +122,17 @@ export async function updateSupplier(id: string, formData: FormData) {
 
 export async function deleteSupplier(id: string) {
   try {
+    const organizationId = await requireOrganizationId()
     await db
       .update(suppliers)
       .set({
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(eq(suppliers.id, id))
+      .where(and(
+        eq(suppliers.id, id),
+        eq(suppliers.organizationId, organizationId)
+      ))
 
     revalidatePath('/dashboard/master-data/suppliers')
 
@@ -139,10 +150,14 @@ export async function deleteSupplier(id: string) {
 
 export async function getSuppliers() {
   try {
+    const organizationId = await getOrganizationId()
     const items = await db
       .select()
       .from(suppliers)
-      .where(isNull(suppliers.deletedAt))
+      .where(and(
+        isNull(suppliers.deletedAt),
+        organizationId ? eq(suppliers.organizationId, organizationId) : undefined
+      ))
       .orderBy(suppliers.supplierName)
 
     return items
@@ -154,13 +169,17 @@ export async function getSuppliers() {
 
 export async function getActiveSuppliers() {
   try {
+    const organizationId = await getOrganizationId()
     const items = await db
       .select({
         id: suppliers.id,
         supplierName: suppliers.supplierName,
       })
       .from(suppliers)
-      .where(isNull(suppliers.deletedAt))
+      .where(and(
+        isNull(suppliers.deletedAt),
+        organizationId ? eq(suppliers.organizationId, organizationId) : undefined
+      ))
       .orderBy(suppliers.supplierName)
 
     return items

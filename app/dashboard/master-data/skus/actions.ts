@@ -3,8 +3,9 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
 import { skus, menuCategories } from '@/lib/db/schema'
-import { eq, isNull } from 'drizzle-orm'
+import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
+import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
 
 const skuSchema = z.object({
   skuName: z.string().min(1, 'SKU명을 입력해주세요').max(100),
@@ -26,6 +27,7 @@ const skuSchema = z.object({
 
 export async function createSku(formData: FormData) {
   try {
+    const organizationId = await requireOrganizationId()
     const rawData = {
       skuName: formData.get('skuName'),
       menuId: formData.get('menuId'),
@@ -40,6 +42,7 @@ export async function createSku(formData: FormData) {
       .insert(skus)
       .values({
         ...validatedData,
+        organizationId,
         createdBy: 'system',
       })
       .returning()
@@ -71,6 +74,7 @@ export async function createSku(formData: FormData) {
 
 export async function updateSku(id: string, formData: FormData) {
   try {
+    const organizationId = await requireOrganizationId()
     const rawData = {
       skuName: formData.get('skuName'),
       menuId: formData.get('menuId'),
@@ -88,7 +92,10 @@ export async function updateSku(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(eq(skus.id, id))
+      .where(and(
+        eq(skus.id, id),
+        eq(skus.organizationId, organizationId)
+      ))
       .returning()
 
     revalidatePath('/dashboard/master-data/skus')
@@ -118,13 +125,17 @@ export async function updateSku(id: string, formData: FormData) {
 
 export async function deleteSku(id: string) {
   try {
+    const organizationId = await requireOrganizationId()
     await db
       .update(skus)
       .set({
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(eq(skus.id, id))
+      .where(and(
+        eq(skus.id, id),
+        eq(skus.organizationId, organizationId)
+      ))
 
     revalidatePath('/dashboard/master-data/skus')
     revalidateTag('skus:active')
@@ -144,6 +155,7 @@ export async function deleteSku(id: string) {
 
 export async function getSkus() {
   try {
+    const organizationId = await getOrganizationId()
     const items = await db
       .select({
         id: skus.id,
@@ -157,7 +169,10 @@ export async function getSkus() {
       })
       .from(skus)
       .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-      .where(isNull(skus.deletedAt))
+      .where(and(
+        isNull(skus.deletedAt),
+        organizationId ? eq(skus.organizationId, organizationId) : undefined
+      ))
       .orderBy(skus.skuName)
 
     return items
@@ -181,6 +196,7 @@ export async function bulkCreateSkus(rows: CSVRow[]) {
   const errors: string[] = []
 
   try {
+    const organizationId = await requireOrganizationId()
     // Fetch all menus for name-to-ID mapping
     const menus = await db
       .select({
@@ -188,7 +204,10 @@ export async function bulkCreateSkus(rows: CSVRow[]) {
         menuName: menuCategories.menuName,
       })
       .from(menuCategories)
-      .where(isNull(menuCategories.deletedAt))
+      .where(and(
+        isNull(menuCategories.deletedAt),
+        eq(menuCategories.organizationId, organizationId)
+      ))
 
     // Create lookup map
     const menuMap = new Map(menus.map(m => [m.menuName, m.id]))
@@ -228,6 +247,7 @@ export async function bulkCreateSkus(rows: CSVRow[]) {
           .insert(skus)
           .values({
             ...validatedData,
+            organizationId,
             createdBy: 'system',
           })
 

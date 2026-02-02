@@ -19,7 +19,17 @@ const fixedCostSchema = z.object({
 
 export async function createFixedCost(prevState: any, formData: FormData) {
   try {
+    // 권한 검사
+    const authorizedStoreIds = await getAuthorizedStoreIds()
     const storeId = formData.get('storeId') as string | null
+
+    if (storeId && !authorizedStoreIds.includes(storeId)) {
+      return {
+        success: false,
+        error: '해당 매장에 대한 권한이 없습니다',
+      }
+    }
+
     const rawData = {
       costDate: formData.get('costDate'),
       costType: formData.get('costType'),
@@ -69,6 +79,15 @@ export async function createFixedCost(prevState: any, formData: FormData) {
 
 export async function updateFixedCost(id: string, formData: FormData) {
   try {
+    // 권한 검사: 레코드가 권한 있는 매장에 속하는지 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return {
+        success: false,
+        error: '권한이 없습니다',
+      }
+    }
+
     const rawData = {
       costDate: formData.get('costDate'),
       costType: formData.get('costType'),
@@ -87,8 +106,20 @@ export async function updateFixedCost(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(eq(fixedCosts.id, id))
+      .where(
+        and(
+          eq(fixedCosts.id, id),
+          inArray(fixedCosts.storeId, authorizedStoreIds)
+        )
+      )
       .returning()
+
+    if (!record) {
+      return {
+        success: false,
+        error: '수정할 레코드를 찾을 수 없거나 권한이 없습니다',
+      }
+    }
 
     revalidatePath('/dashboard/fixed-costs')
     revalidateTag('fixed-costs:all')
@@ -119,13 +150,35 @@ export async function updateFixedCost(id: string, formData: FormData) {
 
 export async function deleteFixedCost(id: string) {
   try {
-    await db
+    // 권한 검사: 레코드가 권한 있는 매장에 속하는지 확인
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return {
+        success: false,
+        error: '권한이 없습니다',
+      }
+    }
+
+    const result = await db
       .update(fixedCosts)
       .set({
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(eq(fixedCosts.id, id))
+      .where(
+        and(
+          eq(fixedCosts.id, id),
+          inArray(fixedCosts.storeId, authorizedStoreIds)
+        )
+      )
+      .returning({ id: fixedCosts.id })
+
+    if (result.length === 0) {
+      return {
+        success: false,
+        error: '삭제할 레코드를 찾을 수 없거나 권한이 없습니다',
+      }
+    }
 
     revalidatePath('/dashboard/fixed-costs')
     revalidateTag('fixed-costs:all')

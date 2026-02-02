@@ -3,8 +3,9 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
 import { menuCategories } from '@/lib/db/schema'
-import { eq, isNull } from 'drizzle-orm'
+import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
+import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
 
 const menuSchema = z.object({
   menuName: z.string().min(1, '메뉴명을 입력해주세요').max(100),
@@ -14,6 +15,7 @@ const menuSchema = z.object({
 
 export async function createMenu(formData: FormData) {
   try {
+    const organizationId = await requireOrganizationId()
     const description = formData.get('description')
     const rawData = {
       menuName: formData.get('menuName'),
@@ -28,6 +30,7 @@ export async function createMenu(formData: FormData) {
       .insert(menuCategories)
       .values({
         ...validatedData,
+        organizationId,
         createdBy: 'system',
       })
       .returning()
@@ -59,6 +62,7 @@ export async function createMenu(formData: FormData) {
 
 export async function updateMenu(id: string, formData: FormData) {
   try {
+    const organizationId = await requireOrganizationId()
     const rawData = {
       menuName: formData.get('menuName'),
       description: formData.get('description') || '',
@@ -74,7 +78,10 @@ export async function updateMenu(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(eq(menuCategories.id, id))
+      .where(and(
+        eq(menuCategories.id, id),
+        eq(menuCategories.organizationId, organizationId)
+      ))
       .returning()
 
     revalidatePath('/dashboard/master-data/menus')
@@ -103,13 +110,17 @@ export async function updateMenu(id: string, formData: FormData) {
 
 export async function deleteMenu(id: string) {
   try {
+    const organizationId = await requireOrganizationId()
     await db
       .update(menuCategories)
       .set({
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(eq(menuCategories.id, id))
+      .where(and(
+        eq(menuCategories.id, id),
+        eq(menuCategories.organizationId, organizationId)
+      ))
 
     revalidatePath('/dashboard/master-data/menus')
     revalidateTag('menus:active')
@@ -128,10 +139,14 @@ export async function deleteMenu(id: string) {
 
 export async function getMenus() {
   try {
+    const organizationId = await getOrganizationId()
     const menus = await db
       .select()
       .from(menuCategories)
-      .where(isNull(menuCategories.deletedAt))
+      .where(and(
+        isNull(menuCategories.deletedAt),
+        organizationId ? eq(menuCategories.organizationId, organizationId) : undefined
+      ))
       .orderBy(menuCategories.menuName)
 
     return menus
@@ -153,6 +168,7 @@ export async function bulkCreateMenus(rows: CSVRow[]) {
   const errors: string[] = []
 
   try {
+    const organizationId = await requireOrganizationId()
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
       const rowNum = i + 1
@@ -177,6 +193,7 @@ export async function bulkCreateMenus(rows: CSVRow[]) {
           .insert(menuCategories)
           .values({
             ...validatedData,
+            organizationId,
             createdBy: 'system',
           })
 

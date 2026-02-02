@@ -3,8 +3,9 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
 import { ingredients } from '@/lib/db/schema'
-import { eq, isNull } from 'drizzle-orm'
+import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
+import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
 
 const ingredientSchema = z.object({
   ingredientName: z.string().min(1, '재료명을 입력해주세요').max(100),
@@ -15,6 +16,7 @@ const ingredientSchema = z.object({
 
 export async function createIngredient(formData: FormData) {
   try {
+    const organizationId = await requireOrganizationId()
     const rawData = {
       ingredientName: formData.get('ingredientName'),
       unit: formData.get('unit'),
@@ -28,6 +30,7 @@ export async function createIngredient(formData: FormData) {
       .insert(ingredients)
       .values({
         ...validatedData,
+        organizationId,
         createdBy: 'system',
       })
       .returning()
@@ -58,6 +61,7 @@ export async function createIngredient(formData: FormData) {
 
 export async function updateIngredient(id: string, formData: FormData) {
   try {
+    const organizationId = await requireOrganizationId()
     const rawData = {
       ingredientName: formData.get('ingredientName'),
       unit: formData.get('unit'),
@@ -74,7 +78,10 @@ export async function updateIngredient(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(eq(ingredients.id, id))
+      .where(and(
+        eq(ingredients.id, id),
+        eq(ingredients.organizationId, organizationId)
+      ))
       .returning()
 
     revalidatePath('/dashboard/master-data/ingredients')
@@ -103,13 +110,17 @@ export async function updateIngredient(id: string, formData: FormData) {
 
 export async function deleteIngredient(id: string) {
   try {
+    const organizationId = await requireOrganizationId()
     await db
       .update(ingredients)
       .set({
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(eq(ingredients.id, id))
+      .where(and(
+        eq(ingredients.id, id),
+        eq(ingredients.organizationId, organizationId)
+      ))
 
     revalidatePath('/dashboard/master-data/ingredients')
     revalidateTag('ingredients:active')
@@ -128,10 +139,14 @@ export async function deleteIngredient(id: string) {
 
 export async function getIngredients() {
   try {
+    const organizationId = await getOrganizationId()
     const items = await db
       .select()
       .from(ingredients)
-      .where(isNull(ingredients.deletedAt))
+      .where(and(
+        isNull(ingredients.deletedAt),
+        organizationId ? eq(ingredients.organizationId, organizationId) : undefined
+      ))
       .orderBy(ingredients.ingredientName)
 
     return items
@@ -154,6 +169,7 @@ export async function bulkCreateIngredients(rows: CSVRow[]) {
   const errors: string[] = []
 
   try {
+    const organizationId = await requireOrganizationId()
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
       const rowNum = i + 1
@@ -179,6 +195,7 @@ export async function bulkCreateIngredients(rows: CSVRow[]) {
           .insert(ingredients)
           .values({
             ...validatedData,
+            organizationId,
             createdBy: 'system',
           })
 

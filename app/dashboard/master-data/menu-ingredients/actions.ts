@@ -5,6 +5,7 @@ import { db } from '@/lib/db'
 import { menuIngredients, menuCategories, ingredients } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
+import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
 
 const menuIngredientSchema = z.object({
   menuId: z.string().uuid('메뉴를 선택해주세요'),
@@ -14,6 +15,7 @@ const menuIngredientSchema = z.object({
 
 export async function createMenuIngredient(formData: FormData) {
   try {
+    const organizationId = await requireOrganizationId()
     const rawData = {
       menuId: formData.get('menuId'),
       ingredientId: formData.get('ingredientId'),
@@ -28,6 +30,7 @@ export async function createMenuIngredient(formData: FormData) {
       where: and(
         eq(menuIngredients.menuId, validatedData.menuId),
         eq(menuIngredients.ingredientId, validatedData.ingredientId),
+        eq(menuIngredients.organizationId, organizationId),
         isNull(menuIngredients.deletedAt)
       ),
     })
@@ -44,6 +47,7 @@ export async function createMenuIngredient(formData: FormData) {
       .values({
         menuId: validatedData.menuId,
         ingredientId: validatedData.ingredientId,
+        organizationId,
         requiredQuantity: validatedData.requiredQuantity.toString(),
         createdBy: 'system',
       })
@@ -74,6 +78,7 @@ export async function createMenuIngredient(formData: FormData) {
 
 export async function updateMenuIngredient(id: string, formData: FormData) {
   try {
+    const organizationId = await requireOrganizationId()
     const rawData = {
       menuId: formData.get('menuId'),
       ingredientId: formData.get('ingredientId'),
@@ -91,7 +96,10 @@ export async function updateMenuIngredient(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(eq(menuIngredients.id, id))
+      .where(and(
+        eq(menuIngredients.id, id),
+        eq(menuIngredients.organizationId, organizationId)
+      ))
       .returning()
 
     revalidatePath('/dashboard/master-data/menu-ingredients')
@@ -119,13 +127,17 @@ export async function updateMenuIngredient(id: string, formData: FormData) {
 
 export async function deleteMenuIngredient(id: string) {
   try {
+    const organizationId = await requireOrganizationId()
     await db
       .update(menuIngredients)
       .set({
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(eq(menuIngredients.id, id))
+      .where(and(
+        eq(menuIngredients.id, id),
+        eq(menuIngredients.organizationId, organizationId)
+      ))
 
     revalidatePath('/dashboard/master-data/menu-ingredients')
 
@@ -143,6 +155,7 @@ export async function deleteMenuIngredient(id: string) {
 
 export async function getMenuIngredients() {
   try {
+    const organizationId = await getOrganizationId()
     const mappings = await db
       .select({
         id: menuIngredients.id,
@@ -156,7 +169,10 @@ export async function getMenuIngredients() {
       .from(menuIngredients)
       .leftJoin(menuCategories, eq(menuIngredients.menuId, menuCategories.id))
       .leftJoin(ingredients, eq(menuIngredients.ingredientId, ingredients.id))
-      .where(isNull(menuIngredients.deletedAt))
+      .where(and(
+        isNull(menuIngredients.deletedAt),
+        organizationId ? eq(menuIngredients.organizationId, organizationId) : undefined
+      ))
       .orderBy(menuCategories.menuName, ingredients.ingredientName)
 
     return mappings
@@ -168,6 +184,7 @@ export async function getMenuIngredients() {
 
 export async function getMenus() {
   try {
+    const organizationId = await getOrganizationId()
     const menus = await db
       .select({
         id: menuCategories.id,
@@ -176,7 +193,8 @@ export async function getMenus() {
       .from(menuCategories)
       .where(and(
         isNull(menuCategories.deletedAt),
-        eq(menuCategories.isActive, true)
+        eq(menuCategories.isActive, true),
+        organizationId ? eq(menuCategories.organizationId, organizationId) : undefined
       ))
       .orderBy(menuCategories.menuName)
 
@@ -189,6 +207,7 @@ export async function getMenus() {
 
 export async function getIngredients() {
   try {
+    const organizationId = await getOrganizationId()
     const ingredientsList = await db
       .select({
         id: ingredients.id,
@@ -198,7 +217,8 @@ export async function getIngredients() {
       .from(ingredients)
       .where(and(
         isNull(ingredients.deletedAt),
-        eq(ingredients.isActive, true)
+        eq(ingredients.isActive, true),
+        organizationId ? eq(ingredients.organizationId, organizationId) : undefined
       ))
       .orderBy(ingredients.ingredientName)
 

@@ -5,7 +5,43 @@ import { db } from '@/lib/db'
 import { sql } from 'drizzle-orm'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
-async function fetchDashboardStats(startDate: string, endDate: string, authorizedStoreIds: string[]) {
+/**
+ * SQL Injection 방지를 위한 parameterized IN clause 생성
+ * sql.raw() 대신 sql 태그 템플릿 사용
+ */
+function buildInClause(
+  storeIds: string[],
+  columnPrefix?: string
+): ReturnType<typeof sql> {
+  const column = columnPrefix ? `${columnPrefix}.store_id` : 'store_id'
+  const placeholders = storeIds.map((_, i) => sql`${storeIds[i]}`)
+  return sql`AND ${sql.identifier(column.split('.')[0])}${columnPrefix ? sql`.store_id` : sql``} IN (${sql.join(placeholders, sql`, `)})`
+}
+
+/**
+ * 단순 store_id 필터 (테이블 alias 없음)
+ */
+function buildSimpleStoreFilter(storeIds: string[]): ReturnType<typeof sql> {
+  const placeholders = storeIds.map((_, i) => sql`${storeIds[i]}`)
+  return sql`AND store_id IN (${sql.join(placeholders, sql`, `)})`
+}
+
+/**
+ * 테이블 alias 포함 store_id 필터
+ */
+function buildAliasedStoreFilter(
+  storeIds: string[],
+  alias: 'pt' | 'sr'
+): ReturnType<typeof sql> {
+  const placeholders = storeIds.map((_, i) => sql`${storeIds[i]}`)
+  return sql`AND ${sql.identifier(alias)}.store_id IN (${sql.join(placeholders, sql`, `)})`
+}
+
+async function fetchDashboardStats(
+  startDate: string,
+  endDate: string,
+  authorizedStoreIds: string[]
+) {
   // 권한이 있는 매장이 없으면 빈 결과 반환
   if (authorizedStoreIds.length === 0) {
     return {
@@ -26,11 +62,10 @@ async function fetchDashboardStats(startDate: string, endDate: string, authorize
     }
   }
 
-  // Build store filter for authorized stores
-  const storeIdList = authorizedStoreIds.map(id => `'${id}'`).join(',')
-  const storeFilter = sql.raw(`AND store_id IN (${storeIdList})`)
-  const ptStoreFilter = sql.raw(`AND pt.store_id IN (${storeIdList})`)
-  const srStoreFilter = sql.raw(`AND sr.store_id IN (${storeIdList})`)
+  // Build store filters using parameterized queries (SQL Injection 방지)
+  const storeFilter = buildSimpleStoreFilter(authorizedStoreIds)
+  const ptStoreFilter = buildAliasedStoreFilter(authorizedStoreIds, 'pt')
+  const srStoreFilter = buildAliasedStoreFilter(authorizedStoreIds, 'sr')
 
   // Execute all queries in parallel for better performance
   const [summary, recentPurchases, recentSales] = await Promise.all([

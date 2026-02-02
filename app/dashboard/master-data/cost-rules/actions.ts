@@ -2,20 +2,29 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
-import { costDistributionRules, menuCategories, ingredients } from '@/lib/db/schema'
+import {
+  costDistributionRules,
+  menuCategories,
+  ingredients,
+} from '@/lib/db/schema'
 import { eq, isNull, and, gte, lte, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
+import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
 
 const costRuleSchema = z.object({
   menuId: z.string().uuid('메뉴를 선택해주세요'),
   ingredientId: z.string().uuid('재료를 선택해주세요'),
-  distributionPercent: z.coerce.number().min(0.01, '배분 비율은 0보다 커야 합니다').max(100, '배분 비율은 100% 이하여야 합니다'),
+  distributionPercent: z.coerce
+    .number()
+    .min(0.01, '배분 비율은 0보다 커야 합니다')
+    .max(100, '배분 비율은 100% 이하여야 합니다'),
   effectiveFrom: z.string().min(1, '시작일을 선택해주세요'),
   effectiveTo: z.string().optional().nullable(),
 })
 
 export async function createCostRule(formData: FormData) {
   try {
+    const organizationId = await requireOrganizationId()
     const effectiveTo = formData.get('effectiveTo')
     const rawData = {
       menuId: formData.get('menuId'),
@@ -25,11 +34,13 @@ export async function createCostRule(formData: FormData) {
       effectiveTo: effectiveTo && effectiveTo !== '' ? effectiveTo : null,
     }
 
-
     const validatedData = costRuleSchema.parse(rawData)
 
     // Validate date range
-    if (validatedData.effectiveTo && validatedData.effectiveTo < validatedData.effectiveFrom) {
+    if (
+      validatedData.effectiveTo &&
+      validatedData.effectiveTo < validatedData.effectiveFrom
+    ) {
       return {
         success: false,
         error: '종료일은 시작일 이후여야 합니다',
@@ -45,27 +56,46 @@ export async function createCostRule(formData: FormData) {
         or(
           // New rule starts within existing range
           and(
-            lte(costDistributionRules.effectiveFrom, validatedData.effectiveFrom),
+            lte(
+              costDistributionRules.effectiveFrom,
+              validatedData.effectiveFrom
+            ),
             or(
               sql`${costDistributionRules.effectiveTo} IS NULL`,
-              gte(costDistributionRules.effectiveTo, validatedData.effectiveFrom)
+              gte(
+                costDistributionRules.effectiveTo,
+                validatedData.effectiveFrom
+              )
             )
           ),
           // New rule ends within existing range
-          validatedData.effectiveTo ? and(
-            lte(costDistributionRules.effectiveFrom, validatedData.effectiveTo),
-            or(
-              sql`${costDistributionRules.effectiveTo} IS NULL`,
-              gte(costDistributionRules.effectiveTo, validatedData.effectiveTo)
-            )
-          ) : sql`1=0`,
+          validatedData.effectiveTo
+            ? and(
+                lte(
+                  costDistributionRules.effectiveFrom,
+                  validatedData.effectiveTo
+                ),
+                or(
+                  sql`${costDistributionRules.effectiveTo} IS NULL`,
+                  gte(
+                    costDistributionRules.effectiveTo,
+                    validatedData.effectiveTo
+                  )
+                )
+              )
+            : sql`1=0`,
           // New rule encompasses existing range
           and(
-            gte(costDistributionRules.effectiveFrom, validatedData.effectiveFrom),
-            validatedData.effectiveTo ? lte(
-              sql`COALESCE(${costDistributionRules.effectiveTo}, '9999-12-31')`,
-              validatedData.effectiveTo
-            ) : sql`1=0`
+            gte(
+              costDistributionRules.effectiveFrom,
+              validatedData.effectiveFrom
+            ),
+            validatedData.effectiveTo
+              ? lte(
+                  sql`COALESCE(${costDistributionRules.effectiveTo}, '9999-12-31')`,
+                  validatedData.effectiveTo
+                )
+              : sql`1=0`
           )
         )
       ),
@@ -83,6 +113,7 @@ export async function createCostRule(formData: FormData) {
       .values({
         menuId: validatedData.menuId,
         ingredientId: validatedData.ingredientId,
+        organizationId,
         distributionPercent: validatedData.distributionPercent.toString(),
         effectiveFrom: validatedData.effectiveFrom,
         effectiveTo: validatedData.effectiveTo || null,
@@ -112,13 +143,15 @@ export async function createCostRule(formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '규칙 등록에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '규칙 등록에 실패했습니다',
     }
   }
 }
 
 export async function updateCostRule(id: string, formData: FormData) {
   try {
+    const organizationId = await requireOrganizationId()
     const effectiveTo = formData.get('effectiveTo')
     const rawData = {
       menuId: formData.get('menuId'),
@@ -131,7 +164,10 @@ export async function updateCostRule(id: string, formData: FormData) {
     const validatedData = costRuleSchema.parse(rawData)
 
     // Validate date range
-    if (validatedData.effectiveTo && validatedData.effectiveTo < validatedData.effectiveFrom) {
+    if (
+      validatedData.effectiveTo &&
+      validatedData.effectiveTo < validatedData.effectiveFrom
+    ) {
       return {
         success: false,
         error: '종료일은 시작일 이후여야 합니다',
@@ -149,7 +185,12 @@ export async function updateCostRule(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(eq(costDistributionRules.id, id))
+      .where(
+        and(
+          eq(costDistributionRules.id, id),
+          eq(costDistributionRules.organizationId, organizationId)
+        )
+      )
       .returning()
 
     revalidatePath('/dashboard/master-data/cost-rules')
@@ -174,20 +215,27 @@ export async function updateCostRule(id: string, formData: FormData) {
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : '규칙 수정에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '규칙 수정에 실패했습니다',
     }
   }
 }
 
 export async function deleteCostRule(id: string) {
   try {
+    const organizationId = await requireOrganizationId()
     await db
       .update(costDistributionRules)
       .set({
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(eq(costDistributionRules.id, id))
+      .where(
+        and(
+          eq(costDistributionRules.id, id),
+          eq(costDistributionRules.organizationId, organizationId)
+        )
+      )
 
     revalidatePath('/dashboard/master-data/cost-rules')
     revalidateTag('cost-rules:all')
@@ -202,13 +250,15 @@ export async function deleteCostRule(id: string) {
     console.error('Failed to delete cost distribution rule:', error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : '규칙 삭제에 실패했습니다',
+      error:
+        error instanceof Error ? error.message : '규칙 삭제에 실패했습니다',
     }
   }
 }
 
 export async function getCostRules() {
   try {
+    const organizationId = await getOrganizationId()
     const rules = await db
       .select({
         id: costDistributionRules.id,
@@ -221,9 +271,22 @@ export async function getCostRules() {
         effectiveTo: costDistributionRules.effectiveTo,
       })
       .from(costDistributionRules)
-      .leftJoin(menuCategories, eq(costDistributionRules.menuId, menuCategories.id))
-      .leftJoin(ingredients, eq(costDistributionRules.ingredientId, ingredients.id))
-      .where(isNull(costDistributionRules.deletedAt))
+      .leftJoin(
+        menuCategories,
+        eq(costDistributionRules.menuId, menuCategories.id)
+      )
+      .leftJoin(
+        ingredients,
+        eq(costDistributionRules.ingredientId, ingredients.id)
+      )
+      .where(
+        and(
+          isNull(costDistributionRules.deletedAt),
+          organizationId
+            ? eq(costDistributionRules.organizationId, organizationId)
+            : undefined
+        )
+      )
       .orderBy(menuCategories.menuName, costDistributionRules.effectiveFrom)
 
     return rules
@@ -235,16 +298,22 @@ export async function getCostRules() {
 
 export async function getMenus() {
   try {
+    const organizationId = await getOrganizationId()
     const menus = await db
       .select({
         id: menuCategories.id,
         menuName: menuCategories.menuName,
       })
       .from(menuCategories)
-      .where(and(
-        isNull(menuCategories.deletedAt),
-        eq(menuCategories.isActive, true)
-      ))
+      .where(
+        and(
+          isNull(menuCategories.deletedAt),
+          eq(menuCategories.isActive, true),
+          organizationId
+            ? eq(menuCategories.organizationId, organizationId)
+            : undefined
+        )
+      )
       .orderBy(menuCategories.menuName)
 
     return menus
@@ -256,6 +325,7 @@ export async function getMenus() {
 
 export async function getIngredients() {
   try {
+    const organizationId = await getOrganizationId()
     const ingredientsList = await db
       .select({
         id: ingredients.id,
@@ -263,10 +333,15 @@ export async function getIngredients() {
         unit: ingredients.unit,
       })
       .from(ingredients)
-      .where(and(
-        isNull(ingredients.deletedAt),
-        eq(ingredients.isActive, true)
-      ))
+      .where(
+        and(
+          isNull(ingredients.deletedAt),
+          eq(ingredients.isActive, true),
+          organizationId
+            ? eq(ingredients.organizationId, organizationId)
+            : undefined
+        )
+      )
       .orderBy(ingredients.ingredientName)
 
     return ingredientsList
