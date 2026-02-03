@@ -1,8 +1,7 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { getAllPlans, FEATURES, type FeatureKey } from '@/lib/features'
-import { Check, X, Minus, LayoutDashboard } from 'lucide-react'
-import { getUserContext } from '@/lib/auth-context'
+import { Check, X } from 'lucide-react'
+import PublicHeader from '@/components/public-header'
 
 export const metadata = {
   title: '요금제 - 매장 관리 시스템',
@@ -30,12 +29,8 @@ function formatPrice(price: number): string {
   return `₩${price.toLocaleString('ko-KR')}`
 }
 
-export default async function PricingPage() {
-  const [plans, userContext] = await Promise.all([
-    Promise.resolve(getAllPlans()),
-    getUserContext(),
-  ])
-  const isLoggedIn = userContext.isAuthenticated
+export default function PricingPage() {
+  const plans = getAllPlans()
 
   // Filter out enterprise for main display (show separately)
   const mainPlans = plans.filter((p) => p.id !== 'enterprise')
@@ -44,52 +39,7 @@ export default async function PricingPage() {
   return (
     <div className="min-h-screen bg-brutal-white">
       {/* Header */}
-      <header className="border-b-3 border-brutal-black bg-brutal-white">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="border-2 border-brutal-black bg-brutal-yellow p-2 shadow-brutal-sm">
-                <Image
-                  src="/images/logo.png"
-                  alt="로고"
-                  width={40}
-                  height={40}
-                  className="h-auto w-auto"
-                />
-              </div>
-              <span className="text-xl font-bold text-brutal-black">
-                매장 관리
-              </span>
-            </Link>
-            <div className="flex items-center gap-4">
-              {isLoggedIn ? (
-                <Link
-                  href="/dashboard"
-                  className="flex items-center gap-2 border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                  대시보드
-                </Link>
-              ) : (
-                <>
-                  <Link
-                    href="/login"
-                    className="px-4 py-2 text-sm font-bold text-brutal-black hover:underline"
-                  >
-                    로그인
-                  </Link>
-                  <Link
-                    href="/signup"
-                    className="border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
-                  >
-                    무료로 시작하기
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      <PublicHeader />
 
       {/* Hero */}
       <section className="px-4 py-16 text-center">
