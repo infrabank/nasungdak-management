@@ -103,7 +103,7 @@ describe('purchaseSchema', () => {
 
 describe('storeSchema', () => {
   const validData = {
-    storeName: '나성닭강정 강남점',
+    storeName: '강남점',
     storeCode: 'GANGNAM-01',
     isActive: true,
   }

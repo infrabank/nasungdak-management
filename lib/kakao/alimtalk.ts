@@ -62,7 +62,7 @@ export async function sendInventoryLowAlert(params: {
 }): Promise<boolean> {
   const client = new KakaoAlimtalkClient()
 
-  const message = `[나성닭강정] 재고 부족 알림
+  const message = `[매장 관리] 재고 부족 알림
 
 매장: ${params.storeName}
 재료: ${params.ingredientName}
@@ -136,7 +136,7 @@ export async function sendSyncFailedAlert(params: {
 }): Promise<boolean> {
   const client = new KakaoAlimtalkClient()
 
-  const message = `[나성닭강정] 매출 동기화 실패
+  const message = `[매장 관리] 매출 동기화 실패
 
 매장: ${params.storeName}
 날짜: ${params.syncDate}

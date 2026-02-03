@@ -106,7 +106,7 @@ export default async function InvitePage({ params }: Props) {
             <div className="border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal-lg">
               <Image
                 src="/images/logo.png"
-                alt="나성닭강정 로고"
+                alt="로고"
                 width={80}
                 height={80}
                 className="h-auto w-auto"
@@ -161,7 +161,7 @@ export default async function InvitePage({ params }: Props) {
           <div className="border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal-lg">
             <Image
               src="/images/logo.png"
-              alt="나성닭강정 로고"
+              alt="로고"
               width={80}
               height={80}
               className="h-auto w-auto"

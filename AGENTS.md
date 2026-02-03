@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Next.js 15 + Drizzle ORM Korean restaurant management system (나성닭강정).
+Next.js 15 + Drizzle ORM multi-tenant store management SaaS platform.
 
 ## Commands
 

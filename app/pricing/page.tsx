@@ -4,8 +4,8 @@ import { getAllPlans, FEATURES, type FeatureKey } from '@/lib/features'
 import { Check, X, Minus } from 'lucide-react'
 
 export const metadata = {
-  title: '요금제 - 나성닭강정 관리 시스템',
-  description: '나성닭강정 관리 시스템의 요금제를 확인하세요.',
+  title: '요금제 - 매장 관리 시스템',
+  description: '매장 관리 시스템의 요금제를 확인하세요.',
 }
 
 // Features to highlight in pricing table
@@ -46,14 +46,14 @@ export default function PricingPage() {
               <div className="border-2 border-brutal-black bg-brutal-yellow p-2 shadow-brutal-sm">
                 <Image
                   src="/images/logo.png"
-                  alt="나성닭강정 로고"
+                  alt="로고"
                   width={40}
                   height={40}
                   className="h-auto w-auto"
                 />
               </div>
               <span className="text-xl font-bold text-brutal-black">
-                나성닭강정
+                매장 관리
               </span>
             </Link>
             <div className="flex items-center gap-4">
@@ -355,8 +355,7 @@ export default function PricingPage() {
             지금 바로 시작하세요
           </h2>
           <p className="mt-4 text-lg text-brutal-black/80">
-            14일 무료 체험으로 나성닭강정 관리 시스템의 모든 기능을
-            경험해보세요.
+            14일 무료 체험으로 매장 관리 시스템의 모든 기능을 경험해보세요.
           </p>
           <Link
             href="/signup"
@@ -370,7 +369,7 @@ export default function PricingPage() {
       {/* Footer */}
       <footer className="border-t-3 border-brutal-black bg-brutal-white px-4 py-8">
         <div className="mx-auto max-w-7xl text-center text-sm text-brutal-black/70">
-          <p>© 2024 나성닭강정. All rights reserved.</p>
+          <p>© 2024 매장 관리 시스템. All rights reserved.</p>
         </div>
       </footer>
     </div>

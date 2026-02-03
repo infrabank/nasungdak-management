@@ -26,7 +26,7 @@ export default function SignupPage() {
           <div className="border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal-lg">
             <Image
               src="/images/logo.png"
-              alt="나성닭강정 로고"
+              alt="로고"
               width={100}
               height={100}
               className="h-auto w-auto"
@@ -38,7 +38,7 @@ export default function SignupPage() {
           회원가입
         </h2>
         <p className="mt-3 text-center text-base font-medium text-brutal-black/70">
-          나성닭강정 관리 시스템에 가입하세요
+          매장 관리를 시작하세요
         </p>
       </div>
 

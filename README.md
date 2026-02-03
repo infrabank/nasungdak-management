@@ -1,6 +1,6 @@
-# 나성닭강정 관리 시스템
+# 매장 관리 시스템
 
-치킨 프랜차이즈를 위한 올인원 매장 관리 웹 애플리케이션입니다.
+매입, 판매, 원가를 효율적으로 관리하는 SaaS 플랫폼입니다.
 
 ![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
 ![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react)
@@ -40,8 +40,8 @@
 ### 1. 설치
 
 ```bash
-git clone https://github.com/infrabank/nasungdak-management.git
-cd nasungdak-management
+git clone https://github.com/your-org/store-management-saas.git
+cd store-management-saas
 npm install
 ```
 
@@ -245,4 +245,4 @@ MIT License
 
 ---
 
-**Made with ❤️ for 나성닭강정**
+**Made with ❤️**

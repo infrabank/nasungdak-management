@@ -91,7 +91,7 @@ export default function OnboardingPage() {
           <div className="border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal-lg">
             <Image
               src="/images/logo.png"
-              alt="나성닭강정 로고"
+              alt="로고"
               width={80}
               height={80}
               className="h-auto w-auto"
@@ -144,7 +144,7 @@ export default function OnboardingPage() {
                     required
                     disabled={orgPending}
                     className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
-                    placeholder="나성닭강정 본사"
+                    placeholder="예: 우리회사"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   />
                 </div>
@@ -172,7 +172,7 @@ export default function OnboardingPage() {
                     disabled={orgPending}
                     onChange={handleSlugChange}
                     className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
-                    placeholder="nasung-chicken"
+                    placeholder="my-company"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   />
                   {slugChecking && (
@@ -297,7 +297,7 @@ export default function OnboardingPage() {
                     disabled={storePending}
                     onChange={handleStoreNameChange}
                     className="block w-full appearance-none border-2 border-brutal-black bg-brutal-white px-4 py-3 font-medium text-brutal-black placeholder-brutal-black/50 shadow-brutal-sm transition-all duration-150 focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 disabled:shadow-none sm:text-sm"
-                    placeholder="나성닭강정 강남점"
+                    placeholder="예: 강남점"
                     style={{ minHeight: '48px', fontSize: '16px' }}
                   />
                 </div>

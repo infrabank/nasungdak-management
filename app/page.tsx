@@ -5,10 +5,10 @@ export default function HomePage() {
     <main className="flex min-h-screen flex-col items-center justify-center bg-brutal-white p-24">
       <div className="max-w-2xl text-center">
         <h1 className="mb-8 text-4xl font-black text-brutal-black">
-          나성닭강정 관리 시스템
+          매장 관리 시스템
         </h1>
         <p className="mb-8 text-lg font-medium text-brutal-black/70">
-          나성닭강정 비즈니스 관리 시스템
+          매입, 판매, 원가를 한 곳에서 관리하세요
         </p>
         <div className="flex justify-center">
           <Link

@@ -23,7 +23,7 @@ export default function LoginPage() {
           <div className="border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal-lg">
             <Image
               src="/images/logo.png"
-              alt="나성닭강정 로고"
+              alt="로고"
               width={100}
               height={100}
               className="h-auto w-auto"
@@ -35,7 +35,7 @@ export default function LoginPage() {
           로그인
         </h2>
         <p className="mt-3 text-center text-base font-medium text-brutal-black/70">
-          나성닭강정 관리 시스템
+          매장 관리 시스템
         </p>
       </div>
 

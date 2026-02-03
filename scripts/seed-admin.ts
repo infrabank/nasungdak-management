@@ -48,7 +48,7 @@ async function seedAdmin() {
 
     // 3. 기본 조직 생성 (없으면)
     let org = await db.query.organizations.findFirst({
-      where: eq(organizations.slug, 'nasungdak-default'),
+      where: eq(organizations.slug, 'default-org'),
     })
 
     if (!org) {
@@ -56,8 +56,8 @@ async function seedAdmin() {
       const [newOrg] = await db
         .insert(organizations)
         .values({
-          name: '나성닭강정',
-          slug: 'nasungdak-default',
+          name: '기본 조직',
+          slug: 'default-org',
           plan: 'premium',
           maxStores: 10,
           maxUsers: 50,

@@ -99,7 +99,7 @@ export default function StoreForm({ store }: StoreFormProps) {
                         id="storeName"
                         required
                         defaultValue={store?.storeName}
-                        placeholder="예: 나성닭강정 본점"
+                        placeholder="예: 본점"
                         className="mt-1"
                       />
                     </div>

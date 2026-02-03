@@ -23,7 +23,7 @@ export default async function DashboardLayout({
             <Link href="/dashboard" className="flex items-center">
               <Image
                 src="/images/logo.png"
-                alt="나성닭강정"
+                alt="로고"
                 width={40}
                 height={40}
                 className="h-9 w-auto"
@@ -43,7 +43,7 @@ export default async function DashboardLayout({
               <Link href="/dashboard" className="flex items-center">
                 <Image
                   src="/images/logo.png"
-                  alt="나성닭강정"
+                  alt="로고"
                   width={40}
                   height={40}
                   className="h-10 w-auto"
