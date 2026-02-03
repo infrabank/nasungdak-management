@@ -1,7 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { getAllPlans, FEATURES, type FeatureKey } from '@/lib/features'
-import { Check, X, Minus } from 'lucide-react'
+import { Check, X, Minus, LayoutDashboard } from 'lucide-react'
+import { getUserContext } from '@/lib/auth-context'
 
 export const metadata = {
   title: '요금제 - 매장 관리 시스템',
@@ -29,8 +30,12 @@ function formatPrice(price: number): string {
   return `₩${price.toLocaleString('ko-KR')}`
 }
 
-export default function PricingPage() {
-  const plans = getAllPlans()
+export default async function PricingPage() {
+  const [plans, userContext] = await Promise.all([
+    Promise.resolve(getAllPlans()),
+    getUserContext(),
+  ])
+  const isLoggedIn = userContext.isAuthenticated
 
   // Filter out enterprise for main display (show separately)
   const mainPlans = plans.filter((p) => p.id !== 'enterprise')
@@ -57,18 +62,30 @@ export default function PricingPage() {
               </span>
             </Link>
             <div className="flex items-center gap-4">
-              <Link
-                href="/login"
-                className="px-4 py-2 text-sm font-bold text-brutal-black hover:underline"
-              >
-                로그인
-              </Link>
-              <Link
-                href="/signup"
-                className="border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
-              >
-                무료로 시작하기
-              </Link>
+              {isLoggedIn ? (
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  대시보드
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="px-4 py-2 text-sm font-bold text-brutal-black hover:underline"
+                  >
+                    로그인
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="border-2 border-brutal-black bg-brutal-yellow px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
+                  >
+                    무료로 시작하기
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
