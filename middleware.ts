@@ -26,11 +26,21 @@ const PUBLIC_ROUTES = [
   '/api/auth/refresh', // Refresh endpoint
 ]
 
+// Exact match public routes (not prefix match)
+const PUBLIC_ROUTES_EXACT = [
+  '/', // Home page
+]
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Allow access to public routes
+  // Allow access to public routes (prefix match)
   if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
+    return NextResponse.next()
+  }
+
+  // Allow access to exact match public routes
+  if (PUBLIC_ROUTES_EXACT.includes(pathname)) {
     return NextResponse.next()
   }
 
