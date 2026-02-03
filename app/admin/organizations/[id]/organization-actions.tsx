@@ -10,7 +10,12 @@ import {
 } from '../../actions'
 import { toast } from 'sonner'
 import { Power, Trash2, Clock, CreditCard, AlertTriangle } from 'lucide-react'
-import { PLANS, type PlanType } from '@/lib/features'
+import {
+  PLANS,
+  type PlanType,
+  normalizePlanType,
+  getPlanConfig,
+} from '@/lib/features'
 
 interface Props {
   organization: {
@@ -181,7 +186,9 @@ function PlanModal({
   onClose: () => void
   onSuccess: () => void
 }) {
-  const [selectedPlan, setSelectedPlan] = useState(organization.plan)
+  const [selectedPlan, setSelectedPlan] = useState(
+    normalizePlanType(organization.plan)
+  )
   const [maxStores, setMaxStores] = useState(organization.maxStores)
   const [maxUsers, setMaxUsers] = useState(organization.maxUsers)
   const [isLoading, setIsLoading] = useState(false)

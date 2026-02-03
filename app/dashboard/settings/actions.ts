@@ -14,7 +14,12 @@ import {
 import { eq, and, isNull, desc, gte } from 'drizzle-orm'
 import { z } from 'zod'
 import { revalidatePath, revalidateTag } from 'next/cache'
-import { PLANS, type PlanType } from '@/lib/features'
+import {
+  PLANS,
+  type PlanType,
+  normalizePlanType,
+  getPlanConfig,
+} from '@/lib/features'
 import { createBillingPortalSession, createCheckoutSession } from '@/lib/stripe'
 import crypto from 'crypto'
 
@@ -148,7 +153,8 @@ export async function getOrganizationSettings() {
     ),
   })
 
-  const planInfo = PLANS[org.plan as PlanType] || PLANS.free
+  const normalizedPlan = normalizePlanType(org.plan || 'free')
+  const planInfo = getPlanConfig(normalizedPlan)
 
   return {
     organization: {
@@ -156,7 +162,7 @@ export async function getOrganizationSettings() {
       name: org.name,
       slug: org.slug,
       logoUrl: org.logoUrl,
-      plan: org.plan as PlanType,
+      plan: normalizedPlan,
       planName: planInfo.nameKo,
       maxStores: org.maxStores,
       maxUsers: org.maxUsers,

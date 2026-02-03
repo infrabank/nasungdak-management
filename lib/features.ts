@@ -61,6 +61,38 @@ export const PLANS = {
 
 export type PlanType = keyof typeof PLANS
 
+// 이전 플랜명 → 새 플랜명 매핑 (하위 호환성)
+const LEGACY_PLAN_MAPPING: Record<string, PlanType> = {
+  basic: 'starter',
+  standard: 'growth',
+  premium: 'pro',
+}
+
+/**
+ * 플랜명 정규화 (이전 플랜명을 새 플랜명으로 변환)
+ * DB에 저장된 이전 플랜명(basic, standard, premium)을 새 플랜명으로 매핑
+ */
+export function normalizePlanType(plan: string): PlanType {
+  // 새 플랜명이면 그대로 반환
+  if (plan in PLANS) {
+    return plan as PlanType
+  }
+  // 이전 플랜명이면 매핑
+  if (plan in LEGACY_PLAN_MAPPING) {
+    return LEGACY_PLAN_MAPPING[plan]
+  }
+  // 알 수 없는 플랜이면 free 반환
+  return 'free'
+}
+
+/**
+ * 플랜 정보 조회 (이전 플랜명 지원)
+ */
+export function getPlanConfig(plan: string) {
+  const normalizedPlan = normalizePlanType(plan)
+  return PLANS[normalizedPlan]
+}
+
 // 기능 키 정의
 export const FEATURES = {
   // 기본 기능

@@ -13,6 +13,7 @@ import {
   DEFAULT_PLAN_FEATURES,
   type PlanType,
   type FeatureKey,
+  normalizePlanType,
 } from '@/lib/features'
 
 /**
@@ -135,7 +136,7 @@ export async function checkUsageLimit(
     }
   }
 
-  const plan = org.plan as PlanType
+  const plan = normalizePlanType(org.plan || 'free')
   const limit = getMetricLimit(plan, metricType)
 
   // No limit

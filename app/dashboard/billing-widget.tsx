@@ -8,7 +8,12 @@ import {
   subscriptions,
 } from '@/lib/db/schema'
 import { eq, and, isNull, desc } from 'drizzle-orm'
-import { PLANS, type PlanType } from '@/lib/features'
+import {
+  PLANS,
+  type PlanType,
+  normalizePlanType,
+  getPlanConfig,
+} from '@/lib/features'
 import { CreditCard, AlertTriangle, ArrowRight } from 'lucide-react'
 
 const SESSION_SECRET = new TextEncoder().encode(
@@ -54,7 +59,8 @@ async function getBillingInfo() {
     orderBy: desc(subscriptions.createdAt),
   })
 
-  const planInfo = PLANS[org.plan as PlanType] || PLANS.free
+  const normalizedPlan = normalizePlanType(org.plan || 'free')
+  const planInfo = getPlanConfig(normalizedPlan)
 
   const isTrial = org.trialEndsAt && new Date(org.trialEndsAt) > new Date()
   const trialDaysLeft = isTrial
@@ -65,7 +71,7 @@ async function getBillingInfo() {
     : 0
 
   return {
-    plan: org.plan as PlanType,
+    plan: normalizedPlan,
     planName: planInfo.nameKo,
     isTrial,
     trialDaysLeft,
