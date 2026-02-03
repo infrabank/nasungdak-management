@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Suspense } from 'react'
-import { Settings } from 'lucide-react'
+import { Settings, HelpCircle } from 'lucide-react'
 import AccordionMenu from './accordion-menu'
 import LogoutButton from './logout-button'
 import StoreSelector from './store-selector'
@@ -49,6 +49,14 @@ export default async function DashboardLayout({
                 <StoreSelector stores={stores} mobile />
               </Suspense>
               <Link
+                href="/guide"
+                className="border-2 border-brutal-black bg-brutal-white p-1.5 text-brutal-black shadow-brutal-sm"
+                title="설정 가이드"
+                target="_blank"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </Link>
+              <Link
                 href="/dashboard/settings"
                 className="border-2 border-brutal-black bg-brutal-white p-1.5 text-brutal-black shadow-brutal-sm"
                 title="설정"
@@ -88,6 +96,14 @@ export default async function DashboardLayout({
               >
                 <StoreSelector stores={stores} />
               </Suspense>
+              <Link
+                href="/guide"
+                className="border-2 border-brutal-black bg-brutal-white p-2 text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal"
+                title="설정 가이드"
+                target="_blank"
+              >
+                <HelpCircle className="h-5 w-5" />
+              </Link>
               <Link
                 href="/dashboard/settings"
                 className="border-2 border-brutal-black bg-brutal-white p-2 text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal"

@@ -114,6 +114,16 @@ export default function LoginPage() {
               </Link>
             </p>
           </div>
+
+          {/* Guide link */}
+          <div className="mt-4 text-center">
+            <Link
+              href="/guide"
+              className="text-sm font-medium text-brutal-black/50 underline underline-offset-2 transition-colors hover:text-brutal-black"
+            >
+              처음이신가요? 설정 가이드 보기
+            </Link>
+          </div>
         </div>
       </div>
     </div>
