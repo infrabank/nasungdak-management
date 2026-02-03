@@ -18,6 +18,7 @@ const PUBLIC_ROUTES = [
   '/signup',
   '/onboarding',
   '/pricing',
+  '/guide',
   '/invite',
   '/api/webhooks',
   '/api/health',
