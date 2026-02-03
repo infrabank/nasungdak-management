@@ -336,7 +336,7 @@ export default function PricingPage() {
       {/* Footer */}
       <footer className="border-t-3 border-brutal-black bg-brutal-white px-4 py-8">
         <div className="mx-auto max-w-7xl text-center text-sm text-brutal-black/70">
-          <p>© 2024 매장 관리 시스템. All rights reserved.</p>
+          <p>© 2026 매장 관리 시스템. All rights reserved.</p>
         </div>
       </footer>
     </div>
