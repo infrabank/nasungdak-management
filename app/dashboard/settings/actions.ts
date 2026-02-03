@@ -34,6 +34,16 @@ const updateOrgSchema = z.object({
   billingName: z.string().optional().nullable(),
 })
 
+// Schema for branding update
+const updateBrandingSchema = z.object({
+  logoUrl: z
+    .string()
+    .url('올바른 URL 형식이 아닙니다')
+    .max(500)
+    .optional()
+    .or(z.literal('')),
+})
+
 // Schema for invitation
 const inviteSchema = z.object({
   email: z.string().email('올바른 이메일 형식이 아닙니다'),
@@ -145,6 +155,7 @@ export async function getOrganizationSettings() {
       id: org.id,
       name: org.name,
       slug: org.slug,
+      logoUrl: org.logoUrl,
       plan: org.plan as PlanType,
       planName: planInfo.nameKo,
       maxStores: org.maxStores,
@@ -491,5 +502,52 @@ export async function createUpgradeCheckout(
   } catch (error) {
     console.error('Checkout error:', error)
     return { success: false, error: '결제 페이지를 열 수 없습니다' }
+  }
+}
+
+/**
+ * Update organization branding (logo URL)
+ */
+export async function updateBranding(
+  _prevState: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  try {
+    const userId = await getCurrentUserId()
+    if (!userId) return { success: false, error: '로그인이 필요합니다' }
+
+    const membership = await getUserOrganization(userId)
+    if (!membership) return { success: false, error: '조직을 찾을 수 없습니다' }
+
+    // Only owner/admin can update branding
+    if (!['owner', 'admin'].includes(membership.role)) {
+      return { success: false, error: '수정 권한이 없습니다' }
+    }
+
+    const rawData = {
+      logoUrl: (formData.get('logoUrl') as string) || '',
+    }
+
+    const result = updateBrandingSchema.safeParse(rawData)
+    if (!result.success) {
+      return { success: false, error: result.error.issues[0].message }
+    }
+
+    await db
+      .update(organizations)
+      .set({
+        logoUrl: result.data.logoUrl || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(organizations.id, membership.organization.id))
+
+    revalidatePath('/dashboard/settings')
+    revalidatePath('/dashboard')
+    revalidateTag(`org:${membership.organization.id}`)
+
+    return { success: true }
+  } catch (error) {
+    console.error('Update branding error:', error)
+    return { success: false, error: '저장 중 오류가 발생했습니다' }
   }
 }

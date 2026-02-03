@@ -3,7 +3,11 @@
 import { cookies } from 'next/headers'
 import { jwtVerify } from 'jose'
 import { db } from '@/lib/db'
-import { userStoreAssignments, organizationMembers } from '@/lib/db/schema'
+import {
+  userStoreAssignments,
+  organizationMembers,
+  organizations,
+} from '@/lib/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 import { SESSION_SECRET, SESSION_COOKIE_NAME } from '@/lib/auth/constants'
 
@@ -123,4 +127,48 @@ export async function requireOrganizationId(): Promise<string> {
     throw new Error('조직 정보가 없습니다. 다시 로그인해주세요.')
   }
   return orgId
+}
+
+/**
+ * 조직 브랜딩 정보 타입
+ */
+export interface OrganizationBranding {
+  id: string
+  name: string
+  logoUrl: string | null
+}
+
+/**
+ * 사용자의 조직 브랜딩 정보 (이름, 로고)를 반환합니다.
+ * 인증되지 않았거나 조직이 없으면 null을 반환합니다.
+ */
+export async function getOrganizationBranding(): Promise<OrganizationBranding | null> {
+  const orgId = await getOrganizationId()
+  if (!orgId) {
+    return null
+  }
+
+  try {
+    const org = await db.query.organizations.findFirst({
+      where: and(eq(organizations.id, orgId), isNull(organizations.deletedAt)),
+      columns: {
+        id: true,
+        name: true,
+        logoUrl: true,
+      },
+    })
+
+    if (!org) {
+      return null
+    }
+
+    return {
+      id: org.id,
+      name: org.name,
+      logoUrl: org.logoUrl,
+    }
+  } catch (error) {
+    console.error('Get organization branding error:', error)
+    return null
+  }
 }

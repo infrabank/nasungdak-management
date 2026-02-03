@@ -2,7 +2,6 @@
 
 import { useActionState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { signup, type SignupState } from './actions'
 
@@ -22,19 +21,7 @@ export default function SignupPage() {
   return (
     <div className="flex min-h-screen flex-col justify-center bg-brutal-white py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="flex justify-center">
-          <div className="border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal-lg">
-            <Image
-              src="/images/logo.png"
-              alt="로고"
-              width={100}
-              height={100}
-              className="h-auto w-auto"
-              priority
-            />
-          </div>
-        </div>
-        <h2 className="mt-8 text-center text-4xl font-bold tracking-tight text-brutal-black">
+        <h2 className="text-center text-4xl font-bold tracking-tight text-brutal-black">
           회원가입
         </h2>
         <p className="mt-3 text-center text-base font-medium text-brutal-black/70">

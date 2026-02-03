@@ -6,13 +6,17 @@ import LogoutButton from './logout-button'
 import StoreSelector from './store-selector'
 import MobileBottomNav from './mobile-bottom-nav'
 import { getActiveStores } from './stores/actions'
+import { getOrganizationBranding } from '@/lib/auth-context'
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const stores = await getActiveStores()
+  const [stores, branding] = await Promise.all([
+    getActiveStores(),
+    getOrganizationBranding(),
+  ])
 
   return (
     <div className="min-h-screen bg-brutal-white pb-[env(safe-area-inset-bottom)] lg:pb-0">
@@ -21,13 +25,19 @@ export default async function DashboardLayout({
           {/* Mobile Header */}
           <div className="flex h-14 items-center justify-between lg:hidden">
             <Link href="/dashboard" className="flex items-center">
-              <Image
-                src="/images/logo.png"
-                alt="로고"
-                width={40}
-                height={40}
-                className="h-9 w-auto"
-              />
+              {branding?.logoUrl ? (
+                <Image
+                  src={branding.logoUrl}
+                  alt={branding.name}
+                  width={40}
+                  height={40}
+                  className="h-9 w-auto"
+                />
+              ) : (
+                <span className="text-lg font-black text-brutal-black">
+                  {branding?.name || '매장 관리'}
+                </span>
+              )}
             </Link>
             <Suspense
               fallback={
@@ -41,13 +51,19 @@ export default async function DashboardLayout({
           <div className="hidden h-16 justify-between lg:flex">
             <div className="flex">
               <Link href="/dashboard" className="flex items-center">
-                <Image
-                  src="/images/logo.png"
-                  alt="로고"
-                  width={40}
-                  height={40}
-                  className="h-10 w-auto"
-                />
+                {branding?.logoUrl ? (
+                  <Image
+                    src={branding.logoUrl}
+                    alt={branding.name}
+                    width={40}
+                    height={40}
+                    className="h-10 w-auto"
+                  />
+                ) : (
+                  <span className="text-xl font-black text-brutal-black">
+                    {branding?.name || '매장 관리'}
+                  </span>
+                )}
               </Link>
               <div className="ml-10 flex items-center">
                 <AccordionMenu />
