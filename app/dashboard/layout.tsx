@@ -55,6 +55,7 @@ export default async function DashboardLayout({
               >
                 <Settings className="h-5 w-5" />
               </Link>
+              <LogoutButton variant="compact" />
             </div>
           </div>
 
