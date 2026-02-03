@@ -1,6 +1,15 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { getUserContext } from '@/lib/auth-context'
 
-export default function HomePage() {
+export default async function HomePage() {
+  const userContext = await getUserContext()
+
+  // 로그인된 사용자는 대시보드로 리다이렉트
+  if (userContext.isAuthenticated) {
+    redirect('/dashboard')
+  }
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-brutal-white p-24">
       <div className="max-w-2xl text-center">
