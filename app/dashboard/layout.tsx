@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Suspense } from 'react'
+import { Settings } from 'lucide-react'
 import AccordionMenu from './accordion-menu'
 import LogoutButton from './logout-button'
 import StoreSelector from './store-selector'
@@ -39,13 +40,22 @@ export default async function DashboardLayout({
                 </span>
               )}
             </Link>
-            <Suspense
-              fallback={
-                <div className="h-8 w-24 animate-pulse border-2 border-brutal-black bg-brutal-white" />
-              }
-            >
-              <StoreSelector stores={stores} mobile />
-            </Suspense>
+            <div className="flex items-center gap-2">
+              <Suspense
+                fallback={
+                  <div className="h-8 w-24 animate-pulse border-2 border-brutal-black bg-brutal-white" />
+                }
+              >
+                <StoreSelector stores={stores} mobile />
+              </Suspense>
+              <Link
+                href="/dashboard/settings"
+                className="border-2 border-brutal-black bg-brutal-white p-1.5 text-brutal-black shadow-brutal-sm"
+                title="설정"
+              >
+                <Settings className="h-5 w-5" />
+              </Link>
+            </div>
           </div>
 
           <div className="hidden h-16 justify-between lg:flex">
@@ -77,6 +87,13 @@ export default async function DashboardLayout({
               >
                 <StoreSelector stores={stores} />
               </Suspense>
+              <Link
+                href="/dashboard/settings"
+                className="border-2 border-brutal-black bg-brutal-white p-2 text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal"
+                title="설정"
+              >
+                <Settings className="h-5 w-5" />
+              </Link>
               <LogoutButton />
             </div>
           </div>
