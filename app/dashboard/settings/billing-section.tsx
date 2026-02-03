@@ -212,7 +212,7 @@ export default function BillingSection({
         <div className="border-2 border-brutal-black p-4">
           <h3 className="mb-4 font-bold text-brutal-black">빠른 업그레이드</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {(['basic', 'standard', 'premium'] as PlanType[]).map((plan) => (
+            {(['starter', 'growth', 'pro'] as PlanType[]).map((plan) => (
               <button
                 key={plan}
                 onClick={() => handleUpgrade(plan)}

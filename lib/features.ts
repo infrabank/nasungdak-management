@@ -9,7 +9,8 @@ import { unstable_cache } from 'next/cache'
  * 플랜별 기능 제한을 관리합니다.
  */
 
-// 플랜 정의
+// 플랜 정의 (2026년 가격 개편)
+// 글로벌 SaaS 가격 전략 기반 - 진입장벽 낮추고 단계별 성장 지원
 export const PLANS = {
   free: {
     name: 'Free',
@@ -18,34 +19,34 @@ export const PLANS = {
     priceYearly: 0,
     maxStores: 1,
     maxUsers: 1,
-    description: '소규모 매장을 위한 기본 기능',
+    description: '시작하는 소규모 매장을 위한 필수 기능',
   },
-  basic: {
-    name: 'Basic',
-    nameKo: '베이직',
-    priceMonthly: 29000,
-    priceYearly: 290000,
+  starter: {
+    name: 'Starter',
+    nameKo: '스타터',
+    priceMonthly: 19000,
+    priceYearly: 190000, // 약 17% 할인
     maxStores: 1,
     maxUsers: 3,
-    description: '성장하는 매장을 위한 확장 기능',
+    description: '성장하는 매장을 위한 분석 기능',
   },
-  standard: {
-    name: 'Standard',
-    nameKo: '스탠다드',
-    priceMonthly: 79000,
-    priceYearly: 790000,
+  growth: {
+    name: 'Growth',
+    nameKo: '그로스',
+    priceMonthly: 49000,
+    priceYearly: 470000, // 20% 할인
     maxStores: 3,
     maxUsers: 10,
-    description: '다매장 운영을 위한 통합 관리',
+    description: '다매장 확장을 위한 통합 관리',
   },
-  premium: {
-    name: 'Premium',
-    nameKo: '프리미엄',
-    priceMonthly: 199000,
-    priceYearly: 1990000,
-    maxStores: -1, // 무제한
+  pro: {
+    name: 'Pro',
+    nameKo: '프로',
+    priceMonthly: 99000,
+    priceYearly: 950000, // 20% 할인
+    maxStores: 10,
     maxUsers: -1, // 무제한
-    description: '대규모 프랜차이즈를 위한 프리미엄 기능',
+    description: '프랜차이즈를 위한 고급 기능',
   },
   enterprise: {
     name: 'Enterprise',
@@ -54,7 +55,7 @@ export const PLANS = {
     priceYearly: -1,
     maxStores: -1,
     maxUsers: -1,
-    description: '맞춤형 기업 솔루션',
+    description: '대기업 맞춤형 솔루션',
   },
 } as const
 
@@ -101,11 +102,11 @@ export const DEFAULT_PLAN_FEATURES: Record<
   free: {
     features: ['purchases', 'sales', 'master-data'],
     limits: {
-      purchases: 100, // 월 100건
-      sales: 100,
+      purchases: 50, // 월 50건 (진입 유도)
+      sales: 50,
     },
   },
-  basic: {
+  starter: {
     features: [
       'purchases',
       'sales',
@@ -115,11 +116,11 @@ export const DEFAULT_PLAN_FEATURES: Record<
       'csv-import',
     ],
     limits: {
-      purchases: 1000,
-      sales: 1000,
+      purchases: 500, // 월 500건
+      sales: 500,
     },
   },
-  standard: {
+  growth: {
     features: [
       'purchases',
       'sales',
@@ -134,8 +135,9 @@ export const DEFAULT_PLAN_FEATURES: Record<
       'csv-export',
       'multi-store',
     ],
+    // 무제한
   },
-  premium: {
+  pro: {
     features: [
       'purchases',
       'sales',
@@ -153,6 +155,7 @@ export const DEFAULT_PLAN_FEATURES: Record<
       'custom-reports',
       'webhooks',
     ],
+    // 무제한
   },
   enterprise: {
     features: Object.keys(FEATURES) as FeatureKey[],
@@ -298,9 +301,9 @@ export function canUpgradeTo(
 ): boolean {
   const planOrder: PlanType[] = [
     'free',
-    'basic',
-    'standard',
-    'premium',
+    'starter',
+    'growth',
+    'pro',
     'enterprise',
   ]
   return planOrder.indexOf(targetPlan) > planOrder.indexOf(currentPlan)

@@ -91,7 +91,7 @@ export default function PricingPage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
             {mainPlans.map((plan, index) => {
-              const isPopular = plan.id === 'standard'
+              const isPopular = plan.id === 'growth'
               return (
                 <div
                   key={plan.id}
@@ -325,7 +325,7 @@ export default function PricingPage() {
               },
               {
                 q: '연간 결제 시 할인이 있나요?',
-                a: '네, 연간 결제 시 약 16% 할인된 가격으로 이용할 수 있습니다.',
+                a: '네, 연간 결제 시 최대 20% 할인된 가격으로 이용할 수 있습니다.',
               },
               {
                 q: '결제 방법은 무엇인가요?',

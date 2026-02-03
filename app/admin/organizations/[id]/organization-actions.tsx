@@ -211,9 +211,9 @@ function PlanModal({
 
   const planOptions = [
     'free',
-    'basic',
-    'standard',
-    'premium',
+    'starter',
+    'growth',
+    'pro',
     'enterprise',
   ] as const
 
