@@ -11,6 +11,12 @@ const nextConfig = {
   // 이미지 최적화 설정
   images: {
     formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.public.blob.vercel-storage.com',
+      },
+    ],
   },
 
   // 빌드 최적화
