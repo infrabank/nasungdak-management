@@ -86,7 +86,7 @@ export default function PricingPage() {
                   </ul>
                 </div>
                 <Link
-                  href="mailto:enterprise@nasungchicken.com"
+                  href="mailto:jhw@mlkit.co.kr"
                   className="flex-shrink-0 border-2 border-brutal-yellow bg-brutal-yellow px-8 py-3 text-base font-bold text-brutal-black transition-colors hover:bg-brutal-white"
                 >
                   영업팀 문의

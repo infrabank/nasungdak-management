@@ -262,7 +262,7 @@ export default function PricingCards({
                 )}
               </div>
               <Link
-                href="mailto:sales@nasungchicken.com?subject=프로 플랜 문의"
+                href="mailto:jhw@mlkit.co.kr?subject=프로 플랜 문의"
                 className="mt-2 border-2 border-brutal-black bg-brutal-yellow px-8 py-3 text-base font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
               >
                 맞춤 견적 문의
