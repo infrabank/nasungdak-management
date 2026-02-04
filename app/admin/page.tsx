@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getAdminStats, getOrganizations } from './actions'
+import { getAdminStats } from './actions'
 import {
   Building2,
   Store,
@@ -7,75 +7,17 @@ import {
   CreditCard,
   Clock,
   CheckCircle,
-  XCircle,
-  AlertCircle,
+  ArrowRight,
 } from 'lucide-react'
 
 export default async function AdminDashboardPage() {
-  const [stats, organizations] = await Promise.all([
-    getAdminStats(),
-    getOrganizations(),
-  ])
+  const stats = await getAdminStats()
 
   if (!stats) {
     return (
       <div className="py-12 text-center">
         <p className="text-brutal-black/70">접근 권한이 없습니다</p>
       </div>
-    )
-  }
-
-  const formatDate = (date: Date | null) => {
-    if (!date) return '-'
-    return new Date(date).toLocaleDateString('ko-KR', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
-  }
-
-  const getPlanBadgeColor = (plan: string) => {
-    switch (plan) {
-      case 'free':
-        return 'bg-gray-100 text-gray-800'
-      case 'basic':
-        return 'bg-blue-100 text-blue-800'
-      case 'standard':
-        return 'bg-green-100 text-green-800'
-      case 'premium':
-        return 'bg-purple-100 text-purple-800'
-      case 'enterprise':
-        return 'bg-yellow-100 text-yellow-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getStatusBadge = (
-    isActive: boolean,
-    subscriptionStatus: string | null
-  ) => {
-    if (!isActive) {
-      return (
-        <span className="inline-flex items-center gap-1 border border-red-300 bg-red-100 px-2 py-1 text-xs font-bold text-red-800">
-          <XCircle className="h-3 w-3" />
-          비활성
-        </span>
-      )
-    }
-    if (subscriptionStatus === 'active') {
-      return (
-        <span className="inline-flex items-center gap-1 border border-green-300 bg-green-100 px-2 py-1 text-xs font-bold text-green-800">
-          <CheckCircle className="h-3 w-3" />
-          구독중
-        </span>
-      )
-    }
-    return (
-      <span className="inline-flex items-center gap-1 border border-yellow-300 bg-yellow-100 px-2 py-1 text-xs font-bold text-yellow-800">
-        <Clock className="h-3 w-3" />
-        체험중
-      </span>
     )
   }
 
@@ -154,113 +96,56 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Organizations Table */}
-      <div className="border-3 border-brutal-black bg-brutal-white shadow-brutal">
-        <div className="border-b-2 border-brutal-black bg-brutal-yellow/20 px-6 py-4">
-          <h2 className="text-lg font-bold text-brutal-black">
-            조직 목록 ({organizations.length})
-          </h2>
-        </div>
+      {/* Quick Links */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <Link
+          href="/admin/organizations"
+          className="group border-3 border-brutal-black bg-brutal-white p-6 shadow-brutal transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-brutal-lg"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center border-2 border-brutal-black bg-brutal-yellow">
+                  <Building2 className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-brutal-black">
+                    조직 관리
+                  </h3>
+                  <p className="text-sm text-brutal-black/70">
+                    {stats.totalOrganizations}개 조직 ·{' '}
+                    {stats.activeOrganizations}개 활성
+                  </p>
+                </div>
+              </div>
+            </div>
+            <ArrowRight className="h-6 w-6 text-brutal-black/50 transition-transform group-hover:translate-x-1" />
+          </div>
+        </Link>
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-brutal-bg border-b-2 border-brutal-black">
-                <th className="px-4 py-3 text-left text-sm font-bold text-brutal-black">
-                  조직명
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-brutal-black">
-                  플랜
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-brutal-black">
-                  상태
-                </th>
-                <th className="px-4 py-3 text-center text-sm font-bold text-brutal-black">
-                  매장
-                </th>
-                <th className="px-4 py-3 text-center text-sm font-bold text-brutal-black">
-                  멤버
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-brutal-black">
-                  체험 종료
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-brutal-black">
-                  가입일
-                </th>
-                <th className="px-4 py-3 text-center text-sm font-bold text-brutal-black">
-                  관리
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {organizations.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={8}
-                    className="px-4 py-8 text-center text-brutal-black/50"
-                  >
-                    등록된 조직이 없습니다
-                  </td>
-                </tr>
-              ) : (
-                organizations.map((org) => (
-                  <tr
-                    key={org.id}
-                    className="border-b border-brutal-black/20 transition-colors hover:bg-brutal-yellow/5"
-                  >
-                    <td className="px-4 py-3">
-                      <div>
-                        <div className="font-bold text-brutal-black">
-                          {org.name}
-                        </div>
-                        <div className="text-xs text-brutal-black/50">
-                          {org.slug}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-block px-2 py-1 text-xs font-bold uppercase ${getPlanBadgeColor(org.plan)}`}
-                      >
-                        {org.plan}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {getStatusBadge(org.isActive, org.subscriptionStatus)}
-                    </td>
-                    <td className="px-4 py-3 text-center font-bold">
-                      {org.storeCount}
-                    </td>
-                    <td className="px-4 py-3 text-center font-bold">
-                      {org.memberCount}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-brutal-black/70">
-                      {org.trialEndsAt &&
-                      new Date(org.trialEndsAt) > new Date() ? (
-                        <span className="font-medium text-yellow-600">
-                          {formatDate(org.trialEndsAt)}
-                        </span>
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-brutal-black/70">
-                      {formatDate(org.createdAt)}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <Link
-                        href={`/admin/organizations/${org.id}`}
-                        className="inline-block border-2 border-brutal-black bg-brutal-yellow px-3 py-1 text-sm font-bold text-brutal-black shadow-brutal transition-all hover:shadow-brutal-lg"
-                      >
-                        상세
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Link
+          href="/admin/users"
+          className="group border-3 border-brutal-black bg-brutal-white p-6 shadow-brutal transition-all hover:-translate-x-1 hover:-translate-y-1 hover:shadow-brutal-lg"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center border-2 border-brutal-black bg-brutal-pink">
+                  <Users className="h-6 w-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-brutal-black">
+                    사용자 관리
+                  </h3>
+                  <p className="text-sm text-brutal-black/70">
+                    {stats.totalUsers}명 사용자
+                  </p>
+                </div>
+              </div>
+            </div>
+            <ArrowRight className="h-6 w-6 text-brutal-black/50 transition-transform group-hover:translate-x-1" />
+          </div>
+        </Link>
       </div>
     </div>
   )
