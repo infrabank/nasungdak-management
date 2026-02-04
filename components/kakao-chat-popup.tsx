@@ -132,7 +132,7 @@ export default function KakaoChatPopup() {
 
           {/* 카카오톡 링크 버튼 */}
           <a
-            href="https://open.kakao.com/o/gT3K1Rei"
+            href="https://open.kakao.com/o/g16acSei"
             target="_blank"
             rel="noopener noreferrer"
             className="mt-4 flex w-full items-center justify-center gap-2 border-2 border-brutal-black bg-[#FEE500] px-4 py-3 font-bold text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
