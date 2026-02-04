@@ -441,3 +441,150 @@ export async function extendTrial(
     }
   }
 }
+
+// =====================
+// 사용자 관리 함수
+// =====================
+
+export interface UserListItem {
+  id: string
+  email: string
+  name: string
+  phone: string | null
+  isActive: boolean
+  lastLoginAt: Date | null
+  createdAt: Date
+  organizations: {
+    id: string
+    name: string
+    role: string
+  }[]
+}
+
+/**
+ * 전체 사용자 목록 조회
+ */
+export async function getUsers(): Promise<UserListItem[]> {
+  try {
+    await requireSuperAdmin()
+
+    const userList = await db.query.users.findMany({
+      where: isNull(users.deletedAt),
+      orderBy: desc(users.createdAt),
+    })
+
+    const result: UserListItem[] = []
+
+    for (const user of userList) {
+      // 사용자가 속한 조직 목록
+      const memberships = await db
+        .select({
+          organizationId: organizationMembers.organizationId,
+          role: organizationMembers.role,
+          organizationName: organizations.name,
+        })
+        .from(organizationMembers)
+        .innerJoin(
+          organizations,
+          eq(organizationMembers.organizationId, organizations.id)
+        )
+        .where(
+          and(
+            eq(organizationMembers.userId, user.id),
+            isNull(organizationMembers.deletedAt),
+            isNull(organizations.deletedAt)
+          )
+        )
+
+      result.push({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone,
+        isActive: user.isActive,
+        lastLoginAt: user.lastLoginAt,
+        createdAt: user.createdAt,
+        organizations: memberships.map((m) => ({
+          id: m.organizationId,
+          name: m.organizationName,
+          role: m.role,
+        })),
+      })
+    }
+
+    return result
+  } catch (error) {
+    console.error('Get users error:', error)
+    return []
+  }
+}
+
+/**
+ * 사용자 활성화/비활성화
+ */
+export async function toggleUserStatus(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireSuperAdmin()
+
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+    })
+
+    if (!user) {
+      return { success: false, error: '사용자를 찾을 수 없습니다' }
+    }
+
+    await db
+      .update(users)
+      .set({
+        isActive: !user.isActive,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+
+    revalidatePath('/admin')
+    revalidatePath('/admin/users')
+
+    return { success: true }
+  } catch (error) {
+    console.error('Toggle user status error:', error)
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : '처리 중 오류가 발생했습니다',
+    }
+  }
+}
+
+/**
+ * 사용자 삭제 (soft delete)
+ */
+export async function deleteUser(
+  userId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireSuperAdmin()
+
+    await db
+      .update(users)
+      .set({
+        deletedAt: new Date(),
+        isActive: false,
+      })
+      .where(eq(users.id, userId))
+
+    revalidatePath('/admin')
+    revalidatePath('/admin/users')
+
+    return { success: true }
+  } catch (error) {
+    console.error('Delete user error:', error)
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : '처리 중 오류가 발생했습니다',
+    }
+  }
+}

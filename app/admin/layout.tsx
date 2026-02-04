@@ -75,6 +75,15 @@ export default async function AdminLayout({
                 조직 관리
               </Link>
             </li>
+            <li>
+              <Link
+                href="/admin/users"
+                className="inline-flex items-center gap-2 border-2 border-brutal-black bg-brutal-white px-4 py-2 text-sm font-bold text-brutal-black shadow-brutal transition-colors hover:bg-brutal-yellow"
+              >
+                <Users className="h-4 w-4" />
+                사용자 관리
+              </Link>
+            </li>
           </ul>
         </nav>
 
