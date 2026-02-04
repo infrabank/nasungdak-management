@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { getUserContext } from '@/lib/auth-context'
 import PublicHeader from '@/components/public-header'
+import KakaoChatPopup from '@/components/kakao-chat-popup'
 
 const features = [
   {
@@ -133,6 +134,7 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-brutal-white">
       <PublicHeader />
+      <KakaoChatPopup />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b-3 border-brutal-black bg-brutal-yellow px-4 py-16 sm:py-24">
