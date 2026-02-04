@@ -66,6 +66,11 @@ export default function CSVUpload({ storeId }: CSVUploadProps) {
   }
 
   const handleUpload = async () => {
+    if (!storeId) {
+      toast.error('매장을 먼저 선택해주세요. 상단 필터에서 매장을 선택하세요.')
+      return
+    }
+
     if (!file) {
       toast.error('파일을 선택해주세요')
       return

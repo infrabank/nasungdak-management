@@ -17,7 +17,7 @@ interface SKU {
 }
 
 interface SalesFormProps {
-  storeId?: string
+  storeId: string // 필수 - 매장 선택 없이는 폼 렌더링 안됨
 }
 
 export default function SalesForm({ storeId }: SalesFormProps) {

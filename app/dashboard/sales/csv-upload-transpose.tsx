@@ -102,6 +102,13 @@ export default function CSVUploadTranspose({
   }
 
   const handleUpload = async () => {
+    if (!storeId) {
+      toast.error(
+        '매장을 먼저 선택해주세요. 상단에서 매장을 선택한 후 다시 시도해주세요.'
+      )
+      return
+    }
+
     if (!file || !previewData) {
       toast.error('파일을 선택해주세요')
       return
