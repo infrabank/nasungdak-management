@@ -55,13 +55,13 @@ export const STRIPE_PRICE_IDS: Record<
   { monthly?: string; yearly?: string }
 > = {
   free: {},
-  starter: {
-    monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY,
-    yearly: process.env.STRIPE_PRICE_STARTER_YEARLY,
+  basic: {
+    monthly: process.env.STRIPE_PRICE_BASIC_MONTHLY,
+    yearly: process.env.STRIPE_PRICE_BASIC_YEARLY,
   },
-  growth: {
-    monthly: process.env.STRIPE_PRICE_GROWTH_MONTHLY,
-    yearly: process.env.STRIPE_PRICE_GROWTH_YEARLY,
+  standard: {
+    monthly: process.env.STRIPE_PRICE_STANDARD_MONTHLY,
+    yearly: process.env.STRIPE_PRICE_STANDARD_YEARLY,
   },
   pro: {
     monthly: process.env.STRIPE_PRICE_PRO_MONTHLY,
@@ -265,8 +265,8 @@ export async function downgradePlan(params: {
   // 업그레이드는 이 함수가 아닌 createCheckoutSession 사용
   const planOrder: PlanType[] = [
     'free',
-    'starter',
-    'growth',
+    'basic',
+    'standard',
     'pro',
     'enterprise',
   ]

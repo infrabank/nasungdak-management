@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getAllPlans, FEATURES, type FeatureKey } from '@/lib/features'
 import { Check, X } from 'lucide-react'
 import PublicHeader from '@/components/public-header'
+import PricingCards from './pricing-cards'
 
 export const metadata = {
   title: '요금제 - 매장 관리 시스템',
@@ -23,17 +24,13 @@ const HIGHLIGHT_FEATURES: FeatureKey[] = [
   'custom-reports',
 ]
 
-function formatPrice(price: number): string {
-  if (price === 0) return '무료'
-  if (price === -1) return '문의'
-  return `₩${price.toLocaleString('ko-KR')}`
-}
-
 export default function PricingPage() {
   const plans = getAllPlans()
 
   // Filter out enterprise for main display (show separately)
-  const mainPlans = plans.filter((p) => p.id !== 'enterprise')
+  // Also filter out pro for main cards, show it separately
+  const mainPlans = plans.filter((p) => p.id !== 'enterprise' && p.id !== 'pro')
+  const proPlan = plans.find((p) => p.id === 'pro')
   const enterprisePlan = plans.find((p) => p.id === 'enterprise')
 
   return (
@@ -53,121 +50,14 @@ export default function PricingPage() {
         </p>
       </section>
 
-      {/* Pricing Cards */}
+      {/* Pricing Cards with Toggle */}
       <section className="px-4 pb-16">
-        <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {mainPlans.map((plan, index) => {
-              const isPopular = plan.id === 'growth'
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative flex flex-col border-3 border-brutal-black bg-brutal-white ${
-                    isPopular
-                      ? '-translate-y-2 shadow-brutal-lg'
-                      : 'shadow-brutal'
-                  }`}
-                >
-                  {isPopular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 border-2 border-brutal-black bg-brutal-yellow px-4 py-1 text-sm font-bold">
-                      인기
-                    </div>
-                  )}
-
-                  <div className="border-b-2 border-brutal-black p-6">
-                    <h3 className="text-xl font-bold text-brutal-black">
-                      {plan.nameKo}
-                    </h3>
-                    <p className="mt-1 text-sm text-brutal-black/70">
-                      {plan.description}
-                    </p>
-
-                    <div className="mt-4">
-                      <span className="text-3xl font-bold text-brutal-black">
-                        {formatPrice(plan.priceMonthly)}
-                      </span>
-                      {plan.priceMonthly > 0 && (
-                        <span className="text-brutal-black/70">/월</span>
-                      )}
-                    </div>
-
-                    {plan.priceYearly > 0 && (
-                      <p className="mt-1 text-sm text-brutal-black/50">
-                        연간 결제 시 {formatPrice(plan.priceYearly)}/년
-                        <span className="ml-1 font-bold text-green-600">
-                          (
-                          {Math.round(
-                            (1 - plan.priceYearly / (plan.priceMonthly * 12)) *
-                              100
-                          )}
-                          % 할인)
-                        </span>
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex-1 p-6">
-                    <p className="mb-3 text-sm font-bold text-brutal-black">
-                      포함된 기능:
-                    </p>
-                    <ul className="space-y-2">
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 flex-shrink-0 text-green-600" />
-                        <span>
-                          매장{' '}
-                          {plan.maxStores === -1
-                            ? '무제한'
-                            : `${plan.maxStores}개`}
-                        </span>
-                      </li>
-                      <li className="flex items-center gap-2 text-sm">
-                        <Check className="h-4 w-4 flex-shrink-0 text-green-600" />
-                        <span>
-                          사용자{' '}
-                          {plan.maxUsers === -1
-                            ? '무제한'
-                            : `${plan.maxUsers}명`}
-                        </span>
-                      </li>
-                      {plan.features.slice(0, 5).map((feature) => (
-                        <li
-                          key={feature.key}
-                          className="flex items-center gap-2 text-sm"
-                        >
-                          <Check className="h-4 w-4 flex-shrink-0 text-green-600" />
-                          <span>{feature.name}</span>
-                        </li>
-                      ))}
-                      {plan.features.length > 5 && (
-                        <li className="pl-6 text-sm text-brutal-black/50">
-                          +{plan.features.length - 5}개 더...
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-
-                  <div className="p-6 pt-0">
-                    <Link
-                      href="/signup"
-                      className={`block w-full border-2 border-brutal-black px-4 py-3 text-center text-sm font-bold shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg ${
-                        isPopular
-                          ? 'bg-brutal-yellow text-brutal-black'
-                          : 'bg-brutal-white text-brutal-black'
-                      }`}
-                    >
-                      {plan.id === 'free'
-                        ? '무료로 시작하기'
-                        : '14일 무료 체험'}
-                    </Link>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
+        <div className="mx-auto max-w-5xl">
+          <PricingCards mainPlans={mainPlans} proPlan={proPlan} />
 
           {/* Enterprise */}
           {enterprisePlan && (
-            <div className="mt-12 border-3 border-brutal-black bg-brutal-black p-8 text-brutal-white">
+            <div className="mt-8 border-3 border-brutal-black bg-brutal-black p-8 text-brutal-white">
               <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
                 <div>
                   <h3 className="text-2xl font-bold">
@@ -221,14 +111,23 @@ export default function PricingPage() {
                   <th className="border-r-2 border-brutal-white/20 p-4 text-left font-bold">
                     기능
                   </th>
-                  {mainPlans.map((plan) => (
-                    <th
-                      key={plan.id}
-                      className="border-r-2 border-brutal-white/20 p-4 text-center font-bold last:border-r-0"
-                    >
-                      {plan.nameKo}
-                    </th>
-                  ))}
+                  {plans
+                    .filter((p) => p.id !== 'enterprise')
+                    .map((plan) => (
+                      <th
+                        key={plan.id}
+                        className={`border-r-2 border-brutal-white/20 p-4 text-center font-bold last:border-r-0 ${
+                          plan.id === 'standard' ? 'bg-brutal-yellow/20' : ''
+                        }`}
+                      >
+                        {plan.nameKo}
+                        {plan.id === 'standard' && (
+                          <span className="ml-1 text-xs text-brutal-yellow">
+                            ★
+                          </span>
+                        )}
+                      </th>
+                    ))}
                 </tr>
               </thead>
               <tbody>
@@ -247,23 +146,27 @@ export default function PricingPage() {
                           {feature.description}
                         </p>
                       </td>
-                      {mainPlans.map((plan) => {
-                        const hasFeature = plan.features.some(
-                          (f) => f.key === featureKey
-                        )
-                        return (
-                          <td
-                            key={plan.id}
-                            className="border-r-2 border-brutal-black p-4 text-center last:border-r-0"
-                          >
-                            {hasFeature ? (
-                              <Check className="mx-auto h-5 w-5 text-green-600" />
-                            ) : (
-                              <X className="mx-auto h-5 w-5 text-brutal-black/30" />
-                            )}
-                          </td>
-                        )
-                      })}
+                      {plans
+                        .filter((p) => p.id !== 'enterprise')
+                        .map((plan) => {
+                          const hasFeature = plan.features.some(
+                            (f) => f.key === featureKey
+                          )
+                          return (
+                            <td
+                              key={plan.id}
+                              className={`border-r-2 border-brutal-black p-4 text-center last:border-r-0 ${
+                                plan.id === 'standard' ? 'bg-[#F8FAFC]/50' : ''
+                              }`}
+                            >
+                              {hasFeature ? (
+                                <Check className="mx-auto h-5 w-5 text-green-600" />
+                              ) : (
+                                <X className="mx-auto h-5 w-5 text-brutal-black/30" />
+                              )}
+                            </td>
+                          )
+                        })}
                     </tr>
                   )
                 })}
@@ -292,15 +195,19 @@ export default function PricingPage() {
               },
               {
                 q: '연간 결제 시 할인이 있나요?',
-                a: '네, 연간 결제 시 최대 20% 할인된 가격으로 이용할 수 있습니다.',
+                a: '네, 연간 결제 시 2개월 무료 혜택을 제공합니다. 10개월 가격으로 12개월 이용 가능합니다.',
+              },
+              {
+                q: '베이직과 스탠다드의 차이는 무엇인가요?',
+                a: '베이직은 혼자 운영하는 가게(1매장, 3사용자)를 위한 플랜이고, 스탠다드는 직원이 있는 가게(3매장, 10사용자)를 위한 플랜으로 재고 관리, 직원 관리, 고정비용 관리, 카카오 알림 기능이 추가됩니다.',
               },
               {
                 q: '결제 방법은 무엇인가요?',
-                a: '신용카드(Visa, Mastercard, American Express)로 결제할 수 있습니다. 엔터프라이즈 플랜은 계좌이체도 가능합니다.',
+                a: '신용카드(Visa, Mastercard, American Express)로 결제할 수 있습니다. 프로/엔터프라이즈 플랜은 계좌이체도 가능합니다.',
               },
               {
                 q: '환불 정책은 어떻게 되나요?',
-                a: '결제 후 7일 이내에 환불 요청 시 전액 환불됩니다. 그 이후에는 남은 기간에 대해 일할 계산하여 환불해드립니다.',
+                a: '결제 후 7일 이내 환불 요청 시 100% 전액 환불됩니다. 그 이후에는 남은 기간에 대해 일할 계산하여 환불해드립니다.',
               },
             ].map((faq, index) => (
               <div
@@ -323,6 +230,10 @@ export default function PricingPage() {
           </h2>
           <p className="mt-4 text-lg text-brutal-black/80">
             14일 무료 체험으로 매장 관리 시스템의 모든 기능을 경험해보세요.
+            <br />
+            <span className="font-medium">
+              7일 이내 100% 환불 · 언제든 해지 가능
+            </span>
           </p>
           <Link
             href="/signup"

@@ -10,7 +10,7 @@ import { unstable_cache } from 'next/cache'
  */
 
 // 플랜 정의 (2026년 가격 개편)
-// 글로벌 SaaS 가격 전략 기반 - 진입장벽 낮추고 단계별 성장 지원
+// 한국 소상공인 대상 - 가격 저항 최소화, Standard(29,000원) 선택 유도
 export const PLANS = {
   free: {
     name: 'Free',
@@ -19,34 +19,34 @@ export const PLANS = {
     priceYearly: 0,
     maxStores: 1,
     maxUsers: 1,
-    description: '시작하는 소규모 매장을 위한 필수 기능',
+    description: '일단 써보고 싶은 분',
   },
-  starter: {
-    name: 'Starter',
-    nameKo: '스타터',
-    priceMonthly: 19000,
-    priceYearly: 190000, // 약 17% 할인
+  basic: {
+    name: 'Basic',
+    nameKo: '베이직',
+    priceMonthly: 9900,
+    priceYearly: 94800, // 2개월 무료 (9,900 × 10 = 99,000이지만 반올림)
     maxStores: 1,
     maxUsers: 3,
-    description: '성장하는 매장을 위한 분석 기능',
+    description: '혼자 운영하는 가게',
   },
-  growth: {
-    name: 'Growth',
-    nameKo: '그로스',
-    priceMonthly: 49000,
-    priceYearly: 470000, // 20% 할인
+  standard: {
+    name: 'Standard',
+    nameKo: '스탠다드',
+    priceMonthly: 29000,
+    priceYearly: 278400, // 2개월 무료 (29,000 × 10 = 290,000이지만 실제 23,200 × 12)
     maxStores: 3,
     maxUsers: 10,
-    description: '다매장 확장을 위한 통합 관리',
+    description: '직원 있는 가게, 제대로 관리',
   },
   pro: {
     name: 'Pro',
     nameKo: '프로',
-    priceMonthly: 99000,
-    priceYearly: 950000, // 20% 할인
+    priceMonthly: 59000,
+    priceYearly: 566400, // 2개월 무료 (59,000 × 10 = 590,000이지만 47,200 × 12)
     maxStores: 10,
     maxUsers: -1, // 무제한
-    description: '프랜차이즈를 위한 고급 기능',
+    description: '다점포 또는 프랜차이즈',
   },
   enterprise: {
     name: 'Enterprise',
@@ -63,8 +63,8 @@ export type PlanType = keyof typeof PLANS
 
 // 이전 플랜명 → 새 플랜명 매핑 (하위 호환성)
 const LEGACY_PLAN_MAPPING: Record<string, PlanType> = {
-  basic: 'starter',
-  standard: 'growth',
+  starter: 'basic', // 이전 starter → 새 basic
+  growth: 'standard', // 이전 growth → 새 standard
   premium: 'pro',
 }
 
@@ -138,7 +138,7 @@ export const DEFAULT_PLAN_FEATURES: Record<
       sales: 50,
     },
   },
-  starter: {
+  basic: {
     features: [
       'purchases',
       'sales',
@@ -152,7 +152,7 @@ export const DEFAULT_PLAN_FEATURES: Record<
       sales: 500,
     },
   },
-  growth: {
+  standard: {
     features: [
       'purchases',
       'sales',
@@ -333,8 +333,8 @@ export function canUpgradeTo(
 ): boolean {
   const planOrder: PlanType[] = [
     'free',
-    'starter',
-    'growth',
+    'basic',
+    'standard',
     'pro',
     'enterprise',
   ]

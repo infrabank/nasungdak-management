@@ -139,18 +139,17 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="text-center">
             <h1 className="text-4xl font-black leading-tight text-brutal-black sm:text-5xl lg:text-6xl">
-              복잡한 엑셀은 그만,
+              매출은 아는데,
               <br />
               <span className="relative">
-                매입부터 원가까지
+                남는 돈은 모르겠다면
                 <span className="absolute -bottom-2 left-0 h-3 w-full bg-brutal-pink/50" />
-              </span>{' '}
-              한 곳에서
+              </span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg font-medium text-brutal-black/80 sm:text-xl">
-              자영업자를 위한 올인원 매장 관리 시스템.
+              엑셀 없이 원가·인건비·순이익을 한눈에.
               <br />
-              5분 설정, 월말 정산 80% 시간 단축.
+              하루 770원으로 매달 3시간 절약.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
@@ -168,7 +167,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <p className="mt-6 text-sm font-medium text-brutal-black/60">
-              신용카드 불필요 | 14일 무료 체험 | 언제든 취소 가능
+              14일 무료 체험 · 7일 이내 100% 환불 · 언제든 해지 가능
             </p>
           </div>
         </div>
@@ -337,18 +336,24 @@ export default async function HomePage() {
       <section className="border-b-3 border-brutal-black bg-brutal-white px-4 py-16 sm:py-24">
         <div className="mx-auto max-w-7xl">
           <div className="text-center">
-            <h2 className="text-3xl font-black text-brutal-black sm:text-4xl">
-              심플한 요금제
+            <p className="text-lg font-bold text-brutal-black/60">
+              연간 결제하면 2개월 무료
+            </p>
+            <h2 className="mt-2 text-3xl font-black text-brutal-black sm:text-4xl">
+              하루 <span className="text-brutal-yellow">770원</span>으로 시작
             </h2>
             <p className="mt-4 text-lg text-brutal-black/70">
-              필요한 만큼만 사용하세요. 무료 플랜으로 시작할 수 있습니다.
+              커피 한 잔 값으로 매달 3시간 절약
             </p>
           </div>
 
           <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3">
             {/* Free Plan */}
             <div className="border-3 border-brutal-black bg-brutal-white p-6 shadow-brutal">
-              <h3 className="text-xl font-bold text-brutal-black">무료</h3>
+              <p className="text-xs font-medium text-brutal-black/50">
+                일단 써보고 싶은 분
+              </p>
+              <h3 className="mt-1 text-xl font-bold text-brutal-black">무료</h3>
               <div className="mt-4">
                 <span className="text-4xl font-black text-brutal-black">
                   0원
@@ -372,29 +377,38 @@ export default async function HomePage() {
                 href="/signup"
                 className="mt-6 block border-2 border-brutal-black bg-brutal-white px-4 py-3 text-center font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal"
               >
-                무료로 시작
+                시작하기
               </Link>
             </div>
 
-            {/* Growth Plan */}
-            <div className="relative border-3 border-brutal-black bg-brutal-white p-6 shadow-brutal-lg">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 border-2 border-brutal-black bg-brutal-yellow px-4 py-1 text-sm font-bold">
-                인기
+            {/* Standard Plan (RECOMMENDED) */}
+            <div className="relative border-[3px] border-brutal-black bg-[#F8FAFC] p-6 shadow-brutal-lg md:scale-105">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap border-2 border-brutal-black bg-brutal-yellow px-4 py-1 text-sm font-bold">
+                사장님들이 가장 많이 선택
               </div>
-              <h3 className="text-xl font-bold text-brutal-black">성장</h3>
+              <p className="text-xs font-medium text-brutal-black/50">
+                직원 있는 가게, 제대로 관리
+              </p>
+              <h3 className="mt-1 text-xl font-bold text-brutal-black">
+                스탠다드
+              </h3>
               <div className="mt-4">
                 <span className="text-4xl font-black text-brutal-black">
                   29,000원
                 </span>
                 <span className="text-brutal-black/70">/월</span>
               </div>
+              <p className="mt-1 text-xs text-brutal-black/50">
+                연간 결제 시 월 23,200원{' '}
+                <span className="font-bold text-green-600">2개월 무료</span>
+              </p>
               <ul className="mt-6 space-y-3">
                 {[
                   '매장 3개',
-                  '사용자 5명',
-                  '모든 기본 기능',
-                  '재고 관리',
-                  '고급 리포트',
+                  '사용자 10명',
+                  '재고·직원·고정비용 관리',
+                  '고급 분석 리포트',
+                  '카카오 알림',
                 ].map((feature, i) => (
                   <li key={i} className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -406,26 +420,38 @@ export default async function HomePage() {
                 href="/signup"
                 className="mt-6 block border-2 border-brutal-black bg-brutal-yellow px-4 py-3 text-center font-bold text-brutal-black shadow-brutal-sm transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal"
               >
-                14일 무료 체험
+                무료로 시작하기
               </Link>
+              <p className="mt-3 text-center text-xs text-brutal-black/50">
+                원가 1%만 잡아도 월 30만 원 절감 (매출 3천만 기준)
+              </p>
             </div>
 
-            {/* Pro Plan */}
+            {/* Basic Plan */}
             <div className="border-3 border-brutal-black bg-brutal-white p-6 shadow-brutal">
-              <h3 className="text-xl font-bold text-brutal-black">프로</h3>
+              <p className="text-xs font-medium text-brutal-black/50">
+                혼자 운영하는 가게
+              </p>
+              <h3 className="mt-1 text-xl font-bold text-brutal-black">
+                베이직
+              </h3>
               <div className="mt-4">
                 <span className="text-4xl font-black text-brutal-black">
-                  79,000원
+                  9,900원
                 </span>
                 <span className="text-brutal-black/70">/월</span>
               </div>
+              <p className="mt-1 text-xs text-brutal-black/50">
+                연간 결제 시 월 7,900원{' '}
+                <span className="font-bold text-green-600">2개월 무료</span>
+              </p>
               <ul className="mt-6 space-y-3">
                 {[
-                  '매장 10개',
-                  '사용자 무제한',
-                  '모든 기능',
-                  'API 연동',
-                  '우선 지원',
+                  '매장 1개',
+                  '사용자 3명',
+                  '재고 관리',
+                  '분석 리포트',
+                  'CSV 가져오기',
                 ].map((feature, i) => (
                   <li key={i} className="flex items-center gap-2">
                     <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -443,6 +469,16 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-8 text-center">
+            <p className="mb-4 text-sm text-brutal-black/60">
+              다점포·프랜차이즈는{' '}
+              <Link
+                href="/pricing"
+                className="font-bold text-brutal-black underline"
+              >
+                프로 플랜
+              </Link>
+              을 확인하세요
+            </p>
             <Link
               href="/pricing"
               className="font-bold text-brutal-black underline underline-offset-4 hover:text-brutal-black/70"
