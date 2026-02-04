@@ -1,0 +1,54 @@
+{
+  "name": "store-management-saas",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/workspaces/store-management-saas",
+
+  // 컨테이너 생성 후 실행 (한 번만)
+  "postCreateCommand": "npm install && npm install -g @anthropics/claude-code",
+
+  // 컨테이너 시작할 때마다 실행
+  "postStartCommand": "git config --global --add safe.directory /workspaces/store-management-saas",
+
+  // 환경 변수
+  "containerEnv": {
+    "NODE_ENV": "development",
+    "LANG": "ko_KR.UTF-8"
+  },
+
+  // VS Code 설정 (최소한만)
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "typescript.preferences.quoteStyle": "single"
+      },
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+
+  // 포트 포워딩 (Next.js dev server)
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Next.js Dev Server",
+      "onAutoForward": "notify"
+    }
+  },
+
+  // 볼륨 마운트 (specs/ 영구 보존)
+  "mounts": [
+    "source=store-management-specs,target=/workspaces/store-management-saas/specs,type=volume",
+    "source=store-management-node-modules,target=/workspaces/store-management-saas/node_modules,type=volume"
+  ],
+
+  // 컨테이너 유저 (non-root)
+  "remoteUser": "node"
+}
