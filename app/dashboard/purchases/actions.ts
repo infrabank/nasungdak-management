@@ -465,7 +465,8 @@ export interface PurchaseEntry {
 export async function createMultiplePurchases(
   transactionDate: string,
   supplierName: string,
-  entries: PurchaseEntry[]
+  entries: PurchaseEntry[],
+  formStoreId?: string
 ) {
   let successCount = 0
   let failedCount = 0
@@ -478,6 +479,13 @@ export async function createMultiplePurchases(
   }> = []
 
   try {
+    // Get storeId from parameter or use user's first authorized store
+    let storeId = formStoreId || null
+    if (!storeId) {
+      const authorizedStoreIds = await getAuthorizedStoreIds()
+      storeId = authorizedStoreIds[0] || null
+    }
+
     // Pre-fetch all menu-ingredient mappings - SINGLE QUERY (avoids N+1)
     const allMenuIngredients = await db
       .select({
@@ -520,6 +528,7 @@ export async function createMultiplePurchases(
             .insert(purchaseTransactions)
             .values({
               ...validatedData,
+              storeId,
               isValid,
               createdBy: 'system',
             })
@@ -547,6 +556,9 @@ export async function createMultiplePurchases(
 
     revalidatePath('/dashboard/purchases')
     revalidateTag('purchases:all')
+    if (storeId) {
+      revalidateTag(`purchases:${storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -571,7 +583,10 @@ export async function createMultiplePurchases(
   }
 }
 
-export async function bulkCreatePurchases(rows: CSVRow[]) {
+export async function bulkCreatePurchases(
+  rows: CSVRow[],
+  formStoreId?: string
+) {
   'use server'
 
   let successCount = 0
@@ -579,6 +594,13 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
   const errors: string[] = []
 
   try {
+    // Get storeId from parameter or use user's first authorized store
+    let storeId = formStoreId || null
+    if (!storeId) {
+      const authorizedStoreIds = await getAuthorizedStoreIds()
+      storeId = authorizedStoreIds[0] || null
+    }
+
     // Fetch all menus and ingredients for name-to-ID mapping
     const menus = await db
       .select({
@@ -660,6 +682,7 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
           // Insert purchase transaction using transaction context
           await tx.insert(purchaseTransactions).values({
             ...validatedData,
+            storeId,
             isValid,
             createdBy: 'system',
           })
@@ -680,6 +703,9 @@ export async function bulkCreatePurchases(rows: CSVRow[]) {
 
     revalidatePath('/dashboard/purchases')
     revalidateTag('purchases:all')
+    if (storeId) {
+      revalidateTag(`purchases:${storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
