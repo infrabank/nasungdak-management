@@ -30,7 +30,7 @@ type EntryRow = {
   menuId: string
   ingredientId: string
   quantity: string
-  unitPrice: string
+  totalPrice: string
   notes: string
   isExpanded: boolean
 }
@@ -45,7 +45,7 @@ function createEmptyRow(): EntryRow {
     menuId: '',
     ingredientId: '',
     quantity: '',
-    unitPrice: '',
+    totalPrice: '',
     notes: '',
     isExpanded: true,
   }
@@ -114,19 +114,18 @@ export default function PurchaseForm() {
     [entries.length]
   )
 
-  const calculateRowTotal = useCallback(
-    (quantity: string, unitPrice: string) => {
-      return (parseFloat(quantity) || 0) * (parseFloat(unitPrice) || 0)
+  const calculateUnitPrice = useCallback(
+    (quantity: string, totalPrice: string) => {
+      const q = parseFloat(quantity) || 0
+      const t = parseFloat(totalPrice) || 0
+      return q > 0 ? Math.round((t / q) * 100) / 100 : 0
     },
     []
   )
 
   const calculateGrandTotal = useMemo(() => {
-    return entries.reduce(
-      (sum, e) => sum + calculateRowTotal(e.quantity, e.unitPrice),
-      0
-    )
-  }, [entries, calculateRowTotal])
+    return entries.reduce((sum, e) => sum + (parseFloat(e.totalPrice) || 0), 0)
+  }, [entries])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -141,7 +140,7 @@ export default function PurchaseForm() {
 
     const validEntries = entries.filter(
       (entry) =>
-        entry.menuId && entry.ingredientId && entry.quantity && entry.unitPrice
+        entry.menuId && entry.ingredientId && entry.quantity && entry.totalPrice
     )
     if (validEntries.length === 0) {
       toast.error('최소 하나의 항목을 입력해주세요')
@@ -154,7 +153,10 @@ export default function PurchaseForm() {
         menuId: entry.menuId,
         ingredientId: entry.ingredientId,
         quantity: entry.quantity,
-        unitPrice: entry.unitPrice,
+        unitPrice: calculateUnitPrice(
+          entry.quantity,
+          entry.totalPrice
+        ).toString(),
         notes: entry.notes || null,
       }))
 
@@ -270,12 +272,12 @@ export default function PurchaseForm() {
         <div className="space-y-3">
           {entries.map((entry, index) => {
             const filteredIngredients = getFilteredIngredients(entry.menuId)
-            const rowTotal = calculateRowTotal(entry.quantity, entry.unitPrice)
+            const entryTotal = parseFloat(entry.totalPrice) || 0
             const isComplete =
               entry.menuId &&
               entry.ingredientId &&
               entry.quantity &&
-              entry.unitPrice
+              entry.totalPrice
 
             return (
               <div
@@ -301,7 +303,7 @@ export default function PurchaseForm() {
                       </p>
                       {isComplete && (
                         <p className="text-sm font-bold text-brutal-black">
-                          {rowTotal.toLocaleString()}원
+                          {entryTotal.toLocaleString()}원
                         </p>
                       )}
                     </div>
@@ -418,32 +420,40 @@ export default function PurchaseForm() {
                           onChange={(e) =>
                             updateEntry(entry.id, 'quantity', e.target.value)
                           }
-                          placeholder="0"
+                          placeholder="예: 3"
                         />
                       </div>
                       <div>
-                        <Label>단가 (원) *</Label>
+                        <Label>총금액 (원) *</Label>
                         <Input
                           type="number"
                           required
                           inputMode="numeric"
                           step="1"
-                          value={entry.unitPrice}
+                          min="1"
+                          value={entry.totalPrice}
                           onChange={(e) =>
-                            updateEntry(entry.id, 'unitPrice', e.target.value)
+                            updateEntry(entry.id, 'totalPrice', e.target.value)
                           }
-                          placeholder="0"
+                          placeholder="예: 13000"
                         />
                       </div>
                     </div>
 
-                    {(entry.quantity || entry.unitPrice) && (
+                    {entry.quantity && entry.totalPrice && (
                       <div className="border-2 border-brutal-black bg-brutal-green/30 p-3 text-center">
                         <span className="text-sm font-bold text-brutal-black">
-                          소계:{' '}
+                          단가:{' '}
                         </span>
                         <span className="text-lg font-black text-brutal-black">
-                          {rowTotal.toLocaleString()}원
+                          {calculateUnitPrice(
+                            entry.quantity,
+                            entry.totalPrice
+                          ).toLocaleString()}
+                          원
+                        </span>
+                        <span className="ml-1 text-sm font-medium text-brutal-black/60">
+                          / 단위
                         </span>
                       </div>
                     )}
