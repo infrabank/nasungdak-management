@@ -2,12 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
-import {
-  skuRecipes,
-  skus,
-  ingredients,
-  menuCategories,
-} from '@/lib/db/schema'
+import { skuRecipes, skus, ingredients, menuCategories } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
@@ -70,10 +65,7 @@ export async function createSkuRecipe(formData: FormData) {
     }
 
     // Check for unique constraint violation
-    if (
-      error instanceof Error &&
-      error.message.includes('unique constraint')
-    ) {
+    if (error instanceof Error && error.message.includes('unique constraint')) {
       return {
         success: false,
         error: '이미 해당 SKU에 동일한 원재료가 등록되어 있습니다',
@@ -321,6 +313,5 @@ export async function getIngredients() {
   } catch (error) {
     console.error('Failed to fetch ingredients:', error)
     return []
-  
   }
 }
