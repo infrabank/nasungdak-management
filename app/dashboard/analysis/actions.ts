@@ -1,15 +1,8 @@
 'use server'
 
-import { unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
-import { sql, inArray } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
-import {
-  salesRecords,
-  purchaseTransactions,
-  fixedCosts,
-  skus,
-} from '@/lib/db/schema'
 
 export interface AnalysisResult {
   success: boolean
@@ -216,22 +209,12 @@ export async function getMonthlyAnalysis(
 
     const normalizedStoreId = storeId ?? 'all'
 
-    // 캐시 키에 사용자의 권한 정보 포함
-    const storeKey = authorizedStoreIds.sort().join(',')
-
-    const getCachedMonthlyAnalysis = unstable_cache(
-      () =>
-        fetchMonthlyAnalysis(
-          startDate,
-          endDate,
-          normalizedStoreId,
-          authorizedStoreIds
-        ),
-      ['analysis:monthly:v2', storeKey, startDate, endDate, normalizedStoreId],
-      { tags: ['analysis:monthly'] }
+    return await fetchMonthlyAnalysis(
+      startDate,
+      endDate,
+      normalizedStoreId,
+      authorizedStoreIds
     )
-
-    return await getCachedMonthlyAnalysis()
   } catch (error) {
     console.error('Failed to get monthly analysis:', error)
     return {
@@ -425,22 +408,12 @@ export async function getAnalysis(
 
     const normalizedStoreId = storeId ?? 'all'
 
-    // 캐시 키에 사용자의 권한 정보 포함
-    const storeKey = authorizedStoreIds.sort().join(',')
-
-    const getCachedAnalysis = unstable_cache(
-      () =>
-        fetchAnalysis(
-          startDate,
-          endDate,
-          normalizedStoreId,
-          authorizedStoreIds
-        ),
-      ['analysis:sku:v2', storeKey, startDate, endDate, normalizedStoreId],
-      { tags: ['analysis:sku'] }
+    return await fetchAnalysis(
+      startDate,
+      endDate,
+      normalizedStoreId,
+      authorizedStoreIds
     )
-
-    return await getCachedAnalysis()
   } catch (error) {
     console.error('Failed to get analysis:', error)
     return {
