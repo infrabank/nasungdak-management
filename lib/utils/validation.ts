@@ -320,3 +320,98 @@ export type AttendanceFormData = z.infer<typeof attendanceSchema>
 // - ingredientSchema
 // - skuSchema
 // - costDistributionSchema
+
+// =====================
+// BOM / Recipe Validation Schemas
+// =====================
+
+// Ingredient validation (with unitCost)
+export const ingredientSchema = z.object({
+  ingredientName: z
+    .string()
+    .min(1, '원재료명을 입력해주세요')
+    .max(100, '원재료명은 100자 이내로 입력해주세요'),
+  unit: z
+    .string()
+    .min(1, '단위를 입력해주세요')
+    .max(20, '단위는 20자 이내로 입력해주세요'),
+  unitCost: z.coerce
+    .string()
+    .optional()
+    .transform((val, ctx) => {
+      if (!val || val === '') return undefined
+      const num = Number(val)
+      if (isNaN(num) || num < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '단가는 0 이상이어야 합니다',
+        })
+        return z.NEVER
+      }
+      return val
+    }),
+  description: z.string().max(500).optional().nullable(),
+  isActive: z.coerce.boolean().optional().default(true),
+})
+export type IngredientFormData = z.infer<typeof ingredientSchema>
+
+// SKU Recipe validation
+export const skuRecipeSchema = z.object({
+  skuId: z.string().uuid('SKU를 선택해주세요'),
+  ingredientId: z.string().uuid('원재료를 선택해주세요'),
+  quantity: z.coerce.string().transform((val, ctx) => {
+    const num = Number(val)
+    if (isNaN(num) || num <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '사용량은 0보다 커야 합니다',
+      })
+      return z.NEVER
+    }
+    return val
+  }),
+  unit: z
+    .string()
+    .min(1, '단위를 입력해주세요')
+    .max(20, '단위는 20자 이내로 입력해주세요'),
+  notes: z.string().optional().nullable(),
+})
+export type SkuRecipeFormData = z.infer<typeof skuRecipeSchema>
+
+// Sales Menu validation
+export const salesMenuSchema = z.object({
+  menuName: z
+    .string()
+    .min(1, '메뉴명을 입력해주세요')
+    .max(100, '메뉴명은 100자 이내로 입력해주세요'),
+  menuType: z.enum(['single', 'bundle'], {
+    required_error: '메뉴 유형을 선택해주세요',
+  }),
+  basePrice: z.coerce.string().transform((val, ctx) => {
+    const num = Number(val)
+    if (isNaN(num) || num < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: '가격은 0 이상이어야 합니다',
+      })
+      return z.NEVER
+    }
+    return val
+  }),
+  description: z.string().max(500).optional().nullable(),
+  isActive: z.coerce.boolean().optional().default(true),
+  sortOrder: z.coerce.number().int().optional().default(0),
+})
+export type SalesMenuFormData = z.infer<typeof salesMenuSchema>
+
+// Sales Menu Item validation
+export const salesMenuItemSchema = z.object({
+  salesMenuId: z.string().uuid('판매 메뉴를 선택해주세요'),
+  skuId: z.string().uuid('SKU를 선택해주세요'),
+  quantity: z.coerce
+    .number()
+    .int()
+    .min(1, '수량은 1 이상이어야 합니다'),
+  isRequired: z.coerce.boolean().optional().default(true),
+})
+export type SalesMenuItemFormData = z.infer<typeof salesMenuItemSchema>

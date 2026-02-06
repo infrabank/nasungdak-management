@@ -87,6 +87,7 @@ export const ingredients = pgTable(
     organizationId: uuid('organization_id').references(() => organizations.id), // Multi-tenancy 지원
     ingredientName: varchar('ingredient_name', { length: 100 }).notNull(),
     unit: varchar('unit', { length: 20 }).notNull(),
+    unitCost: decimal('unit_cost', { precision: 12, scale: 2 }), // 단위당 원가 (원/unit)
     description: varchar('description', { length: 500 }),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -774,6 +775,83 @@ export const organizationInvitations = pgTable(
   ]
 )
 
+
+// SKU Recipes Table (SKU별 원재료 구성 - BOM)
+export const skuRecipes = pgTable(
+  'sku_recipes',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id),
+    skuId: uuid('sku_id').notNull().references(() => skus.id),
+    ingredientId: uuid('ingredient_id').notNull().references(() => ingredients.id),
+    quantity: decimal('quantity', { precision: 10, scale: 4 }).notNull(), // 사용량 (예: 50g)
+    unit: varchar('unit', { length: 20 }).notNull(), // 사용 단위 (g, ml, ea)
+    notes: text('notes'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('sku_recipes_org_id_idx').on(table.organizationId),
+    index('sku_recipes_sku_id_idx').on(table.skuId),
+    index('sku_recipes_deleted_at_idx').on(table.deletedAt),
+    unique('sku_recipes_sku_ingredient_unique').on(table.skuId, table.ingredientId),
+  ]
+)
+
+// Sales Menus Table (판매 메뉴 - 단품/세트)
+export const salesMenus = pgTable(
+  'sales_menus',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id),
+    menuName: varchar('menu_name', { length: 100 }).notNull(), // 예: "붕어빵 3개 세트"
+    menuType: varchar('menu_type', { length: 20 }).notNull().default('single'), // 'single' | 'bundle'
+    basePrice: decimal('base_price', { precision: 10, scale: 2 }).notNull(), // 판매가
+    description: varchar('description', { length: 500 }),
+    isActive: boolean('is_active').notNull().default(true),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('sales_menus_org_id_idx').on(table.organizationId),
+    index('sales_menus_deleted_at_idx').on(table.deletedAt),
+    index('sales_menus_type_idx').on(table.menuType),
+  ]
+)
+
+// Sales Menu Items Table (메뉴 구성 - 세트에 포함된 SKU들)
+export const salesMenuItems = pgTable(
+  'sales_menu_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    organizationId: uuid('organization_id').references(() => organizations.id),
+    salesMenuId: uuid('sales_menu_id').notNull().references(() => salesMenus.id),
+    skuId: uuid('sku_id').notNull().references(() => skus.id),
+    quantity: integer('quantity').notNull().default(1), // 세트에 포함되는 수량
+    isRequired: boolean('is_required').notNull().default(true), // 필수 구성인지
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('sales_menu_items_org_id_idx').on(table.organizationId),
+    index('sales_menu_items_menu_id_idx').on(table.salesMenuId),
+    index('sales_menu_items_deleted_at_idx').on(table.deletedAt),
+  ]
+)
+
 export type Store = typeof stores.$inferSelect
 export type NewStore = typeof stores.$inferInsert
 export type Inventory = typeof inventory.$inferSelect
@@ -857,6 +935,15 @@ export type NewOrganizationMember = typeof organizationMembers.$inferInsert
 export type OrganizationInvitation = typeof organizationInvitations.$inferSelect
 export type NewOrganizationInvitation =
   typeof organizationInvitations.$inferInsert
+
+export type SkuRecipe = typeof skuRecipes.$inferSelect
+export type NewSkuRecipe = typeof skuRecipes.$inferInsert
+
+export type SalesMenu = typeof salesMenus.$inferSelect
+export type NewSalesMenu = typeof salesMenus.$inferInsert
+
+export type SalesMenuItem = typeof salesMenuItems.$inferSelect
+export type NewSalesMenuItem = typeof salesMenuItems.$inferInsert
 
 export type WebhookEvent = typeof webhookEvents.$inferSelect
 export type NewWebhookEvent = typeof webhookEvents.$inferInsert
@@ -943,3 +1030,32 @@ export const userStoreAssignmentsRelations = relations(
     }),
   })
 )
+
+// SKU Recipes Relations
+export const skuRecipesRelations = relations(skuRecipes, ({ one }) => ({
+  sku: one(skus, {
+    fields: [skuRecipes.skuId],
+    references: [skus.id],
+  }),
+  ingredient: one(ingredients, {
+    fields: [skuRecipes.ingredientId],
+    references: [ingredients.id],
+  }),
+}))
+
+// Sales Menus Relations
+export const salesMenusRelations = relations(salesMenus, ({ many }) => ({
+  items: many(salesMenuItems),
+}))
+
+// Sales Menu Items Relations
+export const salesMenuItemsRelations = relations(salesMenuItems, ({ one }) => ({
+  salesMenu: one(salesMenus, {
+    fields: [salesMenuItems.salesMenuId],
+    references: [salesMenus.id],
+  }),
+  sku: one(skus, {
+    fields: [salesMenuItems.skuId],
+    references: [skus.id],
+  }),
+}))

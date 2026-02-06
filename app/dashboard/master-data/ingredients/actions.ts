@@ -10,6 +10,21 @@ import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
 const ingredientSchema = z.object({
   ingredientName: z.string().min(1, '재료명을 입력해주세요').max(100),
   unit: z.string().min(1, '단위를 입력해주세요').max(20),
+  unitCost: z.coerce
+    .string()
+    .optional()
+    .transform((val, ctx) => {
+      if (!val || val === '') return undefined
+      const num = Number(val)
+      if (isNaN(num) || num < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '단가는 0 이상이어야 합니다',
+        })
+        return z.NEVER
+      }
+      return val
+    }),
   description: z.string().max(500).optional(),
   isActive: z.boolean().default(true),
 })
@@ -20,6 +35,7 @@ export async function createIngredient(formData: FormData) {
     const rawData = {
       ingredientName: formData.get('ingredientName'),
       unit: formData.get('unit'),
+      unitCost: formData.get('unitCost') || undefined,
       description: formData.get('description') || '',
       isActive: formData.get('isActive') === 'true',
     }
@@ -29,7 +45,10 @@ export async function createIngredient(formData: FormData) {
     const [ingredient] = await db
       .insert(ingredients)
       .values({
-        ...validatedData,
+        ingredientName: validatedData.ingredientName,
+        unit: validatedData.unit,
+        unitCost: validatedData.unitCost,
+        description: validatedData.description,
         organizationId,
         createdBy: 'system',
       })
@@ -65,6 +84,7 @@ export async function updateIngredient(id: string, formData: FormData) {
     const rawData = {
       ingredientName: formData.get('ingredientName'),
       unit: formData.get('unit'),
+      unitCost: formData.get('unitCost') || undefined,
       description: formData.get('description') || '',
       isActive: formData.get('isActive') === 'true',
     }
@@ -74,7 +94,11 @@ export async function updateIngredient(id: string, formData: FormData) {
     const [ingredient] = await db
       .update(ingredients)
       .set({
-        ...validatedData,
+        ingredientName: validatedData.ingredientName,
+        unit: validatedData.unit,
+        unitCost: validatedData.unitCost,
+        description: validatedData.description,
+        isActive: validatedData.isActive,
         updatedAt: new Date(),
         updatedBy: 'system',
       })
@@ -167,6 +191,7 @@ export async function getIngredients() {
 interface CSVRow {
   재료명: string
   단위: string
+  단가?: string
   설명?: string
   활성?: string
 }
@@ -195,13 +220,17 @@ export async function bulkCreateIngredients(rows: CSVRow[]) {
         const validatedData = ingredientSchema.parse({
           ingredientName: row.재료명,
           unit: row.단위,
+          unitCost: row.단가 || undefined,
           description: row.설명 || '',
           isActive,
         })
 
         // Insert ingredient
         await db.insert(ingredients).values({
-          ...validatedData,
+          ingredientName: validatedData.ingredientName,
+          unit: validatedData.unit,
+          unitCost: validatedData.unitCost,
+          description: validatedData.description,
           organizationId,
           createdBy: 'system',
         })

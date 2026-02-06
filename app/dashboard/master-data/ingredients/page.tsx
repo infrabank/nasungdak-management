@@ -2,6 +2,7 @@ import { getIngredients } from './actions'
 import IngredientForm from './ingredient-form'
 import CSVUpload from './csv-upload'
 import IngredientCard from './ingredient-card'
+import { formatCurrency } from '@/lib/utils/format'
 
 export default async function IngredientsPage() {
   const ingredients = await getIngredients()
@@ -11,7 +12,9 @@ export default async function IngredientsPage() {
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
           <h1 className="text-3xl font-bold text-brutal-black">재료 관리</h1>
-          <p className="mt-2 text-sm text-brutal-black/70">재료 등록 및 관리</p>
+          <p className="mt-2 text-sm text-brutal-black/70">
+            재료 등록 및 단위당 원가 관리
+          </p>
         </div>
         <div className="mt-4 flex flex-col gap-2 sm:ml-16 sm:mt-0 sm:flex-none sm:flex-row sm:gap-3">
           <CSVUpload />
@@ -55,6 +58,12 @@ export default async function IngredientsPage() {
                   </th>
                   <th
                     scope="col"
+                    className="px-3 py-3.5 text-right text-sm font-black text-brutal-black"
+                  >
+                    단위당 원가
+                  </th>
+                  <th
+                    scope="col"
                     className="px-3 py-3.5 text-left text-sm font-black text-brutal-black"
                   >
                     설명
@@ -74,7 +83,7 @@ export default async function IngredientsPage() {
                 {ingredients.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="py-10 text-center text-sm font-medium text-brutal-black"
                     >
                       등록된 재료가 없습니다
@@ -88,6 +97,11 @@ export default async function IngredientsPage() {
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black">
                         {ingredient.unit}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold text-brutal-black">
+                        {ingredient.unitCost
+                          ? `${formatCurrency(Number(ingredient.unitCost))}/${ingredient.unit}`
+                          : '-'}
                       </td>
                       <td className="px-3 py-4 text-sm text-brutal-black/70">
                         {ingredient.description}

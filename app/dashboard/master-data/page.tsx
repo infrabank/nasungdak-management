@@ -8,6 +8,8 @@ export default function MasterDataPage() {
     'bg-brutal-pink',
     'bg-brutal-purple',
     'bg-brutal-white',
+    'bg-brutal-yellow',
+    'bg-brutal-green',
   ]
 
   const items = [
@@ -19,12 +21,22 @@ export default function MasterDataPage() {
     {
       href: '/dashboard/master-data/ingredients',
       title: '재료',
-      desc: '재료 등록 및 관리',
+      desc: '재료 등록 및 단위당 원가 관리',
     },
     {
       href: '/dashboard/master-data/skus',
       title: 'SKU',
       desc: 'SKU(판매 단위) 등록 및 관리',
+    },
+    {
+      href: '/dashboard/master-data/sku-recipes',
+      title: 'SKU 레시피 (BOM)',
+      desc: 'SKU별 원재료 구성 및 원가 계산',
+    },
+    {
+      href: '/dashboard/master-data/sales-menus',
+      title: '판매 메뉴',
+      desc: '단품/세트 메뉴 등록 및 가격 설정',
     },
     {
       href: '/dashboard/master-data/menu-ingredients',
@@ -59,7 +71,7 @@ export default function MasterDataPage() {
           <Link
             key={item.href}
             href={item.href}
-            className={`block ${cardColors[index]} border-3 border-brutal-black p-6 shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-hover active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-sm`}
+            className={`block ${cardColors[index % cardColors.length]} border-3 border-brutal-black p-6 shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-hover active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-sm`}
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-brutal-black">

@@ -112,6 +112,19 @@ export default function IngredientForm({ ingredient }: IngredientFormProps) {
                     </div>
 
                     <div>
+                      <Label htmlFor="unitCost">단위당 원가 (원)</Label>
+                      <Input
+                        type="number"
+                        name="unitCost"
+                        id="unitCost"
+                        min="0"
+                        step="0.01"
+                        defaultValue={ingredient?.unitCost || ''}
+                        placeholder="예: 3000 (단위당 원가)"
+                      />
+                    </div>
+
+                    <div>
                       <Label htmlFor="description">설명</Label>
                       <Textarea
                         name="description"
