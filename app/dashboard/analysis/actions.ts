@@ -279,7 +279,7 @@ async function fetchAnalysis(
   )
 
   // Execute queries in parallel for better performance
-  // SKU cost: BOM-based (sku_recipes × ingredients.unit_cost) with menu fallback
+  // SKU cost: BOM-based (sku_recipes × purchase avg unit price) with menu fallback
   const [skuResult, totalCostsResult, fixedCostsResult] = await Promise.all([
     // SKU-level sales with BOM-based cost calculation
     db.execute(sql`
@@ -298,12 +298,28 @@ async function fetchAnalysis(
           ${salesStoreFilter}
         GROUP BY sr.sku_id, s.sku_name, s.menu_id
       ),
+      ingredient_avg_price AS (
+        -- Weighted average unit price per ingredient from purchase data
+        -- unit_price is price per ingredient's base unit (e.g., per kg)
+        SELECT
+          pt.ingredient_id,
+          CASE
+            WHEN SUM(pt.quantity) > 0
+            THEN SUM(pt.total_amount) / SUM(pt.quantity)
+            ELSE 0
+          END AS avg_unit_price
+        FROM purchase_transactions pt
+        WHERE pt.deleted_at IS NULL
+          AND pt.is_valid = true
+        GROUP BY pt.ingredient_id
+      ),
       bom_unit_cost AS (
-        -- BOM-based per-unit cost for each SKU (recipe × ingredient unit_cost)
+        -- BOM-based per-unit cost for each SKU
+        -- recipe.quantity in recipe.unit × avg purchase price per ingredient base unit
         SELECT
           rec.sku_id,
           SUM(
-            COALESCE(ing.unit_cost, 0) *
+            COALESCE(iap.avg_unit_price, COALESCE(ing.unit_cost, 0)) *
             CASE
               WHEN ing.unit = 'kg' AND rec.unit = 'g' THEN rec.quantity / 1000
               WHEN ing.unit = 'L' AND rec.unit = 'ml' THEN rec.quantity / 1000
@@ -314,6 +330,7 @@ async function fetchAnalysis(
           ) AS cost_per_unit
         FROM sku_recipes rec
         JOIN ingredients ing ON rec.ingredient_id = ing.id
+        LEFT JOIN ingredient_avg_price iap ON rec.ingredient_id = iap.ingredient_id
         WHERE rec.deleted_at IS NULL
           AND ing.deleted_at IS NULL
         GROUP BY rec.sku_id

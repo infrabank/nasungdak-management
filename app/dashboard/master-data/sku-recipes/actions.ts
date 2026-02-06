@@ -2,8 +2,14 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
-import { skuRecipes, skus, ingredients, menuCategories } from '@/lib/db/schema'
-import { eq, isNull, and } from 'drizzle-orm'
+import {
+  skuRecipes,
+  skus,
+  ingredients,
+  menuCategories,
+  purchaseTransactions,
+} from '@/lib/db/schema'
+import { eq, isNull, and, sum, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
 
@@ -211,6 +217,33 @@ export async function getSkusWithRecipes() {
         )
       )
 
+    // Get weighted average unit prices from purchase data per ingredient
+    const avgPrices = await db
+      .select({
+        ingredientId: purchaseTransactions.ingredientId,
+        avgUnitPrice: sql<string>`
+          CASE
+            WHEN SUM(${purchaseTransactions.quantity}) > 0
+            THEN SUM(${purchaseTransactions.totalAmount}) / SUM(${purchaseTransactions.quantity})
+            ELSE 0
+          END
+        `.as('avg_unit_price'),
+      })
+      .from(purchaseTransactions)
+      .where(
+        and(
+          isNull(purchaseTransactions.deletedAt),
+          eq(purchaseTransactions.isValid, true)
+        )
+      )
+      .groupBy(purchaseTransactions.ingredientId)
+
+    // Build a map of ingredient_id -> avg unit price
+    const avgPriceMap = new Map<string, number>()
+    for (const row of avgPrices) {
+      avgPriceMap.set(row.ingredientId, Number(row.avgUnitPrice))
+    }
+
     // Calculate costs and group by SKU
     const skusWithCosts = skuList.map((sku) => {
       const recipes = recipeList.filter((r) => r.skuId === sku.id)
@@ -218,18 +251,28 @@ export async function getSkusWithRecipes() {
       // Calculate total cost
       let totalCost = 0
       const recipeDetails = recipes.map((recipe) => {
-        // Convert units if needed
-        const ingredientCost = recipe.ingredientUnitCost
-          ? Number(recipe.ingredientUnitCost)
+        // Use purchase avg price, fallback to ingredients.unit_cost
+        const purchaseAvgPrice = recipe.ingredientId
+          ? (avgPriceMap.get(recipe.ingredientId) ?? 0)
           : 0
+        const ingredientCost =
+          purchaseAvgPrice > 0
+            ? purchaseAvgPrice
+            : recipe.ingredientUnitCost
+              ? Number(recipe.ingredientUnitCost)
+              : 0
         const quantity = Number(recipe.quantity)
 
-        // Simple unit conversion (g -> kg, ml -> L)
+        // Unit conversion (recipe unit -> ingredient base unit)
         let costPerUnit = ingredientCost
         if (recipe.ingredientUnit === 'kg' && recipe.unit === 'g') {
           costPerUnit = ingredientCost / 1000
         } else if (recipe.ingredientUnit === 'L' && recipe.unit === 'ml') {
           costPerUnit = ingredientCost / 1000
+        } else if (recipe.ingredientUnit === 'g' && recipe.unit === 'kg') {
+          costPerUnit = ingredientCost * 1000
+        } else if (recipe.ingredientUnit === 'ml' && recipe.unit === 'L') {
+          costPerUnit = ingredientCost * 1000
         }
 
         const subtotal = costPerUnit * quantity
