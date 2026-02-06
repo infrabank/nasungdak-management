@@ -10,6 +10,7 @@ interface SkuAnalysisItem {
   cost: number
   profit: number
   marginPercent: number
+  hasBom: boolean
 }
 
 interface MonthlyData {
@@ -117,6 +118,11 @@ export default function AnalysisTabs({
                       <tr key={index}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-bold text-brutal-black sm:pl-0">
                           {sku.skuName}
+                          {sku.hasBom && (
+                            <span className="ml-1 inline-flex items-center border border-brutal-black bg-brutal-blue px-1 text-[10px] font-bold">
+                              BOM
+                            </span>
+                          )}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-medium text-brutal-black">
                           {sku.quantitySold.toFixed(0)}

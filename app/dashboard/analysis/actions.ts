@@ -22,6 +22,7 @@ export interface AnalysisResult {
       cost: number
       profit: number
       marginPercent: number
+      hasBom: boolean
     }>
   }
   error?: string
@@ -278,9 +279,9 @@ async function fetchAnalysis(
   )
 
   // Execute queries in parallel for better performance
-  // Uses direct purchase costs (same as dashboard) instead of distribution rules
+  // SKU cost: BOM-based (sku_recipes × ingredients.unit_cost) with menu fallback
   const [skuResult, totalCostsResult, fixedCostsResult] = await Promise.all([
-    // SKU-level sales with costs attributed by menu
+    // SKU-level sales with BOM-based cost calculation
     db.execute(sql`
       WITH sales_summary AS (
         SELECT
@@ -297,8 +298,28 @@ async function fetchAnalysis(
           ${salesStoreFilter}
         GROUP BY sr.sku_id, s.sku_name, s.menu_id
       ),
+      bom_unit_cost AS (
+        -- BOM-based per-unit cost for each SKU (recipe × ingredient unit_cost)
+        SELECT
+          rec.sku_id,
+          SUM(
+            COALESCE(ing.unit_cost, 0) *
+            CASE
+              WHEN ing.unit = 'kg' AND rec.unit = 'g' THEN rec.quantity / 1000
+              WHEN ing.unit = 'L' AND rec.unit = 'ml' THEN rec.quantity / 1000
+              WHEN ing.unit = 'g' AND rec.unit = 'kg' THEN rec.quantity * 1000
+              WHEN ing.unit = 'ml' AND rec.unit = 'L' THEN rec.quantity * 1000
+              ELSE rec.quantity
+            END
+          ) AS cost_per_unit
+        FROM sku_recipes rec
+        JOIN ingredients ing ON rec.ingredient_id = ing.id
+        WHERE rec.deleted_at IS NULL
+          AND ing.deleted_at IS NULL
+        GROUP BY rec.sku_id
+      ),
       cost_by_menu AS (
-        -- Direct purchase costs grouped by menu (no distribution rules)
+        -- Fallback: purchase costs by menu (for SKUs without BOM)
         SELECT
           pt.menu_id,
           SUM(pt.total_amount) AS total_cost
@@ -313,14 +334,28 @@ async function fetchAnalysis(
         ss.sku_name,
         ss.total_quantity AS quantity_sold,
         ss.total_revenue AS revenue,
-        COALESCE(cm.total_cost, 0) AS cost,
-        ss.total_revenue - COALESCE(cm.total_cost, 0) AS profit,
+        CASE
+          WHEN buc.cost_per_unit IS NOT NULL
+          THEN buc.cost_per_unit * ss.total_quantity
+          ELSE COALESCE(cm.total_cost, 0)
+        END AS cost,
+        ss.total_revenue - CASE
+          WHEN buc.cost_per_unit IS NOT NULL
+          THEN buc.cost_per_unit * ss.total_quantity
+          ELSE COALESCE(cm.total_cost, 0)
+        END AS profit,
         CASE
           WHEN ss.total_revenue > 0
-          THEN ((ss.total_revenue - COALESCE(cm.total_cost, 0)) / ss.total_revenue * 100)
+          THEN ((ss.total_revenue - CASE
+            WHEN buc.cost_per_unit IS NOT NULL
+            THEN buc.cost_per_unit * ss.total_quantity
+            ELSE COALESCE(cm.total_cost, 0)
+          END) / ss.total_revenue * 100)
           ELSE 0
-        END AS margin_percent
+        END AS margin_percent,
+        CASE WHEN buc.cost_per_unit IS NOT NULL THEN true ELSE false END AS has_bom
       FROM sales_summary ss
+      LEFT JOIN bom_unit_cost buc ON ss.sku_id = buc.sku_id
       LEFT JOIN cost_by_menu cm ON ss.menu_id = cm.menu_id
       ORDER BY revenue DESC
     `),
@@ -351,6 +386,7 @@ async function fetchAnalysis(
     cost: Number(row.cost),
     profit: Number(row.profit),
     marginPercent: Number(row.margin_percent),
+    hasBom: row.has_bom === true,
   }))
 
   // Calculate totals using direct purchase costs (same as dashboard)
