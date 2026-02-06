@@ -51,7 +51,10 @@ export async function createFixedCost(prevState: any, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/fixed-costs')
+    revalidatePath('/dashboard/analysis')
+    revalidatePath('/dashboard')
     revalidateTag('fixed-costs:all')
+    revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
 
@@ -122,7 +125,10 @@ export async function updateFixedCost(id: string, formData: FormData) {
     }
 
     revalidatePath('/dashboard/fixed-costs')
+    revalidatePath('/dashboard/analysis')
+    revalidatePath('/dashboard')
     revalidateTag('fixed-costs:all')
+    revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
 
@@ -181,7 +187,10 @@ export async function deleteFixedCost(id: string) {
     }
 
     revalidatePath('/dashboard/fixed-costs')
+    revalidatePath('/dashboard/analysis')
+    revalidatePath('/dashboard')
     revalidateTag('fixed-costs:all')
+    revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
 
