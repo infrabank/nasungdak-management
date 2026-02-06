@@ -6,6 +6,11 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    // Disable client-side router cache to ensure fresh data after mutations
+    staleTimes: {
+      dynamic: 0,
+      static: 0,
+    },
   },
 
   // 이미지 최적화 설정
