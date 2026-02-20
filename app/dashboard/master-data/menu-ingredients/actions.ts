@@ -60,7 +60,10 @@ export async function createMenuIngredient(formData: FormData) {
       data: mapping,
     }
   } catch (error) {
-    logger.error('Failed to create menu-ingredient mapping:', errorToContext(error))
+    logger.error(
+      'Failed to create menu-ingredient mapping:',
+      errorToContext(error)
+    )
 
     if (error instanceof z.ZodError) {
       return {
@@ -112,7 +115,10 @@ export async function updateMenuIngredient(id: string, formData: FormData) {
       data: mapping,
     }
   } catch (error) {
-    logger.error('Failed to update menu-ingredient mapping:', errorToContext(error))
+    logger.error(
+      'Failed to update menu-ingredient mapping:',
+      errorToContext(error)
+    )
 
     if (error instanceof z.ZodError) {
       return {
@@ -151,7 +157,10 @@ export async function deleteMenuIngredient(id: string) {
       success: true,
     }
   } catch (error) {
-    logger.error('Failed to delete menu-ingredient mapping:', errorToContext(error))
+    logger.error(
+      'Failed to delete menu-ingredient mapping:',
+      errorToContext(error)
+    )
     return {
       success: false,
       error:
@@ -203,7 +212,10 @@ export async function getMenuIngredients() {
 
     return await getCached()
   } catch (error) {
-    logger.error('Failed to fetch menu-ingredient mappings:', errorToContext(error))
+    logger.error(
+      'Failed to fetch menu-ingredient mappings:',
+      errorToContext(error)
+    )
     return []
   }
 }

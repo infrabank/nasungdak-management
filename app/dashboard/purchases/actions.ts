@@ -9,10 +9,65 @@ import {
   menuCategories,
   ingredients,
   menuIngredients,
+  inventory,
+  inventoryEvents,
 } from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
+
+async function syncPurchaseToInventory(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  storeId: string,
+  ingredientId: string,
+  quantity: string,
+  purchaseId: string,
+  transactionDate: string
+) {
+  await tx.insert(inventoryEvents).values({
+    storeId,
+    ingredientId,
+    eventType: 'purchase',
+    quantityChange: quantity,
+    reason: '매입 자동 반영',
+    eventDate: transactionDate,
+    referenceId: purchaseId,
+    createdBy: 'system',
+  })
+
+  const existingInventory = await tx.query.inventory.findFirst({
+    where: and(
+      eq(inventory.storeId, storeId),
+      eq(inventory.ingredientId, ingredientId)
+    ),
+  })
+
+  if (existingInventory) {
+    await tx
+      .update(inventory)
+      .set({
+        currentQuantity: sql`${inventory.currentQuantity} + ${quantity}`,
+        lastUpdated: new Date(),
+      })
+      .where(eq(inventory.id, existingInventory.id))
+    return
+  }
+
+  const ingredient = await tx.query.ingredients.findFirst({
+    where: and(eq(ingredients.id, ingredientId), isNull(ingredients.deletedAt)),
+    columns: {
+      unit: true,
+    },
+  })
+
+  await tx.insert(inventory).values({
+    storeId,
+    ingredientId,
+    currentQuantity: quantity,
+    unit: ingredient?.unit ?? null,
+    lastUpdated: new Date(),
+  })
+}
 
 export async function createPurchase(formData: FormData) {
   try {
@@ -50,21 +105,38 @@ export async function createPurchase(formData: FormData) {
 
     const isValid = !!menuIngredient
 
-    const [transaction] = await db
-      .insert(purchaseTransactions)
-      .values({
-        ...validatedData,
-        storeId,
-        isValid,
-        createdBy: 'system',
-      })
-      .returning()
+    const transaction = await db.transaction(async (tx) => {
+      const [createdPurchase] = await tx
+        .insert(purchaseTransactions)
+        .values({
+          ...validatedData,
+          storeId,
+          isValid,
+          createdBy: 'system',
+        })
+        .returning()
+
+      if (createdPurchase.storeId) {
+        await syncPurchaseToInventory(
+          tx,
+          createdPurchase.storeId,
+          createdPurchase.ingredientId,
+          createdPurchase.quantity,
+          createdPurchase.id,
+          createdPurchase.transactionDate
+        )
+      }
+
+      return createdPurchase
+    })
 
     revalidatePath('/dashboard/purchases')
     revalidateTag('purchases:all')
     if (transaction.storeId) {
       revalidateTag(`purchases:${transaction.storeId}`)
+      revalidateTag(`inventory:${transaction.storeId}`)
     }
+    revalidateTag('inventory:all')
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -535,6 +607,17 @@ export async function createMultiplePurchases(
             })
             .returning()
 
+          if (transaction.storeId) {
+            await syncPurchaseToInventory(
+              tx,
+              transaction.storeId,
+              transaction.ingredientId,
+              transaction.quantity,
+              transaction.id,
+              transaction.transactionDate
+            )
+          }
+
           successCount++
           results.push({
             index: i,
@@ -559,7 +642,9 @@ export async function createMultiplePurchases(
     revalidateTag('purchases:all')
     if (storeId) {
       revalidateTag(`purchases:${storeId}`)
+      revalidateTag(`inventory:${storeId}`)
     }
+    revalidateTag('inventory:all')
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')

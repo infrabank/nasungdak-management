@@ -220,15 +220,15 @@ opencode
 
 ### 파일 생성 규칙
 
-| 작업 | 생성 위치 | 생성 주체 |
-|------|----------|----------|
-| 기능 명세 작성 | `specs/{feature}/` | opencode (speckit) |
-| 작업 계획 | `.sisyphus/plans/` | opencode (AI) |
-| 페이지/라우트 추가 | `app/` | 개발자 |
-| 유틸리티 함수 | `lib/utils/` | 개발자 |
-| UI 컴포넌트 | `components/ui/` | 개발자 |
-| DB 스키마 변경 | `lib/db/schema.ts` | 개발자 |
-| DB 마이그레이션 | `drizzle/` | drizzle-kit (자동) |
+| 작업               | 생성 위치          | 생성 주체          |
+| ------------------ | ------------------ | ------------------ |
+| 기능 명세 작성     | `specs/{feature}/` | opencode (speckit) |
+| 작업 계획          | `.sisyphus/plans/` | opencode (AI)      |
+| 페이지/라우트 추가 | `app/`             | 개발자             |
+| 유틸리티 함수      | `lib/utils/`       | 개발자             |
+| UI 컴포넌트        | `components/ui/`   | 개발자             |
+| DB 스키마 변경     | `lib/db/schema.ts` | 개발자             |
+| DB 마이그레이션    | `drizzle/`         | drizzle-kit (자동) |
 
 ### 기능 추가 시 파일 배치
 
@@ -286,11 +286,11 @@ Docker 컨테이너 안에서 개발 환경을 실행하여, 어느 컴퓨터에
 
 ### 사전 요구사항
 
-| 도구 | 설치 방법 |
-|------|----------|
-| Docker Desktop | https://www.docker.com/products/docker-desktop/ |
-| VS Code | https://code.visualstudio.com/ |
-| Dev Containers 확장 | VS Code 마켓플레이스에서 "Dev Containers" 설치 |
+| 도구                | 설치 방법                                       |
+| ------------------- | ----------------------------------------------- |
+| Docker Desktop      | https://www.docker.com/products/docker-desktop/ |
+| VS Code             | https://code.visualstudio.com/                  |
+| Dev Containers 확장 | VS Code 마켓플레이스에서 "Dev Containers" 설치  |
 
 ### 시작 방법
 
@@ -307,24 +307,24 @@ code .
 
 ### 컨테이너 내부 환경
 
-| 항목 | 값 |
-|------|------|
-| Base Image | Node 20 LTS (Debian Bookworm) |
-| 작업 경로 | `/workspaces/store-management-saas` |
-| opencode | 전역 설치됨 |
-| npm | 포함됨 |
-| git | 포함됨 |
-| 쉘 | bash |
+| 항목       | 값                                  |
+| ---------- | ----------------------------------- |
+| Base Image | Node 20 LTS (Debian Bookworm)       |
+| 작업 경로  | `/workspaces/store-management-saas` |
+| opencode   | 전역 설치됨                         |
+| npm        | 포함됨                              |
+| git        | 포함됨                              |
+| 쉘         | bash                                |
 
 ### Dev Container vs 로컬 개발 비교
 
-| 항목 | Dev Container | 로컬 개발 |
-|------|--------------|----------|
-| **환경 일관성** | 완벽히 동일 | Node/npm 버전 수동 관리 필요 |
-| **초기 설정** | Docker 설치만 필요 | Node, npm, opencode 각각 설치 |
-| **시작 속도** | 첫 빌드 5-10분, 이후 즉시 | 즉시 |
-| **리소스 사용** | Docker 메모리 사용 | 네이티브 성능 |
-| **권장 상황** | 환경 충돌 방지, 새 컴퓨터 셋업 | 이미 환경 구성됨, 가벼운 작업 |
+| 항목            | Dev Container                  | 로컬 개발                     |
+| --------------- | ------------------------------ | ----------------------------- |
+| **환경 일관성** | 완벽히 동일                    | Node/npm 버전 수동 관리 필요  |
+| **초기 설정**   | Docker 설치만 필요             | Node, npm, opencode 각각 설치 |
+| **시작 속도**   | 첫 빌드 5-10분, 이후 즉시      | 즉시                          |
+| **리소스 사용** | Docker 메모리 사용             | 네이티브 성능                 |
+| **권장 상황**   | 환경 충돌 방지, 새 컴퓨터 셋업 | 이미 환경 구성됨, 가벼운 작업 |
 
 ### 장소 전환 시 Dev Container 권장 흐름
 
@@ -371,12 +371,12 @@ npm run dev  # 별도 터미널
 
 ### 문제 해결
 
-| 문제 | 해결 |
-|------|------|
-| 컨테이너 빌드 실패 | Docker Desktop 재시작 후 재시도 |
-| opencode 명령 없음 | 컨테이너 내에서 `npm install -g @anthropics/claude-code` |
-| 포트 3000 연결 안 됨 | VS Code 하단 "Ports" 탭에서 3000 포트 포워딩 확인 |
-| 파일 권한 문제 | `sudo chown -R node:node /workspaces/store-management-saas` |
+| 문제                 | 해결                                                        |
+| -------------------- | ----------------------------------------------------------- |
+| 컨테이너 빌드 실패   | Docker Desktop 재시작 후 재시도                             |
+| opencode 명령 없음   | 컨테이너 내에서 `npm install -g @anthropics/claude-code`    |
+| 포트 3000 연결 안 됨 | VS Code 하단 "Ports" 탭에서 3000 포트 포워딩 확인           |
+| 파일 권한 문제       | `sudo chown -R node:node /workspaces/store-management-saas` |
 
 ### Dev Container 없이 개발하기
 

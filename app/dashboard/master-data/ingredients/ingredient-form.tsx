@@ -100,6 +100,17 @@ export default function IngredientForm({ ingredient }: IngredientFormProps) {
                     </div>
 
                     <div>
+                      <Label htmlFor="barcode">바코드</Label>
+                      <Input
+                        type="text"
+                        name="barcode"
+                        id="barcode"
+                        defaultValue={ingredient?.barcode || ''}
+                        placeholder="바코드를 입력하세요 (선택)"
+                      />
+                    </div>
+
+                    <div>
                       <Label htmlFor="unit">단위 *</Label>
                       <Input
                         type="text"

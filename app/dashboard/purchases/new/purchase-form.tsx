@@ -1,11 +1,14 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createMultiplePurchases } from '../actions'
 import type { PurchaseEntry } from '../actions'
 import { getMenus } from '../../master-data/menus/actions'
-import { getIngredients } from '../../master-data/ingredients/actions'
+import {
+  getIngredients,
+  lookupByBarcode,
+} from '../../master-data/ingredients/actions'
 import { getMenuIngredients } from '../../master-data/menu-ingredients/actions'
 import { getActiveSuppliers } from '../../master-data/suppliers/actions'
 import { Button } from '@/components/ui/button'
@@ -27,6 +30,7 @@ type MenuIngredientMapping = {
 
 type EntryRow = {
   id: string
+  barcode: string
   menuId: string
   ingredientId: string
   quantity: string
@@ -42,6 +46,7 @@ function generateId() {
 function createEmptyRow(): EntryRow {
   return {
     id: generateId(),
+    barcode: '',
     menuId: '',
     ingredientId: '',
     quantity: '',
@@ -71,6 +76,107 @@ export default function PurchaseForm() {
   )
   const [supplierName, setSupplierName] = useState('')
   const [entries, setEntries] = useState<EntryRow[]>([createEmptyRow()])
+  const barcodeInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
+  const barcodeLookupTimers = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({})
+
+  const focusBarcodeInput = useCallback((entryId: string) => {
+    requestAnimationFrame(() => {
+      barcodeInputRefs.current[entryId]?.focus()
+    })
+  }, [])
+
+  const processBarcodeLookup = useCallback(
+    async (entryId: string, rawBarcode: string) => {
+      const barcode = rawBarcode.trim()
+      if (!barcode) return
+
+      try {
+        const result = await lookupByBarcode(barcode)
+
+        if (result.success && result.ingredient) {
+          const mappedMenu = result.menuMappings?.[0]
+          const ingredientName = result.ingredient.ingredientName
+
+          setEntries((prev) =>
+            prev.map((entry) =>
+              entry.id === entryId
+                ? {
+                    ...entry,
+                    barcode: '',
+                    menuId: mappedMenu?.menuId || entry.menuId,
+                    ingredientId: result.ingredient.id,
+                  }
+                : entry
+            )
+          )
+
+          toast.success(
+            mappedMenu?.menuName
+              ? `${mappedMenu.menuName} - ${ingredientName} 선택됨`
+              : `${ingredientName} 선택됨`
+          )
+        } else {
+          setEntries((prev) =>
+            prev.map((entry) =>
+              entry.id === entryId ? { ...entry, barcode: '' } : entry
+            )
+          )
+          toast.error('등록되지 않은 바코드입니다')
+        }
+      } catch {
+        setEntries((prev) =>
+          prev.map((entry) =>
+            entry.id === entryId ? { ...entry, barcode: '' } : entry
+          )
+        )
+        toast.error('바코드 조회 중 오류가 발생했습니다')
+      } finally {
+        focusBarcodeInput(entryId)
+      }
+    },
+    [focusBarcodeInput]
+  )
+
+  const handleBarcodeChange = useCallback(
+    (entryId: string, value: string) => {
+      setEntries((prev) =>
+        prev.map((entry) =>
+          entry.id === entryId ? { ...entry, barcode: value } : entry
+        )
+      )
+
+      if (barcodeLookupTimers.current[entryId]) {
+        clearTimeout(barcodeLookupTimers.current[entryId])
+      }
+
+      const barcode = value.trim()
+      if (!barcode) return
+
+      barcodeLookupTimers.current[entryId] = setTimeout(() => {
+        void processBarcodeLookup(entryId, barcode)
+      }, 120)
+    },
+    [processBarcodeLookup]
+  )
+
+  const handleBarcodeEnter = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>, entryId: string) => {
+      if (e.key !== 'Enter') return
+      e.preventDefault()
+
+      if (barcodeLookupTimers.current[entryId]) {
+        clearTimeout(barcodeLookupTimers.current[entryId])
+      }
+
+      const barcode = e.currentTarget.value.trim()
+      if (!barcode) return
+
+      void processBarcodeLookup(entryId, barcode)
+    },
+    [processBarcodeLookup]
+  )
 
   useEffect(() => {
     Promise.all([
@@ -354,6 +460,26 @@ export default function PurchaseForm() {
                 {/* Card Body */}
                 {entry.isExpanded && (
                   <div className="space-y-4 p-4">
+                    <div className="border-2 border-brutal-black bg-brutal-blue/20 p-3">
+                      <Label htmlFor={`barcode-${entry.id}`}>
+                        📦 바코드 스캔
+                      </Label>
+                      <Input
+                        id={`barcode-${entry.id}`}
+                        type="text"
+                        value={entry.barcode}
+                        onChange={(e) =>
+                          handleBarcodeChange(entry.id, e.target.value)
+                        }
+                        onKeyDown={(e) => handleBarcodeEnter(e, entry.id)}
+                        placeholder="바코드를 스캔하세요"
+                        className="mt-2 border-3 border-brutal-black font-bold"
+                        ref={(element) => {
+                          barcodeInputRefs.current[entry.id] = element
+                        }}
+                      />
+                    </div>
+
                     <div>
                       <Label>메뉴 *</Label>
                       <Select

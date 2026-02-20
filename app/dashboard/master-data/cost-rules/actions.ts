@@ -133,7 +133,10 @@ export async function createCostRule(formData: FormData) {
       data: rule,
     }
   } catch (error) {
-    logger.error('Failed to create cost distribution rule:', errorToContext(error))
+    logger.error(
+      'Failed to create cost distribution rule:',
+      errorToContext(error)
+    )
 
     if (error instanceof z.ZodError) {
       return {
@@ -205,7 +208,10 @@ export async function updateCostRule(id: string, formData: FormData) {
       data: rule,
     }
   } catch (error) {
-    logger.error('Failed to update cost distribution rule:', errorToContext(error))
+    logger.error(
+      'Failed to update cost distribution rule:',
+      errorToContext(error)
+    )
 
     if (error instanceof z.ZodError) {
       return {
@@ -248,7 +254,10 @@ export async function deleteCostRule(id: string) {
       success: true,
     }
   } catch (error) {
-    logger.error('Failed to delete cost distribution rule:', errorToContext(error))
+    logger.error(
+      'Failed to delete cost distribution rule:',
+      errorToContext(error)
+    )
     return {
       success: false,
       error:
@@ -301,7 +310,10 @@ export async function getCostRules() {
 
     return await getCached()
   } catch (error) {
-    logger.error('Failed to fetch cost distribution rules:', errorToContext(error))
+    logger.error(
+      'Failed to fetch cost distribution rules:',
+      errorToContext(error)
+    )
     return []
   }
 }

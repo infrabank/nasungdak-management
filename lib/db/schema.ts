@@ -86,6 +86,7 @@ export const ingredients = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     organizationId: uuid('organization_id').references(() => organizations.id), // Multi-tenancy 지원
     ingredientName: varchar('ingredient_name', { length: 100 }).notNull(),
+    barcode: varchar('barcode', { length: 50 }), // 바코드 (EAN-13, 자체코드 등)
     unit: varchar('unit', { length: 20 }).notNull(),
     unitCost: decimal('unit_cost', { precision: 12, scale: 2 }), // 단위당 원가 (원/unit)
     description: varchar('description', { length: 500 }),
@@ -97,7 +98,10 @@ export const ingredients = pgTable(
     deletedAt: timestamp('deleted_at'),
     deletedBy: varchar('deleted_by', { length: 100 }),
   },
-  (table) => [index('ingredients_org_id_idx').on(table.organizationId)]
+  (table) => [
+    index('ingredients_org_id_idx').on(table.organizationId),
+    index('ingredients_barcode_idx').on(table.barcode),
+  ]
 )
 
 // SKUs (Stock Keeping Units) Table
