@@ -68,6 +68,11 @@ export default function BarcodeScanner({
           setError('카메라가 다른 앱에서 사용 중이거나 접근할 수 없습니다')
         } else if (err.name === 'OverconstrainedError') {
           setError('카메라 설정이 지원되지 않습니다')
+        } else if (
+          err.name === 'SecurityError' ||
+          err.name === 'NotSupportedError'
+        ) {
+          setError('브라우저 보안 정책으로 카메라 사용이 차단되었습니다')
         }
       }
     },

@@ -199,6 +199,70 @@ export default function PurchaseForm() {
     [scannerEntryId, processBarcodeLookup]
   )
 
+  const openScannerWithPermission = useCallback(async (entryId: string) => {
+    const isLocalhost =
+      typeof window !== 'undefined' &&
+      ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
+
+    if (
+      typeof window !== 'undefined' &&
+      !window.isSecureContext &&
+      !isLocalhost
+    ) {
+      toast.error('카메라는 HTTPS 환경에서만 사용할 수 있습니다')
+      return
+    }
+
+    if (
+      typeof navigator === 'undefined' ||
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia
+    ) {
+      toast.error('이 브라우저는 카메라 기능을 지원하지 않습니다')
+      return
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+        },
+        audio: false,
+      })
+      stream.getTracks().forEach((track) => track.stop())
+      setScannerEntryId(entryId)
+    } catch (error) {
+      if (error instanceof DOMException) {
+        if (
+          error.name === 'NotAllowedError' ||
+          error.name === 'PermissionDeniedError'
+        ) {
+          toast.error(
+            '카메라 권한이 거부되었습니다. 브라우저 설정에서 허용해주세요'
+          )
+          return
+        }
+        if (error.name === 'NotFoundError') {
+          toast.error('사용 가능한 카메라를 찾을 수 없습니다')
+          return
+        }
+        if (error.name === 'NotReadableError' || error.name === 'AbortError') {
+          toast.error('카메라가 다른 앱에서 사용 중입니다')
+          return
+        }
+        if (
+          error.name === 'SecurityError' ||
+          error.name === 'NotSupportedError'
+        ) {
+          toast.error('브라우저 보안 정책으로 카메라 사용이 차단되었습니다')
+          return
+        }
+      }
+
+      toast.error('카메라 시작 중 오류가 발생했습니다')
+    }
+  }, [])
+
   useEffect(() => {
     Promise.all([
       getMenus(),
@@ -502,7 +566,9 @@ export default function PurchaseForm() {
                         />
                         <button
                           type="button"
-                          onClick={() => setScannerEntryId(entry.id)}
+                          onClick={() => {
+                            void openScannerWithPermission(entry.id)
+                          }}
                           className="flex h-11 w-11 shrink-0 items-center justify-center border-3 border-brutal-black bg-brutal-yellow font-black text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
                           title="카메라로 바코드 스캔"
                         >
