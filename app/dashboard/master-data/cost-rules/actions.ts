@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import {
   costDistributionRules,
@@ -259,37 +259,46 @@ export async function deleteCostRule(id: string) {
 export async function getCostRules() {
   try {
     const organizationId = await getOrganizationId()
-    const rules = await db
-      .select({
-        id: costDistributionRules.id,
-        menuId: costDistributionRules.menuId,
-        menuName: menuCategories.menuName,
-        ingredientId: costDistributionRules.ingredientId,
-        ingredientName: ingredients.ingredientName,
-        distributionPercent: costDistributionRules.distributionPercent,
-        effectiveFrom: costDistributionRules.effectiveFrom,
-        effectiveTo: costDistributionRules.effectiveTo,
-      })
-      .from(costDistributionRules)
-      .leftJoin(
-        menuCategories,
-        eq(costDistributionRules.menuId, menuCategories.id)
-      )
-      .leftJoin(
-        ingredients,
-        eq(costDistributionRules.ingredientId, ingredients.id)
-      )
-      .where(
-        and(
-          isNull(costDistributionRules.deletedAt),
-          organizationId
-            ? eq(costDistributionRules.organizationId, organizationId)
-            : undefined
-        )
-      )
-      .orderBy(menuCategories.menuName, costDistributionRules.effectiveFrom)
+    const orgKey = organizationId ?? 'all'
 
-    return rules
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select({
+            id: costDistributionRules.id,
+            menuId: costDistributionRules.menuId,
+            menuName: menuCategories.menuName,
+            ingredientId: costDistributionRules.ingredientId,
+            ingredientName: ingredients.ingredientName,
+            distributionPercent: costDistributionRules.distributionPercent,
+            effectiveFrom: costDistributionRules.effectiveFrom,
+            effectiveTo: costDistributionRules.effectiveTo,
+          })
+          .from(costDistributionRules)
+          .leftJoin(
+            menuCategories,
+            eq(costDistributionRules.menuId, menuCategories.id)
+          )
+          .leftJoin(
+            ingredients,
+            eq(costDistributionRules.ingredientId, ingredients.id)
+          )
+          .where(
+            and(
+              isNull(costDistributionRules.deletedAt),
+              organizationId
+                ? eq(costDistributionRules.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(menuCategories.menuName, costDistributionRules.effectiveFrom)
+          .limit(500)
+      },
+      ['cost-rules:list', orgKey],
+      { tags: [`cost-rules:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch cost distribution rules:', error)
     return []
@@ -299,24 +308,33 @@ export async function getCostRules() {
 export async function getMenus() {
   try {
     const organizationId = await getOrganizationId()
-    const menus = await db
-      .select({
-        id: menuCategories.id,
-        menuName: menuCategories.menuName,
-      })
-      .from(menuCategories)
-      .where(
-        and(
-          isNull(menuCategories.deletedAt),
-          eq(menuCategories.isActive, true),
-          organizationId
-            ? eq(menuCategories.organizationId, organizationId)
-            : undefined
-        )
-      )
-      .orderBy(menuCategories.menuName)
+    const orgKey = organizationId ?? 'all'
 
-    return menus
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select({
+            id: menuCategories.id,
+            menuName: menuCategories.menuName,
+          })
+          .from(menuCategories)
+          .where(
+            and(
+              isNull(menuCategories.deletedAt),
+              eq(menuCategories.isActive, true),
+              organizationId
+                ? eq(menuCategories.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(menuCategories.menuName)
+          .limit(500)
+      },
+      ['menus:active:cost-rules', orgKey],
+      { tags: [`menus:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch menus:', error)
     return []
@@ -326,25 +344,34 @@ export async function getMenus() {
 export async function getIngredients() {
   try {
     const organizationId = await getOrganizationId()
-    const ingredientsList = await db
-      .select({
-        id: ingredients.id,
-        ingredientName: ingredients.ingredientName,
-        unit: ingredients.unit,
-      })
-      .from(ingredients)
-      .where(
-        and(
-          isNull(ingredients.deletedAt),
-          eq(ingredients.isActive, true),
-          organizationId
-            ? eq(ingredients.organizationId, organizationId)
-            : undefined
-        )
-      )
-      .orderBy(ingredients.ingredientName)
+    const orgKey = organizationId ?? 'all'
 
-    return ingredientsList
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select({
+            id: ingredients.id,
+            ingredientName: ingredients.ingredientName,
+            unit: ingredients.unit,
+          })
+          .from(ingredients)
+          .where(
+            and(
+              isNull(ingredients.deletedAt),
+              eq(ingredients.isActive, true),
+              organizationId
+                ? eq(ingredients.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(ingredients.ingredientName)
+          .limit(500)
+      },
+      ['ingredients:active:cost-rules', orgKey],
+      { tags: [`ingredients:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch ingredients:', error)
     return []

@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { menuCategories } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
@@ -144,20 +144,29 @@ export async function deleteMenu(id: string) {
 export async function getMenus() {
   try {
     const organizationId = await getOrganizationId()
-    const menus = await db
-      .select()
-      .from(menuCategories)
-      .where(
-        and(
-          isNull(menuCategories.deletedAt),
-          organizationId
-            ? eq(menuCategories.organizationId, organizationId)
-            : undefined
-        )
-      )
-      .orderBy(menuCategories.menuName)
+    const orgKey = organizationId ?? 'all'
 
-    return menus
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select()
+          .from(menuCategories)
+          .where(
+            and(
+              isNull(menuCategories.deletedAt),
+              organizationId
+                ? eq(menuCategories.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(menuCategories.menuName)
+          .limit(500)
+      },
+      ['menus:list', orgKey],
+      { tags: [`menus:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch menus:', error)
     return []

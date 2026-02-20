@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { oilChangeSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { oilChangeHistory } from '@/lib/db/schema'
@@ -63,6 +63,8 @@ export async function createOilChange(prevState: any, formData: FormData) {
     })
 
     revalidatePath('/dashboard/oil-changes')
+    revalidateTag(`oil-changes:${storeId ?? 'all'}`)
+
     return { success: true, error: undefined }
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -89,38 +91,53 @@ export async function getOilChanges(filters?: {
       return []
     }
 
-    const conditions = [isNull(oilChangeHistory.deletedAt)]
+    const storeId = filters?.storeId ?? 'all'
 
-    // 항상 권한 있는 매장으로 필터링
-    conditions.push(inArray(oilChangeHistory.storeId, authorizedStoreIds))
+    const getCached = unstable_cache(
+      async () => {
+        const conditions = [isNull(oilChangeHistory.deletedAt)]
 
-    if (filters?.startDate) {
-      conditions.push(
-        sql`oil_change_history.change_date >= ${filters.startDate}`
-      )
-    }
+        // 항상 권한 있는 매장으로 필터링
+        conditions.push(inArray(oilChangeHistory.storeId, authorizedStoreIds))
 
-    if (filters?.endDate) {
-      conditions.push(sql`oil_change_history.change_date <= ${filters.endDate}`)
-    }
+        if (filters?.startDate) {
+          conditions.push(
+            sql`oil_change_history.change_date >= ${filters.startDate}`
+          )
+        }
 
-    if (filters?.fryerType) {
-      conditions.push(eq(oilChangeHistory.fryerType, filters.fryerType))
-    }
+        if (filters?.endDate) {
+          conditions.push(
+            sql`oil_change_history.change_date <= ${filters.endDate}`
+          )
+        }
 
-    // 특정 매장 필터 (권한 체크는 이미 위에서 함)
-    if (filters?.storeId && authorizedStoreIds.includes(filters.storeId)) {
-      conditions.push(eq(oilChangeHistory.storeId, filters.storeId))
-    }
+        if (filters?.fryerType) {
+          conditions.push(eq(oilChangeHistory.fryerType, filters.fryerType))
+        }
 
-    const results = await db
-      .select()
-      .from(oilChangeHistory)
-      .where(and(...conditions))
-      .orderBy(desc(oilChangeHistory.changeDate))
-      .limit(100)
+        // 특정 매장 필터 (권한 체크는 이미 위에서 함)
+        if (filters?.storeId && authorizedStoreIds.includes(filters.storeId)) {
+          conditions.push(eq(oilChangeHistory.storeId, filters.storeId))
+        }
 
-    return results
+        return db
+          .select()
+          .from(oilChangeHistory)
+          .where(and(...conditions))
+          .orderBy(desc(oilChangeHistory.changeDate))
+          .limit(100)
+      },
+      [
+        'oil-changes:list',
+        storeId,
+        filters?.startDate ?? 'all',
+        filters?.endDate ?? 'all',
+        filters?.fryerType ?? 'all',
+      ],
+      { tags: [`oil-changes:${storeId}`] }
+    )
+    return await getCached()
   } catch (error) {
     console.error('Error fetching oil changes:', error)
     return []
@@ -176,7 +193,7 @@ export async function updateOilChange(id: string, formData: FormData) {
       usageDays = Math.max(0, daysDiff)
     }
 
-    await db
+    const [updated] = await db
       .update(oilChangeHistory)
       .set({
         changeDate: validatedData.changeDate,
@@ -188,8 +205,11 @@ export async function updateOilChange(id: string, formData: FormData) {
       .where(
         and(eq(oilChangeHistory.id, id), isNull(oilChangeHistory.deletedAt))
       )
+      .returning({ storeId: oilChangeHistory.storeId })
 
     revalidatePath('/dashboard/oil-changes')
+    revalidateTag(`oil-changes:${updated?.storeId ?? 'all'}`)
+
     return { success: true, error: undefined }
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -205,15 +225,18 @@ export async function updateOilChange(id: string, formData: FormData) {
 
 export async function deleteOilChange(id: string) {
   try {
-    await db
+    const [deleted] = await db
       .update(oilChangeHistory)
       .set({
         deletedAt: new Date(),
         updatedAt: new Date(),
       })
       .where(eq(oilChangeHistory.id, id))
+      .returning({ storeId: oilChangeHistory.storeId })
 
     revalidatePath('/dashboard/oil-changes')
+    revalidateTag(`oil-changes:${deleted?.storeId ?? 'all'}`)
+
     return { success: true, error: undefined }
   } catch (error) {
     console.error('Error deleting oil change:', error)
@@ -235,60 +258,69 @@ export async function getOilChangeStats(storeId?: string) {
       }
     }
 
-    // Get total oil changes in last 30 days
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const storeKey = storeId ?? 'all'
 
-    const recentConditions = [
-      isNull(oilChangeHistory.deletedAt),
-      sql`oil_change_history.change_date >= ${thirtyDaysAgo.toISOString().split('T')[0]}`,
-      inArray(oilChangeHistory.storeId, authorizedStoreIds),
-    ]
+    const getCached = unstable_cache(
+      async () => {
+        // Get total oil changes in last 30 days
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    if (storeId && authorizedStoreIds.includes(storeId)) {
-      recentConditions.push(eq(oilChangeHistory.storeId, storeId))
-    }
+        const recentConditions = [
+          isNull(oilChangeHistory.deletedAt),
+          sql`oil_change_history.change_date >= ${thirtyDaysAgo.toISOString().split('T')[0]}`,
+          inArray(oilChangeHistory.storeId, authorizedStoreIds),
+        ]
 
-    const recentChanges = await db
-      .select({
-        count: sql`COUNT(*)`.mapWith(Number),
-      })
-      .from(oilChangeHistory)
-      .where(and(...recentConditions))
-
-    // Get last change date for each fryer type
-    const lastChangeConditions = [
-      isNull(oilChangeHistory.deletedAt),
-      inArray(oilChangeHistory.storeId, authorizedStoreIds),
-    ]
-    if (storeId && authorizedStoreIds.includes(storeId)) {
-      lastChangeConditions.push(eq(oilChangeHistory.storeId, storeId))
-    }
-
-    const lastChanges = await db.query.oilChangeHistory.findMany({
-      where: and(...lastChangeConditions),
-      orderBy: [desc(oilChangeHistory.changeDate)],
-      limit: 10,
-    })
-
-    const lastChangeByFryer = lastChanges.reduce(
-      (acc, change) => {
-        if (
-          !acc[change.fryerType] ||
-          new Date(change.changeDate) >
-            new Date(acc[change.fryerType].changeDate)
-        ) {
-          acc[change.fryerType] = change
+        if (storeId && authorizedStoreIds.includes(storeId)) {
+          recentConditions.push(eq(oilChangeHistory.storeId, storeId))
         }
-        return acc
-      },
-      {} as Record<string, any>
-    )
 
-    return {
-      recentChanges: recentChanges[0] || { count: 0 },
-      lastChangeByFryer,
-    }
+        const recentChanges = await db
+          .select({
+            count: sql`COUNT(*)`.mapWith(Number),
+          })
+          .from(oilChangeHistory)
+          .where(and(...recentConditions))
+
+        // Get last change date for each fryer type
+        const lastChangeConditions = [
+          isNull(oilChangeHistory.deletedAt),
+          inArray(oilChangeHistory.storeId, authorizedStoreIds),
+        ]
+        if (storeId && authorizedStoreIds.includes(storeId)) {
+          lastChangeConditions.push(eq(oilChangeHistory.storeId, storeId))
+        }
+
+        const lastChanges = await db.query.oilChangeHistory.findMany({
+          where: and(...lastChangeConditions),
+          orderBy: [desc(oilChangeHistory.changeDate)],
+          limit: 10,
+        })
+
+        const lastChangeByFryer = lastChanges.reduce(
+          (acc, change) => {
+            if (
+              !acc[change.fryerType] ||
+              new Date(change.changeDate) >
+                new Date(acc[change.fryerType].changeDate)
+            ) {
+              acc[change.fryerType] = change
+            }
+            return acc
+          },
+          {} as Record<string, any>
+        )
+
+        return {
+          recentChanges: recentChanges[0] || { count: 0 },
+          lastChangeByFryer,
+        }
+      },
+      ['oil-changes:stats', storeKey],
+      { tags: [`oil-changes:${storeKey}`] }
+    )
+    return await getCached()
   } catch (error) {
     console.error('Error fetching oil change stats:', error)
     return {

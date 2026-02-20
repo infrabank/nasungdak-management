@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { suppliers } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
@@ -155,20 +155,29 @@ export async function deleteSupplier(id: string) {
 export async function getSuppliers() {
   try {
     const organizationId = await getOrganizationId()
-    const items = await db
-      .select()
-      .from(suppliers)
-      .where(
-        and(
-          isNull(suppliers.deletedAt),
-          organizationId
-            ? eq(suppliers.organizationId, organizationId)
-            : undefined
-        )
-      )
-      .orderBy(suppliers.supplierName)
+    const orgKey = organizationId ?? 'all'
 
-    return items
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select()
+          .from(suppliers)
+          .where(
+            and(
+              isNull(suppliers.deletedAt),
+              organizationId
+                ? eq(suppliers.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(suppliers.supplierName)
+          .limit(500)
+      },
+      ['suppliers:list', orgKey],
+      { tags: [`suppliers:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch suppliers:', error)
     return []
@@ -178,23 +187,32 @@ export async function getSuppliers() {
 export async function getActiveSuppliers() {
   try {
     const organizationId = await getOrganizationId()
-    const items = await db
-      .select({
-        id: suppliers.id,
-        supplierName: suppliers.supplierName,
-      })
-      .from(suppliers)
-      .where(
-        and(
-          isNull(suppliers.deletedAt),
-          organizationId
-            ? eq(suppliers.organizationId, organizationId)
-            : undefined
-        )
-      )
-      .orderBy(suppliers.supplierName)
+    const orgKey = organizationId ?? 'all'
 
-    return items
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select({
+            id: suppliers.id,
+            supplierName: suppliers.supplierName,
+          })
+          .from(suppliers)
+          .where(
+            and(
+              isNull(suppliers.deletedAt),
+              organizationId
+                ? eq(suppliers.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(suppliers.supplierName)
+          .limit(500)
+      },
+      ['suppliers:active', orgKey],
+      { tags: [`suppliers:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch active suppliers:', error)
     return []

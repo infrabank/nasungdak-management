@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import {
   skuRecipes,
@@ -172,133 +172,152 @@ export async function deleteSkuRecipe(id: string) {
 export async function getSkusWithRecipes() {
   try {
     const organizationId = await getOrganizationId()
+    const orgKey = organizationId ?? 'all'
 
-    // Get all active SKUs with their menu category
-    const skuList = await db
-      .select({
-        id: skus.id,
-        skuName: skus.skuName,
-        menuId: skus.menuId,
-        menuName: menuCategories.menuName,
-        unitPrice: skus.unitPrice,
-        isActive: skus.isActive,
-      })
-      .from(skus)
-      .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-      .where(
-        and(
-          isNull(skus.deletedAt),
-          organizationId ? eq(skus.organizationId, organizationId) : undefined
-        )
-      )
-      .orderBy(skus.skuName)
+    const getCached = unstable_cache(
+      async () => {
+        // Get all active SKUs with their menu category
+        const skuList = await db
+          .select({
+            id: skus.id,
+            skuName: skus.skuName,
+            menuId: skus.menuId,
+            menuName: menuCategories.menuName,
+            unitPrice: skus.unitPrice,
+            isActive: skus.isActive,
+          })
+          .from(skus)
+          .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
+          .where(
+            and(
+              isNull(skus.deletedAt),
+              organizationId
+                ? eq(skus.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(skus.skuName)
 
-    // Get all recipes with ingredient details
-    const recipeList = await db
-      .select({
-        id: skuRecipes.id,
-        skuId: skuRecipes.skuId,
-        ingredientId: skuRecipes.ingredientId,
-        ingredientName: ingredients.ingredientName,
-        ingredientUnit: ingredients.unit,
-        ingredientUnitCost: ingredients.unitCost,
-        quantity: skuRecipes.quantity,
-        unit: skuRecipes.unit,
-        notes: skuRecipes.notes,
-      })
-      .from(skuRecipes)
-      .leftJoin(ingredients, eq(skuRecipes.ingredientId, ingredients.id))
-      .where(
-        and(
-          isNull(skuRecipes.deletedAt),
-          organizationId
-            ? eq(skuRecipes.organizationId, organizationId)
-            : undefined
-        )
-      )
+        // Get all recipes with ingredient details
+        const recipeList = await db
+          .select({
+            id: skuRecipes.id,
+            skuId: skuRecipes.skuId,
+            ingredientId: skuRecipes.ingredientId,
+            ingredientName: ingredients.ingredientName,
+            ingredientUnit: ingredients.unit,
+            ingredientUnitCost: ingredients.unitCost,
+            quantity: skuRecipes.quantity,
+            unit: skuRecipes.unit,
+            notes: skuRecipes.notes,
+          })
+          .from(skuRecipes)
+          .leftJoin(ingredients, eq(skuRecipes.ingredientId, ingredients.id))
+          .where(
+            and(
+              isNull(skuRecipes.deletedAt),
+              organizationId
+                ? eq(skuRecipes.organizationId, organizationId)
+                : undefined
+            )
+          )
 
-    // Get weighted average unit prices from purchase data per ingredient
-    const avgPrices = await db
-      .select({
-        ingredientId: purchaseTransactions.ingredientId,
-        avgUnitPrice: sql<string>`
-          CASE
-            WHEN SUM(${purchaseTransactions.quantity}) > 0
-            THEN SUM(${purchaseTransactions.totalAmount}) / SUM(${purchaseTransactions.quantity})
-            ELSE 0
-          END
-        `.as('avg_unit_price'),
-      })
-      .from(purchaseTransactions)
-      .where(
-        and(
-          isNull(purchaseTransactions.deletedAt),
-          eq(purchaseTransactions.isValid, true)
-        )
-      )
-      .groupBy(purchaseTransactions.ingredientId)
+        // Get weighted average unit prices from purchase data per ingredient
+        const avgPrices = await db
+          .select({
+            ingredientId: purchaseTransactions.ingredientId,
+            avgUnitPrice: sql<string>`
+              CASE
+                WHEN SUM(${purchaseTransactions.quantity}) > 0
+                THEN SUM(${purchaseTransactions.totalAmount}) / SUM(${purchaseTransactions.quantity})
+                ELSE 0
+              END
+            `.as('avg_unit_price'),
+          })
+          .from(purchaseTransactions)
+          .where(
+            and(
+              isNull(purchaseTransactions.deletedAt),
+              eq(purchaseTransactions.isValid, true)
+            )
+          )
+          .groupBy(purchaseTransactions.ingredientId)
 
-    // Build a map of ingredient_id -> avg unit price
-    const avgPriceMap = new Map<string, number>()
-    for (const row of avgPrices) {
-      avgPriceMap.set(row.ingredientId, Number(row.avgUnitPrice))
-    }
+        // Build a map of ingredient_id -> avg unit price
+        const avgPriceMap = new Map<string, number>()
+        for (const row of avgPrices) {
+          avgPriceMap.set(row.ingredientId, Number(row.avgUnitPrice))
+        }
 
-    // Calculate costs and group by SKU
-    const skusWithCosts = skuList.map((sku) => {
-      const recipes = recipeList.filter((r) => r.skuId === sku.id)
+        // Build a Map for O(1) lookup
+        const recipesBySkuId = new Map<string, typeof recipeList>()
+        for (const recipe of recipeList) {
+          const existing = recipesBySkuId.get(recipe.skuId) ?? []
+          existing.push(recipe)
+          recipesBySkuId.set(recipe.skuId, existing)
+        }
 
-      // Calculate total cost
-      let totalCost = 0
-      const recipeDetails = recipes.map((recipe) => {
-        // Use purchase avg price, fallback to ingredients.unit_cost
-        const purchaseAvgPrice = recipe.ingredientId
-          ? (avgPriceMap.get(recipe.ingredientId) ?? 0)
-          : 0
-        const ingredientCost =
-          purchaseAvgPrice > 0
-            ? purchaseAvgPrice
-            : recipe.ingredientUnitCost
-              ? Number(recipe.ingredientUnitCost)
+        // Calculate costs and group by SKU
+        const skusWithCosts = skuList.map((sku) => {
+          const recipes = recipesBySkuId.get(sku.id) ?? []
+
+          // Calculate total cost
+          let totalCost = 0
+          const recipeDetails = recipes.map((recipe) => {
+            // Use purchase avg price, fallback to ingredients.unit_cost
+            const purchaseAvgPrice = recipe.ingredientId
+              ? (avgPriceMap.get(recipe.ingredientId) ?? 0)
               : 0
-        const quantity = Number(recipe.quantity)
+            const ingredientCost =
+              purchaseAvgPrice > 0
+                ? purchaseAvgPrice
+                : recipe.ingredientUnitCost
+                  ? Number(recipe.ingredientUnitCost)
+                  : 0
+            const quantity = Number(recipe.quantity)
 
-        // Unit conversion (recipe unit -> ingredient base unit)
-        let costPerUnit = ingredientCost
-        if (recipe.ingredientUnit === 'kg' && recipe.unit === 'g') {
-          costPerUnit = ingredientCost / 1000
-        } else if (recipe.ingredientUnit === 'L' && recipe.unit === 'ml') {
-          costPerUnit = ingredientCost / 1000
-        } else if (recipe.ingredientUnit === 'g' && recipe.unit === 'kg') {
-          costPerUnit = ingredientCost * 1000
-        } else if (recipe.ingredientUnit === 'ml' && recipe.unit === 'L') {
-          costPerUnit = ingredientCost * 1000
-        }
+            // Unit conversion (recipe unit -> ingredient base unit)
+            let costPerUnit = ingredientCost
+            if (recipe.ingredientUnit === 'kg' && recipe.unit === 'g') {
+              costPerUnit = ingredientCost / 1000
+            } else if (recipe.ingredientUnit === 'L' && recipe.unit === 'ml') {
+              costPerUnit = ingredientCost / 1000
+            } else if (recipe.ingredientUnit === 'g' && recipe.unit === 'kg') {
+              costPerUnit = ingredientCost * 1000
+            } else if (recipe.ingredientUnit === 'ml' && recipe.unit === 'L') {
+              costPerUnit = ingredientCost * 1000
+            }
 
-        const subtotal = costPerUnit * quantity
-        totalCost += subtotal
+            const subtotal = costPerUnit * quantity
+            totalCost += subtotal
 
-        return {
-          ...recipe,
-          costPerUnit,
-          subtotal,
-        }
-      })
+            return {
+              ...recipe,
+              costPerUnit,
+              subtotal,
+            }
+          })
 
-      const unitPrice = Number(sku.unitPrice)
-      const margin = unitPrice - totalCost
-      const marginPercent = unitPrice > 0 ? (margin / unitPrice) * 100 : 0
+          const unitPrice = Number(sku.unitPrice)
+          const margin = unitPrice - totalCost
+          const marginPercent = unitPrice > 0 ? (margin / unitPrice) * 100 : 0
 
-      return {
-        ...sku,
-        recipes: recipeDetails,
-        totalCost,
-        margin,
-        marginPercent,
-      }
-    })
+          return {
+            ...sku,
+            recipes: recipeDetails,
+            totalCost,
+            margin,
+            marginPercent,
+          }
+        })
 
-    return skusWithCosts
+        return skusWithCosts
+      },
+      ['sku-recipes:full', orgKey],
+      { tags: [`sku-recipes:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch SKUs with recipes:', error)
     return []
@@ -308,22 +327,33 @@ export async function getSkusWithRecipes() {
 export async function getSkus() {
   try {
     const organizationId = await getOrganizationId()
-    const items = await db
-      .select({
-        id: skus.id,
-        skuName: skus.skuName,
-      })
-      .from(skus)
-      .where(
-        and(
-          isNull(skus.deletedAt),
-          eq(skus.isActive, true),
-          organizationId ? eq(skus.organizationId, organizationId) : undefined
-        )
-      )
-      .orderBy(skus.skuName)
+    const orgKey = organizationId ?? 'all'
 
-    return items
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select({
+            id: skus.id,
+            skuName: skus.skuName,
+          })
+          .from(skus)
+          .where(
+            and(
+              isNull(skus.deletedAt),
+              eq(skus.isActive, true),
+              organizationId
+                ? eq(skus.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(skus.skuName)
+          .limit(500)
+      },
+      ['skus:active', orgKey],
+      { tags: [`skus:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch SKUs:', error)
     return []
@@ -333,26 +363,35 @@ export async function getSkus() {
 export async function getIngredients() {
   try {
     const organizationId = await getOrganizationId()
-    const items = await db
-      .select({
-        id: ingredients.id,
-        ingredientName: ingredients.ingredientName,
-        unit: ingredients.unit,
-        unitCost: ingredients.unitCost,
-      })
-      .from(ingredients)
-      .where(
-        and(
-          isNull(ingredients.deletedAt),
-          eq(ingredients.isActive, true),
-          organizationId
-            ? eq(ingredients.organizationId, organizationId)
-            : undefined
-        )
-      )
-      .orderBy(ingredients.ingredientName)
+    const orgKey = organizationId ?? 'all'
 
-    return items
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select({
+            id: ingredients.id,
+            ingredientName: ingredients.ingredientName,
+            unit: ingredients.unit,
+            unitCost: ingredients.unitCost,
+          })
+          .from(ingredients)
+          .where(
+            and(
+              isNull(ingredients.deletedAt),
+              eq(ingredients.isActive, true),
+              organizationId
+                ? eq(ingredients.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(ingredients.ingredientName)
+          .limit(500)
+      },
+      ['ingredients:active', orgKey],
+      { tags: [`ingredients:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch ingredients:', error)
     return []

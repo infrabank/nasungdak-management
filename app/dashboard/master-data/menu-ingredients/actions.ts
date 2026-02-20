@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { menuIngredients, menuCategories, ingredients } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
@@ -162,30 +162,45 @@ export async function deleteMenuIngredient(id: string) {
 export async function getMenuIngredients() {
   try {
     const organizationId = await getOrganizationId()
-    const mappings = await db
-      .select({
-        id: menuIngredients.id,
-        menuId: menuIngredients.menuId,
-        menuName: menuCategories.menuName,
-        ingredientId: menuIngredients.ingredientId,
-        ingredientName: ingredients.ingredientName,
-        unit: ingredients.unit,
-        requiredQuantity: menuIngredients.requiredQuantity,
-      })
-      .from(menuIngredients)
-      .leftJoin(menuCategories, eq(menuIngredients.menuId, menuCategories.id))
-      .leftJoin(ingredients, eq(menuIngredients.ingredientId, ingredients.id))
-      .where(
-        and(
-          isNull(menuIngredients.deletedAt),
-          organizationId
-            ? eq(menuIngredients.organizationId, organizationId)
-            : undefined
-        )
-      )
-      .orderBy(menuCategories.menuName, ingredients.ingredientName)
+    const orgKey = organizationId ?? 'all'
 
-    return mappings
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select({
+            id: menuIngredients.id,
+            menuId: menuIngredients.menuId,
+            menuName: menuCategories.menuName,
+            ingredientId: menuIngredients.ingredientId,
+            ingredientName: ingredients.ingredientName,
+            unit: ingredients.unit,
+            requiredQuantity: menuIngredients.requiredQuantity,
+          })
+          .from(menuIngredients)
+          .leftJoin(
+            menuCategories,
+            eq(menuIngredients.menuId, menuCategories.id)
+          )
+          .leftJoin(
+            ingredients,
+            eq(menuIngredients.ingredientId, ingredients.id)
+          )
+          .where(
+            and(
+              isNull(menuIngredients.deletedAt),
+              organizationId
+                ? eq(menuIngredients.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(menuCategories.menuName, ingredients.ingredientName)
+          .limit(500)
+      },
+      ['menu-ingredients:list', orgKey],
+      { tags: [`menu-ingredients:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch menu-ingredient mappings:', error)
     return []
@@ -195,24 +210,33 @@ export async function getMenuIngredients() {
 export async function getMenus() {
   try {
     const organizationId = await getOrganizationId()
-    const menus = await db
-      .select({
-        id: menuCategories.id,
-        menuName: menuCategories.menuName,
-      })
-      .from(menuCategories)
-      .where(
-        and(
-          isNull(menuCategories.deletedAt),
-          eq(menuCategories.isActive, true),
-          organizationId
-            ? eq(menuCategories.organizationId, organizationId)
-            : undefined
-        )
-      )
-      .orderBy(menuCategories.menuName)
+    const orgKey = organizationId ?? 'all'
 
-    return menus
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select({
+            id: menuCategories.id,
+            menuName: menuCategories.menuName,
+          })
+          .from(menuCategories)
+          .where(
+            and(
+              isNull(menuCategories.deletedAt),
+              eq(menuCategories.isActive, true),
+              organizationId
+                ? eq(menuCategories.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(menuCategories.menuName)
+          .limit(500)
+      },
+      ['menus:active:mi', orgKey],
+      { tags: [`menus:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch menus:', error)
     return []
@@ -222,25 +246,34 @@ export async function getMenus() {
 export async function getIngredients() {
   try {
     const organizationId = await getOrganizationId()
-    const ingredientsList = await db
-      .select({
-        id: ingredients.id,
-        ingredientName: ingredients.ingredientName,
-        unit: ingredients.unit,
-      })
-      .from(ingredients)
-      .where(
-        and(
-          isNull(ingredients.deletedAt),
-          eq(ingredients.isActive, true),
-          organizationId
-            ? eq(ingredients.organizationId, organizationId)
-            : undefined
-        )
-      )
-      .orderBy(ingredients.ingredientName)
+    const orgKey = organizationId ?? 'all'
 
-    return ingredientsList
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select({
+            id: ingredients.id,
+            ingredientName: ingredients.ingredientName,
+            unit: ingredients.unit,
+          })
+          .from(ingredients)
+          .where(
+            and(
+              isNull(ingredients.deletedAt),
+              eq(ingredients.isActive, true),
+              organizationId
+                ? eq(ingredients.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(ingredients.ingredientName)
+          .limit(500)
+      },
+      ['ingredients:active:mi', orgKey],
+      { tags: [`ingredients:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch ingredients:', error)
     return []

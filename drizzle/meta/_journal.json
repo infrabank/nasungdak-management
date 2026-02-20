@@ -15,6 +15,13 @@
       "when": 1770342447351,
       "tag": "0001_dry_old_lace",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771592278000,
+      "tag": "0002_add_inventory_indexes",
+      "breakpoints": true
     }
   ]
 }

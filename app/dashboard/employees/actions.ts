@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { employees } from '@/lib/db/schema'
 import { eq, isNull, desc, and, inArray } from 'drizzle-orm'
@@ -46,6 +46,7 @@ export async function createEmployee(prevState: any, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/employees')
+    revalidateTag(`employees:${storeId}`)
 
     return {
       success: true,
@@ -99,6 +100,9 @@ export async function updateEmployee(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/employees')
+    if (record?.storeId) {
+      revalidateTag(`employees:${record.storeId}`)
+    }
 
     return {
       success: true,
@@ -124,15 +128,19 @@ export async function updateEmployee(id: string, formData: FormData) {
 
 export async function deleteEmployee(id: string) {
   try {
-    await db
+    const [deleted] = await db
       .update(employees)
       .set({
         deletedAt: new Date(),
         deletedBy: 'system',
       })
       .where(eq(employees.id, id))
+      .returning({ storeId: employees.storeId })
 
     revalidatePath('/dashboard/employees')
+    if (deleted?.storeId) {
+      revalidateTag(`employees:${deleted.storeId}`)
+    }
 
     return {
       success: true,
@@ -163,14 +171,21 @@ export async function getEmployees(storeId?: string) {
       return []
     }
 
-    const records = await db
-      .select()
-      .from(employees)
-      .where(and(isNull(employees.deletedAt), eq(employees.storeId, storeId)))
-      .orderBy(desc(employees.createdAt))
-      .limit(1000)
-
-    return records
+    const getCached = unstable_cache(
+      async () => {
+        return db
+          .select()
+          .from(employees)
+          .where(
+            and(isNull(employees.deletedAt), eq(employees.storeId, storeId))
+          )
+          .orderBy(desc(employees.createdAt))
+          .limit(1000)
+      },
+      ['employees:list', storeId],
+      { tags: [`employees:${storeId}`] }
+    )
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch employees:', error)
     return []
@@ -194,20 +209,25 @@ export async function getActiveEmployees(storeId?: string) {
       return []
     }
 
-    const records = await db
-      .select()
-      .from(employees)
-      .where(
-        and(
-          isNull(employees.deletedAt),
-          eq(employees.storeId, storeId),
-          eq(employees.isActive, true)
-        )
-      )
-      .orderBy(employees.employeeName)
-      .limit(1000)
-
-    return records
+    const getCached = unstable_cache(
+      async () => {
+        return db
+          .select()
+          .from(employees)
+          .where(
+            and(
+              isNull(employees.deletedAt),
+              eq(employees.storeId, storeId),
+              eq(employees.isActive, true)
+            )
+          )
+          .orderBy(employees.employeeName)
+          .limit(1000)
+      },
+      ['employees:active', storeId],
+      { tags: [`employees:${storeId}`] }
+    )
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch active employees:', error)
     return []

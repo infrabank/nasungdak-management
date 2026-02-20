@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { salesMenus, salesMenuItems, skus } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
@@ -259,49 +259,66 @@ export async function removeMenuItemFromBundle(itemId: string) {
 export async function getSalesMenus() {
   try {
     const organizationId = await getOrganizationId()
+    const orgKey = organizationId ?? 'all'
 
-    // Get all active menus
-    const menuList = await db
-      .select()
-      .from(salesMenus)
-      .where(
-        and(
-          isNull(salesMenus.deletedAt),
-          organizationId
-            ? eq(salesMenus.organizationId, organizationId)
-            : undefined
-        )
-      )
-      .orderBy(salesMenus.sortOrder)
+    const getCached = unstable_cache(
+      async () => {
+        // Get all active menus
+        const menuList = await db
+          .select()
+          .from(salesMenus)
+          .where(
+            and(
+              isNull(salesMenus.deletedAt),
+              organizationId
+                ? eq(salesMenus.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(salesMenus.sortOrder)
 
-    // Get all menu items with SKU details
-    const itemList = await db
-      .select({
-        id: salesMenuItems.id,
-        salesMenuId: salesMenuItems.salesMenuId,
-        skuId: salesMenuItems.skuId,
-        skuName: skus.skuName,
-        quantity: salesMenuItems.quantity,
-        isRequired: salesMenuItems.isRequired,
-      })
-      .from(salesMenuItems)
-      .leftJoin(skus, eq(salesMenuItems.skuId, skus.id))
-      .where(
-        and(
-          isNull(salesMenuItems.deletedAt),
-          organizationId
-            ? eq(salesMenuItems.organizationId, organizationId)
-            : undefined
-        )
-      )
+        // Get all menu items with SKU details
+        const itemList = await db
+          .select({
+            id: salesMenuItems.id,
+            salesMenuId: salesMenuItems.salesMenuId,
+            skuId: salesMenuItems.skuId,
+            skuName: skus.skuName,
+            quantity: salesMenuItems.quantity,
+            isRequired: salesMenuItems.isRequired,
+          })
+          .from(salesMenuItems)
+          .leftJoin(skus, eq(salesMenuItems.skuId, skus.id))
+          .where(
+            and(
+              isNull(salesMenuItems.deletedAt),
+              organizationId
+                ? eq(salesMenuItems.organizationId, organizationId)
+                : undefined
+            )
+          )
 
-    // Group items by menu
-    const menusWithItems = menuList.map((menu) => ({
-      ...menu,
-      items: itemList.filter((item) => item.salesMenuId === menu.id),
-    }))
+        // Build a Map for O(1) lookup
+        const itemsByMenuId = new Map<string, typeof itemList>()
+        for (const item of itemList) {
+          const existing = itemsByMenuId.get(item.salesMenuId) ?? []
+          existing.push(item)
+          itemsByMenuId.set(item.salesMenuId, existing)
+        }
 
-    return menusWithItems
+        // Group items by menu
+        const menusWithItems = menuList.map((menu) => ({
+          ...menu,
+          items: itemsByMenuId.get(menu.id) ?? [],
+        }))
+
+        return menusWithItems
+      },
+      ['sales-menus:list', orgKey],
+      { tags: [`sales-menus:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch sales menus:', error)
     return []
@@ -311,23 +328,34 @@ export async function getSalesMenus() {
 export async function getSkusForSelect() {
   try {
     const organizationId = await getOrganizationId()
-    const items = await db
-      .select({
-        id: skus.id,
-        skuName: skus.skuName,
-        unitPrice: skus.unitPrice,
-      })
-      .from(skus)
-      .where(
-        and(
-          isNull(skus.deletedAt),
-          eq(skus.isActive, true),
-          organizationId ? eq(skus.organizationId, organizationId) : undefined
-        )
-      )
-      .orderBy(skus.skuName)
+    const orgKey = organizationId ?? 'all'
 
-    return items
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select({
+            id: skus.id,
+            skuName: skus.skuName,
+            unitPrice: skus.unitPrice,
+          })
+          .from(skus)
+          .where(
+            and(
+              isNull(skus.deletedAt),
+              eq(skus.isActive, true),
+              organizationId
+                ? eq(skus.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(skus.skuName)
+          .limit(500)
+      },
+      ['skus:select', orgKey],
+      { tags: [`skus:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch SKUs:', error)
     return []

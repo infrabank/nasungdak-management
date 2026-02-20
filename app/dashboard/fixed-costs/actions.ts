@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { fixedCosts } from '@/lib/db/schema'
 import { eq, isNull, desc, sql, inArray, and } from 'drizzle-orm'
@@ -54,6 +54,7 @@ export async function createFixedCost(prevState: any, formData: FormData) {
     revalidatePath('/dashboard/analysis')
     revalidatePath('/dashboard')
     revalidateTag('fixed-costs:all')
+    revalidateTag(`fixed-costs:${storeId ?? 'all'}`)
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -128,6 +129,9 @@ export async function updateFixedCost(id: string, formData: FormData) {
     revalidatePath('/dashboard/analysis')
     revalidatePath('/dashboard')
     revalidateTag('fixed-costs:all')
+    if (record?.storeId) {
+      revalidateTag(`fixed-costs:${record.storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -177,7 +181,7 @@ export async function deleteFixedCost(id: string) {
           inArray(fixedCosts.storeId, authorizedStoreIds)
         )
       )
-      .returning({ id: fixedCosts.id })
+      .returning({ id: fixedCosts.id, storeId: fixedCosts.storeId })
 
     if (result.length === 0) {
       return {
@@ -190,6 +194,9 @@ export async function deleteFixedCost(id: string) {
     revalidatePath('/dashboard/analysis')
     revalidatePath('/dashboard')
     revalidateTag('fixed-costs:all')
+    if (result[0]?.storeId) {
+      revalidateTag(`fixed-costs:${result[0].storeId}`)
+    }
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -219,30 +226,44 @@ export async function getFixedCosts(
       return []
     }
 
-    const conditions = [isNull(fixedCosts.deletedAt)]
+    const normalizedStoreId = storeId ?? 'all'
+    const storeKey = authorizedStoreIds.slice().sort().join(',')
 
-    // 항상 권한 있는 매장으로 필터링
-    conditions.push(inArray(fixedCosts.storeId, authorizedStoreIds))
+    const getCached = unstable_cache(
+      async () => {
+        const conditions = [isNull(fixedCosts.deletedAt)]
 
-    if (startDate && endDate) {
-      conditions.push(
-        sql`${fixedCosts.costDate} BETWEEN ${startDate}::date AND ${endDate}::date`
-      )
-    }
+        // 항상 권한 있는 매장으로 필터링
+        conditions.push(inArray(fixedCosts.storeId, authorizedStoreIds))
 
-    // 특정 매장 필터 (권한 체크는 이미 위에서 함)
-    if (storeId && authorizedStoreIds.includes(storeId)) {
-      conditions.push(eq(fixedCosts.storeId, storeId))
-    }
+        if (startDate && endDate) {
+          conditions.push(
+            sql`${fixedCosts.costDate} BETWEEN ${startDate}::date AND ${endDate}::date`
+          )
+        }
 
-    const records = await db
-      .select()
-      .from(fixedCosts)
-      .where(and(...conditions))
-      .orderBy(desc(fixedCosts.costDate))
-      .limit(1000)
+        // 특정 매장 필터 (권한 체크는 이미 위에서 함)
+        if (storeId && authorizedStoreIds.includes(storeId)) {
+          conditions.push(eq(fixedCosts.storeId, storeId))
+        }
 
-    return records
+        return db
+          .select()
+          .from(fixedCosts)
+          .where(and(...conditions))
+          .orderBy(desc(fixedCosts.costDate))
+          .limit(1000)
+      },
+      [
+        'fixed-costs:list',
+        normalizedStoreId,
+        startDate ?? 'all',
+        endDate ?? 'all',
+        storeKey,
+      ],
+      { tags: [`fixed-costs:${normalizedStoreId}`] }
+    )
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch fixed costs:', error)
     return []

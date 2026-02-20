@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { attendanceRecords, employees, fixedCosts } from '@/lib/db/schema'
 import { eq, isNull, desc, and, sql, gte, lte } from 'drizzle-orm'
@@ -99,6 +99,10 @@ export async function createAttendance(prevState: any, formData: FormData) {
     revalidatePath('/dashboard/fixed-costs')
     revalidateTag('fixed-costs:all')
     revalidateTag('dashboard:stats')
+    if (result.attendance.storeId) {
+      revalidateTag(`attendance:${result.attendance.storeId}`)
+      revalidateTag(`employees:${result.attendance.storeId}`)
+    }
 
     return {
       success: true,
@@ -163,6 +167,9 @@ export async function updateAttendance(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/attendance')
+    if (record?.storeId) {
+      revalidateTag(`attendance:${record.storeId}`)
+    }
 
     return {
       success: true,
@@ -191,15 +198,19 @@ export async function updateAttendance(id: string, formData: FormData) {
 export async function deleteAttendance(id: string) {
   try {
     // Soft delete (NOT touching fixed_costs)
-    await db
+    const [deleted] = await db
       .update(attendanceRecords)
       .set({
         deletedAt: new Date(),
         deletedBy: 'system',
       })
       .where(eq(attendanceRecords.id, id))
+      .returning({ storeId: attendanceRecords.storeId })
 
     revalidatePath('/dashboard/attendance')
+    if (deleted?.storeId) {
+      revalidateTag(`attendance:${deleted.storeId}`)
+    }
 
     return {
       success: true,
@@ -229,7 +240,7 @@ export async function getAttendance(params: GetAttendanceParams) {
 
     // If no storeId, return empty result
     if (!storeId) {
-      return { records: [], totalSum: 0 }
+      return { records: [], totalSum: 0, totalHours: 0 }
     }
 
     // 사용자 권한 확인
@@ -238,7 +249,7 @@ export async function getAttendance(params: GetAttendanceParams) {
       authorizedStoreIds.length === 0 ||
       !authorizedStoreIds.includes(storeId)
     ) {
-      return { records: [], totalSum: 0 }
+      return { records: [], totalSum: 0, totalHours: 0 }
     }
 
     // Default dates: first day of current month to today
@@ -248,67 +259,81 @@ export async function getAttendance(params: GetAttendanceParams) {
       startDate || formatDate(firstDayOfMonth, 'yyyy-MM-dd')
     const effectiveEndDate = endDate || formatDate(today, 'yyyy-MM-dd')
 
-    // Build conditions
-    const conditions = [
-      isNull(attendanceRecords.deletedAt),
-      eq(attendanceRecords.storeId, storeId),
-      gte(attendanceRecords.workDate, effectiveStartDate),
-      lte(attendanceRecords.workDate, effectiveEndDate),
-    ]
+    const getCached = unstable_cache(
+      async () => {
+        // Build conditions
+        const conditions = [
+          isNull(attendanceRecords.deletedAt),
+          eq(attendanceRecords.storeId, storeId!),
+          gte(attendanceRecords.workDate, effectiveStartDate),
+          lte(attendanceRecords.workDate, effectiveEndDate),
+        ]
 
-    if (employeeId) {
-      conditions.push(eq(attendanceRecords.employeeId, employeeId))
-    }
+        if (employeeId) {
+          conditions.push(eq(attendanceRecords.employeeId, employeeId))
+        }
 
-    // Query records with LEFT JOIN to employees
-    const records = await db
-      .select({
-        id: attendanceRecords.id,
-        storeId: attendanceRecords.storeId,
-        employeeId: attendanceRecords.employeeId,
-        workDate: attendanceRecords.workDate,
-        workHours: attendanceRecords.workHours,
-        hourlyRate: attendanceRecords.hourlyRate,
-        totalPay: attendanceRecords.totalPay,
-        fixedCostId: attendanceRecords.fixedCostId,
-        notes: attendanceRecords.notes,
-        createdAt: attendanceRecords.createdAt,
-        employeeName: employees.employeeName,
-        employeeDeleted: sql<boolean>`${employees.deletedAt} IS NOT NULL`.as(
-          'employee_deleted'
-        ),
-      })
-      .from(attendanceRecords)
-      .leftJoin(employees, eq(attendanceRecords.employeeId, employees.id))
-      .where(and(...conditions))
-      .orderBy(
-        desc(attendanceRecords.workDate),
-        desc(attendanceRecords.createdAt)
-      )
-      .limit(1000)
+        // Query records with LEFT JOIN to employees
+        const records = await db
+          .select({
+            id: attendanceRecords.id,
+            storeId: attendanceRecords.storeId,
+            employeeId: attendanceRecords.employeeId,
+            workDate: attendanceRecords.workDate,
+            workHours: attendanceRecords.workHours,
+            hourlyRate: attendanceRecords.hourlyRate,
+            totalPay: attendanceRecords.totalPay,
+            fixedCostId: attendanceRecords.fixedCostId,
+            notes: attendanceRecords.notes,
+            createdAt: attendanceRecords.createdAt,
+            employeeName: employees.employeeName,
+            employeeDeleted:
+              sql<boolean>`${employees.deletedAt} IS NOT NULL`.as(
+                'employee_deleted'
+              ),
+          })
+          .from(attendanceRecords)
+          .leftJoin(employees, eq(attendanceRecords.employeeId, employees.id))
+          .where(and(...conditions))
+          .orderBy(
+            desc(attendanceRecords.workDate),
+            desc(attendanceRecords.createdAt)
+          )
+          .limit(1000)
 
-    // Query totals (all filtered records, not just limit 1000)
-    const sumResult = await db
-      .select({
-        totalSum:
-          sql<string>`COALESCE(SUM(${attendanceRecords.totalPay}), 0)`.as(
-            'total_sum'
-          ),
-        totalHours:
-          sql<string>`COALESCE(SUM(${attendanceRecords.workHours}), 0)`.as(
-            'total_hours'
-          ),
-      })
-      .from(attendanceRecords)
-      .where(and(...conditions))
+        // Query totals (all filtered records, not just limit 1000)
+        const sumResult = await db
+          .select({
+            totalSum:
+              sql<string>`COALESCE(SUM(${attendanceRecords.totalPay}), 0)`.as(
+                'total_sum'
+              ),
+            totalHours:
+              sql<string>`COALESCE(SUM(${attendanceRecords.workHours}), 0)`.as(
+                'total_hours'
+              ),
+          })
+          .from(attendanceRecords)
+          .where(and(...conditions))
 
-    const totalSum = Number(sumResult[0]?.totalSum) || 0
-    const totalHours = Number(sumResult[0]?.totalHours) || 0
+        const totalSum = Number(sumResult[0]?.totalSum) || 0
+        const totalHours = Number(sumResult[0]?.totalHours) || 0
 
-    return { records, totalSum, totalHours }
+        return { records, totalSum, totalHours }
+      },
+      [
+        'attendance:list',
+        storeId ?? 'all',
+        effectiveStartDate,
+        effectiveEndDate,
+        employeeId ?? 'all',
+      ],
+      { tags: [`attendance:${storeId ?? 'all'}`] }
+    )
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch attendance:', error)
-    return { records: [], totalSum: 0 }
+    return { records: [], totalSum: 0, totalHours: 0 }
   }
 }
 
@@ -328,20 +353,25 @@ export async function getActiveEmployees(storeId?: string) {
       return []
     }
 
-    const records = await db
-      .select()
-      .from(employees)
-      .where(
-        and(
-          isNull(employees.deletedAt),
-          eq(employees.storeId, storeId),
-          eq(employees.isActive, true)
-        )
-      )
-      .orderBy(employees.employeeName)
-      .limit(1000)
-
-    return records
+    const getCached = unstable_cache(
+      async () => {
+        return db
+          .select()
+          .from(employees)
+          .where(
+            and(
+              isNull(employees.deletedAt),
+              eq(employees.storeId, storeId!),
+              eq(employees.isActive, true)
+            )
+          )
+          .orderBy(employees.employeeName)
+          .limit(1000)
+      },
+      ['attendance:employees', storeId ?? 'all'],
+      { tags: [`employees:${storeId ?? 'all'}`] }
+    )
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch active employees:', error)
     return []

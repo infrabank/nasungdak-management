@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { ingredients } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
@@ -168,20 +168,29 @@ export async function deleteIngredient(id: string) {
 export async function getIngredients() {
   try {
     const organizationId = await getOrganizationId()
-    const items = await db
-      .select()
-      .from(ingredients)
-      .where(
-        and(
-          isNull(ingredients.deletedAt),
-          organizationId
-            ? eq(ingredients.organizationId, organizationId)
-            : undefined
-        )
-      )
-      .orderBy(ingredients.ingredientName)
+    const orgKey = organizationId ?? 'all'
 
-    return items
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select()
+          .from(ingredients)
+          .where(
+            and(
+              isNull(ingredients.deletedAt),
+              organizationId
+                ? eq(ingredients.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(ingredients.ingredientName)
+          .limit(500)
+      },
+      ['ingredients:list', orgKey],
+      { tags: [`ingredients:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch ingredients:', error)
     return []

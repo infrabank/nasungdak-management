@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { skus, menuCategories } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
@@ -150,28 +150,39 @@ export async function deleteSku(id: string) {
 export async function getSkus() {
   try {
     const organizationId = await getOrganizationId()
-    const items = await db
-      .select({
-        id: skus.id,
-        skuName: skus.skuName,
-        menuId: skus.menuId,
-        menuName: menuCategories.menuName,
-        unitPrice: skus.unitPrice,
-        description: skus.description,
-        isActive: skus.isActive,
-        createdAt: skus.createdAt,
-      })
-      .from(skus)
-      .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-      .where(
-        and(
-          isNull(skus.deletedAt),
-          organizationId ? eq(skus.organizationId, organizationId) : undefined
-        )
-      )
-      .orderBy(skus.skuName)
+    const orgKey = organizationId ?? 'all'
 
-    return items
+    const getCached = unstable_cache(
+      async () => {
+        return await db
+          .select({
+            id: skus.id,
+            skuName: skus.skuName,
+            menuId: skus.menuId,
+            menuName: menuCategories.menuName,
+            unitPrice: skus.unitPrice,
+            description: skus.description,
+            isActive: skus.isActive,
+            createdAt: skus.createdAt,
+          })
+          .from(skus)
+          .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
+          .where(
+            and(
+              isNull(skus.deletedAt),
+              organizationId
+                ? eq(skus.organizationId, organizationId)
+                : undefined
+            )
+          )
+          .orderBy(skus.skuName)
+          .limit(500)
+      },
+      ['skus:list', orgKey],
+      { tags: [`skus:${orgKey}`] }
+    )
+
+    return await getCached()
   } catch (error) {
     console.error('Failed to fetch SKUs:', error)
     return []
