@@ -1,6 +1,14 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  lazy,
+  Suspense,
+} from 'react'
 import { useRouter } from 'next/navigation'
 import { createMultiplePurchases } from '../actions'
 import type { PurchaseEntry } from '../actions'
@@ -13,6 +21,8 @@ import { getMenuIngredients } from '../../master-data/menu-ingredients/actions'
 import { getActiveSuppliers } from '../../master-data/suppliers/actions'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
+
+const BarcodeScanner = lazy(() => import('@/components/barcode-scanner'))
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
@@ -70,6 +80,7 @@ export default function PurchaseForm() {
     MenuIngredientMapping[]
   >([])
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([])
+  const [scannerEntryId, setScannerEntryId] = useState<string | null>(null)
 
   const [transactionDate, setTransactionDate] = useState(
     new Date().toISOString().split('T')[0]
@@ -176,6 +187,16 @@ export default function PurchaseForm() {
       void processBarcodeLookup(entryId, barcode)
     },
     [processBarcodeLookup]
+  )
+
+  const handleCameraScan = useCallback(
+    (barcode: string) => {
+      if (scannerEntryId) {
+        void processBarcodeLookup(scannerEntryId, barcode)
+      }
+      setScannerEntryId(null)
+    },
+    [scannerEntryId, processBarcodeLookup]
   )
 
   useEffect(() => {
@@ -464,20 +485,48 @@ export default function PurchaseForm() {
                       <Label htmlFor={`barcode-${entry.id}`}>
                         📦 바코드 스캔
                       </Label>
-                      <Input
-                        id={`barcode-${entry.id}`}
-                        type="text"
-                        value={entry.barcode}
-                        onChange={(e) =>
-                          handleBarcodeChange(entry.id, e.target.value)
-                        }
-                        onKeyDown={(e) => handleBarcodeEnter(e, entry.id)}
-                        placeholder="바코드를 스캔하세요"
-                        className="mt-2 border-3 border-brutal-black font-bold"
-                        ref={(element) => {
-                          barcodeInputRefs.current[entry.id] = element
-                        }}
-                      />
+                      <div className="mt-2 flex gap-2">
+                        <Input
+                          id={`barcode-${entry.id}`}
+                          type="text"
+                          value={entry.barcode}
+                          onChange={(e) =>
+                            handleBarcodeChange(entry.id, e.target.value)
+                          }
+                          onKeyDown={(e) => handleBarcodeEnter(e, entry.id)}
+                          placeholder="바코드를 스캔하세요"
+                          className="flex-1 border-3 border-brutal-black font-bold"
+                          ref={(element) => {
+                            barcodeInputRefs.current[entry.id] = element
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setScannerEntryId(entry.id)}
+                          className="flex h-11 w-11 shrink-0 items-center justify-center border-3 border-brutal-black bg-brutal-yellow font-black text-brutal-black shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-lg"
+                          title="카메라로 바코드 스캔"
+                        >
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
 
                     <div>
@@ -644,6 +693,23 @@ export default function PurchaseForm() {
           </Button>
         </div>
       </div>
+      {/* Barcode Camera Scanner Modal */}
+      {scannerEntryId && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-brutal-black/80">
+              <div className="border-3 border-brutal-black bg-brutal-white p-6 shadow-brutal">
+                <p className="font-bold text-brutal-black">카메라 로딩 중...</p>
+              </div>
+            </div>
+          }
+        >
+          <BarcodeScanner
+            onScan={handleCameraScan}
+            onClose={() => setScannerEntryId(null)}
+          />
+        </Suspense>
+      )}
     </form>
   )
 }
