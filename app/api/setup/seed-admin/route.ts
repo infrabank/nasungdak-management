@@ -29,6 +29,7 @@ import { eq } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
 import { rateLimit, getClientIP } from '@/lib/rate-limit'
 import { passwordSchema, emailSchema } from '@/lib/utils/validation'
+import { logger, errorToContext } from '@/lib/logger'
 
 // Rate limit 설정: 15분당 3회
 const RATE_LIMIT_CONFIG = {
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
 
   // 시크릿 최소 길이 검증
   if (setupSecret.length < 32) {
-    console.error('SETUP_SECRET must be at least 32 characters')
+    logger.error('SETUP_SECRET must be at least 32 characters')
     return NextResponse.json({ error: '서버 설정 오류' }, { status: 500 })
   }
 
@@ -235,7 +236,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Seed admin error:', error)
+    logger.error('Seed admin error', errorToContext(error))
     return NextResponse.json(
       { error: '관리자 계정 생성 중 오류가 발생했습니다' },
       { status: 500 }

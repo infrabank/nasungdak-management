@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { suppliers } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
@@ -57,7 +58,7 @@ export async function createSupplier(formData: FormData) {
       data: supplier,
     }
   } catch (error) {
-    console.error('Failed to create supplier:', error)
+    logger.error('Failed to create supplier:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -109,7 +110,7 @@ export async function updateSupplier(id: string, formData: FormData) {
       data: supplier,
     }
   } catch (error) {
-    console.error('Failed to update supplier:', error)
+    logger.error('Failed to update supplier:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -144,7 +145,7 @@ export async function deleteSupplier(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete supplier:', error)
+    logger.error('Failed to delete supplier:', errorToContext(error))
     return {
       success: false,
       error: '공급업체 삭제에 실패했습니다',
@@ -179,7 +180,7 @@ export async function getSuppliers() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch suppliers:', error)
+    logger.error('Failed to fetch suppliers:', errorToContext(error))
     return []
   }
 }
@@ -214,7 +215,7 @@ export async function getActiveSuppliers() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch active suppliers:', error)
+    logger.error('Failed to fetch active suppliers:', errorToContext(error))
     return []
   }
 }

@@ -4,6 +4,10 @@
  * 모든 JWT 서명/검증에서 이 모듈의 SESSION_SECRET를 사용합니다.
  */
 
+import { logger, errorToContext } from '@/lib/logger'
+
+void errorToContext
+
 /**
  * JWT 서명에 사용되는 비밀키
  * 환경변수 SESSION_SECRET이 설정되지 않은 경우 빌드 시 에러 발생
@@ -14,7 +18,7 @@ function getSessionSecret(): Uint8Array {
   if (!secret) {
     // 개발 환경에서는 경고만 출력
     if (process.env.NODE_ENV === 'development') {
-      console.warn(
+      logger.warn(
         '[AUTH] SESSION_SECRET이 설정되지 않았습니다. 기본값을 사용합니다.'
       )
       return new TextEncoder().encode('development-only-secret-key')

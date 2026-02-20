@@ -5,6 +5,7 @@ import { jwtVerify, SignJWT } from 'jose'
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { storeSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import {
   stores,
   userStoreAssignments,
@@ -124,7 +125,7 @@ export async function createStore(formData: FormData) {
       data: store,
     }
   } catch (error) {
-    console.error('Failed to create store:', error)
+    logger.error('Failed to create store:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -187,7 +188,7 @@ async function updateSessionWithNewStore(
       })
     }
   } catch (error) {
-    console.error('Update session error:', error)
+    logger.error('Update session error:', errorToContext(error))
   }
 }
 
@@ -237,7 +238,7 @@ export async function updateStore(id: string, formData: FormData) {
       data: store,
     }
   } catch (error) {
-    console.error('Failed to update store:', error)
+    logger.error('Failed to update store:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -271,7 +272,7 @@ export async function deleteStore(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete store:', error)
+    logger.error('Failed to delete store:', errorToContext(error))
     return {
       success: false,
       error:
@@ -298,7 +299,7 @@ export async function getStores() {
 
     return storeList
   } catch (error) {
-    console.error('Failed to fetch stores:', error)
+    logger.error('Failed to fetch stores:', errorToContext(error))
     return []
   }
 }
@@ -346,7 +347,7 @@ export async function getActiveStores() {
 
     return await getCachedActiveStores()
   } catch (error) {
-    console.error('Failed to fetch active stores:', error)
+    logger.error('Failed to fetch active stores:', errorToContext(error))
     return []
   }
 }
@@ -359,7 +360,7 @@ export async function getStoreById(id: string) {
 
     return store
   } catch (error) {
-    console.error('Failed to fetch store:', error)
+    logger.error('Failed to fetch store:', errorToContext(error))
     return null
   }
 }

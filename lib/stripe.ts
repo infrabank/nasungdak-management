@@ -24,6 +24,7 @@ import {
 import { eq, and, isNull, sql } from 'drizzle-orm'
 import { PLANS, type PlanType } from '@/lib/features'
 import { revalidateTag } from 'next/cache'
+import { logger, errorToContext } from '@/lib/logger'
 
 // Stripe 클라이언트 (서버 사이드 전용, lazy initialization)
 let _stripe: Stripe | null = null
@@ -466,7 +467,10 @@ export async function handleStripeWebhook(
   })
 
   if (existingEvent) {
-    console.log(`Duplicate webhook event skipped: ${event.id} (${event.type})`)
+    logger.info('Duplicate webhook event skipped', {
+      eventId: event.id,
+      eventType: event.type,
+    })
     return { received: true, duplicate: true }
   }
 
@@ -481,7 +485,10 @@ export async function handleStripeWebhook(
   } catch (insertError) {
     // 동시에 같은 이벤트가 들어온 경우 (race condition)
     // unique constraint 에러면 중복으로 간주
-    console.log(`Concurrent webhook event, skipping: ${event.id}`)
+    logger.info('Concurrent webhook event, skipping', {
+      eventId: event.id,
+      ...errorToContext(insertError),
+    })
     return { received: true, duplicate: true }
   }
 
@@ -516,7 +523,7 @@ export async function handleStripeWebhook(
         break
 
       default:
-        console.log(`Unhandled event type: ${event.type}`)
+        logger.info('Unhandled event type', { eventType: event.type })
     }
 
     // 처리 완료 상태로 업데이트
@@ -553,7 +560,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const billingCycle = session.metadata?.billingCycle as 'monthly' | 'yearly'
 
   if (!organizationId || !plan) {
-    console.error('Missing metadata in checkout session')
+    logger.error('Missing metadata in checkout session')
     return
   }
 
@@ -696,7 +703,9 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   })
 
   if (!sub) {
-    console.error(`Subscription not found for invoice: ${invoice.id}`)
+    logger.error('Subscription not found for invoice', {
+      invoiceId: invoice.id,
+    })
     return
   }
 
@@ -743,14 +752,15 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   })
 
   // 콘솔에 경고 로그 (프로덕션에서는 이메일/슬랙 등으로 대체)
-  console.warn(`[PAYMENT FAILED] Organization: ${sub.organizationId}`)
-  console.warn(`  Invoice ID: ${invoice.id}`)
-  console.warn(
-    `  Amount: ₩${invoice.amount_due ? (invoice.amount_due / 100).toLocaleString() : 'N/A'}`
-  )
-  console.warn(
-    `  Admins to notify: ${orgAdmins.map((a) => a.email).join(', ') || 'none found'}`
-  )
+  logger.warn('Payment failed', {
+    organizationId: sub.organizationId,
+    invoiceId: invoice.id,
+    amount:
+      invoice.amount_due !== null && invoice.amount_due !== undefined
+        ? `₩${(invoice.amount_due / 100).toLocaleString()}`
+        : 'N/A',
+    adminsToNotify: orgAdmins.map((a) => a.email).join(', ') || 'none found',
+  })
 
   // TODO: 실제 이메일/슬랙 알림 통합 시 아래 코드 활성화
   // await sendPaymentFailureEmail(orgAdmins, invoice)

@@ -3,6 +3,7 @@
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { purchaseSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import {
   purchaseTransactions,
   menuCategories,
@@ -77,7 +78,7 @@ export async function createPurchase(formData: FormData) {
       },
     }
   } catch (error) {
-    console.error('Failed to create purchase:', error)
+    logger.error('Failed to create purchase:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -148,7 +149,7 @@ export async function updatePurchase(id: string, formData: FormData) {
       data: transaction,
     }
   } catch (error) {
-    console.error('Failed to update purchase:', error)
+    logger.error('Failed to update purchase:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -194,7 +195,7 @@ export async function deletePurchase(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete purchase:', error)
+    logger.error('Failed to delete purchase:', errorToContext(error))
     return {
       success: false,
       error:
@@ -238,7 +239,7 @@ export async function togglePurchaseValidation(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to toggle validation:', error)
+    logger.error('Failed to toggle validation:', errorToContext(error))
     return {
       success: false,
       error:
@@ -381,7 +382,7 @@ export async function getPurchases(
 
     return await getCachedPurchases()
   } catch (error) {
-    console.error('Failed to fetch purchases:', error)
+    logger.error('Failed to fetch purchases:', errorToContext(error))
     return { items: [], hasMore: false, page: 1 }
   }
 }
@@ -411,7 +412,7 @@ export async function getMenusForFilter() {
 
     return await getCachedMenusForFilter()
   } catch (error) {
-    console.error('Failed to fetch menus:', error)
+    logger.error('Failed to fetch menus:', errorToContext(error))
     return []
   }
 }
@@ -439,7 +440,7 @@ export async function getIngredientsForFilter() {
 
     return await getCachedIngredientsForFilter()
   } catch (error) {
-    console.error('Failed to fetch ingredients:', error)
+    logger.error('Failed to fetch ingredients:', errorToContext(error))
     return []
   }
 }
@@ -571,7 +572,7 @@ export async function createMultiplePurchases(
       errors: errors.slice(0, 20),
     }
   } catch (error) {
-    console.error('Failed to create multiple purchases:', error)
+    logger.error('Failed to create multiple purchases:', errorToContext(error))
     return {
       success: false,
       successCount,
@@ -717,7 +718,7 @@ export async function bulkCreatePurchases(
       errors: errors.slice(0, 20), // Return first 20 errors
     }
   } catch (error) {
-    console.error('Failed to bulk create purchases:', error)
+    logger.error('Failed to bulk create purchases:', errorToContext(error))
     return {
       success: false,
       successCount,
@@ -827,7 +828,7 @@ export async function getPurchasesTotals(
 
     return await getCachedPurchasesTotals()
   } catch (error) {
-    console.error('Failed to fetch purchases totals:', error)
+    logger.error('Failed to fetch purchases totals:', errorToContext(error))
     return { totalCount: 0, totalQuantity: 0, totalAmount: 0 }
   }
 }

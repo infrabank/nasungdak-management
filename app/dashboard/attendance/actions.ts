@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { attendanceRecords, employees, fixedCosts } from '@/lib/db/schema'
 import { eq, isNull, desc, and, sql, gte, lte } from 'drizzle-orm'
 import { z } from 'zod'
@@ -109,7 +110,7 @@ export async function createAttendance(prevState: any, formData: FormData) {
       data: result.attendance,
     }
   } catch (error) {
-    console.error('Failed to create attendance:', error)
+    logger.error('Failed to create attendance:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -176,7 +177,7 @@ export async function updateAttendance(id: string, formData: FormData) {
       data: record,
     }
   } catch (error) {
-    console.error('Failed to update attendance:', error)
+    logger.error('Failed to update attendance:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -216,7 +217,7 @@ export async function deleteAttendance(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete attendance:', error)
+    logger.error('Failed to delete attendance:', errorToContext(error))
     return {
       success: false,
       error:
@@ -332,7 +333,7 @@ export async function getAttendance(params: GetAttendanceParams) {
     )
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch attendance:', error)
+    logger.error('Failed to fetch attendance:', errorToContext(error))
     return { records: [], totalSum: 0, totalHours: 0 }
   }
 }
@@ -373,7 +374,7 @@ export async function getActiveEmployees(storeId?: string) {
     )
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch active employees:', error)
+    logger.error('Failed to fetch active employees:', errorToContext(error))
     return []
   }
 }

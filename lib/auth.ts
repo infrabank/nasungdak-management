@@ -6,6 +6,7 @@ import { db } from '@/lib/db'
 import { users, userStoreAssignments, roles } from '@/lib/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
+import { logger, errorToContext } from '@/lib/logger'
 
 const SESSION_SECRET = new TextEncoder().encode(
   process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
@@ -66,7 +67,7 @@ export async function getAuthContext(): Promise<AuthContext> {
       isAuthenticated: true,
     }
   } catch (error) {
-    console.error('Auth context error:', error)
+    logger.error('Auth context error', errorToContext(error))
     return {
       userId: '',
       email: '',
@@ -223,7 +224,7 @@ export async function authenticateUser(
 
     return { success: true }
   } catch (error) {
-    console.error('Authentication error:', error)
+    logger.error('Authentication error', errorToContext(error))
     return { success: false, error: '로그인 중 오류가 발생했습니다' }
   }
 }

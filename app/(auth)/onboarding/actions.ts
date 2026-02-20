@@ -13,6 +13,7 @@ import {
 import { eq, and, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
+import { logger, errorToContext } from '@/lib/logger'
 
 const SESSION_SECRET = new TextEncoder().encode(
   process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
@@ -166,7 +167,7 @@ export async function createOrganization(
 
     return { success: true, organizationId: org.id }
   } catch (error) {
-    console.error('Create organization error:', error)
+    logger.error('Create organization error', errorToContext(error))
     return { success: false, error: '조직 생성 중 오류가 발생했습니다' }
   }
 }
@@ -271,7 +272,7 @@ export async function createFirstStore(
 
     return { success: true, storeId: store.id }
   } catch (error) {
-    console.error('Create store error:', error)
+    logger.error('Create store error', errorToContext(error))
     return { success: false, error: '매장 생성 중 오류가 발생했습니다' }
   }
 }
@@ -350,7 +351,7 @@ async function updateSessionWithStore(
       path: '/',
     })
   } catch (error) {
-    console.error('Update session error:', error)
+    logger.error('Update session error', errorToContext(error))
   }
 }
 

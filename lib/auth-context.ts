@@ -10,6 +10,7 @@ import {
 } from '@/lib/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 import { SESSION_SECRET, SESSION_COOKIE_NAME } from '@/lib/auth/constants'
+import { logger, errorToContext } from '@/lib/logger'
 
 export interface UserContext {
   userId: string
@@ -84,7 +85,7 @@ export async function getUserContext(): Promise<UserContext> {
       isAuthenticated: true,
     }
   } catch (error) {
-    console.error('Get user context error:', error)
+    logger.error('Get user context error', errorToContext(error))
     return defaultContext
   }
 }
@@ -168,7 +169,7 @@ export async function getOrganizationBranding(): Promise<OrganizationBranding | 
       logoUrl: org.logoUrl,
     }
   } catch (error) {
-    console.error('Get organization branding error:', error)
+    logger.error('Get organization branding error', errorToContext(error))
     return null
   }
 }

@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { fixedCosts } from '@/lib/db/schema'
 import { eq, isNull, desc, sql, inArray, and } from 'drizzle-orm'
 import { z } from 'zod'
@@ -64,7 +65,7 @@ export async function createFixedCost(prevState: any, formData: FormData) {
       data: record,
     }
   } catch (error) {
-    console.error('Failed to create fixed cost:', error)
+    logger.error('Failed to create fixed cost:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -141,7 +142,7 @@ export async function updateFixedCost(id: string, formData: FormData) {
       data: record,
     }
   } catch (error) {
-    console.error('Failed to update fixed cost:', error)
+    logger.error('Failed to update fixed cost:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -205,7 +206,7 @@ export async function deleteFixedCost(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete fixed cost:', error)
+    logger.error('Failed to delete fixed cost:', errorToContext(error))
     return {
       success: false,
       error:
@@ -265,7 +266,7 @@ export async function getFixedCosts(
     )
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch fixed costs:', error)
+    logger.error('Failed to fetch fixed costs:', errorToContext(error))
     return []
   }
 }

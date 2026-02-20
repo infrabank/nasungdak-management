@@ -2,6 +2,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { skuRecipes, skus, ingredients, menuCategories } from '@/lib/db/schema'
 import { eq, isNull, and, desc } from 'drizzle-orm'
 import { getOrganizationId } from '@/lib/auth-context'
@@ -192,7 +193,7 @@ export async function getSkuMarginAnalysis(): Promise<{
     )
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch SKU margin analysis:', error)
+    logger.error('Failed to fetch SKU margin analysis:', errorToContext(error))
     return {
       skus: [],
       summary: {

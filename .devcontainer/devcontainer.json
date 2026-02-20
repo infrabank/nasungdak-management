@@ -27,10 +27,7 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode",
         "typescript.preferences.quoteStyle": "single"
       },
-      "extensions": [
-        "esbenp.prettier-vscode",
-        "dbaeumer.vscode-eslint"
-      ]
+      "extensions": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint"]
     }
   },
 

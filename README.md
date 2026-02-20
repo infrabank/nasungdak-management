@@ -1,4 +1,6 @@
-# 매장 관리 시스템
+# 사장북 (SajangBook)
+
+> 🌐 **[sajangbook.com](https://sajangbook.com)** - 사장님 전용 원가관리 장부
 
 매입, 판매, 원가를 효율적으로 관리하는 SaaS 플랫폼입니다.
 

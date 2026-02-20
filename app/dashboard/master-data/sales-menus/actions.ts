@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { salesMenus, salesMenuItems, skus } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
@@ -72,7 +73,7 @@ export async function createSalesMenu(formData: FormData) {
       data: menu,
     }
   } catch (error) {
-    console.error('Failed to create sales menu:', error)
+    logger.error('Failed to create sales menu:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -125,7 +126,7 @@ export async function updateSalesMenu(id: string, formData: FormData) {
       data: menu,
     }
   } catch (error) {
-    console.error('Failed to update sales menu:', error)
+    logger.error('Failed to update sales menu:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -180,7 +181,7 @@ export async function deleteSalesMenu(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete sales menu:', error)
+    logger.error('Failed to delete sales menu:', errorToContext(error))
     return {
       success: false,
       error: '메뉴 삭제에 실패했습니다',
@@ -216,7 +217,7 @@ export async function addMenuItemToBundle(
       data: item,
     }
   } catch (error) {
-    console.error('Failed to add menu item:', error)
+    logger.error('Failed to add menu item:', errorToContext(error))
     return {
       success: false,
       error: '구성 추가에 실패했습니다',
@@ -248,7 +249,7 @@ export async function removeMenuItemFromBundle(itemId: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to remove menu item:', error)
+    logger.error('Failed to remove menu item:', errorToContext(error))
     return {
       success: false,
       error: '구성 삭제에 실패했습니다',
@@ -320,7 +321,7 @@ export async function getSalesMenus() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch sales menus:', error)
+    logger.error('Failed to fetch sales menus:', errorToContext(error))
     return []
   }
 }
@@ -357,7 +358,7 @@ export async function getSkusForSelect() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch SKUs:', error)
+    logger.error('Failed to fetch SKUs:', errorToContext(error))
     return []
   }
 }

@@ -22,6 +22,7 @@ import {
   REFRESH_COOKIE_NAME,
 } from '@/lib/auth/constants'
 import { rateLimit, getClientIP } from '@/lib/rate-limit'
+import { logger, errorToContext } from '@/lib/logger'
 
 // JWT Payload 타입
 interface JWTPayload {
@@ -192,7 +193,7 @@ export async function login(
       success: true,
     }
   } catch (error) {
-    console.error('Login error:', error)
+    logger.error('Login error', errorToContext(error))
     return {
       success: false,
       error: '로그인 중 오류가 발생했습니다',
@@ -230,7 +231,7 @@ export async function verifySession() {
     const verified = await jwtVerify(token, SESSION_SECRET)
     return { authenticated: true, payload: verified.payload as JWTPayload }
   } catch (error) {
-    console.error('Session verification error:', error)
+    logger.error('Session verification error', errorToContext(error))
     return { authenticated: false }
   }
 }
@@ -328,7 +329,7 @@ export async function refreshSession(): Promise<{
 
     return { success: true }
   } catch (error) {
-    console.error('Refresh session error:', error)
+    logger.error('Refresh session error', errorToContext(error))
     return { success: false, error: 'Failed to refresh session' }
   }
 }

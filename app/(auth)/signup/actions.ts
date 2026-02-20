@@ -5,6 +5,7 @@ import { users } from '@/lib/db/schema'
 import { hashPassword } from '@/lib/auth'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod'
+import { logger, errorToContext } from '@/lib/logger'
 
 const signupSchema = z
   .object({
@@ -96,7 +97,7 @@ export async function signup(
 
     return { success: true }
   } catch (error) {
-    console.error('Signup error:', error)
+    logger.error('Signup error', errorToContext(error))
     return {
       success: false,
       error: '회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',

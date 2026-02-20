@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { ingredients } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
@@ -62,7 +63,7 @@ export async function createIngredient(formData: FormData) {
       data: ingredient,
     }
   } catch (error) {
-    console.error('Failed to create ingredient:', error)
+    logger.error('Failed to create ingredient:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -118,7 +119,7 @@ export async function updateIngredient(id: string, formData: FormData) {
       data: ingredient,
     }
   } catch (error) {
-    console.error('Failed to update ingredient:', error)
+    logger.error('Failed to update ingredient:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -157,7 +158,7 @@ export async function deleteIngredient(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete ingredient:', error)
+    logger.error('Failed to delete ingredient:', errorToContext(error))
     return {
       success: false,
       error: '재료 삭제에 실패했습니다',
@@ -192,7 +193,7 @@ export async function getIngredients() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch ingredients:', error)
+    logger.error('Failed to fetch ingredients:', errorToContext(error))
     return []
   }
 }
@@ -267,7 +268,7 @@ export async function bulkCreateIngredients(rows: CSVRow[]) {
       errors: errors.slice(0, 20), // Return first 20 errors
     }
   } catch (error) {
-    console.error('Failed to bulk create ingredients:', error)
+    logger.error('Failed to bulk create ingredients:', errorToContext(error))
     return {
       success: false,
       successCount,

@@ -3,6 +3,7 @@
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { oilChangeSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { oilChangeHistory } from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
@@ -70,7 +71,7 @@ export async function createOilChange(prevState: any, formData: FormData) {
     if (error instanceof z.ZodError) {
       return { success: false, error: error.errors[0].message }
     }
-    console.error('Error creating oil change:', error)
+    logger.error('Error creating oil change:', errorToContext(error))
     return {
       success: false,
       error: '기름 교체 이력 등록 중 오류가 발생했습니다',
@@ -139,7 +140,7 @@ export async function getOilChanges(filters?: {
     )
     return await getCached()
   } catch (error) {
-    console.error('Error fetching oil changes:', error)
+    logger.error('Error fetching oil changes:', errorToContext(error))
     return []
   }
 }
@@ -154,7 +155,7 @@ export async function getOilChangeById(id: string) {
     })
     return result
   } catch (error) {
-    console.error('Error fetching oil change:', error)
+    logger.error('Error fetching oil change:', errorToContext(error))
     return null
   }
 }
@@ -215,7 +216,7 @@ export async function updateOilChange(id: string, formData: FormData) {
     if (error instanceof z.ZodError) {
       return { success: false, error: error.errors[0].message }
     }
-    console.error('Error updating oil change:', error)
+    logger.error('Error updating oil change:', errorToContext(error))
     return {
       success: false,
       error: '기름 교체 이력 수정 중 오류가 발생했습니다',
@@ -239,7 +240,7 @@ export async function deleteOilChange(id: string) {
 
     return { success: true, error: undefined }
   } catch (error) {
-    console.error('Error deleting oil change:', error)
+    logger.error('Error deleting oil change:', errorToContext(error))
     return {
       success: false,
       error: '기름 교체 이력 삭제 중 오류가 발생했습니다',
@@ -322,7 +323,7 @@ export async function getOilChangeStats(storeId?: string) {
     )
     return await getCached()
   } catch (error) {
-    console.error('Error fetching oil change stats:', error)
+    logger.error('Error fetching oil change stats:', errorToContext(error))
     return {
       recentChanges: { count: 0 },
       lastChangeByFryer: {},

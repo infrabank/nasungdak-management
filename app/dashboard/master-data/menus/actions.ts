@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { menuCategories } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
@@ -42,10 +43,10 @@ export async function createMenu(formData: FormData) {
       data: menu,
     }
   } catch (error) {
-    console.error('Failed to create menu:', error)
+    logger.error('Failed to create menu:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
-      console.error('Validation errors:', error.errors)
+      logger.error('Validation errors:', { errors: error.errors })
       return {
         success: false,
         error: error.errors[0].message,
@@ -94,7 +95,7 @@ export async function updateMenu(id: string, formData: FormData) {
       data: menu,
     }
   } catch (error) {
-    console.error('Failed to update menu:', error)
+    logger.error('Failed to update menu:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -133,7 +134,7 @@ export async function deleteMenu(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete menu:', error)
+    logger.error('Failed to delete menu:', errorToContext(error))
     return {
       success: false,
       error: '메뉴 삭제에 실패했습니다',
@@ -168,7 +169,7 @@ export async function getMenus() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch menus:', error)
+    logger.error('Failed to fetch menus:', errorToContext(error))
     return []
   }
 }
@@ -236,7 +237,7 @@ export async function bulkCreateMenus(rows: CSVRow[]) {
       errors: errors.slice(0, 20), // Return first 20 errors
     }
   } catch (error) {
-    console.error('Failed to bulk create menus:', error)
+    logger.error('Failed to bulk create menus:', errorToContext(error))
     return {
       success: false,
       successCount,

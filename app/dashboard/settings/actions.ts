@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { jwtVerify } from 'jose'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import {
   organizations,
   organizationMembers,
@@ -245,7 +246,7 @@ export async function updateOrganization(
 
     return { success: true }
   } catch (error) {
-    console.error('Update organization error:', error)
+    logger.error('Update organization error:', errorToContext(error))
     return { success: false, error: '저장 중 오류가 발생했습니다' }
   }
 }
@@ -353,7 +354,7 @@ export async function inviteMember(
 
     return { success: true, data: { email } }
   } catch (error) {
-    console.error('Invite member error:', error)
+    logger.error('Invite member error:', errorToContext(error))
     return { success: false, error: '초대 발송 중 오류가 발생했습니다' }
   }
 }
@@ -388,7 +389,7 @@ export async function cancelInvitation(
 
     return { success: true }
   } catch (error) {
-    console.error('Cancel invitation error:', error)
+    logger.error('Cancel invitation error:', errorToContext(error))
     return { success: false, error: '취소 중 오류가 발생했습니다' }
   }
 }
@@ -434,7 +435,7 @@ export async function removeMember(memberId: string): Promise<ActionResult> {
 
     return { success: true }
   } catch (error) {
-    console.error('Remove member error:', error)
+    logger.error('Remove member error:', errorToContext(error))
     return { success: false, error: '제거 중 오류가 발생했습니다' }
   }
 }
@@ -463,7 +464,7 @@ export async function getBillingPortalUrl(): Promise<ActionResult> {
 
     return { success: true, data: { url } }
   } catch (error) {
-    console.error('Billing portal error:', error)
+    logger.error('Billing portal error:', errorToContext(error))
     return { success: false, error: '결제 포털을 열 수 없습니다' }
   }
 }
@@ -506,7 +507,7 @@ export async function createUpgradeCheckout(
 
     return { success: true, data: { url } }
   } catch (error) {
-    console.error('Checkout error:', error)
+    logger.error('Checkout error:', errorToContext(error))
     return { success: false, error: '결제 페이지를 열 수 없습니다' }
   }
 }
@@ -553,7 +554,7 @@ export async function updateBranding(
 
     return { success: true }
   } catch (error) {
-    console.error('Update branding error:', error)
+    logger.error('Update branding error:', errorToContext(error))
     return { success: false, error: '저장 중 오류가 발생했습니다' }
   }
 }

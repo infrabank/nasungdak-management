@@ -2,6 +2,7 @@ import { put, del } from '@vercel/blob'
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { jwtVerify } from 'jose'
+import { logger, errorToContext } from '@/lib/logger'
 
 const SESSION_SECRET = new TextEncoder().encode(
   process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
@@ -77,7 +78,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     return NextResponse.json({ url: blob.url })
   } catch (error) {
-    console.error('Upload error:', error)
+    logger.error('Upload error', errorToContext(error))
     return NextResponse.json(
       { error: '업로드 중 오류가 발생했습니다' },
       { status: 500 }
@@ -107,7 +108,7 @@ export async function DELETE(request: Request): Promise<NextResponse> {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Delete error:', error)
+    logger.error('Delete error', errorToContext(error))
     return NextResponse.json(
       { error: '삭제 중 오류가 발생했습니다' },
       { status: 500 }

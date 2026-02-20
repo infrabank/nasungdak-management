@@ -123,6 +123,11 @@ nul
 error.txt
 .work-state.md
 
+# Local dev tool configs
+opencode.config.json
+SYNC_PROMPT.md
+SNS_MARKETING_STRATEGY.md
+
 # Data files (should not be in repo)
 *.xlsx
 *.csv

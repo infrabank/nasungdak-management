@@ -408,10 +408,7 @@ export type SalesMenuFormData = z.infer<typeof salesMenuSchema>
 export const salesMenuItemSchema = z.object({
   salesMenuId: z.string().uuid('판매 메뉴를 선택해주세요'),
   skuId: z.string().uuid('SKU를 선택해주세요'),
-  quantity: z.coerce
-    .number()
-    .int()
-    .min(1, '수량은 1 이상이어야 합니다'),
+  quantity: z.coerce.number().int().min(1, '수량은 1 이상이어야 합니다'),
   isRequired: z.coerce.boolean().optional().default(true),
 })
 export type SalesMenuItemFormData = z.infer<typeof salesMenuItemSchema>

@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { menuIngredients, menuCategories, ingredients } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
@@ -59,7 +60,7 @@ export async function createMenuIngredient(formData: FormData) {
       data: mapping,
     }
   } catch (error) {
-    console.error('Failed to create menu-ingredient mapping:', error)
+    logger.error('Failed to create menu-ingredient mapping:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -111,7 +112,7 @@ export async function updateMenuIngredient(id: string, formData: FormData) {
       data: mapping,
     }
   } catch (error) {
-    console.error('Failed to update menu-ingredient mapping:', error)
+    logger.error('Failed to update menu-ingredient mapping:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -150,7 +151,7 @@ export async function deleteMenuIngredient(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete menu-ingredient mapping:', error)
+    logger.error('Failed to delete menu-ingredient mapping:', errorToContext(error))
     return {
       success: false,
       error:
@@ -202,7 +203,7 @@ export async function getMenuIngredients() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch menu-ingredient mappings:', error)
+    logger.error('Failed to fetch menu-ingredient mappings:', errorToContext(error))
     return []
   }
 }
@@ -238,7 +239,7 @@ export async function getMenus() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch menus:', error)
+    logger.error('Failed to fetch menus:', errorToContext(error))
     return []
   }
 }
@@ -275,7 +276,7 @@ export async function getIngredients() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch ingredients:', error)
+    logger.error('Failed to fetch ingredients:', errorToContext(error))
     return []
   }
 }

@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { auditLogs } from '@/lib/db/schema'
 import { headers } from 'next/headers'
 import { getAuthContext } from '@/lib/auth'
+import { logger, errorToContext } from '@/lib/logger'
 
 type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE'
 
@@ -100,7 +101,7 @@ export async function logAudit(params: AuditLogParams): Promise<void> {
     })
   } catch (error) {
     // 감사 로그 실패는 주 기능에 영향을 주지 않도록 함
-    console.error('Audit log failed:', error)
+    logger.error('Audit log failed', errorToContext(error))
   }
 }
 
@@ -223,7 +224,7 @@ export async function logBulkAudit(
       })
     }
   } catch (error) {
-    console.error('Bulk audit log failed:', error)
+    logger.error('Bulk audit log failed', errorToContext(error))
   }
 }
 

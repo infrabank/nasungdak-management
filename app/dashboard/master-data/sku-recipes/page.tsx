@@ -59,7 +59,8 @@ export default async function SkuRecipesPage() {
                     <span
                       className={`font-bold ${sku.marginPercent >= 30 ? 'text-green-600' : sku.marginPercent >= 15 ? 'text-yellow-600' : 'text-red-600'}`}
                     >
-                      {formatCurrency(sku.margin)} ({sku.marginPercent.toFixed(1)}%)
+                      {formatCurrency(sku.margin)} (
+                      {sku.marginPercent.toFixed(1)}%)
                     </span>
                   </p>
                 </div>

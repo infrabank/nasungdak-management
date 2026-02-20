@@ -15,6 +15,7 @@ import {
   type FeatureKey,
   normalizePlanType,
 } from '@/lib/features'
+import { logger, errorToContext } from '@/lib/logger'
 
 /**
  * Usage tracking and limit enforcement utilities
@@ -358,7 +359,7 @@ export function withUsageTracking<T extends unknown[], R>(
           await recordUsage(organizationId, metricType)
         }
       } catch (error) {
-        console.error('Failed to record usage:', error)
+        logger.error('Failed to record usage', errorToContext(error))
         // Don't fail the action if usage recording fails
       }
     }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { refreshSession } from '@/app/(auth)/login/actions'
+import { logger, errorToContext } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   const redirect = request.nextUrl.searchParams.get('redirect') || '/dashboard'
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL(redirect, request.url))
     } else {
       // Refresh failed, redirect to login
-      console.error('Token refresh failed:', result.error)
+      logger.error('Token refresh failed', { error: result.error || 'unknown' })
       const loginUrl = new URL('/login', request.url)
       const response = NextResponse.redirect(loginUrl)
 
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
       return response
     }
   } catch (error) {
-    console.error('Refresh endpoint error:', error)
+    logger.error('Refresh endpoint error', errorToContext(error))
     const loginUrl = new URL('/login', request.url)
     return NextResponse.redirect(loginUrl)
   }

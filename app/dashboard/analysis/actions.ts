@@ -1,6 +1,7 @@
 'use server'
 
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { sql } from 'drizzle-orm'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
@@ -217,7 +218,7 @@ export async function getMonthlyAnalysis(
       authorizedStoreIds
     )
   } catch (error) {
-    console.error('Failed to get monthly analysis:', error)
+    logger.error('Failed to get monthly analysis:', errorToContext(error))
     return {
       success: false,
       error: '월별 분석 데이터를 가져오는데 실패했습니다',
@@ -468,7 +469,7 @@ export async function getAnalysis(
       authorizedStoreIds
     )
   } catch (error) {
-    console.error('Failed to get analysis:', error)
+    logger.error('Failed to get analysis:', errorToContext(error))
     return {
       success: false,
       error: '분석 데이터를 가져오는데 실패했습니다',

@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { skus, menuCategories } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
@@ -56,7 +57,7 @@ export async function createSku(formData: FormData) {
       data: sku,
     }
   } catch (error) {
-    console.error('Failed to create SKU:', error)
+    logger.error('Failed to create SKU:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -104,7 +105,7 @@ export async function updateSku(id: string, formData: FormData) {
       data: sku,
     }
   } catch (error) {
-    console.error('Failed to update SKU:', error)
+    logger.error('Failed to update SKU:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -139,7 +140,7 @@ export async function deleteSku(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete SKU:', error)
+    logger.error('Failed to delete SKU:', errorToContext(error))
     return {
       success: false,
       error: 'SKU 삭제에 실패했습니다',
@@ -184,7 +185,7 @@ export async function getSkus() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch SKUs:', error)
+    logger.error('Failed to fetch SKUs:', errorToContext(error))
     return []
   }
 }
@@ -283,7 +284,7 @@ export async function bulkCreateSkus(rows: CSVRow[]) {
       errors: errors.slice(0, 20), // Return first 20 errors
     }
   } catch (error) {
-    console.error('Failed to bulk create SKUs:', error)
+    logger.error('Failed to bulk create SKUs:', errorToContext(error))
     return {
       success: false,
       successCount,

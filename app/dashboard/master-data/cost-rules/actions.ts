@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import {
   costDistributionRules,
   menuCategories,
@@ -132,7 +133,7 @@ export async function createCostRule(formData: FormData) {
       data: rule,
     }
   } catch (error) {
-    console.error('Failed to create cost distribution rule:', error)
+    logger.error('Failed to create cost distribution rule:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -204,7 +205,7 @@ export async function updateCostRule(id: string, formData: FormData) {
       data: rule,
     }
   } catch (error) {
-    console.error('Failed to update cost distribution rule:', error)
+    logger.error('Failed to update cost distribution rule:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -247,7 +248,7 @@ export async function deleteCostRule(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete cost distribution rule:', error)
+    logger.error('Failed to delete cost distribution rule:', errorToContext(error))
     return {
       success: false,
       error:
@@ -300,7 +301,7 @@ export async function getCostRules() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch cost distribution rules:', error)
+    logger.error('Failed to fetch cost distribution rules:', errorToContext(error))
     return []
   }
 }
@@ -336,7 +337,7 @@ export async function getMenus() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch menus:', error)
+    logger.error('Failed to fetch menus:', errorToContext(error))
     return []
   }
 }
@@ -373,7 +374,7 @@ export async function getIngredients() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch ingredients:', error)
+    logger.error('Failed to fetch ingredients:', errorToContext(error))
     return []
   }
 }

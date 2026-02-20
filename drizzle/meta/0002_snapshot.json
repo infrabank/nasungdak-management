@@ -130,12 +130,8 @@
           "name": "alert_history_store_id_stores_id_fk",
           "tableFrom": "alert_history",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -143,12 +139,8 @@
           "name": "alert_history_ingredient_id_ingredients_id_fk",
           "tableFrom": "alert_history",
           "tableTo": "ingredients",
-          "columnsFrom": [
-            "ingredient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ingredient_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -345,12 +337,8 @@
           "name": "attendance_records_store_id_stores_id_fk",
           "tableFrom": "attendance_records",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -358,12 +346,8 @@
           "name": "attendance_records_employee_id_employees_id_fk",
           "tableFrom": "attendance_records",
           "tableTo": "employees",
-          "columnsFrom": [
-            "employee_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["employee_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -371,12 +355,8 @@
           "name": "attendance_records_fixed_cost_id_fixed_costs_id_fk",
           "tableFrom": "attendance_records",
           "tableTo": "fixed_costs",
-          "columnsFrom": [
-            "fixed_cost_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["fixed_cost_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -527,12 +507,8 @@
           "name": "audit_logs_store_id_stores_id_fk",
           "tableFrom": "audit_logs",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -540,12 +516,8 @@
           "name": "audit_logs_user_id_users_id_fk",
           "tableFrom": "audit_logs",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -664,12 +636,8 @@
           "name": "cost_distribution_rules_organization_id_organizations_id_fk",
           "tableFrom": "cost_distribution_rules",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -677,12 +645,8 @@
           "name": "cost_distribution_rules_menu_id_menu_categories_id_fk",
           "tableFrom": "cost_distribution_rules",
           "tableTo": "menu_categories",
-          "columnsFrom": [
-            "menu_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["menu_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -690,12 +654,8 @@
           "name": "cost_distribution_rules_ingredient_id_ingredients_id_fk",
           "tableFrom": "cost_distribution_rules",
           "tableTo": "ingredients",
-          "columnsFrom": [
-            "ingredient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ingredient_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -830,12 +790,8 @@
           "name": "employees_store_id_stores_id_fk",
           "tableFrom": "employees",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -984,12 +940,8 @@
           "name": "fixed_costs_store_id_stores_id_fk",
           "tableFrom": "fixed_costs",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1109,12 +1061,8 @@
           "name": "ingredients_organization_id_organizations_id_fk",
           "tableFrom": "ingredients",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1227,12 +1175,8 @@
           "name": "inventory_store_id_stores_id_fk",
           "tableFrom": "inventory",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1240,12 +1184,8 @@
           "name": "inventory_ingredient_id_ingredients_id_fk",
           "tableFrom": "inventory",
           "tableTo": "ingredients",
-          "columnsFrom": [
-            "ingredient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ingredient_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1391,12 +1331,8 @@
           "name": "inventory_alert_rules_store_id_stores_id_fk",
           "tableFrom": "inventory_alert_rules",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1404,12 +1340,8 @@
           "name": "inventory_alert_rules_ingredient_id_ingredients_id_fk",
           "tableFrom": "inventory_alert_rules",
           "tableTo": "ingredients",
-          "columnsFrom": [
-            "ingredient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ingredient_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1560,12 +1492,8 @@
           "name": "inventory_events_store_id_stores_id_fk",
           "tableFrom": "inventory_events",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1573,12 +1501,8 @@
           "name": "inventory_events_ingredient_id_ingredients_id_fk",
           "tableFrom": "inventory_events",
           "tableTo": "ingredients",
-          "columnsFrom": [
-            "ingredient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ingredient_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1754,12 +1678,8 @@
           "name": "invoices_organization_id_organizations_id_fk",
           "tableFrom": "invoices",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1767,12 +1687,8 @@
           "name": "invoices_subscription_id_subscriptions_id_fk",
           "tableFrom": "invoices",
           "tableTo": "subscriptions",
-          "columnsFrom": [
-            "subscription_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["subscription_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1782,9 +1698,7 @@
         "invoices_invoice_number_unique": {
           "name": "invoices_invoice_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "invoice_number"
-          ]
+          "columns": ["invoice_number"]
         }
       },
       "policies": {},
@@ -1888,12 +1802,8 @@
           "name": "menu_categories_organization_id_organizations_id_fk",
           "tableFrom": "menu_categories",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2036,12 +1946,8 @@
           "name": "menu_ingredients_organization_id_organizations_id_fk",
           "tableFrom": "menu_ingredients",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2049,12 +1955,8 @@
           "name": "menu_ingredients_menu_id_menu_categories_id_fk",
           "tableFrom": "menu_ingredients",
           "tableTo": "menu_categories",
-          "columnsFrom": [
-            "menu_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["menu_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2062,12 +1964,8 @@
           "name": "menu_ingredients_ingredient_id_ingredients_id_fk",
           "tableFrom": "menu_ingredients",
           "tableTo": "ingredients",
-          "columnsFrom": [
-            "ingredient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ingredient_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2251,12 +2149,8 @@
           "name": "oil_change_history_store_id_stores_id_fk",
           "tableFrom": "oil_change_history",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2381,12 +2275,8 @@
           "name": "organization_invitations_organization_id_organizations_id_fk",
           "tableFrom": "organization_invitations",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2394,12 +2284,8 @@
           "name": "organization_invitations_invited_by_users_id_fk",
           "tableFrom": "organization_invitations",
           "tableTo": "users",
-          "columnsFrom": [
-            "invited_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invited_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2409,9 +2295,7 @@
         "organization_invitations_token_unique": {
           "name": "organization_invitations_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -2511,12 +2395,8 @@
           "name": "organization_members_organization_id_organizations_id_fk",
           "tableFrom": "organization_members",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2524,12 +2404,8 @@
           "name": "organization_members_user_id_users_id_fk",
           "tableFrom": "organization_members",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2537,12 +2413,8 @@
           "name": "organization_members_invited_by_users_id_fk",
           "tableFrom": "organization_members",
           "tableTo": "users",
-          "columnsFrom": [
-            "invited_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["invited_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2552,10 +2424,7 @@
         "om_org_user_unique": {
           "name": "om_org_user_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "organization_id",
-            "user_id"
-          ]
+          "columns": ["organization_id", "user_id"]
         }
       },
       "policies": {},
@@ -2729,9 +2598,7 @@
         "organizations_slug_unique": {
           "name": "organizations_slug_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
+          "columns": ["slug"]
         }
       },
       "policies": {},
@@ -2818,10 +2685,7 @@
         "pf_plan_feature_unique": {
           "name": "pf_plan_feature_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "plan",
-            "feature_key"
-          ]
+          "columns": ["plan", "feature_key"]
         }
       },
       "policies": {},
@@ -3046,12 +2910,8 @@
           "name": "purchase_transactions_store_id_stores_id_fk",
           "tableFrom": "purchase_transactions",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3059,12 +2919,8 @@
           "name": "purchase_transactions_menu_id_menu_categories_id_fk",
           "tableFrom": "purchase_transactions",
           "tableTo": "menu_categories",
-          "columnsFrom": [
-            "menu_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["menu_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3072,12 +2928,8 @@
           "name": "purchase_transactions_ingredient_id_ingredients_id_fk",
           "tableFrom": "purchase_transactions",
           "tableTo": "ingredients",
-          "columnsFrom": [
-            "ingredient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ingredient_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3146,9 +2998,7 @@
         "roles_role_name_unique": {
           "name": "roles_role_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "role_name"
-          ]
+          "columns": ["role_name"]
         }
       },
       "policies": {},
@@ -3289,12 +3139,8 @@
           "name": "sales_menu_items_organization_id_organizations_id_fk",
           "tableFrom": "sales_menu_items",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3302,12 +3148,8 @@
           "name": "sales_menu_items_sales_menu_id_sales_menus_id_fk",
           "tableFrom": "sales_menu_items",
           "tableTo": "sales_menus",
-          "columnsFrom": [
-            "sales_menu_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sales_menu_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3315,12 +3157,8 @@
           "name": "sales_menu_items_sku_id_skus_id_fk",
           "tableFrom": "sales_menu_items",
           "tableTo": "skus",
-          "columnsFrom": [
-            "sku_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sku_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3478,12 +3316,8 @@
           "name": "sales_menus_organization_id_organizations_id_fk",
           "tableFrom": "sales_menus",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3672,12 +3506,8 @@
           "name": "sales_records_store_id_stores_id_fk",
           "tableFrom": "sales_records",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3685,12 +3515,8 @@
           "name": "sales_records_sku_id_skus_id_fk",
           "tableFrom": "sales_records",
           "tableTo": "skus",
-          "columnsFrom": [
-            "sku_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sku_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3839,12 +3665,8 @@
           "name": "sku_recipes_organization_id_organizations_id_fk",
           "tableFrom": "sku_recipes",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3852,12 +3674,8 @@
           "name": "sku_recipes_sku_id_skus_id_fk",
           "tableFrom": "sku_recipes",
           "tableTo": "skus",
-          "columnsFrom": [
-            "sku_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["sku_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -3865,12 +3683,8 @@
           "name": "sku_recipes_ingredient_id_ingredients_id_fk",
           "tableFrom": "sku_recipes",
           "tableTo": "ingredients",
-          "columnsFrom": [
-            "ingredient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ingredient_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -3880,10 +3694,7 @@
         "sku_recipes_sku_ingredient_unique": {
           "name": "sku_recipes_sku_ingredient_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "sku_id",
-            "ingredient_id"
-          ]
+          "columns": ["sku_id", "ingredient_id"]
         }
       },
       "policies": {},
@@ -4029,12 +3840,8 @@
           "name": "skus_organization_id_organizations_id_fk",
           "tableFrom": "skus",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4042,12 +3849,8 @@
           "name": "skus_menu_id_menu_categories_id_fk",
           "tableFrom": "skus",
           "tableTo": "menu_categories",
-          "columnsFrom": [
-            "menu_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["menu_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4174,9 +3977,7 @@
         "stores_store_code_unique": {
           "name": "stores_store_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "store_code"
-          ]
+          "columns": ["store_code"]
         }
       },
       "policies": {},
@@ -4336,12 +4137,8 @@
           "name": "subscriptions_organization_id_organizations_id_fk",
           "tableFrom": "subscriptions",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4479,12 +4276,8 @@
           "name": "suppliers_organization_id_organizations_id_fk",
           "tableFrom": "suppliers",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4602,12 +4395,8 @@
           "name": "usage_metrics_organization_id_organizations_id_fk",
           "tableFrom": "usage_metrics",
           "tableTo": "organizations",
-          "columnsFrom": [
-            "organization_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["organization_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4731,12 +4520,8 @@
           "name": "user_sessions_user_id_users_id_fk",
           "tableFrom": "user_sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -4848,12 +4633,8 @@
           "name": "user_store_assignments_user_id_users_id_fk",
           "tableFrom": "user_store_assignments",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4861,12 +4642,8 @@
           "name": "user_store_assignments_store_id_stores_id_fk",
           "tableFrom": "user_store_assignments",
           "tableTo": "stores",
-          "columnsFrom": [
-            "store_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["store_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4874,12 +4651,8 @@
           "name": "user_store_assignments_role_id_roles_id_fk",
           "tableFrom": "user_store_assignments",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -4887,12 +4660,8 @@
           "name": "user_store_assignments_assigned_by_users_id_fk",
           "tableFrom": "user_store_assignments",
           "tableTo": "users",
-          "columnsFrom": [
-            "assigned_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assigned_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -4902,10 +4671,7 @@
         "usa_user_store_unique": {
           "name": "usa_user_store_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "store_id"
-          ]
+          "columns": ["user_id", "store_id"]
         }
       },
       "policies": {},
@@ -5019,9 +4785,7 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -5145,9 +4909,7 @@
         "webhook_events_event_id_unique": {
           "name": "webhook_events_event_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "event_id"
-          ]
+          "columns": ["event_id"]
         }
       },
       "policies": {},

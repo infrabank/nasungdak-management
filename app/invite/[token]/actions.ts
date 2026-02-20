@@ -13,6 +13,7 @@ import {
 } from '@/lib/db/schema'
 import { eq, and, isNull, gte } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
+import { logger, errorToContext } from '@/lib/logger'
 
 const SESSION_SECRET = new TextEncoder().encode(
   process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
@@ -118,7 +119,7 @@ export async function acceptInvitation(token: string): Promise<ActionResult> {
 
     return { success: true }
   } catch (error) {
-    console.error('Accept invitation error:', error)
+    logger.error('Accept invitation error', errorToContext(error))
     return { success: false, error: '초대 수락 중 오류가 발생했습니다' }
   }
 }
@@ -192,6 +193,6 @@ async function updateUserSession(userId: string): Promise<void> {
       path: '/',
     })
   } catch (error) {
-    console.error('Update session error:', error)
+    logger.error('Update session error', errorToContext(error))
   }
 }

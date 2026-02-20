@@ -7,6 +7,7 @@ import {
   inventoryAlertRuleSchema,
 } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import {
   inventory,
   inventoryEvents,
@@ -91,7 +92,7 @@ export async function createInventory(formData: FormData) {
       data: newInventory,
     }
   } catch (error) {
-    console.error('Failed to create inventory:', error)
+    logger.error('Failed to create inventory:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -158,7 +159,7 @@ export async function updateInventory(id: string, formData: FormData) {
       data: updated,
     }
   } catch (error) {
-    console.error('Failed to update inventory:', error)
+    logger.error('Failed to update inventory:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -210,7 +211,7 @@ export async function deleteInventory(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete inventory:', error)
+    logger.error('Failed to delete inventory:', errorToContext(error))
     return {
       success: false,
       error:
@@ -271,7 +272,7 @@ export async function getInventory(storeId?: string) {
 
     return await getCachedInventory()
   } catch (error) {
-    console.error('Failed to fetch inventory:', error)
+    logger.error('Failed to fetch inventory:', errorToContext(error))
     return []
   }
 }
@@ -348,7 +349,7 @@ export async function createInventoryEvent(formData: FormData) {
       data: event,
     }
   } catch (error) {
-    console.error('Failed to create inventory event:', error)
+    logger.error('Failed to create inventory event:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -407,7 +408,7 @@ export async function getInventoryEvents(
 
     return events
   } catch (error) {
-    console.error('Failed to fetch inventory events:', error)
+    logger.error('Failed to fetch inventory events:', errorToContext(error))
     return []
   }
 }
@@ -472,7 +473,7 @@ export async function createAlertRule(formData: FormData) {
       data: rule,
     }
   } catch (error) {
-    console.error('Failed to create alert rule:', error)
+    logger.error('Failed to create alert rule:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -544,7 +545,7 @@ export async function updateAlertRule(id: string, formData: FormData) {
       data: rule,
     }
   } catch (error) {
-    console.error('Failed to update alert rule:', error)
+    logger.error('Failed to update alert rule:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -602,7 +603,7 @@ export async function deleteAlertRule(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete alert rule:', error)
+    logger.error('Failed to delete alert rule:', errorToContext(error))
     return {
       success: false,
       error:
@@ -669,7 +670,7 @@ export async function getAlertRules(storeId?: string) {
 
     return await getCachedAlertRules()
   } catch (error) {
-    console.error('Failed to fetch alert rules:', error)
+    logger.error('Failed to fetch alert rules:', errorToContext(error))
     return []
   }
 }
@@ -734,7 +735,7 @@ export async function calculateDaysRemaining(
 
     return { daysRemaining, avgDailySales }
   } catch (error) {
-    console.error('Failed to calculate days remaining:', error)
+    logger.error('Failed to calculate days remaining:', errorToContext(error))
     return { daysRemaining: 0, avgDailySales: 0 }
   }
 }
@@ -816,7 +817,7 @@ export async function checkInventoryAlerts(storeId: string): Promise<{
       },
     }
   } catch (error) {
-    console.error('Failed to check inventory alerts:', error)
+    logger.error('Failed to check inventory alerts:', errorToContext(error))
     return { alerts: [], store: { id: '', storeName: '', managerPhone: '' } }
   }
 }

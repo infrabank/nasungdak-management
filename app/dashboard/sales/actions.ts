@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { salesRecords, skus, menuCategories } from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
@@ -76,7 +77,7 @@ export async function createSalesRecord(formData: FormData) {
       data: record,
     }
   } catch (error) {
-    console.error('Failed to create sales record:', error)
+    logger.error('Failed to create sales record:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -127,7 +128,7 @@ export async function updateSalesRecord(id: string, formData: FormData) {
       data: record,
     }
   } catch (error) {
-    console.error('Failed to update sales record:', error)
+    logger.error('Failed to update sales record:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -173,7 +174,7 @@ export async function deleteSalesRecord(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete sales record:', error)
+    logger.error('Failed to delete sales record:', errorToContext(error))
     return {
       success: false,
       error:
@@ -227,7 +228,7 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
       deletedCount,
     }
   } catch (error) {
-    console.error('Failed to bulk delete sales records:', error)
+    logger.error('Failed to bulk delete sales records:', errorToContext(error))
     return {
       success: false,
       error:
@@ -348,7 +349,7 @@ export async function getSalesRecords(
 
     return await getCachedSalesRecords()
   } catch (error) {
-    console.error('Failed to fetch sales records:', error)
+    logger.error('Failed to fetch sales records:', errorToContext(error))
     return { items: [], hasMore: false, page: 1 }
   }
 }
@@ -379,7 +380,7 @@ export async function getActiveSKUs() {
 
     return await getCachedActiveSKUs()
   } catch (error) {
-    console.error('Failed to fetch SKUs:', error)
+    logger.error('Failed to fetch SKUs:', errorToContext(error))
     return []
   }
 }
@@ -409,7 +410,7 @@ export async function getSKUsForFilter() {
 
     return await getCachedSKUsForFilter()
   } catch (error) {
-    console.error('Failed to fetch SKUs for filter:', error)
+    logger.error('Failed to fetch SKUs for filter:', errorToContext(error))
     return []
   }
 }
@@ -517,7 +518,7 @@ export async function createDailySales(
       errors,
     }
   } catch (error) {
-    console.error('Failed to create daily sales:', error)
+    logger.error('Failed to create daily sales:', errorToContext(error))
     return {
       success: false,
       successCount,
@@ -619,7 +620,7 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
       errors: errors.slice(0, 20), // Return first 20 errors
     }
   } catch (error) {
-    console.error('Failed to bulk create sales:', error)
+    logger.error('Failed to bulk create sales:', errorToContext(error))
     return {
       success: false,
       successCount,
@@ -720,7 +721,7 @@ export async function getSalesTotals(
 
     return await getCachedSalesTotals()
   } catch (error) {
-    console.error('Failed to fetch sales totals:', error)
+    logger.error('Failed to fetch sales totals:', errorToContext(error))
     return { totalCount: 0, totalQuantity: 0, totalRevenue: 0 }
   }
 }

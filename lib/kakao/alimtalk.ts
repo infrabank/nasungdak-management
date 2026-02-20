@@ -10,6 +10,7 @@
 import { db } from '@/lib/db'
 import { alertHistory } from '@/lib/db/schema'
 import { sql } from 'drizzle-orm'
+import { logger, errorToContext } from '@/lib/logger'
 
 interface AlimtalkParams {
   templateCode: string
@@ -39,7 +40,7 @@ export class KakaoAlimtalkClient {
         messageId: 'SIMULATED-' + Date.now(),
       }
     } catch (error) {
-      console.error('[KAKAO 알림톡] 발송 실패:', error)
+      logger.error('[KAKAO 알림톡] 발송 실패', errorToContext(error))
       return {
         success: false,
         error: error instanceof Error ? error.message : '알림 발송 실패',

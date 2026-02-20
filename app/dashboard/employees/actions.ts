@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { employees } from '@/lib/db/schema'
 import { eq, isNull, desc, and, inArray } from 'drizzle-orm'
 import { z } from 'zod'
@@ -53,7 +54,7 @@ export async function createEmployee(prevState: any, formData: FormData) {
       data: record,
     }
   } catch (error) {
-    console.error('Failed to create employee:', error)
+    logger.error('Failed to create employee:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -109,7 +110,7 @@ export async function updateEmployee(id: string, formData: FormData) {
       data: record,
     }
   } catch (error) {
-    console.error('Failed to update employee:', error)
+    logger.error('Failed to update employee:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -146,7 +147,7 @@ export async function deleteEmployee(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete employee:', error)
+    logger.error('Failed to delete employee:', errorToContext(error))
     return {
       success: false,
       error:
@@ -187,7 +188,7 @@ export async function getEmployees(storeId?: string) {
     )
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch employees:', error)
+    logger.error('Failed to fetch employees:', errorToContext(error))
     return []
   }
 }
@@ -229,7 +230,7 @@ export async function getActiveEmployees(storeId?: string) {
     )
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch active employees:', error)
+    logger.error('Failed to fetch active employees:', errorToContext(error))
     return []
   }
 }

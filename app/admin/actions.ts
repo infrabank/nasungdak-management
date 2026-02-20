@@ -12,6 +12,7 @@ import {
 import { eq, and, isNull, desc, count, sql } from 'drizzle-orm'
 import { requireSuperAdmin, getAdminContext } from '@/lib/admin-auth'
 import { revalidatePath } from 'next/cache'
+import { logger, errorToContext } from '@/lib/logger'
 
 export interface AdminStats {
   totalOrganizations: number
@@ -140,7 +141,7 @@ export async function getAdminStats(): Promise<AdminStats | null> {
       paidOrganizations: paidOrgsResult?.count || 0,
     }
   } catch (error) {
-    console.error('Get admin stats error:', error)
+    logger.error('Get admin stats error', errorToContext(error))
     return null
   }
 }
@@ -199,7 +200,7 @@ export async function getOrganizations(): Promise<OrganizationListItem[]> {
 
     return result
   } catch (error) {
-    console.error('Get organizations error:', error)
+    logger.error('Get organizations error', errorToContext(error))
     return []
   }
 }
@@ -288,7 +289,7 @@ export async function getOrganizationDetail(
         : null,
     }
   } catch (error) {
-    console.error('Get organization detail error:', error)
+    logger.error('Get organization detail error', errorToContext(error))
     return null
   }
 }
@@ -323,7 +324,7 @@ export async function toggleOrganizationStatus(
 
     return { success: true }
   } catch (error) {
-    console.error('Toggle organization status error:', error)
+    logger.error('Toggle organization status error', errorToContext(error))
     return {
       success: false,
       error:
@@ -359,7 +360,7 @@ export async function updateOrganizationPlan(
 
     return { success: true }
   } catch (error) {
-    console.error('Update organization plan error:', error)
+    logger.error('Update organization plan error', errorToContext(error))
     return {
       success: false,
       error:
@@ -389,7 +390,7 @@ export async function deleteOrganization(
 
     return { success: true }
   } catch (error) {
-    console.error('Delete organization error:', error)
+    logger.error('Delete organization error', errorToContext(error))
     return {
       success: false,
       error:
@@ -433,7 +434,7 @@ export async function extendTrial(
 
     return { success: true }
   } catch (error) {
-    console.error('Extend trial error:', error)
+    logger.error('Extend trial error', errorToContext(error))
     return {
       success: false,
       error:
@@ -514,7 +515,7 @@ export async function getUsers(): Promise<UserListItem[]> {
 
     return result
   } catch (error) {
-    console.error('Get users error:', error)
+    logger.error('Get users error', errorToContext(error))
     return []
   }
 }
@@ -549,7 +550,7 @@ export async function toggleUserStatus(
 
     return { success: true }
   } catch (error) {
-    console.error('Toggle user status error:', error)
+    logger.error('Toggle user status error', errorToContext(error))
     return {
       success: false,
       error:
@@ -580,7 +581,7 @@ export async function deleteUser(
 
     return { success: true }
   } catch (error) {
-    console.error('Delete user error:', error)
+    logger.error('Delete user error', errorToContext(error))
     return {
       success: false,
       error:

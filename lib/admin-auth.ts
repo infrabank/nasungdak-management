@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { users, roles, userStoreAssignments } from '@/lib/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 import { SESSION_SECRET, SESSION_COOKIE_NAME } from '@/lib/auth/constants'
+import { logger, errorToContext } from '@/lib/logger'
 
 export interface AdminContext {
   userId: string
@@ -77,7 +78,7 @@ export async function getAdminContext(): Promise<AdminContext> {
       isAuthenticated: true,
     }
   } catch (error) {
-    console.error('Admin context error:', error)
+    logger.error('Admin context error', errorToContext(error))
     return defaultContext
   }
 }

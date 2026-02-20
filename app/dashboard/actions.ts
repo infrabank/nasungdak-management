@@ -2,6 +2,7 @@
 
 import { unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import { sql } from 'drizzle-orm'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
@@ -246,7 +247,7 @@ export async function getDashboardStats() {
 
     return await getCachedDashboardStats()
   } catch (error) {
-    console.error('Failed to fetch dashboard stats:', error)
+    logger.error('Failed to fetch dashboard stats:', errorToContext(error))
     return {
       success: false,
       error: '대시보드 데이터를 가져오는데 실패했습니다',

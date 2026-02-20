@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
+import { logger, errorToContext } from '@/lib/logger'
 import {
   skuRecipes,
   skus,
@@ -61,7 +62,7 @@ export async function createSkuRecipe(formData: FormData) {
       data: recipe,
     }
   } catch (error) {
-    console.error('Failed to create SKU recipe:', error)
+    logger.error('Failed to create SKU recipe:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -121,7 +122,7 @@ export async function updateSkuRecipe(id: string, formData: FormData) {
       data: recipe,
     }
   } catch (error) {
-    console.error('Failed to update SKU recipe:', error)
+    logger.error('Failed to update SKU recipe:', errorToContext(error))
 
     if (error instanceof z.ZodError) {
       return {
@@ -160,7 +161,7 @@ export async function deleteSkuRecipe(id: string) {
       success: true,
     }
   } catch (error) {
-    console.error('Failed to delete SKU recipe:', error)
+    logger.error('Failed to delete SKU recipe:', errorToContext(error))
     return {
       success: false,
       error: '레시피 삭제에 실패했습니다',
@@ -319,7 +320,7 @@ export async function getSkusWithRecipes() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch SKUs with recipes:', error)
+    logger.error('Failed to fetch SKUs with recipes:', errorToContext(error))
     return []
   }
 }
@@ -355,7 +356,7 @@ export async function getSkus() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch SKUs:', error)
+    logger.error('Failed to fetch SKUs:', errorToContext(error))
     return []
   }
 }
@@ -393,7 +394,7 @@ export async function getIngredients() {
 
     return await getCached()
   } catch (error) {
-    console.error('Failed to fetch ingredients:', error)
+    logger.error('Failed to fetch ingredients:', errorToContext(error))
     return []
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
+import { logger, errorToContext } from '@/lib/logger'
 
 // 환경 변수에서 직접 읽기 (middleware는 Edge Runtime에서 실행)
 const SESSION_SECRET = new TextEncoder().encode(
@@ -80,7 +81,10 @@ export async function middleware(request: NextRequest) {
     } catch (error) {
       // Access token invalid/expired, check refresh token
       if (!refreshToken) {
-        console.error('Token verification failed, no refresh token:', error)
+        logger.error(
+          'Token verification failed, no refresh token',
+          errorToContext(error)
+        )
         const loginUrl = new URL('/login', request.url)
         const response = NextResponse.redirect(loginUrl)
         response.cookies.delete(SESSION_COOKIE_NAME)
