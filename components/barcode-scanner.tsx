@@ -6,10 +6,8 @@ import { Button } from '@/components/ui/button'
 
 type CameraState =
   | 'ready' // 초기: "카메라 시작" 버튼 표시
-  | 'requesting' // getUserMedia 호출 중 (권한 팝업 대기)
-  | 'granted' // 카메라 활성화됨
-  | 'denied' // 권한 거부됨
-  | 'not-found' // 카메라 없음
+  | 'active' // useZxing이 카메라 직접 관리 중
+  | 'error' // 카메라 열기 실패
   | 'insecure' // HTTPS 아님
 
 interface BarcodeScannerProps {
@@ -23,44 +21,26 @@ export default function BarcodeScanner({
 }: BarcodeScannerProps) {
   const [cameraState, setCameraState] = useState<CameraState>('ready')
   const [scanned, setScanned] = useState(false)
-  const [retryCount, setRetryCount] = useState(0)
+  const [errorMessage, setErrorMessage] = useState('')
 
   // 초기 환경 체크
   useEffect(() => {
-    if (!window.isSecureContext) {
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
       setCameraState('insecure')
-      return
-    }
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setCameraState('not-found')
     }
   }, [])
 
-  // 사용자 제스처에서 호출 — 브라우저가 반드시 권한 팝업을 표시함
-  const requestCamera = useCallback(() => {
-    setCameraState('requesting')
-
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'environment' } })
-      .then((stream) => {
-        // 수동 스트림 중지 — useZxing이 자체 스트림을 생성함
-        stream.getTracks().forEach((track) => track.stop())
-        setCameraState('granted')
-      })
-      .catch((err: DOMException) => {
-        if (err.name === 'NotFoundError') {
-          setCameraState('not-found')
-        } else {
-          // NotAllowedError, PermissionDeniedError, 기타
-          setCameraState('denied')
-          setRetryCount((c) => c + 1)
-        }
-      })
+  // "카메라 시작" 버튼 클릭 → 바로 active로 전환
+  // useZxing이 유일하게 getUserMedia를 호출 (이중 호출 없음)
+  const startCamera = useCallback(() => {
+    setCameraState('active')
+    setScanned(false)
+    setErrorMessage('')
   }, [])
 
-  // 권한 획득 후에만 스캐너 시작
+  // useZxing — active일 때만 카메라 시작
   const { ref } = useZxing({
-    paused: cameraState !== 'granted' || scanned,
+    paused: cameraState !== 'active' || scanned,
     constraints: {
       video: {
         facingMode: 'environment',
@@ -73,6 +53,30 @@ export default function BarcodeScanner({
       if (text && !scanned) {
         setScanned(true)
         onScan(text)
+      }
+    },
+    onError(err) {
+      // onError는 카메라 접근 실패 시 호출됨
+      if (err instanceof DOMException) {
+        if (
+          err.name === 'NotAllowedError' ||
+          err.name === 'PermissionDeniedError'
+        ) {
+          setErrorMessage('카메라 권한이 거부되었습니다')
+          setCameraState('error')
+        } else if (err.name === 'NotFoundError') {
+          setErrorMessage('카메라를 찾을 수 없습니다')
+          setCameraState('error')
+        } else if (
+          err.name === 'NotReadableError' ||
+          err.name === 'AbortError'
+        ) {
+          setErrorMessage(
+            '카메라가 다른 앱에서 사용 중이거나 접근할 수 없습니다'
+          )
+          setCameraState('error')
+        }
+        // NotFoundException 등 zxing 디코딩 에러는 무시 (정상 동작)
       }
     },
   })
@@ -145,30 +149,17 @@ export default function BarcodeScanner({
                   d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-              <Button type="button" onClick={requestCamera} className="text-lg">
+              <Button type="button" onClick={startCamera} className="text-lg">
                 📷 카메라 시작
               </Button>
               <p className="text-center text-sm text-brutal-white/70">
-                버튼을 누르면 카메라 권한을 요청합니다
+                버튼을 누르면 카메라가 열립니다
               </p>
             </div>
           )}
 
-          {/* 권한 요청 중 (팝업 대기) */}
-          {cameraState === 'requesting' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
-              <div className="h-8 w-8 animate-spin border-4 border-brutal-yellow border-t-transparent" />
-              <p className="text-center font-bold text-brutal-white">
-                카메라 권한을 요청하고 있습니다...
-              </p>
-              <p className="text-center text-sm text-brutal-yellow">
-                &quot;허용&quot;을 눌러주세요
-              </p>
-            </div>
-          )}
-
-          {/* 카메라 활성화됨 */}
-          {cameraState === 'granted' && (
+          {/* 카메라 활성화 — useZxing이 직접 카메라 관리 */}
+          {cameraState === 'active' && (
             <>
               <video
                 ref={ref}
@@ -190,8 +181,8 @@ export default function BarcodeScanner({
             </>
           )}
 
-          {/* 권한 거부됨 */}
-          {cameraState === 'denied' && (
+          {/* 에러 상태 */}
+          {cameraState === 'error' && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-y-auto p-6">
               <svg
                 className="h-10 w-10 shrink-0 text-brutal-yellow"
@@ -207,73 +198,62 @@ export default function BarcodeScanner({
                 />
               </svg>
               <p className="text-center font-bold text-brutal-white">
-                카메라 권한이 필요합니다
+                {errorMessage || '카메라를 열 수 없습니다'}
               </p>
 
-              {retryCount <= 1 ? (
-                <>
-                  <p className="text-center text-sm text-brutal-white/80">
-                    아래 버튼을 눌러 다시 요청하세요
-                  </p>
-                  <Button type="button" onClick={requestCamera}>
-                    카메라 권한 요청
-                  </Button>
-                </>
-              ) : (
-                <div className="w-full space-y-3">
-                  <p className="text-center text-xs text-brutal-white/70">
-                    브라우저가 권한 요청을 차단했습니다.
-                    <br />
-                    아래 방법으로 직접 허용해주세요:
-                  </p>
+              <div className="w-full space-y-3">
+                <p className="text-center text-xs text-brutal-white/70">
+                  카메라 권한을 확인해주세요:
+                </p>
 
-                  {isIOS && (
-                    <div className="border-2 border-brutal-yellow/50 bg-brutal-black/50 p-3 text-xs text-brutal-white/90">
-                      <p className="mb-1 font-bold text-brutal-yellow">
-                        iPhone / iPad
-                      </p>
-                      <p>
-                        설정 → Safari → 카메라 →{' '}
-                        <span className="font-bold">&quot;허용&quot;</span>
-                      </p>
-                    </div>
-                  )}
-
-                  {isAndroid && (
-                    <div className="border-2 border-brutal-yellow/50 bg-brutal-black/50 p-3 text-xs text-brutal-white/90">
-                      <p className="mb-1 font-bold text-brutal-yellow">
-                        Android Chrome
-                      </p>
-                      <p>
-                        주소창 왼쪽 아이콘 → 권한 → 카메라 →{' '}
-                        <span className="font-bold">&quot;허용&quot;</span>
-                      </p>
-                      <p className="mt-1 text-brutal-white/60">
-                        또는: Chrome 설정 → 사이트 설정 → 카메라
-                      </p>
-                    </div>
-                  )}
-
-                  {!isIOS && !isAndroid && (
-                    <div className="border-2 border-brutal-yellow/50 bg-brutal-black/50 p-3 text-xs text-brutal-white/90">
-                      <p className="mb-1 font-bold text-brutal-yellow">PC</p>
-                      <p>
-                        주소창 왼쪽 아이콘 → 사이트 설정 → 카메라 →{' '}
-                        <span className="font-bold">&quot;허용&quot;</span>
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex justify-center gap-2 pt-1">
-                    <Button type="button" onClick={requestCamera}>
-                      다시 시도
-                    </Button>
-                    <Button type="button" variant="secondary" onClick={onClose}>
-                      닫기
-                    </Button>
+                {isIOS && (
+                  <div className="border-2 border-brutal-yellow/50 bg-brutal-black/50 p-3 text-xs text-brutal-white/90">
+                    <p className="mb-1 font-bold text-brutal-yellow">
+                      iPhone / iPad
+                    </p>
+                    <p>
+                      설정 → Safari → 카메라 →{' '}
+                      <span className="font-bold">&quot;허용&quot;</span>
+                    </p>
                   </div>
+                )}
+
+                {isAndroid && (
+                  <div className="border-2 border-brutal-yellow/50 bg-brutal-black/50 p-3 text-xs text-brutal-white/90">
+                    <p className="mb-1 font-bold text-brutal-yellow">
+                      Android Chrome
+                    </p>
+                    <p>
+                      주소창 왼쪽 ⓘ 아이콘 → 권한 → 카메라 →{' '}
+                      <span className="font-bold">&quot;허용&quot;</span>
+                    </p>
+                    <p className="mt-1 text-brutal-white/60">
+                      또는: Chrome ⋮ → 설정 → 사이트 설정 → 카메라
+                    </p>
+                  </div>
+                )}
+
+                {!isIOS && !isAndroid && (
+                  <div className="border-2 border-brutal-yellow/50 bg-brutal-black/50 p-3 text-xs text-brutal-white/90">
+                    <p className="mb-1 font-bold text-brutal-yellow">
+                      PC Chrome
+                    </p>
+                    <p>
+                      주소창 왼쪽 아이콘 → 사이트 설정 → 카메라 →{' '}
+                      <span className="font-bold">&quot;허용&quot;</span>
+                    </p>
+                  </div>
+                )}
+
+                <div className="flex justify-center gap-2 pt-1">
+                  <Button type="button" onClick={startCamera}>
+                    다시 시도
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={onClose}>
+                    닫기
+                  </Button>
                 </div>
-              )}
+              </div>
             </div>
           )}
 
@@ -291,25 +271,10 @@ export default function BarcodeScanner({
               </Button>
             </div>
           )}
-
-          {/* 카메라 없음 */}
-          {cameraState === 'not-found' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
-              <p className="text-center font-bold text-brutal-white">
-                카메라를 찾을 수 없습니다
-              </p>
-              <p className="text-center text-sm text-brutal-white/80">
-                이 기기에 카메라가 연결되어 있는지 확인해주세요
-              </p>
-              <Button type="button" variant="secondary" onClick={onClose}>
-                닫기
-              </Button>
-            </div>
-          )}
         </div>
 
         {/* Footer Hint */}
-        {cameraState === 'granted' && (
+        {cameraState === 'active' && !scanned && (
           <div className="border-t-2 border-brutal-black bg-brutal-blue/20 p-3 text-center">
             <p className="text-sm font-bold text-brutal-black">
               바코드를 사각형 안에 맞춰주세요
