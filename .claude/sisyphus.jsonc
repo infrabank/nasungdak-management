@@ -1,0 +1,168 @@
+{
+  // ============================================================
+  // Oh-My-ClaudeCode 에이전트 모델 최적화 설정
+  // 2026-02-21 — Sonnet 4.6 출시 반영
+  //
+  // 핵심 변경:
+  // - MEDIUM 티어: Sonnet 4.5 → 4.6 (큰 성능 향상)
+  // - Sonnet 4.6이 이전 Opus 수준으로 향상됨 → 일부 HIGH 에이전트 MEDIUM으로 하향
+  // - 단순 작업 에이전트는 Haiku로 비용 최적화
+  // ============================================================
+
+  "routing": {
+    "enabled": true,
+    "defaultTier": "MEDIUM",
+    "escalationEnabled": true,
+    "maxEscalations": 2,
+
+    // 티어별 모델 매핑 — Sonnet 4.6 적용
+    "tierModels": {
+      "LOW": "claude-haiku-4-5-20251001",
+      "MEDIUM": "claude-sonnet-4-6-20260219",
+      "HIGH": "claude-opus-4-6-20260205",
+    },
+
+    // 에이전트별 티어 오버라이드
+    //
+    // 원칙:
+    //   HIGH (Opus): 복잡한 추론, 아키텍처 설계, 전략적 판단만
+    //   MEDIUM (Sonnet 4.6): 대부분의 코드/분석 작업 (4.6이 이전 Opus급)
+    //   LOW (Haiku): 검색, 단순 포맷팅, 기계적 작업
+    "agentOverrides": {
+      // ── BUILD/ANALYSIS LANE ──
+      "explore": { "tier": "LOW", "reason": "탐색은 속도 우선, Haiku로 충분" },
+      "analyst": {
+        "tier": "MEDIUM",
+        "reason": "Sonnet 4.6이 요구사항 분석 가능 (이전 Opus에서 하향)",
+      },
+      "planner": {
+        "tier": "HIGH",
+        "reason": "전략적 작업 분해는 여전히 깊은 추론 필요",
+      },
+      "architect": {
+        "tier": "HIGH",
+        "reason": "시스템 설계, 경계 분석은 Opus 필요",
+      },
+      "debugger": {
+        "tier": "MEDIUM",
+        "reason": "근본 원인 분석 — Sonnet 4.6 충분",
+      },
+      "executor": { "tier": "MEDIUM", "reason": "코드 구현 — Sonnet 4.6 표준" },
+      "deep-executor": {
+        "tier": "HIGH",
+        "reason": "자율적 복잡 작업은 Opus 필요",
+      },
+      "verifier": { "tier": "MEDIUM", "reason": "완료 검증 — Sonnet 4.6 충분" },
+
+      // ── REVIEW LANE ──
+      "style-reviewer": {
+        "tier": "LOW",
+        "reason": "포맷팅/네이밍 검사는 Haiku로 충분",
+      },
+      "quality-reviewer": {
+        "tier": "MEDIUM",
+        "reason": "로직 결함 탐지 — Sonnet 4.6",
+      },
+      "api-reviewer": {
+        "tier": "MEDIUM",
+        "reason": "API 계약 검증 — Sonnet 4.6",
+      },
+      "security-reviewer": {
+        "tier": "HIGH",
+        "reason": "보안 취약점 탐지는 깊은 추론 필요 (MEDIUM에서 상향)",
+      },
+      "performance-reviewer": {
+        "tier": "MEDIUM",
+        "reason": "성능 핫스팟 분석 — Sonnet 4.6",
+      },
+      "code-reviewer": {
+        "tier": "MEDIUM",
+        "reason": "Sonnet 4.6이 종합 리뷰 가능 (이전 Opus에서 하향)",
+      },
+
+      // ── DOMAIN SPECIALISTS ──
+      "dependency-expert": {
+        "tier": "MEDIUM",
+        "reason": "SDK/API 평가 — Sonnet 4.6",
+      },
+      "test-engineer": {
+        "tier": "MEDIUM",
+        "reason": "테스트 전략 — Sonnet 4.6",
+      },
+      "quality-strategist": {
+        "tier": "MEDIUM",
+        "reason": "품질 전략 — Sonnet 4.6",
+      },
+      "build-fixer": {
+        "tier": "LOW",
+        "reason": "빌드 에러 수정은 패턴 매칭 — Haiku로 충분 (MEDIUM에서 하향)",
+      },
+      "designer": { "tier": "MEDIUM", "reason": "UI/UX 설계 — Sonnet 4.6" },
+      "writer": { "tier": "LOW", "reason": "문서 작성은 Haiku로 충분" },
+      "qa-tester": { "tier": "MEDIUM", "reason": "QA 검증 — Sonnet 4.6" },
+      "scientist": { "tier": "MEDIUM", "reason": "데이터 분석 — Sonnet 4.6" },
+      "git-master": {
+        "tier": "LOW",
+        "reason": "Git 작업은 기계적 — Haiku로 충분 (MEDIUM에서 하향)",
+      },
+
+      // ── PRODUCT LANE ──
+      "product-manager": {
+        "tier": "MEDIUM",
+        "reason": "문제 정의, PRD — Sonnet 4.6",
+      },
+      "ux-researcher": {
+        "tier": "MEDIUM",
+        "reason": "휴리스틱 감사 — Sonnet 4.6",
+      },
+      "information-architect": {
+        "tier": "MEDIUM",
+        "reason": "정보 구조 — Sonnet 4.6",
+      },
+      "product-analyst": {
+        "tier": "MEDIUM",
+        "reason": "메트릭 분석 — Sonnet 4.6",
+      },
+
+      // ── COORDINATION ──
+      "critic": { "tier": "HIGH", "reason": "비판적 평가는 깊은 추론 필요" },
+      "vision": { "tier": "MEDIUM", "reason": "시각 분석 — Sonnet 4.6" },
+    },
+  },
+
+  // 에이전트 모델 직접 지정 (routing 오버라이드보다 이 설정이 레거시 코드에서 사용됨)
+  "agents": {
+    "omc": { "model": "claude-opus-4-6-20260205" },
+    "architect": { "model": "claude-opus-4-6-20260205", "enabled": true },
+    "researcher": { "model": "claude-sonnet-4-6-20260219" },
+    "explore": { "model": "claude-haiku-4-5-20251001" },
+    "frontendEngineer": {
+      "model": "claude-sonnet-4-6-20260219",
+      "enabled": true,
+    },
+    "documentWriter": { "model": "claude-haiku-4-5-20251001", "enabled": true },
+    "multimodalLooker": {
+      "model": "claude-sonnet-4-6-20260219",
+      "enabled": true,
+    },
+    "critic": { "model": "claude-opus-4-6-20260205", "enabled": true },
+    "analyst": { "model": "claude-sonnet-4-6-20260219", "enabled": true },
+    "orchestratorSisyphus": {
+      "model": "claude-sonnet-4-6-20260219",
+      "enabled": true,
+    },
+    "sisyphusJunior": {
+      "model": "claude-sonnet-4-6-20260219",
+      "enabled": true,
+    },
+    "planner": { "model": "claude-opus-4-6-20260205", "enabled": true },
+  },
+
+  // 외부 모델 프로바이더 설정
+  "externalModels": {
+    "defaults": {
+      "codexModel": "o3",
+      "geminiModel": "gemini-2.5-pro",
+    },
+  },
+}
