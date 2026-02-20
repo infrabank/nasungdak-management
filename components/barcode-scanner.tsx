@@ -1,51 +1,47 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useZxing } from 'react-zxing'
 import { Button } from '@/components/ui/button'
-
-type CameraState =
-  | 'ready' // 초기: "카메라 시작" 버튼 표시
-  | 'active' // useZxing이 카메라 직접 관리 중
-  | 'error' // 카메라 열기 실패
-  | 'insecure' // HTTPS 아님
 
 interface BarcodeScannerProps {
   onScan: (barcode: string) => void
   onClose: () => void
 }
 
+/**
+ * 바코드 카메라 스캐너
+ *
+ * react-zxing 모바일 호환 패턴 (Issues #32, #45):
+ * - 이 컴포넌트가 마운트될 때 즉시 카메라 시작
+ * - video 요소는 항상 DOM에 존재 (조건부 렌더링 금지)
+ * - paused prop을 시작/중지 토글로 사용 금지
+ * - 부모가 mount/unmount로 카메라를 제어
+ */
 export default function BarcodeScanner({
   onScan,
   onClose,
 }: BarcodeScannerProps) {
-  const [cameraState, setCameraState] = useState<CameraState>('ready')
   const [scanned, setScanned] = useState(false)
-  const [errorMessage, setErrorMessage] = useState('')
+  const [error, setError] = useState('')
+  const [isInsecure, setIsInsecure] = useState(false)
 
-  // 초기 환경 체크
   useEffect(() => {
     if (typeof window !== 'undefined' && !window.isSecureContext) {
-      setCameraState('insecure')
+      setIsInsecure(true)
     }
   }, [])
 
-  // "카메라 시작" 버튼 클릭 → 바로 active로 전환
-  // useZxing이 유일하게 getUserMedia를 호출 (이중 호출 없음)
-  const startCamera = useCallback(() => {
-    setCameraState('active')
-    setScanned(false)
-    setErrorMessage('')
-  }, [])
-
-  // useZxing — active일 때만 카메라 시작
+  // useZxing — 마운트 즉시 카메라 시작 (paused 토글 없음)
+  // 부모의 버튼 클릭 → 이 컴포넌트 마운트 → useEffect에서 getUserMedia 호출
+  // 사용자 제스처 컨텍스트가 유지되는 시간 내에 실행됨
   const { ref } = useZxing({
-    paused: cameraState !== 'active' || scanned,
+    paused: scanned || isInsecure, // 스캔 성공 또는 비보안 컨텍스트에서만 일시정지
     constraints: {
       video: {
         facingMode: 'environment',
-        width: { min: 640, ideal: 1280, max: 1920 },
-        height: { min: 480, ideal: 720, max: 1080 },
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
       },
     },
     onDecodeResult(result) {
@@ -56,27 +52,23 @@ export default function BarcodeScanner({
       }
     },
     onError(err) {
-      // onError는 카메라 접근 실패 시 호출됨
+      // DOMException만 처리 — zxing 디코딩 에러(NotFoundException 등) 무시
       if (err instanceof DOMException) {
         if (
           err.name === 'NotAllowedError' ||
           err.name === 'PermissionDeniedError'
         ) {
-          setErrorMessage('카메라 권한이 거부되었습니다')
-          setCameraState('error')
+          setError('카메라 권한이 거부되었습니다')
         } else if (err.name === 'NotFoundError') {
-          setErrorMessage('카메라를 찾을 수 없습니다')
-          setCameraState('error')
+          setError('카메라를 찾을 수 없습니다')
         } else if (
           err.name === 'NotReadableError' ||
           err.name === 'AbortError'
         ) {
-          setErrorMessage(
-            '카메라가 다른 앱에서 사용 중이거나 접근할 수 없습니다'
-          )
-          setCameraState('error')
+          setError('카메라가 다른 앱에서 사용 중이거나 접근할 수 없습니다')
+        } else if (err.name === 'OverconstrainedError') {
+          setError('카메라 설정이 지원되지 않습니다')
         }
-        // NotFoundException 등 zxing 디코딩 에러는 무시 (정상 동작)
       }
     },
   })
@@ -125,65 +117,34 @@ export default function BarcodeScanner({
           </button>
         </div>
 
-        {/* Camera View */}
+        {/* Camera View — video 항상 DOM에 존재 (ref 유지 필수) */}
         <div className="relative aspect-[4/3] w-full bg-brutal-black">
-          {/* 초기 상태: 카메라 시작 버튼 */}
-          {cameraState === 'ready' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6">
-              <svg
-                className="h-16 w-16 text-brutal-yellow"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-              <Button type="button" onClick={startCamera} className="text-lg">
-                📷 카메라 시작
-              </Button>
-              <p className="text-center text-sm text-brutal-white/70">
-                버튼을 누르면 카메라가 열립니다
+          <video
+            ref={ref}
+            className="h-full w-full object-cover"
+            playsInline
+            autoPlay
+            muted
+          />
+
+          {/* HTTPS 필요 오버레이 */}
+          {isInsecure && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-brutal-black p-6">
+              <p className="text-center font-bold text-brutal-white">
+                카메라는 HTTPS에서만 사용 가능합니다
               </p>
+              <p className="text-center text-sm text-brutal-white/70">
+                https:// 주소로 접속하거나 localhost에서 테스트해주세요
+              </p>
+              <Button type="button" variant="secondary" onClick={onClose}>
+                닫기
+              </Button>
             </div>
           )}
 
-          {/* 카메라 활성화 — useZxing이 직접 카메라 관리 */}
-          {cameraState === 'active' && (
-            <>
-              <video
-                ref={ref}
-                className="h-full w-full object-cover"
-                playsInline
-                muted
-              />
-              {!scanned && (
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <div className="relative h-48 w-64">
-                    <div className="absolute inset-0 border-2 border-brutal-yellow/40" />
-                    <div className="absolute -left-0.5 -top-0.5 h-6 w-6 border-l-4 border-t-4 border-brutal-yellow" />
-                    <div className="absolute -right-0.5 -top-0.5 h-6 w-6 border-r-4 border-t-4 border-brutal-yellow" />
-                    <div className="absolute -bottom-0.5 -left-0.5 h-6 w-6 border-b-4 border-l-4 border-brutal-yellow" />
-                    <div className="absolute -bottom-0.5 -right-0.5 h-6 w-6 border-b-4 border-r-4 border-brutal-yellow" />
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* 에러 상태 */}
-          {cameraState === 'error' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-y-auto p-6">
+          {/* 에러 오버레이 */}
+          {error && !isInsecure && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 overflow-y-auto bg-brutal-black/95 p-6">
               <svg
                 className="h-10 w-10 shrink-0 text-brutal-yellow"
                 fill="none"
@@ -197,9 +158,7 @@ export default function BarcodeScanner({
                   d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <p className="text-center font-bold text-brutal-white">
-                {errorMessage || '카메라를 열 수 없습니다'}
-              </p>
+              <p className="text-center font-bold text-brutal-white">{error}</p>
 
               <div className="w-full space-y-3">
                 <p className="text-center text-xs text-brutal-white/70">
@@ -246,10 +205,7 @@ export default function BarcodeScanner({
                 )}
 
                 <div className="flex justify-center gap-2 pt-1">
-                  <Button type="button" onClick={startCamera}>
-                    다시 시도
-                  </Button>
-                  <Button type="button" variant="secondary" onClick={onClose}>
+                  <Button type="button" onClick={onClose}>
                     닫기
                   </Button>
                 </div>
@@ -257,24 +213,22 @@ export default function BarcodeScanner({
             </div>
           )}
 
-          {/* HTTPS 필요 */}
-          {cameraState === 'insecure' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6">
-              <p className="text-center font-bold text-brutal-white">
-                카메라는 HTTPS에서만 사용 가능합니다
-              </p>
-              <p className="text-center text-sm text-brutal-white/70">
-                https:// 주소로 접속하거나 localhost에서 테스트해주세요
-              </p>
-              <Button type="button" variant="secondary" onClick={onClose}>
-                닫기
-              </Button>
+          {/* 스캔 가이드 오버레이 */}
+          {!scanned && !error && !isInsecure && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="relative h-48 w-64">
+                <div className="absolute inset-0 border-2 border-brutal-yellow/40" />
+                <div className="absolute -left-0.5 -top-0.5 h-6 w-6 border-l-4 border-t-4 border-brutal-yellow" />
+                <div className="absolute -right-0.5 -top-0.5 h-6 w-6 border-r-4 border-t-4 border-brutal-yellow" />
+                <div className="absolute -bottom-0.5 -left-0.5 h-6 w-6 border-b-4 border-l-4 border-brutal-yellow" />
+                <div className="absolute -bottom-0.5 -right-0.5 h-6 w-6 border-b-4 border-r-4 border-brutal-yellow" />
+              </div>
             </div>
           )}
         </div>
 
         {/* Footer Hint */}
-        {cameraState === 'active' && !scanned && (
+        {!scanned && !error && !isInsecure && (
           <div className="border-t-2 border-brutal-black bg-brutal-blue/20 p-3 text-center">
             <p className="text-sm font-bold text-brutal-black">
               바코드를 사각형 안에 맞춰주세요
