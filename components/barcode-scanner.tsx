@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useZxing } from 'react-zxing'
 import { BarcodeFormat, DecodeHintType } from '@zxing/library'
 import { Button } from '@/components/ui/button'
@@ -11,14 +11,28 @@ interface BarcodeScannerProps {
 }
 
 /**
- * 바코드 카메라 스캐너
+ * 바코드 카메라 스캐너 (듀얼 디코더)
  *
- * react-zxing 모바일 호환 패턴 (Issues #32, #45):
- * - 이 컴포넌트가 마운트될 때 즉시 카메라 시작
- * - video 요소는 항상 DOM에 존재 (조건부 렌더링 금지)
- * - paused prop을 시작/중지 토글로 사용 금지
- * - 부모가 mount/unmount로 카메라를 제어
+ * 1순위: 네이티브 BarcodeDetector API (Chrome Android, Safari iOS 17.2+)
+ *   - 하드웨어 가속, 높은 인식률
+ * 2순위: react-zxing (BarcodeDetector 미지원 브라우저 폴백)
+ *   - JS 기반 디코딩, hints/TRY_HARDER 최적화
+ *
+ * 두 디코더가 동시에 동작하여 먼저 인식되는 쪽이 결과 반환
  */
+
+/** 네이티브 BarcodeDetector용 포맷 */
+const NATIVE_FORMATS = [
+  'ean_13',
+  'ean_8',
+  'code_128',
+  'code_39',
+  'qr_code',
+  'upc_a',
+  'upc_e',
+  'itf',
+]
+
 export default function BarcodeScanner({
   onScan,
   onClose,
@@ -26,6 +40,9 @@ export default function BarcodeScanner({
   const [scanned, setScanned] = useState(false)
   const [error, setError] = useState('')
   const [isInsecure, setIsInsecure] = useState(false)
+  const scannedRef = useRef(false)
+  const onScanRef = useRef(onScan)
+  onScanRef.current = onScan
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !window.isSecureContext) {
@@ -33,11 +50,19 @@ export default function BarcodeScanner({
     }
   }, [])
 
-  // 바코드 디코딩 힌트 — 포맷 지정 + TRY_HARDER로 인식률 향상
+  // 스캔 성공 핸들러 (네이티브/zxing 양쪽에서 중복 호출 방지)
+  const handleDetected = useCallback((value: string) => {
+    if (scannedRef.current) return
+    scannedRef.current = true
+    setScanned(true)
+    onScanRef.current(value)
+  }, [])
+
+  // ─── react-zxing (폴백 디코더) ───
   const hints = useMemo(() => {
     const map = new Map<DecodeHintType, unknown>()
     map.set(DecodeHintType.POSSIBLE_FORMATS, [
-      BarcodeFormat.EAN_13, // 한국 상품 바코드 (가장 흔함)
+      BarcodeFormat.EAN_13,
       BarcodeFormat.EAN_8,
       BarcodeFormat.CODE_128,
       BarcodeFormat.CODE_39,
@@ -50,13 +75,10 @@ export default function BarcodeScanner({
     return map
   }, [])
 
-  // useZxing — 마운트 즉시 카메라 시작 (paused 토글 없음)
-  // 부모의 버튼 클릭 → 이 컴포넌트 마운트 → useEffect에서 getUserMedia 호출
-  // 사용자 제스처 컨텍스트가 유지되는 시간 내에 실행됨
   const { ref } = useZxing({
-    paused: scanned || isInsecure, // 스캔 성공 또는 비보안 컨텍스트에서만 일시정지
+    paused: scanned || isInsecure,
     hints,
-    timeBetweenDecodingAttempts: 150, // 기본 300ms → 150ms로 빠른 스캔
+    timeBetweenDecodingAttempts: 150,
     constraints: {
       video: {
         facingMode: 'environment',
@@ -66,13 +88,9 @@ export default function BarcodeScanner({
     },
     onDecodeResult(result) {
       const text = result.getText()
-      if (text && !scanned) {
-        setScanned(true)
-        onScan(text)
-      }
+      if (text) handleDetected(text)
     },
     onError(err) {
-      // DOMException만 처리 — zxing 디코딩 에러(NotFoundException 등) 무시
       if (err instanceof DOMException) {
         if (
           err.name === 'NotAllowedError' ||
@@ -97,6 +115,62 @@ export default function BarcodeScanner({
       }
     },
   })
+
+  // ─── 네이티브 BarcodeDetector (1순위 디코더) ───
+  // react-zxing이 관리하는 video 요소에 병렬로 BarcodeDetector 루프 실행
+  useEffect(() => {
+    if (isInsecure || scanned) return
+    if (typeof window === 'undefined' || !window.BarcodeDetector) return
+
+    const video = ref.current
+    if (!video) return
+
+    let cancelled = false
+    let rafId = 0
+
+    const startDetection = async () => {
+      try {
+        const supported = await BarcodeDetector.getSupportedFormats()
+        const formats = NATIVE_FORMATS.filter((f) => supported.includes(f))
+        if (formats.length === 0 || cancelled) return
+
+        const detector = new BarcodeDetector({ formats })
+
+        const detect = async () => {
+          if (cancelled || scannedRef.current) return
+
+          if (video.readyState >= 2) {
+            try {
+              const barcodes = await detector.detect(video)
+              if (
+                barcodes.length > 0 &&
+                barcodes[0].rawValue &&
+                !scannedRef.current
+              ) {
+                handleDetected(barcodes[0].rawValue)
+                return
+              }
+            } catch {
+              // 이 프레임 디코딩 실패 — 다음 프레임 시도
+            }
+          }
+
+          rafId = requestAnimationFrame(() => void detect())
+        }
+
+        rafId = requestAnimationFrame(() => void detect())
+      } catch {
+        // BarcodeDetector 초기화 실패 — react-zxing 폴백에 의존
+      }
+    }
+
+    void startDetection()
+
+    return () => {
+      cancelled = true
+      if (rafId) cancelAnimationFrame(rafId)
+    }
+  }, [ref, isInsecure, scanned, handleDetected])
 
   // Escape 키로 닫기
   useEffect(() => {
