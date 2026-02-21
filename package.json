@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
+    "@undecaf/zbar-wasm": "^0.11.0",
     "@vercel/blob": "^2.0.1",
     "@vercel/postgres": "^0.10.0",
     "bcryptjs": "^2.4.3",

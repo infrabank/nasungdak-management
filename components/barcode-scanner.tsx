@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode'
+import type { ZBarSymbol } from '@undecaf/zbar-wasm'
 import { Button } from '@/components/ui/button'
 
 interface BarcodeScannerProps {
@@ -10,34 +10,31 @@ interface BarcodeScannerProps {
 }
 
 /**
- * 바코드 카메라 스캐너 (html5-qrcode)
+ * 바코드 카메라 스캐너 — 삼성 인터넷 최적화
  *
- * html5-qrcode = 수백만 기기에서 검증된 바코드 스캔 라이브러리
- * - 네이티브 BarcodeDetector 자동 감지 + ExperimentalFeatures(ZXing) 폴백
- * - 삼성 인터넷, Chrome, Safari, Firefox 등 모든 모바일 브라우저 지원
- * - 카메라 관리, 프레임 캡처, 디코딩을 라이브러리가 일괄 처리
+ * 핵심 수정사항 (삼성 S20+ / 삼성 인터넷 호환):
+ * 1. ZBar WASM 폴리필 사용 — 네이티브 BarcodeDetector 크래시 우회
+ * 2. createImageBitmap 기반 프레임 캡처 — canvas.drawImage 회전 버그 우회
+ * 3. getUserMedia 직접 호출 + 해상도 제한 (720p) — 삼성 4K 기본값 문제 완화
+ * 4. purchase-form.tsx의 pre-permission 더블오픈 패턴 제거됨
+ *
+ * @see https://github.com/mebjas/html5-qrcode/issues/881
+ * @see https://github.com/mebjas/html5-qrcode/issues/934
  */
 
-/** 매장 관리에 필요한 바코드 포맷 */
-const BARCODE_FORMATS = [
-  Html5QrcodeSupportedFormats.EAN_13, // 한국 상품 바코드 (가장 흔함)
-  Html5QrcodeSupportedFormats.EAN_8,
-  Html5QrcodeSupportedFormats.CODE_128,
-  Html5QrcodeSupportedFormats.CODE_39,
-  Html5QrcodeSupportedFormats.QR_CODE,
-  Html5QrcodeSupportedFormats.UPC_A,
-  Html5QrcodeSupportedFormats.UPC_E,
-  Html5QrcodeSupportedFormats.ITF,
-]
-
-/** 스캐너 컨테이너 ID */
-const SCANNER_ELEMENT_ID = 'barcode-scanner-region'
+/**
+ * 스캔 간격 (ms) — 너무 빠르면 WASM이 부하, 너무 느리면 인식 지연
+ * ZBar WASM은 기본적으로 EAN-13, EAN-8, Code-128, Code-39, QR, UPC-A/E, ITF 등
+ * 모든 지원 포맷을 자동 감지하므로 별도 포맷 목록이 불필요
+ */
+const SCAN_INTERVAL_MS = 120
 
 export default function BarcodeScanner({
   onScan,
   onClose,
 }: BarcodeScannerProps) {
-  const scannerRef = useRef<Html5Qrcode | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const scannedRef = useRef(false)
   const onScanRef = useRef(onScan)
   onScanRef.current = onScan
@@ -45,23 +42,21 @@ export default function BarcodeScanner({
   const [scanned, setScanned] = useState(false)
   const [error, setError] = useState('')
   const [isInsecure, setIsInsecure] = useState(false)
+  const [debugInfo, setDebugInfo] = useState('')
 
   // 스캔 성공 핸들러
   const handleDetected = useCallback((value: string) => {
     if (scannedRef.current) return
     scannedRef.current = true
     setScanned(true)
-
-    // 스캐너 정지
-    if (scannerRef.current) {
-      void scannerRef.current.stop().catch(() => {
-        /* 이미 정지됨 */
-      })
-    }
     onScanRef.current(value)
   }, [])
 
-  // ─── 메인 효과: html5-qrcode 스캐너 시작 ───
+  // ─── 메인 효과: ZBar WASM 폴리필 + 직접 카메라 관리 ───
+  // 삼성 인터넷의 3가지 버그를 모두 우회:
+  // 1. 네이티브 BarcodeDetector 사용 안 함 (constructor 크래시 우회)
+  // 2. canvas.drawImage 사용 안 함 (회전 버그 우회 — ZBar가 내부적으로 createImageBitmap 사용)
+  // 3. getUserMedia 해상도 제약 직접 관리
   useEffect(() => {
     if (typeof window !== 'undefined' && !window.isSecureContext) {
       setIsInsecure(true)
@@ -69,30 +64,95 @@ export default function BarcodeScanner({
     }
 
     let mounted = true
+    let rafId = 0
 
     const start = async () => {
       try {
-        const scanner = new Html5Qrcode(SCANNER_ELEMENT_ID, {
-          formatsToSupport: BARCODE_FORMATS,
-          verbose: false,
-        })
-        scannerRef.current = scanner
+        // ① ZBar WASM 모듈 동적 로딩 (코드 스플리팅)
+        const { scanImageData } = await import('@undecaf/zbar-wasm')
 
-        await scanner.start(
-          { facingMode: 'environment' },
-          {
-            fps: 10,
-            qrbox: { width: 280, height: 160 },
-            aspectRatio: 4 / 3,
-            disableFlip: false,
+        if (!mounted) return
+
+        // ② 카메라 스트림 획득 — 해상도 제한으로 삼성 고해상도 문제 완화
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280, max: 1920 },
+            height: { ideal: 720, max: 1080 },
           },
-          (decodedText) => {
-            if (mounted) handleDetected(decodedText)
-          },
-          () => {
-            // 매 프레임 디코딩 실패 — 정상 (바코드 미감지)
+          audio: false,
+        })
+
+        if (!mounted) {
+          stream.getTracks().forEach((t) => t.stop())
+          return
+        }
+
+        streamRef.current = stream
+
+        // ③ video 요소에 스트림 연결
+        const video = videoRef.current
+        if (!video) return
+
+        video.srcObject = stream
+        await video.play()
+
+        // 디버그: 실제 획득된 해상도 표시
+        const track = stream.getVideoTracks()[0]
+        const settings = track.getSettings()
+        setDebugInfo(`${settings.width}x${settings.height}`)
+
+        // ④ 프레임 캡처용 OffscreenCanvas (또는 일반 canvas)
+        // createImageBitmap → canvas → getImageData 파이프라인으로
+        // Samsung의 canvas.drawImage(video) 회전 버그를 우회
+        const captureCanvas = document.createElement('canvas')
+        const ctx = captureCanvas.getContext('2d', {
+          willReadFrequently: true,
+        })
+        if (!ctx) return
+
+        // ⑤ requestAnimationFrame 스캔 루프
+        let lastScanTime = 0
+
+        const scanLoop = async (timestamp: number) => {
+          if (!mounted || scannedRef.current) return
+
+          if (timestamp - lastScanTime >= SCAN_INTERVAL_MS) {
+            lastScanTime = timestamp
+            try {
+              // createImageBitmap는 compositor 레벨에서 올바른 방향으로
+              // 프레임을 캡처 — Samsung의 canvas.drawImage(video) 회전 버그 우회
+              const bitmap = await createImageBitmap(video)
+              captureCanvas.width = bitmap.width
+              captureCanvas.height = bitmap.height
+              ctx.drawImage(bitmap, 0, 0)
+              bitmap.close()
+
+              const imageData = ctx.getImageData(
+                0,
+                0,
+                captureCanvas.width,
+                captureCanvas.height
+              )
+
+              // ZBar WASM C/C++ 디코더로 스캔
+              const symbols: ZBarSymbol[] = await scanImageData(imageData)
+              if (symbols.length > 0 && mounted) {
+                const decoded = symbols[0].decode()
+                if (decoded) {
+                  handleDetected(decoded)
+                  return // 인식 성공 → 루프 종료
+                }
+              }
+            } catch {
+              // 프레임 준비 안 됨 또는 비디오 미재생 — 무시하고 재시도
+            }
           }
-        )
+
+          rafId = requestAnimationFrame(scanLoop)
+        }
+
+        rafId = requestAnimationFrame(scanLoop)
       } catch (err) {
         if (!mounted) return
         const msg = err instanceof Error ? err.message : String(err)
@@ -109,22 +169,21 @@ export default function BarcodeScanner({
         } else if (msg.includes('Security') || msg.includes('blocked')) {
           setError('브라우저 보안 정책으로 카메라 사용이 차단되었습니다')
         } else {
-          setError('카메라 시작 중 오류가 발생했습니다')
+          setError(`카메라 시작 중 오류: ${msg}`)
         }
       }
     }
 
-    // DOM이 준비된 후 시작 (html5-qrcode는 실제 DOM 요소가 필요)
-    const timerId = setTimeout(() => void start(), 50)
+    // DOM이 준비된 후 시작 (video 요소가 필요)
+    const timerId = setTimeout(() => void start(), 100)
 
     return () => {
       mounted = false
       clearTimeout(timerId)
-      if (scannerRef.current) {
-        void scannerRef.current.stop().catch(() => {
-          /* cleanup */
-        })
-        scannerRef.current = null
+      cancelAnimationFrame(rafId)
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop())
+        streamRef.current = null
       }
     }
   }, [handleDetected])
@@ -173,12 +232,32 @@ export default function BarcodeScanner({
           </button>
         </div>
 
-        {/* Camera View — html5-qrcode가 이 div 내부에 video + canvas를 생성 */}
+        {/* Camera View — 직접 관리하는 video 요소 + ZBar WASM 디코더 */}
         <div className="relative w-full bg-brutal-black">
-          <div
-            id={SCANNER_ELEMENT_ID}
-            className="w-full [&>video]:!object-cover"
+          {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+          <video
+            ref={videoRef}
+            className="aspect-[4/3] w-full object-cover"
+            playsInline
+            muted
+            autoPlay
           />
+
+          {/* 스캔 가이드 오버레이 */}
+          {!scanned && !error && !isInsecure && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="h-40 w-72 border-2 border-brutal-yellow/80" />
+            </div>
+          )}
+
+          {/* 디버그 정보 (카메라 해상도) */}
+          {debugInfo && !scanned && !error && (
+            <div className="absolute left-2 top-2 rounded bg-brutal-black/70 px-2 py-1">
+              <p className="font-mono text-[10px] text-brutal-white/60">
+                {debugInfo}
+              </p>
+            </div>
+          )}
 
           {/* HTTPS 필요 오버레이 */}
           {isInsecure && (
@@ -232,15 +311,13 @@ export default function BarcodeScanner({
 
                 {isAndroid && (
                   <div className="border-2 border-brutal-yellow/50 bg-brutal-black/50 p-3 text-xs text-brutal-white/90">
-                    <p className="mb-1 font-bold text-brutal-yellow">
-                      Android Chrome
-                    </p>
+                    <p className="mb-1 font-bold text-brutal-yellow">Android</p>
                     <p>
-                      주소창 왼쪽 ⓘ 아이콘 → 권한 → 카메라 →{' '}
+                      주소창 왼쪽 아이콘 → 권한 → 카메라 →{' '}
                       <span className="font-bold">&quot;허용&quot;</span>
                     </p>
                     <p className="mt-1 text-brutal-white/60">
-                      또는: Chrome ⋮ → 설정 → 사이트 설정 → 카메라
+                      또는: 브라우저 설정 → 사이트 설정 → 카메라
                     </p>
                   </div>
                 )}

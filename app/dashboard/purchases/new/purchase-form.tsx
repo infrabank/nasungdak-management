@@ -199,7 +199,7 @@ export default function PurchaseForm() {
     [scannerEntryId, processBarcodeLookup]
   )
 
-  const openScannerWithPermission = useCallback(async (entryId: string) => {
+  const openScannerWithPermission = useCallback((entryId: string) => {
     const isLocalhost =
       typeof window !== 'undefined' &&
       ['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)
@@ -222,45 +222,9 @@ export default function PurchaseForm() {
       return
     }
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-        },
-        audio: false,
-      })
-      stream.getTracks().forEach((track) => track.stop())
-      setScannerEntryId(entryId)
-    } catch (error) {
-      if (error instanceof DOMException) {
-        if (
-          error.name === 'NotAllowedError' ||
-          error.name === 'PermissionDeniedError'
-        ) {
-          toast.error(
-            '카메라 권한이 거부되었습니다. 브라우저 설정에서 허용해주세요'
-          )
-          return
-        }
-        if (error.name === 'NotFoundError') {
-          toast.error('사용 가능한 카메라를 찾을 수 없습니다')
-          return
-        }
-        if (error.name === 'NotReadableError' || error.name === 'AbortError') {
-          toast.error('카메라가 다른 앱에서 사용 중입니다')
-          return
-        }
-        if (
-          error.name === 'SecurityError' ||
-          error.name === 'NotSupportedError'
-        ) {
-          toast.error('브라우저 보안 정책으로 카메라 사용이 차단되었습니다')
-          return
-        }
-      }
-
-      toast.error('카메라 시작 중 오류가 발생했습니다')
-    }
+    // 카메라 스트림을 미리 열고 닫는 패턴은 삼성 인터넷에서
+    // NotReadableError를 유발하므로 직접 스캐너 컴포넌트에 위임
+    setScannerEntryId(entryId)
   }, [])
 
   useEffect(() => {

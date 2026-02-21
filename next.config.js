@@ -1,4 +1,5 @@
 // @ts-check
+const path = require('path')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -22,6 +23,18 @@ const nextConfig = {
         hostname: '*.public.blob.vercel-storage.com',
       },
     ],
+  },
+
+  // ZBar WASM 바코드 스캐너 — inlined 버전 사용 (WASM이 JS에 내장)
+  // Next.js webpack이 외부 zbar.wasm 파일을 resolve 못하는 문제 우회
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      config.resolve.alias['@undecaf/zbar-wasm'] = path.resolve(
+        __dirname,
+        'node_modules/@undecaf/zbar-wasm/dist/inlined/index.mjs'
+      )
+    }
+    return config
   },
 
   // 빌드 최적화
@@ -68,7 +81,7 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
