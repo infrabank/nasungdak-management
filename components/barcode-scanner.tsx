@@ -1,8 +1,15 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useZxing } from 'react-zxing'
-import { BarcodeFormat, DecodeHintType } from '@zxing/library'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import {
+  BarcodeFormat,
+  BinaryBitmap,
+  DecodeHintType,
+  HybridBinarizer,
+  MultiFormatReader,
+  NotFoundException,
+} from '@zxing/library'
+import { HTMLCanvasElementLuminanceSource } from '@zxing/library/esm/browser/HTMLCanvasElementLuminanceSource'
 import { Button } from '@/components/ui/button'
 
 interface BarcodeScannerProps {
@@ -11,14 +18,15 @@ interface BarcodeScannerProps {
 }
 
 /**
- * 바코드 카메라 스캐너 (듀얼 디코더)
+ * 바코드 카메라 스캐너 (직접 카메라 관리 + 듀얼 디코더)
  *
- * 1순위: 네이티브 BarcodeDetector API (Chrome Android, Safari iOS 17.2+)
- *   - 하드웨어 가속, 높은 인식률
- * 2순위: react-zxing (BarcodeDetector 미지원 브라우저 폴백)
- *   - JS 기반 디코딩, hints/TRY_HARDER 최적화
+ * react-zxing 제거 — 삼성 인터넷 등 일부 브라우저에서 decodeFromConstraints 디코딩 루프 미동작 이슈
  *
- * 두 디코더가 동시에 동작하여 먼저 인식되는 쪽이 결과 반환
+ * 구조:
+ * 1. getUserMedia로 직접 카메라 스트림 획득 → <video>에 연결
+ * 2. 네이티브 BarcodeDetector (RAF 루프) — 하드웨어 가속, 최우선
+ * 3. ZXing MultiFormatReader (setInterval + canvas) — JS 폴백
+ * 4. 둘 다 동시 실행, 먼저 인식되는 쪽이 결과 반환
  */
 
 /** 네이티브 BarcodeDetector용 포맷 */
@@ -37,140 +45,199 @@ export default function BarcodeScanner({
   onScan,
   onClose,
 }: BarcodeScannerProps) {
-  const [scanned, setScanned] = useState(false)
-  const [error, setError] = useState('')
-  const [isInsecure, setIsInsecure] = useState(false)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
   const scannedRef = useRef(false)
   const onScanRef = useRef(onScan)
   onScanRef.current = onScan
 
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !window.isSecureContext) {
-      setIsInsecure(true)
-    }
-  }, [])
+  const [scanned, setScanned] = useState(false)
+  const [error, setError] = useState('')
+  const [isInsecure, setIsInsecure] = useState(false)
 
-  // 스캔 성공 핸들러 (네이티브/zxing 양쪽에서 중복 호출 방지)
+  // 스캔 성공 핸들러 (중복 호출 방지 + 카메라 정리)
   const handleDetected = useCallback((value: string) => {
     if (scannedRef.current) return
     scannedRef.current = true
     setScanned(true)
+    // 카메라 즉시 정리
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop())
+    }
     onScanRef.current(value)
   }, [])
 
-  // ─── react-zxing (폴백 디코더) ───
-  const hints = useMemo(() => {
-    const map = new Map<DecodeHintType, unknown>()
-    map.set(DecodeHintType.POSSIBLE_FORMATS, [
-      BarcodeFormat.EAN_13,
-      BarcodeFormat.EAN_8,
-      BarcodeFormat.CODE_128,
-      BarcodeFormat.CODE_39,
-      BarcodeFormat.QR_CODE,
-      BarcodeFormat.UPC_A,
-      BarcodeFormat.UPC_E,
-      BarcodeFormat.ITF,
-    ])
-    map.set(DecodeHintType.TRY_HARDER, true)
-    return map
-  }, [])
-
-  const { ref } = useZxing({
-    paused: scanned || isInsecure,
-    hints,
-    timeBetweenDecodingAttempts: 150,
-    constraints: {
-      video: {
-        facingMode: 'environment',
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-      },
-    },
-    onDecodeResult(result) {
-      const text = result.getText()
-      if (text) handleDetected(text)
-    },
-    onError(err) {
-      if (err instanceof DOMException) {
-        if (
-          err.name === 'NotAllowedError' ||
-          err.name === 'PermissionDeniedError'
-        ) {
-          setError('카메라 권한이 거부되었습니다')
-        } else if (err.name === 'NotFoundError') {
-          setError('카메라를 찾을 수 없습니다')
-        } else if (
-          err.name === 'NotReadableError' ||
-          err.name === 'AbortError'
-        ) {
-          setError('카메라가 다른 앱에서 사용 중이거나 접근할 수 없습니다')
-        } else if (err.name === 'OverconstrainedError') {
-          setError('카메라 설정이 지원되지 않습니다')
-        } else if (
-          err.name === 'SecurityError' ||
-          err.name === 'NotSupportedError'
-        ) {
-          setError('브라우저 보안 정책으로 카메라 사용이 차단되었습니다')
-        }
-      }
-    },
-  })
-
-  // ─── 네이티브 BarcodeDetector (1순위 디코더) ───
-  // react-zxing이 관리하는 video 요소에 병렬로 BarcodeDetector 루프 실행
+  // ─── 메인 효과: 카메라 시작 + 듀얼 디코더 루프 ───
   useEffect(() => {
-    if (isInsecure || scanned) return
-    if (typeof window === 'undefined' || !window.BarcodeDetector) return
-
-    const video = ref.current
-    if (!video) return
+    if (typeof window !== 'undefined' && !window.isSecureContext) {
+      setIsInsecure(true)
+      return
+    }
 
     let cancelled = false
-    let rafId = 0
+    let nativeRafId = 0
+    let zxingTimerId: ReturnType<typeof setInterval> | null = null
 
-    const startDetection = async () => {
+    const start = async () => {
       try {
-        const supported = await BarcodeDetector.getSupportedFormats()
-        const formats = NATIVE_FORMATS.filter((f) => supported.includes(f))
-        if (formats.length === 0 || cancelled) return
+        // 1. 카메라 스트림 획득
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
+          audio: false,
+        })
 
-        const detector = new BarcodeDetector({ formats })
-
-        const detect = async () => {
-          if (cancelled || scannedRef.current) return
-
-          if (video.readyState >= 2) {
-            try {
-              const barcodes = await detector.detect(video)
-              if (
-                barcodes.length > 0 &&
-                barcodes[0].rawValue &&
-                !scannedRef.current
-              ) {
-                handleDetected(barcodes[0].rawValue)
-                return
-              }
-            } catch {
-              // 이 프레임 디코딩 실패 — 다음 프레임 시도
-            }
-          }
-
-          rafId = requestAnimationFrame(() => void detect())
+        if (cancelled) {
+          stream.getTracks().forEach((t) => t.stop())
+          return
         }
 
-        rafId = requestAnimationFrame(() => void detect())
-      } catch {
-        // BarcodeDetector 초기화 실패 — react-zxing 폴백에 의존
+        streamRef.current = stream
+        const video = videoRef.current
+        if (!video) return
+
+        video.srcObject = stream
+        await video.play()
+
+        // video ready 대기
+        if (video.readyState < 2) {
+          await new Promise<void>((resolve) => {
+            video.addEventListener('loadeddata', () => resolve(), {
+              once: true,
+            })
+          })
+        }
+        if (cancelled) return
+
+        // 2. 네이티브 BarcodeDetector (RAF 루프)
+        if ('BarcodeDetector' in window && window.BarcodeDetector) {
+          try {
+            const supported = await BarcodeDetector.getSupportedFormats()
+            const formats = NATIVE_FORMATS.filter((f) => supported.includes(f))
+            if (formats.length > 0 && !cancelled) {
+              const detector = new BarcodeDetector({ formats })
+
+              const detectNative = async () => {
+                if (cancelled || scannedRef.current) return
+                try {
+                  if (video.readyState >= 2) {
+                    const barcodes = await detector.detect(video)
+                    if (
+                      barcodes.length > 0 &&
+                      barcodes[0].rawValue &&
+                      !scannedRef.current
+                    ) {
+                      handleDetected(barcodes[0].rawValue)
+                      return
+                    }
+                  }
+                } catch {
+                  /* 프레임 디코딩 실패 */
+                }
+                if (!cancelled && !scannedRef.current) {
+                  nativeRafId = requestAnimationFrame(() => void detectNative())
+                }
+              }
+              nativeRafId = requestAnimationFrame(() => void detectNative())
+            }
+          } catch {
+            /* BarcodeDetector 초기화 실패 — ZXing 폴백에 의존 */
+          }
+        }
+
+        // 3. ZXing MultiFormatReader (canvas 캡처 + setInterval)
+        if (!cancelled) {
+          const hints = new Map<DecodeHintType, unknown>()
+          hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+            BarcodeFormat.EAN_13,
+            BarcodeFormat.EAN_8,
+            BarcodeFormat.CODE_128,
+            BarcodeFormat.CODE_39,
+            BarcodeFormat.QR_CODE,
+            BarcodeFormat.UPC_A,
+            BarcodeFormat.UPC_E,
+            BarcodeFormat.ITF,
+          ])
+          hints.set(DecodeHintType.TRY_HARDER, true)
+
+          const reader = new MultiFormatReader()
+          reader.setHints(hints)
+
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d', { willReadFrequently: true })
+
+          zxingTimerId = setInterval(() => {
+            if (cancelled || scannedRef.current) return
+            if (!ctx || video.readyState < 2 || video.videoWidth === 0) return
+
+            try {
+              canvas.width = video.videoWidth
+              canvas.height = video.videoHeight
+              ctx.drawImage(video, 0, 0)
+
+              const luminanceSource = new HTMLCanvasElementLuminanceSource(
+                canvas
+              )
+              const binaryBitmap = new BinaryBitmap(
+                new HybridBinarizer(luminanceSource)
+              )
+              const result = reader.decode(binaryBitmap)
+
+              if (result && result.getText()) {
+                handleDetected(result.getText())
+              }
+            } catch (e) {
+              // NotFoundException = 이 프레임에서 바코드 없음 (정상)
+              if (!(e instanceof NotFoundException)) {
+                // 예상치 못한 에러는 무시하되 루프 계속
+              }
+            }
+          }, 200)
+        }
+      } catch (err) {
+        if (cancelled) return
+        if (err instanceof DOMException) {
+          if (
+            err.name === 'NotAllowedError' ||
+            err.name === 'PermissionDeniedError'
+          ) {
+            setError('카메라 권한이 거부되었습니다')
+          } else if (err.name === 'NotFoundError') {
+            setError('카메라를 찾을 수 없습니다')
+          } else if (
+            err.name === 'NotReadableError' ||
+            err.name === 'AbortError'
+          ) {
+            setError('카메라가 다른 앱에서 사용 중이거나 접근할 수 없습니다')
+          } else if (err.name === 'OverconstrainedError') {
+            setError('카메라 설정이 지원되지 않습니다')
+          } else if (
+            err.name === 'SecurityError' ||
+            err.name === 'NotSupportedError'
+          ) {
+            setError('브라우저 보안 정책으로 카메라 사용이 차단되었습니다')
+          }
+        } else {
+          setError('카메라 시작 중 오류가 발생했습니다')
+        }
       }
     }
 
-    void startDetection()
+    void start()
 
     return () => {
       cancelled = true
-      if (rafId) cancelAnimationFrame(rafId)
+      if (nativeRafId) cancelAnimationFrame(nativeRafId)
+      if (zxingTimerId) clearInterval(zxingTimerId)
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop())
+        streamRef.current = null
+      }
     }
-  }, [ref, isInsecure, scanned, handleDetected])
+  }, [handleDetected])
 
   // Escape 키로 닫기
   useEffect(() => {
@@ -216,10 +283,10 @@ export default function BarcodeScanner({
           </button>
         </div>
 
-        {/* Camera View — video 항상 DOM에 존재 (ref 유지 필수) */}
+        {/* Camera View */}
         <div className="relative aspect-[4/3] w-full bg-brutal-black">
           <video
-            ref={ref}
+            ref={videoRef}
             className="h-full w-full object-cover"
             playsInline
             autoPlay
