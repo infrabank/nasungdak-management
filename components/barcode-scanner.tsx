@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useZxing } from 'react-zxing'
+import { BarcodeFormat, DecodeHintType } from '@zxing/library'
 import { Button } from '@/components/ui/button'
 
 interface BarcodeScannerProps {
@@ -32,11 +33,30 @@ export default function BarcodeScanner({
     }
   }, [])
 
+  // 바코드 디코딩 힌트 — 포맷 지정 + TRY_HARDER로 인식률 향상
+  const hints = useMemo(() => {
+    const map = new Map<DecodeHintType, unknown>()
+    map.set(DecodeHintType.POSSIBLE_FORMATS, [
+      BarcodeFormat.EAN_13, // 한국 상품 바코드 (가장 흔함)
+      BarcodeFormat.EAN_8,
+      BarcodeFormat.CODE_128,
+      BarcodeFormat.CODE_39,
+      BarcodeFormat.QR_CODE,
+      BarcodeFormat.UPC_A,
+      BarcodeFormat.UPC_E,
+      BarcodeFormat.ITF,
+    ])
+    map.set(DecodeHintType.TRY_HARDER, true)
+    return map
+  }, [])
+
   // useZxing — 마운트 즉시 카메라 시작 (paused 토글 없음)
   // 부모의 버튼 클릭 → 이 컴포넌트 마운트 → useEffect에서 getUserMedia 호출
   // 사용자 제스처 컨텍스트가 유지되는 시간 내에 실행됨
   const { ref } = useZxing({
     paused: scanned || isInsecure, // 스캔 성공 또는 비보안 컨텍스트에서만 일시정지
+    hints,
+    timeBetweenDecodingAttempts: 150, // 기본 300ms → 150ms로 빠른 스캔
     constraints: {
       video: {
         facingMode: 'environment',
