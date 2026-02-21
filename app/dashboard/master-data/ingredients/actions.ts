@@ -305,6 +305,103 @@ export async function lookupByBarcode(barcode: string) {
   }
 }
 
+/**
+ * 매입 등록 화면에서 미등록 바코드 스캔 시 원스텝 등록
+ * 재료 생성 + 메뉴-재료 매핑을 한 번에 처리
+ */
+export async function quickRegisterIngredient(data: {
+  barcode: string
+  ingredientName: string
+  unit: string
+  unitCost?: string
+  menuId?: string
+}) {
+  try {
+    const organizationId = await requireOrganizationId()
+
+    // 1. 바코드 중복 확인
+    const existing = await db.query.ingredients.findFirst({
+      where: and(
+        eq(ingredients.barcode, data.barcode.trim()),
+        eq(ingredients.organizationId, organizationId),
+        isNull(ingredients.deletedAt)
+      ),
+    })
+
+    if (existing) {
+      return {
+        success: false,
+        error: '이미 등록된 바코드입니다',
+      }
+    }
+
+    // 2. 재료 등록
+    const validated = ingredientSchema.parse({
+      ingredientName: data.ingredientName,
+      unit: data.unit,
+      barcode: data.barcode,
+      unitCost: data.unitCost || undefined,
+      isActive: true,
+    })
+
+    const [ingredient] = await db
+      .insert(ingredients)
+      .values({
+        ingredientName: validated.ingredientName,
+        unit: validated.unit,
+        barcode: validated.barcode ?? null,
+        unitCost: validated.unitCost,
+        organizationId,
+        createdBy: 'system',
+      })
+      .returning()
+
+    // 3. 메뉴-재료 매핑 (메뉴 선택 시)
+    if (data.menuId) {
+      try {
+        await db.insert(menuIngredients).values({
+          menuId: data.menuId,
+          ingredientId: ingredient.id,
+          organizationId,
+          requiredQuantity: '1',
+          createdBy: 'system',
+        })
+      } catch {
+        // 매핑 실패해도 재료는 이미 등록됨 — 무시
+        logger.warn('Menu-ingredient mapping failed but ingredient was created')
+      }
+    }
+
+    revalidatePath('/dashboard/master-data/ingredients')
+    revalidatePath('/dashboard/master-data/menu-ingredients')
+    revalidateTag('ingredients:active')
+
+    return {
+      success: true,
+      ingredient: {
+        id: ingredient.id,
+        ingredientName: ingredient.ingredientName,
+        unit: ingredient.unit,
+      },
+      menuId: data.menuId || null,
+    }
+  } catch (error) {
+    logger.error('Failed to quick-register ingredient:', errorToContext(error))
+
+    if (error instanceof z.ZodError) {
+      return {
+        success: false,
+        error: error.errors[0].message,
+      }
+    }
+
+    return {
+      success: false,
+      error: '재료 등록에 실패했습니다',
+    }
+  }
+}
+
 interface CSVRow {
   재료명: string
   단위: string

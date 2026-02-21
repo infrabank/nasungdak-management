@@ -16,6 +16,7 @@ import { getMenus } from '../../master-data/menus/actions'
 import {
   getIngredients,
   lookupByBarcode,
+  quickRegisterIngredient,
 } from '../../master-data/ingredients/actions'
 import { getMenuIngredients } from '../../master-data/menu-ingredients/actions'
 import { getActiveSuppliers } from '../../master-data/suppliers/actions'
@@ -82,6 +83,17 @@ export default function PurchaseForm() {
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([])
   const [scannerEntryId, setScannerEntryId] = useState<string | null>(null)
 
+  // 미등록 바코드 → 재료 등록 모달 상태
+  const [registerModal, setRegisterModal] = useState<{
+    barcode: string
+    entryId: string
+  } | null>(null)
+  const [regName, setRegName] = useState('')
+  const [regUnit, setRegUnit] = useState('')
+  const [regUnitCost, setRegUnitCost] = useState('')
+  const [regMenuId, setRegMenuId] = useState('')
+  const [isRegistering, setIsRegistering] = useState(false)
+
   const [transactionDate, setTransactionDate] = useState(
     new Date().toISOString().split('T')[0]
   )
@@ -129,12 +141,17 @@ export default function PurchaseForm() {
               : `${ingredientName} 선택됨`
           )
         } else {
+          // 미등록 바코드 → 재료 등록 모달 표시
           setEntries((prev) =>
             prev.map((entry) =>
               entry.id === entryId ? { ...entry, barcode: '' } : entry
             )
           )
-          toast.error('등록되지 않은 바코드입니다')
+          setRegName('')
+          setRegUnit('')
+          setRegUnitCost('')
+          setRegMenuId('')
+          setRegisterModal({ barcode, entryId })
         }
       } catch {
         setEntries((prev) =>
@@ -197,6 +214,62 @@ export default function PurchaseForm() {
       setScannerEntryId(null)
     },
     [scannerEntryId, processBarcodeLookup]
+  )
+
+  // 미등록 바코드 → 재료 빠른 등록 처리
+  const handleQuickRegister = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      if (!registerModal) return
+      setIsRegistering(true)
+
+      try {
+        const result = await quickRegisterIngredient({
+          barcode: registerModal.barcode,
+          ingredientName: regName.trim(),
+          unit: regUnit.trim(),
+          unitCost: regUnitCost || undefined,
+          menuId: regMenuId || undefined,
+        })
+
+        if (result.success && result.ingredient) {
+          // 등록 성공 → 매입 항목에 자동 반영
+          setEntries((prev) =>
+            prev.map((entry) =>
+              entry.id === registerModal.entryId
+                ? {
+                    ...entry,
+                    menuId: result.menuId || entry.menuId,
+                    ingredientId: result.ingredient.id,
+                  }
+                : entry
+            )
+          )
+
+          // 재료/메뉴 목록 새로고침
+          const [menusData, ingredientsData, mappingsData] = await Promise.all([
+            getMenus(),
+            getIngredients(),
+            getMenuIngredients(),
+          ])
+          setMenus(menusData)
+          setIngredients(ingredientsData)
+          setMenuIngredients(mappingsData)
+
+          toast.success(
+            `${result.ingredient.ingredientName} 재료가 등록되었습니다`
+          )
+          setRegisterModal(null)
+        } else {
+          toast.error(result.error || '등록에 실패했습니다')
+        }
+      } catch {
+        toast.error('재료 등록 중 오류가 발생했습니다')
+      } finally {
+        setIsRegistering(false)
+      }
+    },
+    [registerModal, regName, regUnit, regUnitCost, regMenuId]
   )
 
   const openScannerWithPermission = useCallback((entryId: string) => {
@@ -739,6 +812,131 @@ export default function PurchaseForm() {
             onClose={() => setScannerEntryId(null)}
           />
         </Suspense>
+      )}
+
+      {/* 미등록 바코드 → 재료 등록 모달 */}
+      {registerModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 sm:items-center sm:p-0">
+            <div
+              className="fixed inset-0 bg-brutal-black/50"
+              onClick={() => setRegisterModal(null)}
+            />
+            <div className="relative w-full max-w-md transform border-3 border-brutal-black bg-brutal-white shadow-brutal-lg sm:my-8">
+              {/* 모달 헤더 */}
+              <div className="border-b-3 border-brutal-black bg-brutal-pink p-4">
+                <h3 className="text-base font-black text-brutal-black">
+                  미등록 바코드 — 새 재료 등록
+                </h3>
+                <p className="mt-1 text-sm text-brutal-black/70">
+                  스캔된 바코드로 새 재료를 등록합니다
+                </p>
+              </div>
+
+              <form onSubmit={handleQuickRegister} className="p-4">
+                <div className="space-y-4">
+                  {/* 바코드 (읽기 전용) */}
+                  <div>
+                    <Label htmlFor="reg-barcode">바코드</Label>
+                    <div className="flex items-center border-3 border-brutal-black bg-brutal-black/5 px-3 py-2 font-mono text-sm font-bold text-brutal-black">
+                      {registerModal.barcode}
+                    </div>
+                  </div>
+
+                  {/* 재료명 */}
+                  <div>
+                    <Label htmlFor="reg-name">재료명 *</Label>
+                    <Input
+                      id="reg-name"
+                      type="text"
+                      required
+                      value={regName}
+                      onChange={(e) => setRegName(e.target.value)}
+                      placeholder="예: 식용유, 밀가루"
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* 단위 */}
+                  <div>
+                    <Label htmlFor="reg-unit">단위 *</Label>
+                    <select
+                      id="reg-unit"
+                      required
+                      value={regUnit}
+                      onChange={(e) => setRegUnit(e.target.value)}
+                      className="w-full border-2 border-brutal-black bg-brutal-white px-3 py-2 text-sm font-medium"
+                    >
+                      <option value="">단위 선택</option>
+                      <option value="kg">kg (킬로그램)</option>
+                      <option value="g">g (그램)</option>
+                      <option value="L">L (리터)</option>
+                      <option value="ml">ml (밀리리터)</option>
+                      <option value="개">개</option>
+                      <option value="봉">봉</option>
+                      <option value="팩">팩</option>
+                      <option value="박스">박스</option>
+                      <option value="병">병</option>
+                      <option value="캔">캔</option>
+                    </select>
+                  </div>
+
+                  {/* 단가 (선택) */}
+                  <div>
+                    <Label htmlFor="reg-cost">단가 (원, 선택)</Label>
+                    <Input
+                      id="reg-cost"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={regUnitCost}
+                      onChange={(e) => setRegUnitCost(e.target.value)}
+                      placeholder="예: 3000"
+                    />
+                  </div>
+
+                  {/* 메뉴 매핑 (선택) */}
+                  <div>
+                    <Label htmlFor="reg-menu">메뉴 매핑 (선택)</Label>
+                    <select
+                      id="reg-menu"
+                      value={regMenuId}
+                      onChange={(e) => setRegMenuId(e.target.value)}
+                      className="w-full border-2 border-brutal-black bg-brutal-white px-3 py-2 text-sm font-medium"
+                    >
+                      <option value="">매핑 안 함</option>
+                      {menus
+                        .filter((m) => m.isActive)
+                        .map((menu) => (
+                          <option key={menu.id} value={menu.id}>
+                            {menu.menuName}
+                          </option>
+                        ))}
+                    </select>
+                    <p className="mt-1 text-xs text-brutal-black/50">
+                      메뉴를 선택하면 해당 메뉴에 자동 매핑됩니다
+                    </p>
+                  </div>
+                </div>
+
+                {/* 버튼 */}
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setRegisterModal(null)}
+                    disabled={isRegistering}
+                  >
+                    취소
+                  </Button>
+                  <Button type="submit" disabled={isRegistering}>
+                    {isRegistering ? '등록 중...' : '등록'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       )}
     </form>
   )

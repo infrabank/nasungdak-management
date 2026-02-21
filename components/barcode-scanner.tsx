@@ -43,6 +43,26 @@ export default function BarcodeScanner({
   const [error, setError] = useState('')
   const [isInsecure, setIsInsecure] = useState(false)
   const [debugInfo, setDebugInfo] = useState('')
+  const [torchOn, setTorchOn] = useState(false)
+  const [torchSupported, setTorchSupported] = useState(false)
+
+  // 토치(플래시) 토글 — 저조도 환경 바코드 스캔 개선
+  const toggleTorch = useCallback(async () => {
+    const stream = streamRef.current
+    if (!stream) return
+    const track = stream.getVideoTracks()[0]
+    if (!track) return
+
+    const newState = !torchOn
+    try {
+      await track.applyConstraints({
+        advanced: [{ torch: newState } as MediaTrackConstraintSet],
+      })
+      setTorchOn(newState)
+    } catch {
+      // 토치 지원 안 되는 기기 — 무시
+    }
+  }, [torchOn])
 
   // 스캔 성공 핸들러
   const handleDetected = useCallback((value: string) => {
@@ -97,10 +117,24 @@ export default function BarcodeScanner({
         video.srcObject = stream
         await video.play()
 
-        // 디버그: 실제 획득된 해상도 표시
+        // 디버그: 실제 획득된 해상도 표시 + 토치 지원 여부 감지
         const track = stream.getVideoTracks()[0]
         const settings = track.getSettings()
         setDebugInfo(`${settings.width}x${settings.height}`)
+
+        // 토치 지원 감지 (Samsung Internet / Chrome Android)
+        try {
+          const capabilities = track.getCapabilities?.()
+          if (
+            capabilities &&
+            'torch' in capabilities &&
+            (capabilities as Record<string, unknown>).torch
+          ) {
+            setTorchSupported(true)
+          }
+        } catch {
+          // getCapabilities 미지원 — 무시
+        }
 
         // ④ 프레임 캡처용 OffscreenCanvas (또는 일반 canvas)
         // createImageBitmap → canvas → getImageData 파이프라인으로
@@ -344,12 +378,38 @@ export default function BarcodeScanner({
           )}
         </div>
 
-        {/* Footer Hint */}
+        {/* Footer: 토치 버튼 + 안내 */}
         {!scanned && !error && !isInsecure && (
-          <div className="border-t-2 border-brutal-black bg-brutal-blue/20 p-3 text-center">
+          <div className="flex items-center justify-between border-t-2 border-brutal-black bg-brutal-blue/20 p-3">
             <p className="text-sm font-bold text-brutal-black">
               바코드를 사각형 안에 맞춰주세요
             </p>
+            {torchSupported && (
+              <button
+                type="button"
+                onClick={() => void toggleTorch()}
+                className={`flex items-center gap-1.5 border-2 border-brutal-black px-3 py-1.5 text-xs font-bold transition-all ${
+                  torchOn
+                    ? 'bg-brutal-yellow text-brutal-black shadow-brutal'
+                    : 'bg-brutal-white text-brutal-black hover:bg-brutal-yellow/50'
+                }`}
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill={torchOn ? 'currentColor' : 'none'}
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                  />
+                </svg>
+                {torchOn ? '조명 끄기' : '조명 켜기'}
+              </button>
+            )}
           </div>
         )}
       </div>
