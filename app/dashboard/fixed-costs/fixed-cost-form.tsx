@@ -29,11 +29,10 @@ export default function FixedCostForm({ storeId }: FixedCostFormProps) {
         const result = await createFixedCost(new FormData(e.currentTarget))
 
         if (result.success) {
-          router.push(
-            storeId
-              ? `/dashboard/fixed-costs?storeId=${storeId}`
-              : '/dashboard/fixed-costs'
-          )
+          window.location.href = storeId
+            ? `/dashboard/fixed-costs?storeId=${storeId}`
+            : '/dashboard/fixed-costs'
+          return
         } else {
           setError(result.error || '등록에 실패했습니다')
         }
