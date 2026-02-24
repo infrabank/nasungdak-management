@@ -1,6 +1,5 @@
 'use server'
 
-import { unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { sql } from 'drizzle-orm'
@@ -245,16 +244,7 @@ export async function getDashboardStats() {
     const startDate = firstDayOfMonth.toISOString().split('T')[0]
     const endDate = today.toISOString().split('T')[0]
 
-    // 캐시 키에 사용자의 권한 정보 포함
-    const storeKey = authorizedStoreIds.sort().join(',')
-
-    const getCachedDashboardStats = unstable_cache(
-      () => fetchDashboardStats(startDate, endDate, authorizedStoreIds),
-      ['dashboard:stats:v2', storeKey, startDate, endDate],
-      { tags: ['dashboard:stats'] }
-    )
-
-    return await getCachedDashboardStats()
+    return await fetchDashboardStats(startDate, endDate, authorizedStoreIds)
   } catch (error) {
     logger.error('Failed to fetch dashboard stats:', errorToContext(error))
     return {
