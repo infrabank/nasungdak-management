@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createFixedCost } from './actions'
 import { formatDate } from '@/lib/utils/format'
@@ -19,13 +19,15 @@ export default function FixedCostForm({ storeId }: FixedCostFormProps) {
   const [state, formAction, isPending] = useActionState(createFixedCost, null)
 
   // Redirect on success
-  if (state?.success) {
-    router.push(
-      storeId
-        ? `/dashboard/fixed-costs?storeId=${storeId}`
-        : '/dashboard/fixed-costs'
-    )
-  }
+  useEffect(() => {
+    if (state?.success) {
+      router.push(
+        storeId
+          ? `/dashboard/fixed-costs?storeId=${storeId}`
+          : '/dashboard/fixed-costs'
+      )
+    }
+  }, [state?.success, storeId, router])
 
   const today = formatDate(new Date(), 'yyyy-MM-dd')
 

@@ -227,7 +227,7 @@ export async function getFixedCosts(
       return []
     }
 
-    const normalizedStoreId = storeId ?? 'all'
+    const normalizedStoreId = storeId || 'all'
     const storeKey = authorizedStoreIds.slice().sort().join(',')
 
     const getCached = unstable_cache(
