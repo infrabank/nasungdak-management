@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { fixedCosts } from '@/lib/db/schema'
@@ -54,11 +54,6 @@ export async function createFixedCost(formData: FormData) {
     revalidatePath('/dashboard/fixed-costs')
     revalidatePath('/dashboard/analysis')
     revalidatePath('/dashboard')
-    revalidateTag('fixed-costs:all')
-    revalidateTag(`fixed-costs:${storeId || 'all'}`)
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -129,13 +124,6 @@ export async function updateFixedCost(id: string, formData: FormData) {
     revalidatePath('/dashboard/fixed-costs')
     revalidatePath('/dashboard/analysis')
     revalidatePath('/dashboard')
-    revalidateTag('fixed-costs:all')
-    if (record?.storeId) {
-      revalidateTag(`fixed-costs:${record.storeId}`)
-    }
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -194,13 +182,6 @@ export async function deleteFixedCost(id: string) {
     revalidatePath('/dashboard/fixed-costs')
     revalidatePath('/dashboard/analysis')
     revalidatePath('/dashboard')
-    revalidateTag('fixed-costs:all')
-    if (result[0]?.storeId) {
-      revalidateTag(`fixed-costs:${result[0].storeId}`)
-    }
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
 
     return {
       success: true,
@@ -227,44 +208,28 @@ export async function getFixedCosts(
       return []
     }
 
-    const normalizedStoreId = storeId || 'all'
-    const storeKey = authorizedStoreIds.slice().sort().join(',')
+    const conditions = [isNull(fixedCosts.deletedAt)]
 
-    const getCached = unstable_cache(
-      async () => {
-        const conditions = [isNull(fixedCosts.deletedAt)]
+    // 권한 있는 매장 + storeId 없는 레코드도 포함
+    conditions.push(or(inArray(fixedCosts.storeId, authorizedStoreIds), isNull(fixedCosts.storeId))!)
 
-        // 권한 있는 매장 + storeId 없는 레코드도 포함
-        conditions.push(or(inArray(fixedCosts.storeId, authorizedStoreIds), isNull(fixedCosts.storeId))!)
+    if (startDate && endDate) {
+      conditions.push(
+        sql`${fixedCosts.costDate} BETWEEN ${startDate}::date AND ${endDate}::date`
+      )
+    }
 
-        if (startDate && endDate) {
-          conditions.push(
-            sql`${fixedCosts.costDate} BETWEEN ${startDate}::date AND ${endDate}::date`
-          )
-        }
+    // 특정 매장 필터 (권한 체크는 이미 위에서 함)
+    if (storeId && authorizedStoreIds.includes(storeId)) {
+      conditions.push(eq(fixedCosts.storeId, storeId))
+    }
 
-        // 특정 매장 필터 (권한 체크는 이미 위에서 함)
-        if (storeId && authorizedStoreIds.includes(storeId)) {
-          conditions.push(eq(fixedCosts.storeId, storeId))
-        }
-
-        return db
-          .select()
-          .from(fixedCosts)
-          .where(and(...conditions))
-          .orderBy(desc(fixedCosts.costDate))
-          .limit(1000)
-      },
-      [
-        'fixed-costs:list',
-        normalizedStoreId,
-        startDate ?? 'all',
-        endDate ?? 'all',
-        storeKey,
-      ],
-      { tags: [`fixed-costs:${normalizedStoreId}`] }
-    )
-    return await getCached()
+    return db
+      .select()
+      .from(fixedCosts)
+      .where(and(...conditions))
+      .orderBy(desc(fixedCosts.costDate))
+      .limit(1000)
   } catch (error) {
     logger.error('Failed to fetch fixed costs:', errorToContext(error))
     return []
