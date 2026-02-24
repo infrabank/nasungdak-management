@@ -4,7 +4,7 @@ import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { fixedCosts } from '@/lib/db/schema'
-import { eq, isNull, desc, sql, inArray, and } from 'drizzle-orm'
+import { eq, isNull, desc, sql, inArray, and, or } from 'drizzle-orm'
 import { z } from 'zod'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
@@ -18,7 +18,7 @@ const fixedCostSchema = z.object({
   notes: z.string().optional(),
 })
 
-export async function createFixedCost(prevState: any, formData: FormData) {
+export async function createFixedCost(formData: FormData) {
   try {
     // 권한 검사
     const authorizedStoreIds = await getAuthorizedStoreIds()
@@ -114,7 +114,7 @@ export async function updateFixedCost(id: string, formData: FormData) {
       .where(
         and(
           eq(fixedCosts.id, id),
-          inArray(fixedCosts.storeId, authorizedStoreIds)
+          or(inArray(fixedCosts.storeId, authorizedStoreIds), isNull(fixedCosts.storeId))
         )
       )
       .returning()
@@ -179,7 +179,7 @@ export async function deleteFixedCost(id: string) {
       .where(
         and(
           eq(fixedCosts.id, id),
-          inArray(fixedCosts.storeId, authorizedStoreIds)
+          or(inArray(fixedCosts.storeId, authorizedStoreIds), isNull(fixedCosts.storeId))
         )
       )
       .returning({ id: fixedCosts.id, storeId: fixedCosts.storeId })
@@ -234,8 +234,8 @@ export async function getFixedCosts(
       async () => {
         const conditions = [isNull(fixedCosts.deletedAt)]
 
-        // 항상 권한 있는 매장으로 필터링
-        conditions.push(inArray(fixedCosts.storeId, authorizedStoreIds))
+        // 권한 있는 매장 + storeId 없는 레코드도 포함
+        conditions.push(or(inArray(fixedCosts.storeId, authorizedStoreIds), isNull(fixedCosts.storeId))!)
 
         if (startDate && endDate) {
           conditions.push(

@@ -26,10 +26,7 @@ export default function FixedCostForm({ storeId }: FixedCostFormProps) {
       setError(null)
 
       try {
-        const result = await createFixedCost(
-          null,
-          new FormData(e.currentTarget)
-        )
+        const result = await createFixedCost(new FormData(e.currentTarget))
 
         if (result.success) {
           router.push(
