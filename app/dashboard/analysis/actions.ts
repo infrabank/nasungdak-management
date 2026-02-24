@@ -50,10 +50,14 @@ export interface MonthlyAnalysisResult {
 function buildStoreFilter(
   storeId: string,
   authorizedStoreIds: string[],
-  tableAlias: 'sr' | 'pt' | 'fc'
+  tableAlias: 'sr' | 'pt' | 'fc',
+  includeNull: boolean = false
 ): ReturnType<typeof sql> {
   // 특정 매장 선택 시 (권한 있는 경우)
   if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
+    if (includeNull) {
+      return sql`AND (${sql.identifier(tableAlias)}.store_id = ${storeId} OR ${sql.identifier(tableAlias)}.store_id IS NULL)`
+    }
     return sql`AND ${sql.identifier(tableAlias)}.store_id = ${storeId}`
   }
 
@@ -62,6 +66,9 @@ function buildStoreFilter(
   const placeholders = authorizedStoreIds.map(
     (_, i) => sql`${authorizedStoreIds[i]}`
   )
+  if (includeNull) {
+    return sql`AND (${sql.identifier(tableAlias)}.store_id IN (${sql.join(placeholders, sql`, `)}) OR ${sql.identifier(tableAlias)}.store_id IS NULL)`
+  }
   return sql`AND ${sql.identifier(tableAlias)}.store_id IN (${sql.join(placeholders, sql`, `)})`
 }
 
@@ -86,7 +93,8 @@ async function fetchMonthlyAnalysis(
   const fixedCostStoreFilter = buildStoreFilter(
     storeId,
     authorizedStoreIds,
-    'fc'
+    'fc',
+    true
   )
 
   // Execute all queries in parallel for better performance
@@ -234,13 +242,13 @@ function buildFixedCostStoreFilter(
   authorizedStoreIds: string[]
 ): ReturnType<typeof sql> {
   if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
-    return sql`AND store_id = ${storeId}`
+    return sql`AND (store_id = ${storeId} OR store_id IS NULL)`
   }
 
   const placeholders = authorizedStoreIds.map(
     (_, i) => sql`${authorizedStoreIds[i]}`
   )
-  return sql`AND store_id IN (${sql.join(placeholders, sql`, `)})`
+  return sql`AND (store_id IN (${sql.join(placeholders, sql`, `)}) OR store_id IS NULL)`
 }
 
 async function fetchAnalysis(

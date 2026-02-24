@@ -28,6 +28,14 @@ function buildSimpleStoreFilter(storeIds: string[]): ReturnType<typeof sql> {
 }
 
 /**
+ * store_id 필터 + NULL 포함 (고정비처럼 store_id 없는 레코드도 포함)
+ */
+function buildSimpleStoreFilterWithNull(storeIds: string[]): ReturnType<typeof sql> {
+  const placeholders = storeIds.map((_, i) => sql`${storeIds[i]}`)
+  return sql`AND (store_id IN (${sql.join(placeholders, sql`, `)}) OR store_id IS NULL)`
+}
+
+/**
  * 테이블 alias 포함 store_id 필터
  */
 function buildAliasedStoreFilter(
@@ -65,6 +73,7 @@ async function fetchDashboardStats(
 
   // Build store filters using parameterized queries (SQL Injection 방지)
   const storeFilter = buildSimpleStoreFilter(authorizedStoreIds)
+  const storeFilterWithNull = buildSimpleStoreFilterWithNull(authorizedStoreIds)
   const ptStoreFilter = buildAliasedStoreFilter(authorizedStoreIds, 'pt')
   const srStoreFilter = buildAliasedStoreFilter(authorizedStoreIds, 'sr')
 
@@ -121,7 +130,7 @@ async function fetchDashboardStats(
         FROM fixed_costs
         WHERE cost_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND deleted_at IS NULL
-          ${storeFilter}
+          ${storeFilterWithNull}
       )
       SELECT
         pc.count as purchase_count,
