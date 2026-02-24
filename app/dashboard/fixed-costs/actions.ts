@@ -55,7 +55,7 @@ export async function createFixedCost(prevState: any, formData: FormData) {
     revalidatePath('/dashboard/analysis')
     revalidatePath('/dashboard')
     revalidateTag('fixed-costs:all')
-    revalidateTag(`fixed-costs:${storeId ?? 'all'}`)
+    revalidateTag(`fixed-costs:${storeId || 'all'}`)
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')

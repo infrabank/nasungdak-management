@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createFixedCost } from './actions'
 import { formatDate } from '@/lib/utils/format'
@@ -16,30 +16,50 @@ interface FixedCostFormProps {
 
 export default function FixedCostForm({ storeId }: FixedCostFormProps) {
   const router = useRouter()
-  const [state, formAction, isPending] = useActionState(createFixedCost, null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // Redirect on success
-  useEffect(() => {
-    if (state?.success) {
-      router.push(
-        storeId
-          ? `/dashboard/fixed-costs?storeId=${storeId}`
-          : '/dashboard/fixed-costs'
-      )
-    }
-  }, [state?.success, storeId, router])
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      setIsSubmitting(true)
+      setError(null)
+
+      try {
+        const result = await createFixedCost(
+          null,
+          new FormData(e.currentTarget)
+        )
+
+        if (result.success) {
+          router.push(
+            storeId
+              ? `/dashboard/fixed-costs?storeId=${storeId}`
+              : '/dashboard/fixed-costs'
+          )
+        } else {
+          setError(result.error || '등록에 실패했습니다')
+        }
+      } catch {
+        setError('등록 중 오류가 발생했습니다')
+      } finally {
+        setIsSubmitting(false)
+      }
+    },
+    [storeId, router]
+  )
 
   const today = formatDate(new Date(), 'yyyy-MM-dd')
 
   return (
-    <form action={formAction} className="pb-32">
+    <form onSubmit={handleSubmit} className="pb-32">
       {/* Hidden storeId */}
       {storeId && <input type="hidden" name="storeId" value={storeId} />}
 
       {/* Error Message */}
-      {state?.error && (
+      {error && (
         <div className="mb-4 bg-brutal-red/10 p-4">
-          <p className="text-sm text-brutal-red">{state.error}</p>
+          <p className="text-sm text-brutal-red">{error}</p>
         </div>
       )}
 
@@ -119,17 +139,17 @@ export default function FixedCostForm({ storeId }: FixedCostFormProps) {
             type="button"
             variant="secondary"
             onClick={() => router.back()}
-            disabled={isPending}
+            disabled={isSubmitting}
             className="flex-1 py-3 text-base"
           >
             취소
           </Button>
           <Button
             type="submit"
-            disabled={isPending}
+            disabled={isSubmitting}
             className="flex-1 py-3 text-base"
           >
-            {isPending ? '등록 중...' : '등록'}
+            {isSubmitting ? '등록 중...' : '등록'}
           </Button>
         </div>
       </div>
