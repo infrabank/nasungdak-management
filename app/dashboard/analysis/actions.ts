@@ -443,6 +443,156 @@ async function fetchAnalysis(
   }
 }
 
+export interface MonthlySkuAnalysisResult {
+  success: boolean
+  data?: {
+    monthlySkuData: Array<{
+      month: string // YYYY-MM
+      skuId: string
+      skuName: string
+      quantitySold: number
+      revenue: number
+    }>
+    skuCosts: Array<{
+      skuId: string
+      skuName: string
+      unitPrice: number
+      costPerUnit: number
+      hasBom: boolean
+    }>
+  }
+  error?: string
+}
+
+async function fetchMonthlySkuAnalysis(
+  startDate: string,
+  endDate: string,
+  storeId: string,
+  authorizedStoreIds: string[]
+): Promise<MonthlySkuAnalysisResult> {
+  if (authorizedStoreIds.length === 0) {
+    return { success: true, data: { monthlySkuData: [], skuCosts: [] } }
+  }
+
+  const salesStoreFilter = buildStoreFilter(storeId, authorizedStoreIds, 'sr')
+
+  const [monthlySkuResult, skuCostsResult] = await Promise.all([
+    // Query 1: Monthly SKU sales aggregation
+    db.execute(sql`
+      SELECT
+        TO_CHAR(sr.sale_date, 'YYYY-MM') AS month,
+        sr.sku_id,
+        s.sku_name,
+        SUM(sr.quantity_sold) AS quantity_sold,
+        SUM(sr.total_revenue) AS revenue
+      FROM sales_records sr
+      JOIN skus s ON sr.sku_id = s.id
+      WHERE sr.sale_date BETWEEN ${startDate}::date AND ${endDate}::date
+        AND sr.deleted_at IS NULL
+        AND s.deleted_at IS NULL
+        ${salesStoreFilter}
+      GROUP BY month, sr.sku_id, s.sku_name
+      ORDER BY month, revenue DESC
+    `),
+    // Query 2: SKU BOM unit costs
+    db.execute(sql`
+      WITH ingredient_avg_price AS (
+        SELECT
+          pt.ingredient_id,
+          CASE
+            WHEN SUM(pt.quantity) > 0
+            THEN SUM(pt.total_amount) / SUM(pt.quantity)
+            ELSE 0
+          END AS avg_unit_price
+        FROM purchase_transactions pt
+        WHERE pt.deleted_at IS NULL
+          AND pt.is_valid = true
+        GROUP BY pt.ingredient_id
+      ),
+      bom_unit_cost AS (
+        SELECT
+          rec.sku_id,
+          SUM(
+            COALESCE(iap.avg_unit_price, COALESCE(ing.unit_cost, 0)) *
+            CASE
+              WHEN ing.unit = 'kg' AND rec.unit = 'g' THEN rec.quantity / 1000
+              WHEN ing.unit = 'L' AND rec.unit = 'ml' THEN rec.quantity / 1000
+              WHEN ing.unit = 'g' AND rec.unit = 'kg' THEN rec.quantity * 1000
+              WHEN ing.unit = 'ml' AND rec.unit = 'L' THEN rec.quantity * 1000
+              ELSE rec.quantity
+            END
+          ) AS cost_per_unit
+        FROM sku_recipes rec
+        JOIN ingredients ing ON rec.ingredient_id = ing.id
+        LEFT JOIN ingredient_avg_price iap ON rec.ingredient_id = iap.ingredient_id
+        WHERE rec.deleted_at IS NULL
+          AND ing.deleted_at IS NULL
+        GROUP BY rec.sku_id
+      )
+      SELECT
+        s.id,
+        s.sku_name,
+        s.unit_price,
+        COALESCE(buc.cost_per_unit, 0) AS cost_per_unit,
+        (buc.cost_per_unit IS NOT NULL) AS has_bom
+      FROM skus s
+      LEFT JOIN bom_unit_cost buc ON s.id = buc.sku_id
+      WHERE s.deleted_at IS NULL
+    `),
+  ])
+
+  return {
+    success: true,
+    data: {
+      monthlySkuData: monthlySkuResult.rows.map((row: any) => ({
+        month: row.month,
+        skuId: row.sku_id,
+        skuName: row.sku_name,
+        quantitySold: Number(row.quantity_sold),
+        revenue: Number(row.revenue),
+      })),
+      skuCosts: skuCostsResult.rows.map((row: any) => ({
+        skuId: row.id,
+        skuName: row.sku_name,
+        unitPrice: Number(row.unit_price),
+        costPerUnit: Number(row.cost_per_unit),
+        hasBom: row.has_bom === true,
+      })),
+    },
+  }
+}
+
+export async function getMonthlySkuAnalysis(
+  startDate: string,
+  endDate: string,
+  storeId?: string
+): Promise<MonthlySkuAnalysisResult> {
+  try {
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return { success: true, data: { monthlySkuData: [], skuCosts: [] } }
+    }
+
+    const normalizedStoreId = storeId ?? 'all'
+
+    return await fetchMonthlySkuAnalysis(
+      startDate,
+      endDate,
+      normalizedStoreId,
+      authorizedStoreIds
+    )
+  } catch (error) {
+    logger.error(
+      'Failed to get monthly SKU analysis:',
+      errorToContext(error)
+    )
+    return {
+      success: false,
+      error: '월별 SKU 분석 데이터를 가져오는데 실패했습니다',
+    }
+  }
+}
+
 export async function getAnalysis(
   startDate: string,
   endDate: string,

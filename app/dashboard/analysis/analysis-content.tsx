@@ -6,7 +6,7 @@
  * renders immediately while this component loads data.
  */
 
-import { getAnalysis, getMonthlyAnalysis } from './actions'
+import { getAnalysis, getMonthlyAnalysis, getMonthlySkuAnalysis } from './actions'
 import { formatCurrency } from '@/lib/utils/format'
 import Link from 'next/link'
 import AnalysisTabs from './analysis-tabs'
@@ -23,17 +23,19 @@ export default async function AnalysisContent({
   storeId,
 }: AnalysisContentProps) {
   // Fetch analysis data
-  const [result, monthlyResult] = await Promise.all([
+  const [result, monthlyResult, monthlySkuResult] = await Promise.all([
     getAnalysis(startDate, endDate, storeId),
     getMonthlyAnalysis(startDate, endDate, storeId),
+    getMonthlySkuAnalysis(startDate, endDate, storeId),
   ])
 
-  if (!result.success || !result.data || !monthlyResult.success) {
+  if (!result.success || !result.data || !monthlyResult.success || !monthlySkuResult.success) {
     return (
       <div className="border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal">
         <div className="text-center text-sm font-bold text-red-600">
           {result.error ||
             monthlyResult.error ||
+            monthlySkuResult.error ||
             '데이터를 불러오는데 실패했습니다'}
         </div>
       </div>
@@ -90,6 +92,8 @@ export default async function AnalysisContent({
       <AnalysisTabs
         skuAnalysis={result.data.skuAnalysis}
         monthlyData={monthlyResult.data || []}
+        monthlySkuData={monthlySkuResult.data?.monthlySkuData || []}
+        skuCosts={monthlySkuResult.data?.skuCosts || []}
       />
 
       {/* Help Text */}
