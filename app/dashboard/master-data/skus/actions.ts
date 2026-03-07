@@ -49,8 +49,11 @@ export async function createSku(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/skus')
+    revalidatePath('/dashboard/master-data/sku-recipes')
     revalidateTag('skus:active')
     revalidateTag('skus:filter')
+    revalidateTag(`skus:${organizationId}`)
+    revalidateTag(`sku-recipes:${organizationId}`)
 
     return {
       success: true,
@@ -97,8 +100,11 @@ export async function updateSku(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/skus')
+    revalidatePath('/dashboard/master-data/sku-recipes')
     revalidateTag('skus:active')
     revalidateTag('skus:filter')
+    revalidateTag(`skus:${organizationId}`)
+    revalidateTag(`sku-recipes:${organizationId}`)
 
     return {
       success: true,
@@ -133,8 +139,11 @@ export async function deleteSku(id: string) {
       .where(and(eq(skus.id, id), eq(skus.organizationId, organizationId)))
 
     revalidatePath('/dashboard/master-data/skus')
+    revalidatePath('/dashboard/master-data/sku-recipes')
     revalidateTag('skus:active')
     revalidateTag('skus:filter')
+    revalidateTag(`skus:${organizationId}`)
+    revalidateTag(`sku-recipes:${organizationId}`)
 
     return {
       success: true,
@@ -274,8 +283,11 @@ export async function bulkCreateSkus(rows: CSVRow[]) {
     }
 
     revalidatePath('/dashboard/master-data/skus')
+    revalidatePath('/dashboard/master-data/sku-recipes')
     revalidateTag('skus:active')
     revalidateTag('skus:filter')
+    revalidateTag(`skus:${organizationId}`)
+    revalidateTag(`sku-recipes:${organizationId}`)
 
     return {
       success: true,
