@@ -28,7 +28,14 @@ export const menuGroups: MenuGroup[] = [
   },
   {
     label: '비용/분석',
-    items: [{ label: '기간 분석', href: '/dashboard/analysis' }],
+    items: [
+      { label: '기간 분석', href: '/dashboard/analysis' },
+      { label: '마진 분석', href: '/dashboard/analysis/margin' },
+      { label: '메뉴 엔지니어링', href: '/dashboard/analysis/menu-engineering' },
+      { label: '손익분기점', href: '/dashboard/analysis/break-even' },
+      { label: '식재료 가격 추이', href: '/dashboard/analysis/ingredient-prices' },
+      { label: '요일별 판매', href: '/dashboard/analysis/day-of-week' },
+    ],
   },
   {
     label: '데이터 관리',
