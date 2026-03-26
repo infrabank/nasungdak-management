@@ -364,7 +364,7 @@ async function fetchActiveSKUs() {
     })
     .from(skus)
     .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-    .where(isNull(skus.deletedAt))
+    .where(and(isNull(skus.deletedAt), eq(skus.isActive, true)))
     .orderBy(menuCategories.menuName, skus.skuName)
 
   return skuList
@@ -394,7 +394,7 @@ async function fetchSKUsForFilter() {
     })
     .from(skus)
     .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-    .where(isNull(skus.deletedAt))
+    .where(and(isNull(skus.deletedAt), eq(skus.isActive, true)))
     .orderBy(menuCategories.menuName, skus.skuName)
 
   return skuList
@@ -455,7 +455,7 @@ export async function createDailySales(
         unitPrice: skus.unitPrice,
       })
       .from(skus)
-      .where(isNull(skus.deletedAt))
+      .where(and(isNull(skus.deletedAt), eq(skus.isActive, true)))
 
     const skuMap = new Map(skuList.map((s) => [s.id, s]))
 
@@ -552,7 +552,7 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
         unitPrice: skus.unitPrice,
       })
       .from(skus)
-      .where(isNull(skus.deletedAt))
+      .where(and(isNull(skus.deletedAt), eq(skus.isActive, true)))
 
     // Create lookup map
     const skuMap = new Map(
