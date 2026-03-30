@@ -119,6 +119,20 @@ plugins/installed_plugins.json
 .sisyphus/
 .bkit/
 .omc/
+.sisyphus/
+.specify/
+skills/
+docs/.bkit-memory.json
+docs/.pdca-status.json
+oh-my-opencode.json
+opencode.config.json
+opencode.json
+settings.json
+statusline.sh
+sync-docs.py
+AGENTS.md
+MARKETING_STRATEGY.md
+setup-database.sql
 
 # Temp files
 nul
