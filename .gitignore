@@ -117,6 +117,8 @@ plugins/installed_plugins.json
 # AI/Claude skills (local only)
 .claude/skills/
 .sisyphus/
+.bkit/
+.omc/
 
 # Temp files
 nul
