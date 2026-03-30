@@ -1,22 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import {
-  togglePurchaseValidation,
-  deletePurchase,
-  updatePurchase,
-} from './actions'
-import { getMenus } from '../master-data/menus/actions'
+import { deletePurchase, updatePurchase } from './actions'
 import { getIngredients } from '../master-data/ingredients/actions'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 import { toast } from '@/components/ui/toast'
 import { useConfirm } from '@/components/ui/confirm-dialog'
-import type { MenuCategory, Ingredient } from '@/lib/db/schema'
+import type { Ingredient } from '@/lib/db/schema'
 
 interface Purchase {
   id: string
   transactionDate: string
-  menuId?: string
+  menuId?: string | null
   menuName: string | null
   ingredientId?: string
   ingredientName: string | null
@@ -24,21 +19,17 @@ interface Purchase {
   quantity: string
   unitPrice: string
   totalAmount: string | null
-  isValid: boolean
   notes: string | null
 }
 
 export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
   const confirm = useConfirm()
-  const [isValid, setIsValid] = useState(purchase.isValid)
-  const [isToggling, setIsToggling] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
   const [editData, setEditData] = useState({
     transactionDate: purchase.transactionDate,
-    menuId: purchase.menuId || '',
     ingredientId: purchase.ingredientId || '',
     supplierName: purchase.supplierName,
     quantity: purchase.quantity,
@@ -46,35 +37,13 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
     notes: purchase.notes || '',
   })
 
-  const [menus, setMenus] = useState<MenuCategory[]>([])
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
 
   useEffect(() => {
-    if (isEditing && menus.length === 0) {
-      Promise.all([getMenus(), getIngredients()]).then(([m, i]) => {
-        setMenus(m)
-        setIngredients(i)
-      })
+    if (isEditing && ingredients.length === 0) {
+      getIngredients().then((i) => setIngredients(i))
     }
-  }, [isEditing, menus.length])
-
-  const handleToggle = async () => {
-    if (isToggling) return
-
-    setIsToggling(true)
-    try {
-      const result = await togglePurchaseValidation(purchase.id)
-      if (result.success) {
-        setIsValid(!isValid)
-      } else {
-        toast.error(result.error || '검증 상태 변경 실패')
-      }
-    } catch {
-      toast.error('검증 상태 변경 중 오류가 발생했습니다')
-    } finally {
-      setIsToggling(false)
-    }
-  }
+  }, [isEditing, ingredients.length])
 
   const handleDelete = async () => {
     if (isDeleting) return
@@ -109,7 +78,6 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
     try {
       const formData = new FormData()
       formData.append('transactionDate', editData.transactionDate)
-      formData.append('menuId', editData.menuId)
       formData.append('ingredientId', editData.ingredientId)
       formData.append('supplierName', editData.supplierName)
       formData.append('quantity', editData.quantity)
@@ -133,7 +101,6 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
   const handleCancel = () => {
     setEditData({
       transactionDate: purchase.transactionDate,
-      menuId: purchase.menuId || '',
       ingredientId: purchase.ingredientId || '',
       supplierName: purchase.supplierName,
       quantity: purchase.quantity,
@@ -160,24 +127,6 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
             }
             className={inputClass}
           />
-        </td>
-        <td className="whitespace-nowrap px-2 py-2 text-sm">
-          <select
-            value={editData.menuId}
-            onChange={(e) =>
-              setEditData({ ...editData, menuId: e.target.value })
-            }
-            className={selectClass}
-          >
-            <option value="">선택</option>
-            {menus
-              .filter((m) => m.isActive)
-              .map((menu) => (
-                <option key={menu.id} value={menu.id}>
-                  {menu.menuName}
-                </option>
-              ))}
-          </select>
         </td>
         <td className="whitespace-nowrap px-2 py-2 text-sm">
           <select
@@ -232,9 +181,6 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
         <td className="whitespace-nowrap px-2 py-2 text-right text-sm text-brutal-black/50">
           -
         </td>
-        <td className="whitespace-nowrap px-2 py-2 text-center text-sm text-brutal-black/50">
-          -
-        </td>
         <td className="whitespace-nowrap px-2 py-2 text-right text-sm">
           <div className="flex justify-end gap-1">
             <button
@@ -265,9 +211,6 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
         {formatDate(new Date(purchase.transactionDate), 'yyyy-MM-dd')}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black">
-        {purchase.menuName || '-'}
-      </td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black">
         {purchase.ingredientName || '-'}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black">
@@ -281,19 +224,6 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-bold text-brutal-black">
         {formatCurrency(Number(purchase.totalAmount))}
-      </td>
-      <td className="whitespace-nowrap px-3 py-4 text-center text-sm">
-        <button
-          onClick={handleToggle}
-          disabled={isToggling}
-          className={`inline-flex border-2 border-brutal-black px-2 py-1 text-xs font-bold leading-5 transition-all ${
-            isValid
-              ? 'bg-brutal-green text-brutal-black hover:shadow-brutal-sm'
-              : 'bg-brutal-pink text-brutal-black hover:shadow-brutal-sm'
-          } ${isToggling ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-        >
-          {isToggling ? '...' : isValid ? '유효' : '무효'}
-        </button>
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-right text-sm">
         <div className="flex justify-end gap-2">

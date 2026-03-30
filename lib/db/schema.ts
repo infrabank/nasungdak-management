@@ -169,12 +169,11 @@ export const purchaseTransactions = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
     transactionDate: date('transaction_date').notNull(),
-    menuId: uuid('menu_id')
-      .notNull()
-      .references(() => menuCategories.id),
+    menuId: uuid('menu_id').references(() => menuCategories.id),
     ingredientId: uuid('ingredient_id')
       .notNull()
       .references(() => ingredients.id),
+    category: varchar('category', { length: 100 }),
     supplierName: varchar('supplier_name', { length: 200 }).notNull(),
     quantity: decimal('quantity', { precision: 10, scale: 2 }).notNull(),
     unitPrice: decimal('unit_price', { precision: 12, scale: 2 }).notNull(),
@@ -200,6 +199,10 @@ export const purchaseTransactions = pgTable(
     index('pt_ingredient_id_idx').on(table.ingredientId),
     // Composite index for date range + store filtering (most common query pattern)
     index('pt_store_date_idx').on(table.storeId, table.transactionDate.desc()),
+    index('pt_ingredient_date_idx').on(
+      table.ingredientId,
+      table.transactionDate.desc()
+    ),
   ]
 )
 

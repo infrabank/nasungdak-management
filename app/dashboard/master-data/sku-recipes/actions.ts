@@ -236,12 +236,7 @@ export async function getSkusWithRecipes() {
             `.as('avg_unit_price'),
           })
           .from(purchaseTransactions)
-          .where(
-            and(
-              isNull(purchaseTransactions.deletedAt),
-              eq(purchaseTransactions.isValid, true)
-            )
-          )
+          .where(isNull(purchaseTransactions.deletedAt))
           .groupBy(purchaseTransactions.ingredientId)
 
         // Build a map of ingredient_id -> avg unit price

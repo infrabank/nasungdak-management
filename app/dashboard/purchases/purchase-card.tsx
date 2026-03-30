@@ -1,22 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import {
-  togglePurchaseValidation,
-  deletePurchase,
-  updatePurchase,
-} from './actions'
-import { getMenus } from '../master-data/menus/actions'
+import { deletePurchase, updatePurchase } from './actions'
 import { getIngredients } from '../master-data/ingredients/actions'
 import { formatCurrency, formatDate } from '@/lib/utils/format'
 import { toast } from '@/components/ui/toast'
 import { useConfirm } from '@/components/ui/confirm-dialog'
-import type { MenuCategory, Ingredient } from '@/lib/db/schema'
+import type { Ingredient } from '@/lib/db/schema'
 
 interface Purchase {
   id: string
   transactionDate: string
-  menuId?: string
+  menuId?: string | null
   menuName: string | null
   ingredientId?: string
   ingredientName: string | null
@@ -24,22 +19,17 @@ interface Purchase {
   quantity: string
   unitPrice: string
   totalAmount: string | null
-  isValid: boolean
   notes: string | null
 }
 
 export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
   const confirm = useConfirm()
-  const [isValid, setIsValid] = useState(purchase.isValid)
-  const [isToggling, setIsToggling] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Edit form state
   const [editData, setEditData] = useState({
     transactionDate: purchase.transactionDate,
-    menuId: purchase.menuId || '',
     ingredientId: purchase.ingredientId || '',
     supplierName: purchase.supplierName,
     quantity: purchase.quantity,
@@ -47,35 +37,13 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
     notes: purchase.notes || '',
   })
 
-  const [menus, setMenus] = useState<MenuCategory[]>([])
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
 
   useEffect(() => {
-    if (isEditing && menus.length === 0) {
-      Promise.all([getMenus(), getIngredients()]).then(([m, i]) => {
-        setMenus(m)
-        setIngredients(i)
-      })
+    if (isEditing && ingredients.length === 0) {
+      getIngredients().then((i) => setIngredients(i))
     }
-  }, [isEditing, menus.length])
-
-  const handleToggle = async () => {
-    if (isToggling) return
-
-    setIsToggling(true)
-    try {
-      const result = await togglePurchaseValidation(purchase.id)
-      if (result.success) {
-        setIsValid(!isValid)
-      } else {
-        toast.error(result.error || '검증 상태 변경 실패')
-      }
-    } catch {
-      toast.error('검증 상태 변경 중 오류가 발생했습니다')
-    } finally {
-      setIsToggling(false)
-    }
-  }
+  }, [isEditing, ingredients.length])
 
   const handleDelete = async () => {
     if (isDeleting) return
@@ -110,7 +78,6 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
     try {
       const formData = new FormData()
       formData.append('transactionDate', editData.transactionDate)
-      formData.append('menuId', editData.menuId)
       formData.append('ingredientId', editData.ingredientId)
       formData.append('supplierName', editData.supplierName)
       formData.append('quantity', editData.quantity)
@@ -134,7 +101,6 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
   const handleCancel = () => {
     setEditData({
       transactionDate: purchase.transactionDate,
-      menuId: purchase.menuId || '',
       ingredientId: purchase.ingredientId || '',
       supplierName: purchase.supplierName,
       quantity: purchase.quantity,
@@ -168,27 +134,6 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
               }
               className={inputClass}
             />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-bold text-brutal-black">
-              메뉴
-            </label>
-            <select
-              value={editData.menuId}
-              onChange={(e) =>
-                setEditData({ ...editData, menuId: e.target.value })
-              }
-              className={selectClass}
-            >
-              <option value="">선택하세요</option>
-              {menus
-                .filter((m) => m.isActive)
-                .map((menu) => (
-                  <option key={menu.id} value={menu.id}>
-                    {menu.menuName}
-                  </option>
-                ))}
-            </select>
           </div>
           <div>
             <label className="mb-1 block text-xs font-bold text-brutal-black">
@@ -297,39 +242,23 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
       {/* Card Header */}
       <div className="flex items-center justify-between border-b-2 border-brutal-black bg-brutal-yellow/30 p-4">
         <div className="flex items-center gap-2">
-          <span className="text-sm">📅</span>
           <span className="font-bold text-brutal-black">
             {formatDate(new Date(purchase.transactionDate), 'yyyy-MM-dd')}
           </span>
         </div>
-        <button
-          onClick={handleToggle}
-          disabled={isToggling}
-          className={`inline-flex border-2 border-brutal-black px-3 py-1 text-xs font-bold leading-5 transition-all ${
-            isValid
-              ? 'bg-brutal-green text-brutal-black hover:shadow-brutal-sm'
-              : 'bg-brutal-pink text-brutal-black hover:shadow-brutal-sm'
-          } ${isToggling ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-        >
-          {isToggling ? '...' : isValid ? '✓ 유효' : '✗ 무효'}
-        </button>
       </div>
 
       {/* Card Body */}
       <div className="p-4">
-        {/* Menu & Ingredient */}
         <div className="mb-3">
           <p className="text-lg font-bold text-brutal-black">
-            {purchase.menuName || '-'}{' '}
-            <span className="text-brutal-black/50">→</span>{' '}
             {purchase.ingredientName || '-'}
           </p>
           <p className="mt-1 text-sm font-medium text-brutal-black/70">
-            🏢 {purchase.supplierName}
+            {purchase.supplierName}
           </p>
         </div>
 
-        {/* Quantity & Price */}
         <div className="grid grid-cols-2 gap-3 border-t-2 border-brutal-black/20 py-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-brutal-black/70">
@@ -349,14 +278,12 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
           </div>
         </div>
 
-        {/* Notes */}
         {purchase.notes && (
           <p className="border-t-2 border-brutal-black/20 py-2 text-sm font-medium text-brutal-black/70">
-            📝 {purchase.notes}
+            {purchase.notes}
           </p>
         )}
 
-        {/* Total & Actions */}
         <div className="flex items-center justify-between border-t-2 border-brutal-black/20 pt-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-brutal-black/70">

@@ -10,39 +10,24 @@ import {
   Suspense,
 } from 'react'
 import { useRouter } from 'next/navigation'
-import { createMultiplePurchases } from '../actions'
+import { createMultiplePurchases, getSupplierSuggestions } from '../actions'
 import type { PurchaseEntry } from '../actions'
-import { getMenus } from '../../master-data/menus/actions'
 import {
   getIngredients,
   lookupByBarcode,
   quickRegisterIngredient,
 } from '../../master-data/ingredients/actions'
-import { getMenuIngredients } from '../../master-data/menu-ingredients/actions'
-import { getActiveSuppliers } from '../../master-data/suppliers/actions'
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
 
 const BarcodeScanner = lazy(() => import('@/components/barcode-scanner'))
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
-import type { MenuCategory, Ingredient } from '@/lib/db/schema'
-
-type MenuIngredientMapping = {
-  id: string
-  menuId: string
-  menuName: string | null
-  ingredientId: string
-  ingredientName: string | null
-  unit: string | null
-  requiredQuantity: string
-}
+import type { Ingredient } from '@/lib/db/schema'
 
 type EntryRow = {
   id: string
   barcode: string
-  menuId: string
   ingredientId: string
   quantity: string
   totalPrice: string
@@ -58,7 +43,6 @@ function createEmptyRow(): EntryRow {
   return {
     id: generateId(),
     barcode: '',
-    menuId: '',
     ingredientId: '',
     quantity: '',
     totalPrice: '',
@@ -67,23 +51,21 @@ function createEmptyRow(): EntryRow {
   }
 }
 
-type SupplierOption = {
-  id: string
-  supplierName: string
-}
-
 export default function PurchaseForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [menus, setMenus] = useState<MenuCategory[]>([])
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
-  const [menuIngredients, setMenuIngredients] = useState<
-    MenuIngredientMapping[]
-  >([])
-  const [suppliers, setSuppliers] = useState<SupplierOption[]>([])
+  const [supplierSuggestions, setSupplierSuggestions] = useState<string[]>([])
   const [scannerEntryId, setScannerEntryId] = useState<string | null>(null)
 
-  // 미등록 바코드 → 재료 등록 모달 상태
+  // Inline ingredient creation modal state
+  const [showIngredientModal, setShowIngredientModal] = useState(false)
+  const [newIngName, setNewIngName] = useState('')
+  const [newIngUnit, setNewIngUnit] = useState('')
+  const [isCreatingIngredient, setIsCreatingIngredient] = useState(false)
+  const [targetEntryId, setTargetEntryId] = useState<string | null>(null)
+
+  // Barcode register modal state
   const [registerModal, setRegisterModal] = useState<{
     barcode: string
     entryId: string
@@ -91,18 +73,19 @@ export default function PurchaseForm() {
   const [regName, setRegName] = useState('')
   const [regUnit, setRegUnit] = useState('')
   const [regUnitCost, setRegUnitCost] = useState('')
-  const [regMenuId, setRegMenuId] = useState('')
   const [isRegistering, setIsRegistering] = useState(false)
 
   const [transactionDate, setTransactionDate] = useState(
     new Date().toISOString().split('T')[0]
   )
   const [supplierName, setSupplierName] = useState('')
+  const [showSupplierSuggestions, setShowSupplierSuggestions] = useState(false)
   const [entries, setEntries] = useState<EntryRow[]>([createEmptyRow()])
   const barcodeInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
   const barcodeLookupTimers = useRef<
     Record<string, ReturnType<typeof setTimeout>>
   >({})
+  const supplierInputRef = useRef<HTMLInputElement>(null)
 
   const focusBarcodeInput = useCallback((entryId: string) => {
     requestAnimationFrame(() => {
@@ -119,7 +102,6 @@ export default function PurchaseForm() {
         const result = await lookupByBarcode(barcode)
 
         if (result.success && result.ingredient) {
-          const mappedMenu = result.menuMappings?.[0]
           const ingredientName = result.ingredient.ingredientName
 
           setEntries((prev) =>
@@ -128,20 +110,14 @@ export default function PurchaseForm() {
                 ? {
                     ...entry,
                     barcode: '',
-                    menuId: mappedMenu?.menuId || entry.menuId,
                     ingredientId: result.ingredient.id,
                   }
                 : entry
             )
           )
 
-          toast.success(
-            mappedMenu?.menuName
-              ? `${mappedMenu.menuName} - ${ingredientName} 선택됨`
-              : `${ingredientName} 선택됨`
-          )
+          toast.success(`${ingredientName} 선택됨`)
         } else {
-          // 미등록 바코드 → 재료 등록 모달 표시
           setEntries((prev) =>
             prev.map((entry) =>
               entry.id === entryId ? { ...entry, barcode: '' } : entry
@@ -150,7 +126,6 @@ export default function PurchaseForm() {
           setRegName('')
           setRegUnit('')
           setRegUnitCost('')
-          setRegMenuId('')
           setRegisterModal({ barcode, entryId })
         }
       } catch {
@@ -216,7 +191,7 @@ export default function PurchaseForm() {
     [scannerEntryId, processBarcodeLookup]
   )
 
-  // 미등록 바코드 → 재료 빠른 등록 처리
+  // Barcode quick register handler
   const handleQuickRegister = useCallback(
     async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault()
@@ -229,32 +204,22 @@ export default function PurchaseForm() {
           ingredientName: regName.trim(),
           unit: regUnit.trim(),
           unitCost: regUnitCost || undefined,
-          menuId: regMenuId || undefined,
         })
 
         if (result.success && result.ingredient) {
-          // 등록 성공 → 매입 항목에 자동 반영
           setEntries((prev) =>
             prev.map((entry) =>
               entry.id === registerModal.entryId
                 ? {
                     ...entry,
-                    menuId: result.menuId || entry.menuId,
                     ingredientId: result.ingredient.id,
                   }
                 : entry
             )
           )
 
-          // 재료/메뉴 목록 새로고침
-          const [menusData, ingredientsData, mappingsData] = await Promise.all([
-            getMenus(),
-            getIngredients(),
-            getMenuIngredients(),
-          ])
-          setMenus(menusData)
+          const ingredientsData = await getIngredients()
           setIngredients(ingredientsData)
-          setMenuIngredients(mappingsData)
 
           toast.success(
             `${result.ingredient.ingredientName} 재료가 등록되었습니다`
@@ -269,7 +234,7 @@ export default function PurchaseForm() {
         setIsRegistering(false)
       }
     },
-    [registerModal, regName, regUnit, regUnitCost, regMenuId]
+    [registerModal, regName, regUnit, regUnitCost]
   )
 
   const openScannerWithPermission = useCallback((entryId: string) => {
@@ -295,23 +260,16 @@ export default function PurchaseForm() {
       return
     }
 
-    // 카메라 스트림을 미리 열고 닫는 패턴은 삼성 인터넷에서
-    // NotReadableError를 유발하므로 직접 스캐너 컴포넌트에 위임
     setScannerEntryId(entryId)
   }, [])
 
   useEffect(() => {
-    Promise.all([
-      getMenus(),
-      getIngredients(),
-      getMenuIngredients(),
-      getActiveSuppliers(),
-    ]).then(([menusData, ingredientsData, mappingsData, suppliersData]) => {
-      setMenus(menusData)
-      setIngredients(ingredientsData)
-      setMenuIngredients(mappingsData)
-      setSuppliers(suppliersData)
-    })
+    Promise.all([getIngredients(), getSupplierSuggestions()]).then(
+      ([ingredientsData, suggestions]) => {
+        setIngredients(ingredientsData)
+        setSupplierSuggestions(suggestions)
+      }
+    )
   }, [])
 
   const updateEntry = useCallback(
@@ -319,9 +277,6 @@ export default function PurchaseForm() {
       setEntries((prev) =>
         prev.map((entry) => {
           if (entry.id !== id) return entry
-          if (field === 'menuId') {
-            return { ...entry, menuId: value as string, ingredientId: '' }
-          }
           return { ...entry, [field]: value }
         })
       )
@@ -367,8 +322,7 @@ export default function PurchaseForm() {
     }
 
     const validEntries = entries.filter(
-      (entry) =>
-        entry.menuId && entry.ingredientId && entry.quantity && entry.totalPrice
+      (entry) => entry.ingredientId && entry.quantity && entry.totalPrice
     )
     if (validEntries.length === 0) {
       toast.error('최소 하나의 항목을 입력해주세요')
@@ -378,7 +332,6 @@ export default function PurchaseForm() {
     setIsSubmitting(true)
     try {
       const purchaseEntries: PurchaseEntry[] = validEntries.map((entry) => ({
-        menuId: entry.menuId,
         ingredientId: entry.ingredientId,
         quantity: entry.quantity,
         unitPrice: calculateUnitPrice(
@@ -399,9 +352,8 @@ export default function PurchaseForm() {
           (sum, r) => sum + r.totalAmount,
           0
         )
-        const validCount = result.results.filter((r) => r.isValid).length
         toast.success(
-          `${result.successCount}건 매입이 등록되었습니다. 총 합계: ${totalAmount.toLocaleString()}원 (유효: ${validCount}건 / 무효: ${result.successCount - validCount}건)`
+          `${result.successCount}건 매입이 등록되었습니다. 총 합계: ${totalAmount.toLocaleString()}원`
         )
         router.push('/dashboard/purchases')
       } else {
@@ -418,42 +370,91 @@ export default function PurchaseForm() {
     }
   }
 
-  const getFilteredIngredients = useCallback(
-    (menuId: string) => {
-      if (!menuId) return []
-      return menuIngredients
-        .filter((mi) => mi.menuId === menuId)
-        .map((mapping) => {
-          const ingredient = ingredients.find(
-            (i) => i.id === mapping.ingredientId
-          )
-          return ingredient
-            ? {
-                id: ingredient.id,
-                name: ingredient.ingredientName,
-                unit: ingredient.unit,
-              }
-            : null
-        })
-        .filter(Boolean) as Array<{ id: string; name: string; unit: string }>
-    },
-    [menuIngredients, ingredients]
-  )
-
   const getEntryDisplayName = useCallback(
     (entry: EntryRow) => {
-      const menu = menus.find((m) => m.id === entry.menuId)
       const ingredient = ingredients.find((i) => i.id === entry.ingredientId)
-      if (menu && ingredient)
-        return `${menu.menuName} - ${ingredient.ingredientName}`
-      if (menu) return menu.menuName
+      if (ingredient) return ingredient.ingredientName
       return '새 항목'
     },
-    [menus, ingredients]
+    [ingredients]
   )
+
+  // Inline ingredient creation
+  const openIngredientModal = useCallback((entryId: string) => {
+    setTargetEntryId(entryId)
+    setNewIngName('')
+    setNewIngUnit('')
+    setShowIngredientModal(true)
+  }, [])
+
+  const handleCreateIngredient = useCallback(
+    async (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault()
+      if (!newIngName.trim() || !newIngUnit.trim()) return
+      setIsCreatingIngredient(true)
+
+      try {
+        const result = await quickRegisterIngredient({
+          barcode: '',
+          ingredientName: newIngName.trim(),
+          unit: newIngUnit.trim(),
+        })
+
+        if (result.success && result.ingredient) {
+          const ingredientsData = await getIngredients()
+          setIngredients(ingredientsData)
+
+          if (targetEntryId) {
+            setEntries((prev) =>
+              prev.map((entry) =>
+                entry.id === targetEntryId
+                  ? { ...entry, ingredientId: result.ingredient.id }
+                  : entry
+              )
+            )
+          }
+
+          toast.success(`${result.ingredient.ingredientName} 재료가 등록되었습니다`)
+          setShowIngredientModal(false)
+        } else {
+          toast.error(result.error || '등록에 실패했습니다')
+        }
+      } catch {
+        toast.error('재료 등록 중 오류가 발생했습니다')
+      } finally {
+        setIsCreatingIngredient(false)
+      }
+    },
+    [newIngName, newIngUnit, targetEntryId]
+  )
+
+  const filteredSupplierSuggestions = useMemo(() => {
+    if (!supplierName.trim()) return supplierSuggestions
+    const lower = supplierName.toLowerCase()
+    return supplierSuggestions.filter((s) => s.toLowerCase().includes(lower))
+  }, [supplierName, supplierSuggestions])
+
+  const activeIngredients = useMemo(
+    () => ingredients.filter((i) => i.isActive),
+    [ingredients]
+  )
+
+  const hasNoIngredients = activeIngredients.length === 0
 
   return (
     <form onSubmit={handleSubmit} className="pb-32">
+      {/* Empty state: no ingredients */}
+      {hasNoIngredients && (
+        <div className="mb-4 border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal">
+          <p className="font-bold text-brutal-black">
+            먼저 재료를 등록해주세요
+          </p>
+          <p className="mt-1 text-sm text-brutal-black/70">
+            아래 항목에서 [+ 새 재료] 버튼으로 바로 등록할 수 있습니다.
+          </p>
+        </div>
+      )}
+
       {/* Shared Fields Section */}
       <div className="mb-4 border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal">
         <h3 className="mb-4 text-sm font-black uppercase tracking-wide text-brutal-black">
@@ -461,7 +462,7 @@ export default function PurchaseForm() {
         </h3>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="transactionDate">📅 거래 날짜</Label>
+            <Label htmlFor="transactionDate">거래 날짜</Label>
             <Input
               type="date"
               id="transactionDate"
@@ -470,21 +471,44 @@ export default function PurchaseForm() {
               onChange={(e) => setTransactionDate(e.target.value)}
             />
           </div>
-          <div>
-            <Label htmlFor="supplierName">🏢 공급업체</Label>
-            <Select
+          <div className="relative">
+            <Label htmlFor="supplierName">공급업체</Label>
+            <Input
+              ref={supplierInputRef}
+              type="text"
               id="supplierName"
               required
               value={supplierName}
-              onChange={(e) => setSupplierName(e.target.value)}
-            >
-              <option value="">공급업체를 선택하세요</option>
-              {suppliers.map((supplier) => (
-                <option key={supplier.id} value={supplier.supplierName}>
-                  {supplier.supplierName}
-                </option>
-              ))}
-            </Select>
+              onChange={(e) => {
+                setSupplierName(e.target.value)
+                setShowSupplierSuggestions(true)
+              }}
+              onFocus={() => setShowSupplierSuggestions(true)}
+              onBlur={() =>
+                setTimeout(() => setShowSupplierSuggestions(false), 200)
+              }
+              placeholder="공급업체명을 입력하세요"
+              autoComplete="off"
+            />
+            {showSupplierSuggestions &&
+              filteredSupplierSuggestions.length > 0 && (
+                <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto border-2 border-brutal-black bg-brutal-white shadow-brutal">
+                  {filteredSupplierSuggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      className="block w-full px-3 py-2 text-left text-sm font-medium text-brutal-black hover:bg-brutal-yellow"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        setSupplierName(suggestion)
+                        setShowSupplierSuggestions(false)
+                      }}
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
           </div>
         </div>
       </div>
@@ -499,13 +523,9 @@ export default function PurchaseForm() {
 
         <div className="space-y-3">
           {entries.map((entry, index) => {
-            const filteredIngredients = getFilteredIngredients(entry.menuId)
             const entryTotal = parseFloat(entry.totalPrice) || 0
             const isComplete =
-              entry.menuId &&
-              entry.ingredientId &&
-              entry.quantity &&
-              entry.totalPrice
+              entry.ingredientId && entry.quantity && entry.totalPrice
 
             return (
               <div
@@ -584,7 +604,7 @@ export default function PurchaseForm() {
                   <div className="space-y-4 p-4">
                     <div className="border-2 border-brutal-black bg-brutal-blue/20 p-3">
                       <Label htmlFor={`barcode-${entry.id}`}>
-                        📦 바코드 스캔
+                        바코드 스캔
                       </Label>
                       <div className="mt-2 flex gap-2">
                         <Input
@@ -633,56 +653,31 @@ export default function PurchaseForm() {
                     </div>
 
                     <div>
-                      <Label>메뉴 *</Label>
-                      <Select
-                        required
-                        value={entry.menuId}
-                        onChange={(e) =>
-                          updateEntry(entry.id, 'menuId', e.target.value)
-                        }
-                      >
-                        <option value="">메뉴를 선택하세요</option>
-                        {menus
-                          .filter((m) => m.isActive)
-                          .map((menu) => (
-                            <option key={menu.id} value={menu.id}>
-                              {menu.menuName}
-                            </option>
-                          ))}
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>재료 *</Label>
-                      <Select
+                      <div className="flex items-center justify-between">
+                        <Label>재료 *</Label>
+                        <button
+                          type="button"
+                          onClick={() => openIngredientModal(entry.id)}
+                          className="mb-1 text-xs font-bold text-brutal-black underline underline-offset-2 hover:bg-brutal-blue"
+                        >
+                          + 새 재료
+                        </button>
+                      </div>
+                      <select
                         required
                         value={entry.ingredientId}
                         onChange={(e) =>
                           updateEntry(entry.id, 'ingredientId', e.target.value)
                         }
-                        disabled={!entry.menuId}
-                        className={
-                          !entry.menuId
-                            ? 'disabled:cursor-not-allowed disabled:bg-brutal-black/10'
-                            : ''
-                        }
+                        className="block w-full border-2 border-brutal-black bg-brutal-white px-4 py-3 text-base font-medium text-brutal-black shadow-brutal-sm transition-all focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal"
                       >
-                        <option value="">
-                          {entry.menuId
-                            ? '재료를 선택하세요'
-                            : '먼저 메뉴를 선택하세요'}
-                        </option>
-                        {filteredIngredients.map((ing) => (
+                        <option value="">재료를 선택하세요</option>
+                        {activeIngredients.map((ing) => (
                           <option key={ing.id} value={ing.id}>
-                            {ing.name} ({ing.unit})
+                            {ing.ingredientName} ({ing.unit})
                           </option>
                         ))}
-                      </Select>
-                      {entry.menuId && filteredIngredients.length === 0 && (
-                        <p className="mt-2 border-2 border-brutal-black bg-brutal-yellow p-2 text-sm font-bold text-brutal-black">
-                          ⚠️ 매핑된 재료가 없습니다
-                        </p>
-                      )}
+                      </select>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -775,7 +770,7 @@ export default function PurchaseForm() {
         </div>
       </div>
 
-      {/* Fixed Bottom Action Bar - positioned above bottom nav on mobile */}
+      {/* Fixed Bottom Action Bar */}
       <div className="fixed bottom-14 left-0 right-0 z-20 border-t-3 border-brutal-black bg-brutal-yellow p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:bottom-0 lg:pb-4">
         <div className="mx-auto flex max-w-lg gap-3">
           <Button
@@ -796,6 +791,7 @@ export default function PurchaseForm() {
           </Button>
         </div>
       </div>
+
       {/* Barcode Camera Scanner Modal */}
       {scannerEntryId && (
         <Suspense
@@ -814,7 +810,7 @@ export default function PurchaseForm() {
         </Suspense>
       )}
 
-      {/* 미등록 바코드 → 재료 등록 모달 */}
+      {/* Barcode register modal */}
       {registerModal && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex min-h-full items-end justify-center p-4 sm:items-center sm:p-0">
@@ -823,10 +819,9 @@ export default function PurchaseForm() {
               onClick={() => setRegisterModal(null)}
             />
             <div className="relative w-full max-w-md transform border-3 border-brutal-black bg-brutal-white shadow-brutal-lg sm:my-8">
-              {/* 모달 헤더 */}
               <div className="border-b-3 border-brutal-black bg-brutal-pink p-4">
                 <h3 className="text-base font-black text-brutal-black">
-                  미등록 바코드 — 새 재료 등록
+                  미등록 바코드 -- 새 재료 등록
                 </h3>
                 <p className="mt-1 text-sm text-brutal-black/70">
                   스캔된 바코드로 새 재료를 등록합니다
@@ -835,7 +830,6 @@ export default function PurchaseForm() {
 
               <form onSubmit={handleQuickRegister} className="p-4">
                 <div className="space-y-4">
-                  {/* 바코드 (읽기 전용) */}
                   <div>
                     <Label htmlFor="reg-barcode">바코드</Label>
                     <div className="flex items-center border-3 border-brutal-black bg-brutal-black/5 px-3 py-2 font-mono text-sm font-bold text-brutal-black">
@@ -843,7 +837,6 @@ export default function PurchaseForm() {
                     </div>
                   </div>
 
-                  {/* 재료명 */}
                   <div>
                     <Label htmlFor="reg-name">재료명 *</Label>
                     <Input
@@ -857,7 +850,6 @@ export default function PurchaseForm() {
                     />
                   </div>
 
-                  {/* 단위 */}
                   <div>
                     <Label htmlFor="reg-unit">단위 *</Label>
                     <select
@@ -881,7 +873,6 @@ export default function PurchaseForm() {
                     </select>
                   </div>
 
-                  {/* 단가 (선택) */}
                   <div>
                     <Label htmlFor="reg-cost">단가 (원, 선택)</Label>
                     <Input
@@ -894,32 +885,8 @@ export default function PurchaseForm() {
                       placeholder="예: 3000"
                     />
                   </div>
-
-                  {/* 메뉴 매핑 (선택) */}
-                  <div>
-                    <Label htmlFor="reg-menu">메뉴 매핑 (선택)</Label>
-                    <select
-                      id="reg-menu"
-                      value={regMenuId}
-                      onChange={(e) => setRegMenuId(e.target.value)}
-                      className="w-full border-2 border-brutal-black bg-brutal-white px-3 py-2 text-sm font-medium"
-                    >
-                      <option value="">매핑 안 함</option>
-                      {menus
-                        .filter((m) => m.isActive)
-                        .map((menu) => (
-                          <option key={menu.id} value={menu.id}>
-                            {menu.menuName}
-                          </option>
-                        ))}
-                    </select>
-                    <p className="mt-1 text-xs text-brutal-black/50">
-                      메뉴를 선택하면 해당 메뉴에 자동 매핑됩니다
-                    </p>
-                  </div>
                 </div>
 
-                {/* 버튼 */}
                 <div className="mt-5 grid grid-cols-2 gap-3">
                   <Button
                     type="button"
@@ -931,6 +898,79 @@ export default function PurchaseForm() {
                   </Button>
                   <Button type="submit" disabled={isRegistering}>
                     {isRegistering ? '등록 중...' : '등록'}
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline ingredient creation modal */}
+      {showIngredientModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 sm:items-center sm:p-0">
+            <div
+              className="fixed inset-0 bg-brutal-black/50"
+              onClick={() => setShowIngredientModal(false)}
+            />
+            <div className="relative w-full max-w-md transform border-3 border-brutal-black bg-brutal-white shadow-brutal-lg sm:my-8">
+              <div className="border-b-3 border-brutal-black bg-brutal-green p-4">
+                <h3 className="text-base font-black text-brutal-black">
+                  새 재료 등록
+                </h3>
+              </div>
+
+              <form onSubmit={handleCreateIngredient} className="p-4">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="new-ing-name">재료명 *</Label>
+                    <Input
+                      id="new-ing-name"
+                      type="text"
+                      required
+                      value={newIngName}
+                      onChange={(e) => setNewIngName(e.target.value)}
+                      placeholder="예: 닭고기, 식용유"
+                      autoFocus
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="new-ing-unit">단위 *</Label>
+                    <select
+                      id="new-ing-unit"
+                      required
+                      value={newIngUnit}
+                      onChange={(e) => setNewIngUnit(e.target.value)}
+                      className="w-full border-2 border-brutal-black bg-brutal-white px-3 py-2 text-sm font-medium"
+                    >
+                      <option value="">단위 선택</option>
+                      <option value="kg">kg (킬로그램)</option>
+                      <option value="g">g (그램)</option>
+                      <option value="L">L (리터)</option>
+                      <option value="ml">ml (밀리리터)</option>
+                      <option value="개">개</option>
+                      <option value="봉">봉</option>
+                      <option value="팩">팩</option>
+                      <option value="박스">박스</option>
+                      <option value="병">병</option>
+                      <option value="캔">캔</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => setShowIngredientModal(false)}
+                    disabled={isCreatingIngredient}
+                  >
+                    취소
+                  </Button>
+                  <Button type="submit" disabled={isCreatingIngredient}>
+                    {isCreatingIngredient ? '등록 중...' : '등록'}
                   </Button>
                 </div>
               </form>

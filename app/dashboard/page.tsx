@@ -106,13 +106,13 @@ export default async function DashboardPage() {
           <div className="flex items-center">
             <div className="flex-1">
               <dt className="truncate text-sm font-bold text-brutal-black">
-                매입 검증 상태
+                이번달 매입 건수
               </dt>
               <dd className="mt-1 text-2xl font-black text-brutal-black lg:text-3xl">
-                {data.validPurchases}
+                {data.purchaseCount}건
               </dd>
               <dd className="mt-1 text-xs font-medium text-brutal-black">
-                유효: {data.validPurchases} / 무효: {data.invalidPurchases}
+                총 매입액 기준
               </dd>
             </div>
           </div>
@@ -175,14 +175,12 @@ export default async function DashboardPage() {
           </Link>
 
           <Link
-            href="/dashboard/master-data/cost-rules"
+            href="/dashboard/master-data/sku-recipes"
             className="border-3 border-brutal-black bg-brutal-pink p-4 shadow-brutal transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-brutal-hover active:translate-x-0.5 active:translate-y-0.5 active:shadow-brutal-sm"
           >
-            <h3 className="font-bold text-brutal-black">원가 배분 규칙</h3>
+            <h3 className="font-bold text-brutal-black">SKU 레시피</h3>
             <p className="mt-1 text-sm font-medium text-brutal-black">
-              {data.costRules > 0
-                ? `${data.costRules}개 규칙`
-                : '규칙 설정 필요'}
+              원재료 구성 관리
             </p>
           </Link>
         </div>
@@ -205,24 +203,15 @@ export default async function DashboardPage() {
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-bold text-brutal-black">
-                        {purchase.menuName} - {purchase.ingredientName}
+                        {purchase.ingredientName}
                       </p>
                       <p className="text-xs font-medium text-brutal-black/70">
                         {formatDate(new Date(purchase.date), 'yyyy-MM-dd')}
                       </p>
                     </div>
-                    <div className="ml-4 flex items-center gap-2">
+                    <div className="ml-4">
                       <span className="text-sm font-black text-brutal-black">
                         {formatCurrency(purchase.amount)}
-                      </span>
-                      <span
-                        className={`inline-flex border-2 border-brutal-black px-2 py-0.5 text-xs font-bold ${
-                          purchase.isValid
-                            ? 'bg-brutal-green text-brutal-black'
-                            : 'bg-brutal-pink text-brutal-black'
-                        }`}
-                      >
-                        {purchase.isValid ? '유효' : '무효'}
                       </span>
                     </div>
                   </div>
@@ -291,74 +280,23 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Alerts */}
-      {data.invalidPurchases > 0 && (
-        <div className="mt-6 border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal">
+      {/* Empty State Alerts */}
+      {data.purchaseCount === 0 && data.salesCount === 0 && (
+        <div className="mt-6 border-3 border-brutal-black bg-brutal-blue p-4 shadow-brutal">
           <div className="flex">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-6 w-6 text-brutal-black"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
             <div className="ml-3">
               <h3 className="text-sm font-black text-brutal-black">
-                {data.invalidPurchases}건의 무효 매입이 있습니다
+                시작하기
               </h3>
               <div className="mt-2 text-sm font-medium text-brutal-black">
                 <p>
-                  무효 매입은 원가 계산에서 제외됩니다.{' '}
+                  매입을 등록하면 원가를 자동으로 분석합니다.{' '}
                   <Link
-                    href="/dashboard/purchases"
+                    href="/dashboard/purchases/new"
                     className="px-0.5 font-bold underline underline-offset-2 hover:bg-brutal-white"
                   >
-                    매입 목록에서 확인
+                    매입 등록하기
                   </Link>
-                  하여 유효로 변경하세요.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {data.costRules === 0 && (
-        <div className="mt-6 border-3 border-brutal-black bg-brutal-pink p-4 shadow-brutal">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg
-                className="h-6 w-6 text-brutal-black"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-black text-brutal-black">
-                원가 배분 규칙이 설정되지 않았습니다
-              </h3>
-              <div className="mt-2 text-sm font-medium text-brutal-black">
-                <p>
-                  정확한 원가 계산을 위해{' '}
-                  <Link
-                    href="/dashboard/master-data/cost-rules"
-                    className="px-0.5 font-bold underline underline-offset-2 hover:bg-brutal-white"
-                  >
-                    원가 배분 규칙
-                  </Link>
-                  을 설정하세요.
                 </p>
               </div>
             </div>

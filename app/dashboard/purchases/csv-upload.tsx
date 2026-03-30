@@ -8,7 +8,7 @@ import { toast } from '@/components/ui/toast'
 
 interface CSVRow {
   날짜: string
-  메뉴: string
+  메뉴?: string
   재료: string
   공급업체: string
   수량: string
@@ -49,7 +49,6 @@ export default function CSVUpload() {
         const validationErrors: string[] = []
         results.data.forEach((row, index) => {
           if (!row.날짜) validationErrors.push(`${index + 1}행: 날짜 누락`)
-          if (!row.메뉴) validationErrors.push(`${index + 1}행: 메뉴 누락`)
           if (!row.재료) validationErrors.push(`${index + 1}행: 재료 누락`)
           if (!row.공급업체)
             validationErrors.push(`${index + 1}행: 공급업체 누락`)
@@ -127,7 +126,7 @@ export default function CSVUpload() {
 
   const downloadTemplate = () => {
     const template =
-      '날짜,메뉴,재료,공급업체,수량,단가,비고\n2024-01-01,닭강정,닭고기,ABC공급업체,10.5,5000,테스트 데이터'
+      '날짜,재료,공급업체,수량,단가,비고\n2024-01-01,닭고기,ABC공급업체,10.5,5000,테스트 데이터'
     const blob = new Blob(['\uFEFF' + template], {
       type: 'text/csv;charset=utf-8;',
     })
@@ -164,7 +163,7 @@ export default function CSVUpload() {
                 <div className="space-y-4">
                   <div>
                     <p className="mb-2 text-sm font-medium text-brutal-black">
-                      CSV 파일 형식: 날짜,메뉴,재료,공급업체,수량,단가,비고
+                      CSV 파일 형식: 날짜,재료,공급업체,수량,단가,비고
                     </p>
                     <button
                       type="button"
@@ -211,9 +210,6 @@ export default function CSVUpload() {
                                 날짜
                               </th>
                               <th className="px-3 py-2 text-left text-xs font-bold text-brutal-black">
-                                메뉴
-                              </th>
-                              <th className="px-3 py-2 text-left text-xs font-bold text-brutal-black">
                                 재료
                               </th>
                               <th className="px-3 py-2 text-left text-xs font-bold text-brutal-black">
@@ -232,9 +228,6 @@ export default function CSVUpload() {
                               <tr key={index}>
                                 <td className="whitespace-nowrap px-3 py-2 text-xs font-medium">
                                   {row.날짜}
-                                </td>
-                                <td className="whitespace-nowrap px-3 py-2 text-xs font-medium">
-                                  {row.메뉴}
                                 </td>
                                 <td className="whitespace-nowrap px-3 py-2 text-xs font-medium">
                                   {row.재료}

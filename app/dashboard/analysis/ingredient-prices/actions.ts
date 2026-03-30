@@ -77,7 +77,6 @@ export async function getIngredientPriceTrend(
       JOIN ingredients i ON pt.ingredient_id = i.id
       WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
         AND pt.deleted_at IS NULL
-        AND pt.is_valid = true
         ${purchaseStoreFilter}
       GROUP BY i.id, i.ingredient_name, TO_CHAR(pt.transaction_date, 'YYYY-MM')
       ORDER BY i.ingredient_name, month

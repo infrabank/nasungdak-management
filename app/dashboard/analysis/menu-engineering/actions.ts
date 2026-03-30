@@ -107,7 +107,6 @@ export async function getMenuEngineering(
           END AS avg_unit_price
         FROM purchase_transactions pt
         WHERE pt.deleted_at IS NULL
-          AND pt.is_valid = true
         GROUP BY pt.ingredient_id
       ),
       bom_unit_cost AS (

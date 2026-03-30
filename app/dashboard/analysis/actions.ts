@@ -123,7 +123,6 @@ async function fetchMonthlyAnalysis(
         FROM purchase_transactions pt
         WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND pt.deleted_at IS NULL
-          AND pt.is_valid = true
           ${purchaseStoreFilter}
         GROUP BY TO_CHAR(pt.transaction_date, 'YYYY-MM')
         ORDER BY month
@@ -319,7 +318,6 @@ async function fetchAnalysis(
           END AS avg_unit_price
         FROM purchase_transactions pt
         WHERE pt.deleted_at IS NULL
-          AND pt.is_valid = true
         GROUP BY pt.ingredient_id
       ),
       bom_unit_cost AS (
@@ -352,7 +350,7 @@ async function fetchAnalysis(
         FROM purchase_transactions pt
         WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND pt.deleted_at IS NULL
-          AND pt.is_valid = true
+          AND pt.menu_id IS NOT NULL
           ${purchaseStoreFilter}
         GROUP BY pt.menu_id
       )
@@ -391,7 +389,6 @@ async function fetchAnalysis(
       FROM purchase_transactions pt
       WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
         AND pt.deleted_at IS NULL
-        AND pt.is_valid = true
         ${purchaseStoreFilter}
     `),
     // Get fixed costs for the period
@@ -506,7 +503,6 @@ async function fetchMonthlySkuAnalysis(
           END AS avg_unit_price
         FROM purchase_transactions pt
         WHERE pt.deleted_at IS NULL
-          AND pt.is_valid = true
         GROUP BY pt.ingredient_id
       ),
       bom_unit_cost AS (

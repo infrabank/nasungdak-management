@@ -61,9 +61,6 @@ async function fetchDashboardStats(
         purchaseCount: 0,
         salesCount: 0,
         marginPercent: 0,
-        validPurchases: 0,
-        invalidPurchases: 0,
-        costRules: 0,
         recentPurchases: [],
         recentSales: [],
       },
@@ -81,13 +78,11 @@ async function fetchDashboardStats(
     // Get monthly summary - actual purchase costs (without distribution rules)
     db.execute(sql`
       WITH cost_summary AS (
-        -- Calculate actual cost from all valid purchases (no distribution rules)
         SELECT
           COALESCE(SUM(pt.total_amount), 0) as total_actual_cost
         FROM purchase_transactions pt
         WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND pt.deleted_at IS NULL
-          AND pt.is_valid = true
           ${ptStoreFilter}
       ),
       monthly_sales AS (
@@ -98,23 +93,6 @@ async function fetchDashboardStats(
         WHERE sale_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND deleted_at IS NULL
           ${storeFilter}
-      ),
-      valid_purchases AS (
-        SELECT COUNT(*) as valid_count
-        FROM purchase_transactions
-        WHERE deleted_at IS NULL AND is_valid = true
-          ${storeFilter}
-      ),
-      invalid_purchases AS (
-        SELECT COUNT(*) as invalid_count
-        FROM purchase_transactions
-        WHERE deleted_at IS NULL AND is_valid = false
-          ${storeFilter}
-      ),
-      cost_rules AS (
-        SELECT COUNT(*) as rules_count
-        FROM cost_distribution_rules
-        WHERE deleted_at IS NULL
       ),
       purchase_count AS (
         SELECT COUNT(*) as count
@@ -136,9 +114,6 @@ async function fetchDashboardStats(
         cs.total_actual_cost,
         ms.sales_count,
         ms.total_sales,
-        vp.valid_count,
-        ip.invalid_count,
-        cr.rules_count,
         mfc.total_fixed_costs,
         CASE
           WHEN ms.total_sales > 0
@@ -147,9 +122,6 @@ async function fetchDashboardStats(
         END as margin_percent
       FROM cost_summary cs
       CROSS JOIN monthly_sales ms
-      CROSS JOIN valid_purchases vp
-      CROSS JOIN invalid_purchases ip
-      CROSS JOIN cost_rules cr
       CROSS JOIN purchase_count pc
       CROSS JOIN monthly_fixed_costs mfc
     `),
@@ -159,8 +131,7 @@ async function fetchDashboardStats(
         pt.transaction_date,
         mc.menu_name,
         i.ingredient_name,
-        pt.total_amount,
-        pt.is_valid
+        pt.total_amount
       FROM purchase_transactions pt
       LEFT JOIN menu_categories mc ON pt.menu_id = mc.id
       LEFT JOIN ingredients i ON pt.ingredient_id = i.id
@@ -196,15 +167,10 @@ async function fetchDashboardStats(
       purchaseCount: Number(stats.purchase_count),
       salesCount: Number(stats.sales_count),
       marginPercent: Number(stats.margin_percent),
-      validPurchases: Number(stats.valid_count),
-      invalidPurchases: Number(stats.invalid_count),
-      costRules: Number(stats.rules_count),
       recentPurchases: recentPurchases.rows.map((row: any) => ({
         date: row.transaction_date,
-        menuName: row.menu_name || '-',
         ingredientName: row.ingredient_name || '-',
         amount: Number(row.total_amount),
-        isValid: row.is_valid,
       })),
       recentSales: recentSales.rows.map((row: any) => ({
         date: row.sale_date,
@@ -230,9 +196,6 @@ export async function getDashboardStats() {
           purchaseCount: 0,
           salesCount: 0,
           marginPercent: 0,
-          validPurchases: 0,
-          invalidPurchases: 0,
-          costRules: 0,
           recentPurchases: [],
           recentSales: [],
         },

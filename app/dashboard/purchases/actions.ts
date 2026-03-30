@@ -8,7 +8,6 @@ import {
   purchaseTransactions,
   menuCategories,
   ingredients,
-  menuIngredients,
   inventory,
   inventoryEvents,
 } from '@/lib/db/schema'
@@ -79,9 +78,10 @@ export async function createPurchase(formData: FormData) {
     }
 
     const notes = formData.get('notes')
+    const menuIdRaw = formData.get('menuId')
     const rawData = {
       transactionDate: formData.get('transactionDate'),
-      menuId: formData.get('menuId'),
+      menuId: menuIdRaw && String(menuIdRaw).trim() ? menuIdRaw : null,
       ingredientId: formData.get('ingredientId'),
       supplierName: formData.get('supplierName'),
       quantity: formData.get('quantity'),
@@ -94,24 +94,13 @@ export async function createPurchase(formData: FormData) {
 
     const validatedData = purchaseSchema.parse(rawData)
 
-    // Check if menu-ingredient mapping exists for auto-validation
-    const menuIngredient = await db.query.menuIngredients.findFirst({
-      where: and(
-        eq(menuIngredients.menuId, validatedData.menuId),
-        eq(menuIngredients.ingredientId, validatedData.ingredientId),
-        isNull(menuIngredients.deletedAt)
-      ),
-    })
-
-    const isValid = !!menuIngredient
-
     const transaction = await db.transaction(async (tx) => {
       const [createdPurchase] = await tx
         .insert(purchaseTransactions)
         .values({
           ...validatedData,
           storeId,
-          isValid,
+          isValid: true,
           createdBy: 'system',
         })
         .returning()
@@ -146,7 +135,6 @@ export async function createPurchase(formData: FormData) {
       data: {
         id: transaction.id,
         totalAmount: Number(transaction.totalAmount),
-        isValid: transaction.isValid,
       },
     }
   } catch (error) {
@@ -170,9 +158,10 @@ export async function createPurchase(formData: FormData) {
 export async function updatePurchase(id: string, formData: FormData) {
   try {
     const notes = formData.get('notes')
+    const menuIdRaw = formData.get('menuId')
     const rawData = {
       transactionDate: formData.get('transactionDate'),
-      menuId: formData.get('menuId'),
+      menuId: menuIdRaw && String(menuIdRaw).trim() ? menuIdRaw : null,
       ingredientId: formData.get('ingredientId'),
       supplierName: formData.get('supplierName'),
       quantity: formData.get('quantity'),
@@ -185,22 +174,11 @@ export async function updatePurchase(id: string, formData: FormData) {
 
     const validatedData = purchaseSchema.parse(rawData)
 
-    // Re-check validation
-    const menuIngredient = await db.query.menuIngredients.findFirst({
-      where: and(
-        eq(menuIngredients.menuId, validatedData.menuId),
-        eq(menuIngredients.ingredientId, validatedData.ingredientId),
-        isNull(menuIngredients.deletedAt)
-      ),
-    })
-
-    const isValid = !!menuIngredient
-
     const [transaction] = await db
       .update(purchaseTransactions)
       .set({
         ...validatedData,
-        isValid,
+        isValid: true,
         updatedAt: new Date(),
         updatedBy: 'system',
       })
@@ -276,52 +254,6 @@ export async function deletePurchase(id: string) {
   }
 }
 
-export async function togglePurchaseValidation(id: string) {
-  try {
-    const purchase = await db.query.purchaseTransactions.findFirst({
-      where: eq(purchaseTransactions.id, id),
-    })
-
-    if (!purchase) {
-      return {
-        success: false,
-        error: '매입 내역을 찾을 수 없습니다',
-      }
-    }
-
-    await db
-      .update(purchaseTransactions)
-      .set({
-        isValid: !purchase.isValid,
-        updatedAt: new Date(),
-        updatedBy: 'system',
-      })
-      .where(eq(purchaseTransactions.id, id))
-
-    revalidatePath('/dashboard/purchases')
-    revalidateTag('purchases:all')
-    if (purchase.storeId) {
-      revalidateTag(`purchases:${purchase.storeId}`)
-    }
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
-
-    return {
-      success: true,
-    }
-  } catch (error) {
-    logger.error('Failed to toggle validation:', errorToContext(error))
-    return {
-      success: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : '검증 상태 변경에 실패했습니다',
-    }
-  }
-}
-
 // Default page size for pagination
 const PURCHASES_PAGE_SIZE = 50
 
@@ -334,15 +266,11 @@ async function fetchPurchases(
   page: number,
   authorizedStoreIds: string[]
 ) {
-  // 권한이 있는 매장이 없으면 빈 결과 반환
   if (authorizedStoreIds.length === 0) {
     return { items: [], hasMore: false, page: 1 }
   }
 
-  // Build WHERE conditions
   const conditions = [isNull(purchaseTransactions.deletedAt)]
-
-  // 항상 권한 있는 매장으로 필터링
   conditions.push(inArray(purchaseTransactions.storeId, authorizedStoreIds))
 
   if (startDate !== 'all' && endDate !== 'all') {
@@ -359,7 +287,6 @@ async function fetchPurchases(
     conditions.push(eq(purchaseTransactions.ingredientId, ingredientId))
   }
 
-  // 특정 매장 필터 (권한 체크는 이미 위에서 함)
   if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
     conditions.push(eq(purchaseTransactions.storeId, storeId))
   }
@@ -393,10 +320,9 @@ async function fetchPurchases(
     )
     .where(and(...conditions))
     .orderBy(desc(purchaseTransactions.transactionDate))
-    .limit(PURCHASES_PAGE_SIZE + 1) // Fetch one extra to check if there are more
+    .limit(PURCHASES_PAGE_SIZE + 1)
     .offset(offset)
 
-  // Determine if there are more pages
   const hasMore = purchases.length > PURCHASES_PAGE_SIZE
   const items = hasMore ? purchases.slice(0, PURCHASES_PAGE_SIZE) : purchases
 
@@ -412,7 +338,6 @@ export async function getPurchases(
   page: number = 1
 ) {
   try {
-    // 사용자 권한 확인
     const authorizedStoreIds = await getAuthorizedStoreIds()
     if (authorizedStoreIds.length === 0) {
       return { items: [], hasMore: false, page: 1 }
@@ -425,7 +350,6 @@ export async function getPurchases(
     const normalizedStoreId = storeId ?? 'all'
     const normalizedPage = Math.max(1, page)
 
-    // 캐시 키에 사용자의 권한 정보 포함
     const storeKey = authorizedStoreIds.sort().join(',')
 
     const getCachedPurchases = unstable_cache(
@@ -440,7 +364,7 @@ export async function getPurchases(
           authorizedStoreIds
         ),
       [
-        'purchases:list:v3', // Cache version bump
+        'purchases:list:v4',
         storeKey,
         normalizedStartDate,
         normalizedEndDate,
@@ -517,9 +441,29 @@ export async function getIngredientsForFilter() {
   }
 }
 
+export async function getSupplierSuggestions(): Promise<string[]> {
+  try {
+    const result = await db.execute(sql`
+      SELECT DISTINCT supplier_name
+      FROM purchase_transactions
+      WHERE deleted_at IS NULL AND supplier_name IS NOT NULL
+      UNION
+      SELECT supplier_name
+      FROM suppliers
+      WHERE deleted_at IS NULL AND supplier_name IS NOT NULL
+      ORDER BY supplier_name
+      LIMIT 200
+    `)
+    return result.rows.map((row: any) => row.supplier_name as string)
+  } catch (error) {
+    logger.error('Failed to fetch supplier suggestions:', errorToContext(error))
+    return []
+  }
+}
+
 interface CSVRow {
   날짜: string
-  메뉴: string
+  메뉴?: string
   재료: string
   공급업체: string
   수량: string
@@ -528,7 +472,7 @@ interface CSVRow {
 }
 
 export interface PurchaseEntry {
-  menuId: string
+  menuId?: string | null
   ingredientId: string
   quantity: string
   unitPrice: string
@@ -548,32 +492,15 @@ export async function createMultiplePurchases(
     index: number
     id: string
     totalAmount: number
-    isValid: boolean
   }> = []
 
   try {
-    // Get storeId from parameter or use user's first authorized store
     let storeId = formStoreId || null
     if (!storeId) {
       const authorizedStoreIds = await getAuthorizedStoreIds()
       storeId = authorizedStoreIds[0] || null
     }
 
-    // Pre-fetch all menu-ingredient mappings - SINGLE QUERY (avoids N+1)
-    const allMenuIngredients = await db
-      .select({
-        menuId: menuIngredients.menuId,
-        ingredientId: menuIngredients.ingredientId,
-      })
-      .from(menuIngredients)
-      .where(isNull(menuIngredients.deletedAt))
-
-    // Create composite key map for O(1) lookup
-    const menuIngredientMap = new Set(
-      allMenuIngredients.map((mi) => `${mi.menuId}:${mi.ingredientId}`)
-    )
-
-    // Use transaction for atomicity
     await db.transaction(async (tx) => {
       for (let i = 0; i < entries.length; i++) {
         const entry = entries[i]
@@ -582,7 +509,7 @@ export async function createMultiplePurchases(
         try {
           const rawData = {
             transactionDate,
-            menuId: entry.menuId,
+            menuId: entry.menuId || null,
             ingredientId: entry.ingredientId,
             supplierName,
             quantity: entry.quantity,
@@ -592,17 +519,12 @@ export async function createMultiplePurchases(
 
           const validatedData = purchaseSchema.parse(rawData)
 
-          // Check if menu-ingredient mapping exists using pre-fetched Set - O(1)
-          const isValid = menuIngredientMap.has(
-            `${validatedData.menuId}:${validatedData.ingredientId}`
-          )
-
           const [transaction] = await tx
             .insert(purchaseTransactions)
             .values({
               ...validatedData,
               storeId,
-              isValid,
+              isValid: true,
               createdBy: 'system',
             })
             .returning()
@@ -623,7 +545,6 @@ export async function createMultiplePurchases(
             index: i,
             id: transaction.id,
             totalAmount: Number(transaction.totalAmount),
-            isValid: transaction.isValid,
           })
         } catch (error) {
           failedCount++
@@ -680,14 +601,13 @@ export async function bulkCreatePurchases(
   const errors: string[] = []
 
   try {
-    // Get storeId from parameter or use user's first authorized store
     let storeId = formStoreId || null
     if (!storeId) {
       const authorizedStoreIds = await getAuthorizedStoreIds()
       storeId = authorizedStoreIds[0] || null
     }
 
-    // Fetch all menus and ingredients for name-to-ID mapping
+    // Fetch menus and ingredients for name-to-ID mapping
     const menus = await db
       .select({
         id: menuCategories.id,
@@ -706,38 +626,22 @@ export async function bulkCreatePurchases(
       .from(ingredients)
       .where(and(isNull(ingredients.deletedAt), eq(ingredients.isActive, true)))
 
-    // Create lookup maps
     const menuMap = new Map(menus.map((m) => [m.menuName, m.id]))
     const ingredientMap = new Map(
       ingredientsList.map((i) => [i.ingredientName, i.id])
     )
 
-    // Pre-fetch all menu-ingredient mappings - SINGLE QUERY (avoids N+1)
-    const allMenuIngredients = await db
-      .select({
-        menuId: menuIngredients.menuId,
-        ingredientId: menuIngredients.ingredientId,
-      })
-      .from(menuIngredients)
-      .where(isNull(menuIngredients.deletedAt))
-
-    // Create composite key set for O(1) lookup
-    const menuIngredientSet = new Set(
-      allMenuIngredients.map((mi) => `${mi.menuId}:${mi.ingredientId}`)
-    )
-
-    // Use transaction for atomicity
     await db.transaction(async (tx) => {
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i]
         const rowNum = i + 1
 
         try {
-          // Find menu and ingredient IDs
-          const menuId = menuMap.get(row.메뉴)
+          // Menu is now optional in CSV
+          const menuId = row.메뉴 ? menuMap.get(row.메뉴) : null
           const ingredientId = ingredientMap.get(row.재료)
 
-          if (!menuId) {
+          if (row.메뉴 && !menuId) {
             errors.push(`${rowNum}행: 메뉴 '${row.메뉴}'를 찾을 수 없습니다`)
             failedCount++
             continue
@@ -749,10 +653,9 @@ export async function bulkCreatePurchases(
             continue
           }
 
-          // Validate data
           const validatedData = purchaseSchema.parse({
             transactionDate: row.날짜,
-            menuId,
+            menuId: menuId || null,
             ingredientId,
             supplierName: row.공급업체,
             quantity: row.수량,
@@ -760,16 +663,10 @@ export async function bulkCreatePurchases(
             notes: row.비고 && row.비고.trim() ? row.비고.trim() : null,
           })
 
-          // Check if menu-ingredient mapping exists using pre-fetched Set - O(1)
-          const isValid = menuIngredientSet.has(
-            `${validatedData.menuId}:${validatedData.ingredientId}`
-          )
-
-          // Insert purchase transaction using transaction context
           await tx.insert(purchaseTransactions).values({
             ...validatedData,
             storeId,
-            isValid,
+            isValid: true,
             createdBy: 'system',
           })
 
@@ -800,7 +697,7 @@ export async function bulkCreatePurchases(
       success: true,
       successCount,
       failedCount,
-      errors: errors.slice(0, 20), // Return first 20 errors
+      errors: errors.slice(0, 20),
     }
   } catch (error) {
     logger.error('Failed to bulk create purchases:', errorToContext(error))
@@ -822,14 +719,11 @@ async function fetchPurchasesTotals(
   storeId: string,
   authorizedStoreIds: string[]
 ) {
-  // 권한이 있는 매장이 없으면 빈 결과 반환
   if (authorizedStoreIds.length === 0) {
     return { totalCount: 0, totalQuantity: 0, totalAmount: 0 }
   }
 
   const conditions = [isNull(purchaseTransactions.deletedAt)]
-
-  // 항상 권한 있는 매장으로 필터링
   conditions.push(inArray(purchaseTransactions.storeId, authorizedStoreIds))
 
   if (startDate !== 'all' && endDate !== 'all') {
@@ -874,7 +768,6 @@ export async function getPurchasesTotals(
   storeId?: string
 ) {
   try {
-    // 사용자 권한 확인
     const authorizedStoreIds = await getAuthorizedStoreIds()
     if (authorizedStoreIds.length === 0) {
       return { totalCount: 0, totalQuantity: 0, totalAmount: 0 }
@@ -886,7 +779,6 @@ export async function getPurchasesTotals(
     const normalizedIngredientId = ingredientId ?? 'all'
     const normalizedStoreId = storeId ?? 'all'
 
-    // 캐시 키에 사용자의 권한 정보 포함
     const storeKey = authorizedStoreIds.sort().join(',')
 
     const getCachedPurchasesTotals = unstable_cache(

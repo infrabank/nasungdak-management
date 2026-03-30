@@ -14,11 +14,6 @@ export default function MasterDataPage() {
 
   const items = [
     {
-      href: '/dashboard/master-data/menus',
-      title: '메뉴 카테고리',
-      desc: '메뉴 카테고리 등록 및 관리',
-    },
-    {
       href: '/dashboard/master-data/ingredients',
       title: '재료',
       desc: '재료 등록 및 단위당 원가 관리',
@@ -34,24 +29,19 @@ export default function MasterDataPage() {
       desc: 'SKU별 원재료 구성 및 원가 계산',
     },
     {
-      href: '/dashboard/master-data/sales-menus',
-      title: '판매 메뉴',
-      desc: '단품/세트 메뉴 등록 및 가격 설정',
-    },
-    {
-      href: '/dashboard/master-data/menu-ingredients',
-      title: '메뉴-재료 매핑',
-      desc: '메뉴별 필요 재료 및 수량 설정',
-    },
-    {
-      href: '/dashboard/master-data/cost-rules',
-      title: '원가 배분 규칙',
-      desc: '재료별 원가 배분 비율 설정',
-    },
-    {
       href: '/dashboard/master-data/suppliers',
       title: '공급업체',
       desc: '거래처 정보 등록 및 관리',
+    },
+    {
+      href: '/dashboard/master-data/menus',
+      title: '메뉴 카테고리',
+      desc: '메뉴 카테고리 등록 및 관리',
+    },
+    {
+      href: '/dashboard/master-data/sales-menus',
+      title: '판매 메뉴',
+      desc: '단품/세트 메뉴 등록 및 가격 설정',
     },
   ]
 

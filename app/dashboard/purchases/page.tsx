@@ -27,7 +27,6 @@ export const dynamic = 'force-dynamic'
 import {
   getPurchases,
   getPurchasesTotals,
-  getMenusForFilter,
   getIngredientsForFilter,
 } from './actions'
 import CSVUpload from './csv-upload'
@@ -65,10 +64,9 @@ export default async function PurchasesPage({
   const storeId = normalizeOptionalParam(params.storeId)
   const page = Math.max(1, parseInt(params.page || '1', 10) || 1)
 
-  const [purchasesResult, totals, menus, ingredientsList] = await Promise.all([
+  const [purchasesResult, totals, ingredientsList] = await Promise.all([
     getPurchases(startDate, endDate, menuId, ingredientId, storeId, page),
     getPurchasesTotals(startDate, endDate, menuId, ingredientId, storeId),
-    getMenusForFilter(),
     getIngredientsForFilter(),
   ])
 
@@ -81,7 +79,6 @@ export default async function PurchasesPage({
     const searchParamsObj = new URLSearchParams()
     searchParamsObj.set('startDate', startDate)
     searchParamsObj.set('endDate', endDate)
-    if (menuId) searchParamsObj.set('menuId', menuId)
     if (ingredientId) searchParamsObj.set('ingredientId', ingredientId)
     if (storeId) searchParamsObj.set('storeId', storeId)
     if (newPage > 1) searchParamsObj.set('page', String(newPage))
@@ -130,7 +127,7 @@ export default async function PurchasesPage({
       >
         {storeId && <input type="hidden" name="storeId" value={storeId} />}
 
-        <div className="space-y-4 md:grid md:grid-cols-4 md:gap-4 md:space-y-0">
+        <div className="space-y-4 md:grid md:grid-cols-3 md:gap-4 md:space-y-0">
           {/* Start Date */}
           <div>
             <label htmlFor="startDate" className={labelClass}>
@@ -157,41 +154,6 @@ export default async function PurchasesPage({
               defaultValue={endDate}
               className={inputClass}
             />
-          </div>
-
-          {/* Menu Filter */}
-          <div>
-            <label htmlFor="menuId" className={labelClass}>
-              🍗 메뉴
-            </label>
-            <div className="relative">
-              <select
-                id="menuId"
-                name="menuId"
-                defaultValue={menuId}
-                className={selectClass}
-              >
-                <option value="">전체</option>
-                {menus.map((menu) => (
-                  <option key={menu.id} value={menu.id}>
-                    {menu.menuName}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4">
-                <svg
-                  className="h-5 w-5 text-brutal-black"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-            </div>
           </div>
 
           {/* Ingredient Filter */}
@@ -235,7 +197,7 @@ export default async function PurchasesPage({
           <p className="text-sm font-medium text-brutal-black">
             페이지 {page} · {purchases.length}건 표시
             {hasMore ? ' (더 있음)' : ''}
-            {menuId || ingredientId ? ' · 필터 적용됨' : ''}
+            {ingredientId ? ' · 필터 적용됨' : ''}
           </p>
           <div className="flex gap-2">
             <a
@@ -315,9 +277,6 @@ export default async function PurchasesPage({
                   날짜
                 </th>
                 <th className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
-                  메뉴
-                </th>
-                <th className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
                   재료
                 </th>
                 <th className="px-3 py-3.5 text-left text-sm font-black text-brutal-black">
@@ -332,9 +291,6 @@ export default async function PurchasesPage({
                 <th className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
                   합계
                 </th>
-                <th className="px-3 py-3.5 text-center text-sm font-black text-brutal-black">
-                  검증
-                </th>
                 <th className="px-3 py-3.5 text-right text-sm font-black text-brutal-black">
                   작업
                 </th>
@@ -344,7 +300,7 @@ export default async function PurchasesPage({
               {purchases.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={7}
                     className="py-8 text-center text-sm font-medium text-brutal-black"
                   >
                     매입 데이터가 없습니다. &ldquo;새 매입 등록&rdquo; 버튼을
@@ -358,7 +314,7 @@ export default async function PurchasesPage({
                   ))}
                   <tr className="border-t-3 border-brutal-black bg-brutal-yellow/50 font-bold">
                     <td
-                      colSpan={4}
+                      colSpan={3}
                       className="py-4 pl-4 pr-3 text-right text-sm text-brutal-black sm:pl-6"
                     >
                       검색 기간 합계 ({totalCount}건)
@@ -372,7 +328,7 @@ export default async function PurchasesPage({
                     <td className="whitespace-nowrap px-3 py-4 text-right text-sm font-black text-brutal-black">
                       {formatCurrency(totalAmount)}
                     </td>
-                    <td colSpan={2}></td>
+                    <td></td>
                   </tr>
                 </>
               )}
