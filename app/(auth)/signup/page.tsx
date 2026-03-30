@@ -25,7 +25,7 @@ export default function SignupPage() {
           회원가입
         </h2>
         <p className="mt-3 text-center text-base font-medium text-brutal-black/70">
-          매장 관리를 시작하세요
+          사장북을 시작하세요
         </p>
       </div>
 

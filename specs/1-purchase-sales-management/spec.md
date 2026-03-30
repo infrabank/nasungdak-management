@@ -144,7 +144,7 @@ A business operator needs to maintain reference lists of menu categories, ingred
 
 ### Assumptions
 
-- **Business Context**: This system is designed for a single-location fried chicken restaurant ("나성닭강정") with existing Excel-based tracking. The business has established menu categories and ingredient lists that are relatively stable.
+- **Business Context**: This system is designed for small restaurant businesses (사장북 - sajangbook.com) with existing Excel-based tracking. The business has established menu categories and ingredient lists that are relatively stable.
 
 - **Data Volume**: The system will handle approximately 10-50 purchase transactions per month and daily sales entries (30-31 records per month), with total data volume expected under 10,000 records per year.
 

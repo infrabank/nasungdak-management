@@ -29,7 +29,7 @@ Default to 1-2 sentence explanations. Only expand when complexity absolutely req
 
 ## Overview
 
-나성닭강정 관리 시스템 - A Next.js 15 management web application using App Router, Drizzle ORM, and Vercel Postgres.
+사장북(sajangbook.com) 관리 시스템 - A Next.js 15 management web application using App Router, Drizzle ORM, and Vercel Postgres.
 
 ## Development Commands
 

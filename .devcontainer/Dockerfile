@@ -1,12 +1,12 @@
 # ==============================================================================
-# Dev Container for store-management-saas
+# Dev Container for sajangbook
 # Node 20 LTS + opencode + Git
 # ==============================================================================
 
 FROM node:20-bookworm
 
 # 메타데이터
-LABEL maintainer="store-management-saas"
+LABEL maintainer="sajangbook"
 LABEL description="Dev Container for 매입/판매/원가 관리 SaaS"
 
 # 필수 패키지만 설치 (최소화)
@@ -29,7 +29,7 @@ RUN npm install -g @anthropics/claude-code
 USER node
 
 # 작업 디렉토리
-WORKDIR /workspaces/store-management-saas
+WORKDIR /workspaces/sajangbook
 
 # 기본 쉘
 SHELL ["/bin/bash", "-c"]

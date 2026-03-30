@@ -22,8 +22,8 @@ import {
 import PublicHeader from '@/components/public-header'
 
 export const metadata = {
-  title: '설정 가이드 - 매장 관리 시스템',
-  description: '매장 관리 시스템 신규 사용자를 위한 단계별 설정 가이드입니다.',
+  title: '설정 가이드 - 사장북',
+  description: '사장북 신규 사용자를 위한 단계별 설정 가이드입니다.',
 }
 
 const STEPS = [
@@ -359,7 +359,7 @@ export default function GuidePage() {
       {/* Footer */}
       <footer className="border-t-3 border-brutal-black bg-brutal-white px-4 py-6">
         <div className="mx-auto max-w-5xl text-center text-sm text-brutal-black/70">
-          <p>2026 매장 관리 시스템. All rights reserved.</p>
+          <p>2026 사장북(sajangbook.com). All rights reserved.</p>
         </div>
       </footer>
     </div>

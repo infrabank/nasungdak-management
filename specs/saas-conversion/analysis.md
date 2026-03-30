@@ -1,4 +1,4 @@
-# 나성닭강정 SaaS 전환 종합 분석 보고서
+# 사장북(sajangbook.com) SaaS 전환 종합 분석 보고서
 
 > 분석일: 2026-01-31
 > 분석 대상: Next.js 15 + Drizzle ORM 매장 관리 시스템

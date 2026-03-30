@@ -43,7 +43,7 @@ export default async function PublicHeader() {
               />
             ) : (
               <span className="text-lg font-black text-brutal-black">
-                {branding?.name || '매장 관리'}
+                {branding?.name || '사장북'}
               </span>
             )}
           </Link>
@@ -109,7 +109,7 @@ export default async function PublicHeader() {
                 />
               ) : (
                 <span className="text-xl font-black text-brutal-black">
-                  {branding?.name || '매장 관리'}
+                  {branding?.name || '사장북'}
                 </span>
               )}
             </Link>

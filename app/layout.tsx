@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toast'
 import { ConfirmProvider } from '@/components/ui/confirm-dialog'
 
 export const metadata: Metadata = {
-  title: '매장 관리 시스템',
+  title: '사장북 - sajangbook.com',
   description: '매입, 판매, 원가를 효율적으로 관리하는 SaaS 플랫폼',
 }
 

@@ -22,7 +22,7 @@ export default function LoginPage() {
           로그인
         </h2>
         <p className="mt-3 text-center text-base font-medium text-brutal-black/70">
-          매장 관리 시스템
+          사장북
         </p>
       </div>
 

@@ -31,7 +31,7 @@ nvm use  # .nvmrc 자동 인식
 ```bash
 # 1. 저장소 클론
 git clone <repo-url>
-cd 매입_판매_원가
+cd sajangbook
 
 # 2. 의존성 설치
 npm install
@@ -167,7 +167,7 @@ opencode
 ### 구조 원칙: 자동 생성물 vs 수동 코드 분리
 
 ```
-매입_판매_원가/
+sajangbook/
 ├── [자동 생성물 - AI/도구가 생성]
 │   ├── specs/                    # 기능 명세서 (opencode/speckit 생성)
 │   │   └── {feature}/
@@ -310,7 +310,7 @@ code .
 | 항목       | 값                                  |
 | ---------- | ----------------------------------- |
 | Base Image | Node 20 LTS (Debian Bookworm)       |
-| 작업 경로  | `/workspaces/store-management-saas` |
+| 작업 경로  | `/workspaces/sajangbook` |
 | opencode   | 전역 설치됨                         |
 | npm        | 포함됨                              |
 | git        | 포함됨                              |
@@ -376,7 +376,7 @@ npm run dev  # 별도 터미널
 | 컨테이너 빌드 실패   | Docker Desktop 재시작 후 재시도                             |
 | opencode 명령 없음   | 컨테이너 내에서 `npm install -g @anthropics/claude-code`    |
 | 포트 3000 연결 안 됨 | VS Code 하단 "Ports" 탭에서 3000 포트 포워딩 확인           |
-| 파일 권한 문제       | `sudo chown -R node:node /workspaces/store-management-saas` |
+| 파일 권한 문제       | `sudo chown -R node:node /workspaces/sajangbook` |
 
 ### Dev Container 없이 개발하기
 

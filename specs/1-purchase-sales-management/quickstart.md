@@ -20,7 +20,7 @@
 
 ```bash
 git clone <repository-url>
-cd 매입_판매_원가
+cd sajangbook
 git checkout 1-purchase-sales-management
 ```
 
@@ -460,7 +460,7 @@ Opens Drizzle Studio at [https://local.drizzle.studio](https://local.drizzle.stu
 ### Import Excel Data
 
 ```bash
-npm run import:excel -- path/to/매입_판매_원가.xlsx
+npm run import:excel -- path/to/sajangbook.xlsx
 ```
 
 Imports all data and generates report.

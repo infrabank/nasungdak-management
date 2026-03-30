@@ -5,8 +5,8 @@ import PublicHeader from '@/components/public-header'
 import PricingCards from './pricing-cards'
 
 export const metadata = {
-  title: '요금제 - 매장 관리 시스템',
-  description: '매장 관리 시스템의 요금제를 확인하세요.',
+  title: '요금제 - 사장북',
+  description: '사장북의 요금제를 확인하세요.',
 }
 
 // Features to highlight in pricing table
@@ -229,7 +229,7 @@ export default function PricingPage() {
             지금 바로 시작하세요
           </h2>
           <p className="mt-4 text-lg text-brutal-black/80">
-            14일 무료 체험으로 매장 관리 시스템의 모든 기능을 경험해보세요.
+            14일 무료 체험으로 사장북의 모든 기능을 경험해보세요.
             <br />
             <span className="font-medium">
               7일 이내 100% 환불 · 언제든 해지 가능
@@ -247,7 +247,7 @@ export default function PricingPage() {
       {/* Footer */}
       <footer className="border-t-3 border-brutal-black bg-brutal-white px-4 py-8">
         <div className="mx-auto max-w-7xl text-center text-sm text-brutal-black/70">
-          <p>© 2026 매장 관리 시스템. All rights reserved.</p>
+          <p>© 2026 사장북(sajangbook.com). All rights reserved.</p>
         </div>
       </footer>
     </div>

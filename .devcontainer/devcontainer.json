@@ -1,16 +1,16 @@
 {
-  "name": "store-management-saas",
+  "name": "sajangbook",
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
   },
-  "workspaceFolder": "/workspaces/store-management-saas",
+  "workspaceFolder": "/workspaces/sajangbook",
 
   // 컨테이너 생성 후 실행 (한 번만)
   "postCreateCommand": "npm install && npm install -g @anthropics/claude-code",
 
   // 컨테이너 시작할 때마다 실행
-  "postStartCommand": "git config --global --add safe.directory /workspaces/store-management-saas",
+  "postStartCommand": "git config --global --add safe.directory /workspaces/sajangbook",
 
   // 환경 변수
   "containerEnv": {
@@ -42,8 +42,8 @@
 
   // 볼륨 마운트 (specs/ 영구 보존)
   "mounts": [
-    "source=store-management-specs,target=/workspaces/store-management-saas/specs,type=volume",
-    "source=store-management-node-modules,target=/workspaces/store-management-saas/node_modules,type=volume"
+    "source=store-management-specs,target=/workspaces/sajangbook/specs,type=volume",
+    "source=store-management-node-modules,target=/workspaces/sajangbook/node_modules,type=volume"
   ],
 
   // 컨테이너 유저 (non-root)

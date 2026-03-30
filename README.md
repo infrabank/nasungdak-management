@@ -42,8 +42,8 @@
 ### 1. 설치
 
 ```bash
-git clone https://github.com/your-org/store-management-saas.git
-cd store-management-saas
+git clone https://github.com/your-org/sajangbook.git
+cd sajangbook
 npm install
 ```
 

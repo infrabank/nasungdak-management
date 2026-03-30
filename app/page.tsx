@@ -235,7 +235,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="text-center">
             <h2 className="text-3xl font-black text-brutal-black sm:text-4xl">
-              왜 매장 관리 시스템인가요?
+              왜 사장북인가요?
             </h2>
           </div>
 
@@ -525,7 +525,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <div className="text-sm text-brutal-black/70">
-              2026 매장 관리 시스템. All rights reserved.
+              2026 사장북(sajangbook.com). All rights reserved.
             </div>
             <div className="flex gap-6 text-sm">
               <Link

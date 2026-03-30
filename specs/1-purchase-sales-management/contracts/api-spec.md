@@ -918,6 +918,6 @@ Use test database with seeded data:
 4. Validate all data
 5. Generate import report
 
-**Run**: `npm run import:excel -- path/to/매입_판매_원가.xlsx`
+**Run**: `npm run import:excel -- path/to/sajangbook.xlsx`
 
 **Output**: JSON report with counts, errors, and validation warnings

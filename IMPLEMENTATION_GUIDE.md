@@ -29,7 +29,7 @@
 ### 프로젝트 구조
 
 ```
-매입_판매_원가/
+sajangbook/
 ├── app/                        # Next.js App Router
 │   ├── (auth)/                 # 인증 관련 페이지
 │   │   └── login/

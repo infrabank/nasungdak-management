@@ -1,4 +1,4 @@
--- Create all tables for 나성닭강정 매입·판매·원가 관리 시스템
+-- Create all tables for 사장북(sajangbook.com) 매입·판매·원가 관리 시스템
 
 -- 1. Menu Categories Table
 CREATE TABLE IF NOT EXISTS menu_categories (
