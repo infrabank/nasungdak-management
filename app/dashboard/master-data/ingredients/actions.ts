@@ -181,28 +181,32 @@ export async function deleteIngredient(id: string) {
   }
 }
 
-export async function getIngredients() {
+export async function getIngredients(includeOneTime?: boolean) {
   try {
     const organizationId = await getOrganizationId()
     const orgKey = organizationId ?? 'all'
+    const oneTimeKey = includeOneTime ? 'with-onetime' : 'no-onetime'
 
     const getCached = unstable_cache(
       async () => {
+        const conditions = [isNull(ingredients.deletedAt)]
+
+        if (organizationId) {
+          conditions.push(eq(ingredients.organizationId, organizationId))
+        }
+
+        if (!includeOneTime) {
+          conditions.push(eq(ingredients.isOneTime, false))
+        }
+
         return await db
           .select()
           .from(ingredients)
-          .where(
-            and(
-              isNull(ingredients.deletedAt),
-              organizationId
-                ? eq(ingredients.organizationId, organizationId)
-                : undefined
-            )
-          )
+          .where(and(...conditions))
           .orderBy(ingredients.ingredientName)
           .limit(500)
       },
-      ['ingredients:list', orgKey],
+      ['ingredients:list', orgKey, oneTimeKey],
       { tags: [`ingredients:${orgKey}`] }
     )
 

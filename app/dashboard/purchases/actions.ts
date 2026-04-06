@@ -13,7 +13,7 @@ import {
 } from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import { getAuthorizedStoreIds, getOrganizationId } from '@/lib/auth-context'
 
 async function syncPurchaseToInventory(
   tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
@@ -473,10 +473,12 @@ interface CSVRow {
 
 export interface PurchaseEntry {
   menuId?: string | null
-  ingredientId: string
+  ingredientId?: string
   quantity: string
   unitPrice: string
   notes?: string | null
+  quickIngredientName?: string
+  quickIngredientUnit?: string
 }
 
 export async function createMultiplePurchases(
@@ -501,16 +503,65 @@ export async function createMultiplePurchases(
       storeId = authorizedStoreIds[0] || null
     }
 
+    const organizationId = await getOrganizationId()
+
     await db.transaction(async (tx) => {
       for (let i = 0; i < entries.length; i++) {
         const entry = entries[i]
         const rowNum = i + 1
 
         try {
+          let resolvedIngredientId = entry.ingredientId
+
+          // Handle quick (one-time) ingredient creation
+          if (
+            !resolvedIngredientId &&
+            entry.quickIngredientName &&
+            entry.quickIngredientUnit
+          ) {
+            const trimmedName = entry.quickIngredientName.trim()
+            const trimmedUnit = entry.quickIngredientUnit.trim()
+
+            // Search for existing one-time ingredient with same name + org
+            if (organizationId) {
+              const existing = await tx.query.ingredients.findFirst({
+                where: and(
+                  eq(ingredients.ingredientName, trimmedName),
+                  eq(ingredients.isOneTime, true),
+                  eq(ingredients.organizationId, organizationId),
+                  isNull(ingredients.deletedAt)
+                ),
+              })
+
+              if (existing) {
+                resolvedIngredientId = existing.id
+              }
+            }
+
+            // Create new one-time ingredient if not found
+            if (!resolvedIngredientId) {
+              const [newIngredient] = await tx
+                .insert(ingredients)
+                .values({
+                  ingredientName: trimmedName,
+                  unit: trimmedUnit,
+                  isOneTime: true,
+                  organizationId: organizationId || undefined,
+                  createdBy: 'system',
+                })
+                .returning()
+              resolvedIngredientId = newIngredient.id
+            }
+          }
+
+          if (!resolvedIngredientId) {
+            throw new Error('재료를 선택하거나 입력해주세요')
+          }
+
           const rawData = {
             transactionDate,
             menuId: entry.menuId || null,
-            ingredientId: entry.ingredientId,
+            ingredientId: resolvedIngredientId,
             supplierName,
             quantity: entry.quantity,
             unitPrice: entry.unitPrice,
@@ -708,6 +759,51 @@ export async function bulkCreatePurchases(
       error:
         error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
     }
+  }
+}
+
+export async function getRecentPurchaseIngredients(): Promise<
+  Array<{ id: string; ingredientName: string; unit: string }>
+> {
+  try {
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) return []
+
+    const result = await db
+      .select({
+        id: ingredients.id,
+        ingredientName: ingredients.ingredientName,
+        unit: ingredients.unit,
+        lastUsed: sql<Date>`MAX(${purchaseTransactions.createdAt})`,
+      })
+      .from(purchaseTransactions)
+      .innerJoin(
+        ingredients,
+        eq(purchaseTransactions.ingredientId, ingredients.id)
+      )
+      .where(
+        and(
+          isNull(purchaseTransactions.deletedAt),
+          isNull(ingredients.deletedAt),
+          eq(ingredients.isActive, true),
+          inArray(purchaseTransactions.storeId, authorizedStoreIds)
+        )
+      )
+      .groupBy(ingredients.id, ingredients.ingredientName, ingredients.unit)
+      .orderBy(desc(sql`MAX(${purchaseTransactions.createdAt})`))
+      .limit(10)
+
+    return result.map((r) => ({
+      id: r.id,
+      ingredientName: r.ingredientName,
+      unit: r.unit,
+    }))
+  } catch (error) {
+    logger.error(
+      'Failed to fetch recent purchase ingredients:',
+      errorToContext(error)
+    )
+    return []
   }
 }
 

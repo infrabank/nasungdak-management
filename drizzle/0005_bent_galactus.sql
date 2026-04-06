@@ -1,0 +1,1 @@
+ALTER TABLE "ingredients" ADD COLUMN "is_one_time" boolean DEFAULT false NOT NULL;

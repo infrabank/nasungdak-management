@@ -2,10 +2,10 @@ import Link from 'next/link'
 
 export default function MasterDataPage() {
   const cardColors = [
+    'bg-brutal-pink',
     'bg-brutal-yellow',
     'bg-brutal-green',
     'bg-brutal-blue',
-    'bg-brutal-pink',
     'bg-brutal-purple',
     'bg-brutal-white',
     'bg-brutal-yellow',
@@ -13,6 +13,11 @@ export default function MasterDataPage() {
   ]
 
   const items = [
+    {
+      href: '/dashboard/master-data/menu-setup',
+      title: '메뉴 셋업 마법사',
+      desc: '메뉴+재료+SKU를 한번에 등록',
+    },
     {
       href: '/dashboard/master-data/ingredients',
       title: '재료',

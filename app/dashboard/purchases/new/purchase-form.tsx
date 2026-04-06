@@ -10,7 +10,11 @@ import {
   Suspense,
 } from 'react'
 import { useRouter } from 'next/navigation'
-import { createMultiplePurchases, getSupplierSuggestions } from '../actions'
+import {
+  createMultiplePurchases,
+  getSupplierSuggestions,
+  getRecentPurchaseIngredients,
+} from '../actions'
 import type { PurchaseEntry } from '../actions'
 import {
   getIngredients,
@@ -18,6 +22,8 @@ import {
   quickRegisterIngredient,
 } from '../../master-data/ingredients/actions'
 import { Button } from '@/components/ui/button'
+import { Combobox } from '@/components/ui/combobox'
+import type { ComboboxOption } from '@/components/ui/combobox'
 import { toast } from '@/components/ui/toast'
 
 const BarcodeScanner = lazy(() => import('@/components/barcode-scanner'))
@@ -33,6 +39,9 @@ type EntryRow = {
   totalPrice: string
   notes: string
   isExpanded: boolean
+  isQuickEntry: boolean
+  quickIngredientName: string
+  quickIngredientUnit: string
 }
 
 function generateId() {
@@ -48,6 +57,9 @@ function createEmptyRow(): EntryRow {
     totalPrice: '',
     notes: '',
     isExpanded: true,
+    isQuickEntry: false,
+    quickIngredientName: '',
+    quickIngredientUnit: '',
   }
 }
 
@@ -74,6 +86,10 @@ export default function PurchaseForm() {
   const [regUnit, setRegUnit] = useState('')
   const [regUnitCost, setRegUnitCost] = useState('')
   const [isRegistering, setIsRegistering] = useState(false)
+
+  const [recentIngredients, setRecentIngredients] = useState<
+    Array<{ id: string; ingredientName: string; unit: string }>
+  >([])
 
   const [transactionDate, setTransactionDate] = useState(
     new Date().toISOString().split('T')[0]
@@ -264,12 +280,15 @@ export default function PurchaseForm() {
   }, [])
 
   useEffect(() => {
-    Promise.all([getIngredients(), getSupplierSuggestions()]).then(
-      ([ingredientsData, suggestions]) => {
-        setIngredients(ingredientsData)
-        setSupplierSuggestions(suggestions)
-      }
-    )
+    Promise.all([
+      getIngredients(),
+      getSupplierSuggestions(),
+      getRecentPurchaseIngredients(),
+    ]).then(([ingredientsData, suggestions, recent]) => {
+      setIngredients(ingredientsData)
+      setSupplierSuggestions(suggestions)
+      setRecentIngredients(recent)
+    })
   }, [])
 
   const updateEntry = useCallback(
@@ -322,7 +341,11 @@ export default function PurchaseForm() {
     }
 
     const validEntries = entries.filter(
-      (entry) => entry.ingredientId && entry.quantity && entry.totalPrice
+      (entry) =>
+        (entry.ingredientId ||
+          (entry.isQuickEntry && entry.quickIngredientName && entry.quickIngredientUnit)) &&
+        entry.quantity &&
+        entry.totalPrice
     )
     if (validEntries.length === 0) {
       toast.error('최소 하나의 항목을 입력해주세요')
@@ -332,13 +355,19 @@ export default function PurchaseForm() {
     setIsSubmitting(true)
     try {
       const purchaseEntries: PurchaseEntry[] = validEntries.map((entry) => ({
-        ingredientId: entry.ingredientId,
+        ingredientId: entry.isQuickEntry ? undefined : entry.ingredientId,
         quantity: entry.quantity,
         unitPrice: calculateUnitPrice(
           entry.quantity,
           entry.totalPrice
         ).toString(),
         notes: entry.notes || null,
+        quickIngredientName: entry.isQuickEntry
+          ? entry.quickIngredientName
+          : undefined,
+        quickIngredientUnit: entry.isQuickEntry
+          ? entry.quickIngredientUnit
+          : undefined,
       }))
 
       const result = await createMultiplePurchases(
@@ -372,6 +401,9 @@ export default function PurchaseForm() {
 
   const getEntryDisplayName = useCallback(
     (entry: EntryRow) => {
+      if (entry.isQuickEntry && entry.quickIngredientName) {
+        return `${entry.quickIngredientName} (간편)`
+      }
       const ingredient = ingredients.find((i) => i.id === entry.ingredientId)
       if (ingredient) return ingredient.ingredientName
       return '새 항목'
@@ -437,6 +469,28 @@ export default function PurchaseForm() {
   const activeIngredients = useMemo(
     () => ingredients.filter((i) => i.isActive),
     [ingredients]
+  )
+
+  const ingredientOptions: ComboboxOption[] = useMemo(
+    () =>
+      activeIngredients.map((ing) => ({
+        value: ing.id,
+        label: ing.ingredientName,
+        sublabel: ing.unit,
+      })),
+    [activeIngredients]
+  )
+
+  const recentIngredientOptions: ComboboxOption[] = useMemo(
+    () =>
+      recentIngredients
+        .filter((r) => activeIngredients.some((a) => a.id === r.id))
+        .map((r) => ({
+          value: r.id,
+          label: r.ingredientName,
+          sublabel: r.unit,
+        })),
+    [recentIngredients, activeIngredients]
   )
 
   const hasNoIngredients = activeIngredients.length === 0
@@ -653,31 +707,125 @@ export default function PurchaseForm() {
                     </div>
 
                     <div>
-                      <div className="flex items-center justify-between">
+                      <div className="mb-2 flex items-center justify-between">
                         <Label>재료 *</Label>
-                        <button
-                          type="button"
-                          onClick={() => openIngredientModal(entry.id)}
-                          className="mb-1 text-xs font-bold text-brutal-black underline underline-offset-2 hover:bg-brutal-blue"
-                        >
-                          + 새 재료
-                        </button>
+                        <div className="flex items-center gap-3">
+                          <label className="inline-flex cursor-pointer items-center gap-1.5">
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={entry.isQuickEntry}
+                              onClick={() => {
+                                updateEntry(
+                                  entry.id,
+                                  'isQuickEntry',
+                                  !entry.isQuickEntry
+                                )
+                                if (!entry.isQuickEntry) {
+                                  updateEntry(entry.id, 'ingredientId', '')
+                                } else {
+                                  updateEntry(
+                                    entry.id,
+                                    'quickIngredientName',
+                                    ''
+                                  )
+                                  updateEntry(
+                                    entry.id,
+                                    'quickIngredientUnit',
+                                    ''
+                                  )
+                                }
+                              }}
+                              className={`relative inline-flex h-5 w-9 shrink-0 items-center border-2 border-brutal-black transition-colors ${
+                                entry.isQuickEntry
+                                  ? 'bg-brutal-pink'
+                                  : 'bg-brutal-white'
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-3 w-3 border border-brutal-black bg-brutal-black transition-transform ${
+                                  entry.isQuickEntry
+                                    ? 'translate-x-4'
+                                    : 'translate-x-0.5'
+                                }`}
+                              />
+                            </button>
+                            <span className="text-xs font-bold text-brutal-black">
+                              간편 매입
+                            </span>
+                          </label>
+                          {!entry.isQuickEntry && (
+                            <button
+                              type="button"
+                              onClick={() => openIngredientModal(entry.id)}
+                              className="text-xs font-bold text-brutal-black underline underline-offset-2 hover:bg-brutal-blue"
+                            >
+                              + 새 재료
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <select
-                        required
-                        value={entry.ingredientId}
-                        onChange={(e) =>
-                          updateEntry(entry.id, 'ingredientId', e.target.value)
-                        }
-                        className="block w-full border-2 border-brutal-black bg-brutal-white px-4 py-3 text-base font-medium text-brutal-black shadow-brutal-sm transition-all focus:-translate-x-0.5 focus:-translate-y-0.5 focus:shadow-brutal"
-                      >
-                        <option value="">재료를 선택하세요</option>
-                        {activeIngredients.map((ing) => (
-                          <option key={ing.id} value={ing.id}>
-                            {ing.ingredientName} ({ing.unit})
-                          </option>
-                        ))}
-                      </select>
+
+                      {entry.isQuickEntry ? (
+                        <div className="space-y-3 border-2 border-dashed border-brutal-pink bg-brutal-pink/10 p-3">
+                          <div>
+                            <Label>재료명 *</Label>
+                            <Input
+                              type="text"
+                              required
+                              value={entry.quickIngredientName}
+                              onChange={(e) =>
+                                updateEntry(
+                                  entry.id,
+                                  'quickIngredientName',
+                                  e.target.value
+                                )
+                              }
+                              placeholder="예: 일회용 장갑, 포장지"
+                            />
+                          </div>
+                          <div>
+                            <Label>단위 *</Label>
+                            <select
+                              required
+                              value={entry.quickIngredientUnit}
+                              onChange={(e) =>
+                                updateEntry(
+                                  entry.id,
+                                  'quickIngredientUnit',
+                                  e.target.value
+                                )
+                              }
+                              className="w-full border-2 border-brutal-black bg-brutal-white px-3 py-2 text-sm font-medium"
+                            >
+                              <option value="">단위 선택</option>
+                              <option value="kg">kg (킬로그램)</option>
+                              <option value="g">g (그램)</option>
+                              <option value="L">L (리터)</option>
+                              <option value="ml">ml (밀리리터)</option>
+                              <option value="개">개</option>
+                              <option value="봉">봉</option>
+                              <option value="팩">팩</option>
+                              <option value="박스">박스</option>
+                              <option value="병">병</option>
+                              <option value="캔">캔</option>
+                              <option value="롤">롤</option>
+                              <option value="장">장</option>
+                            </select>
+                          </div>
+                        </div>
+                      ) : (
+                        <Combobox
+                          options={ingredientOptions}
+                          recentOptions={recentIngredientOptions}
+                          value={entry.ingredientId}
+                          onChange={(val) =>
+                            updateEntry(entry.id, 'ingredientId', val)
+                          }
+                          placeholder="재료를 선택하세요"
+                          required
+                        />
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
