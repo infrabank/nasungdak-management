@@ -5,13 +5,23 @@ import { oilChangeSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { oilChangeHistory } from '@/lib/db/schema'
-import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
+import { eq, and, isNull, desc, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 export async function createOilChange(prevState: any, formData: FormData) {
   try {
-    const storeId = formData.get('storeId') as string | null
+    let storeId = formData.get('storeId') as string | null
+
+    // storeId가 없으면 사용자의 권한 있는 첫 번째 매장을 자동 할당
+    if (!storeId) {
+      const authorizedStoreIds = await getAuthorizedStoreIds()
+      if (authorizedStoreIds.length === 0) {
+        return { success: false, error: '접근 가능한 매장이 없습니다' }
+      }
+      storeId = authorizedStoreIds[0]
+    }
+
     const notes = formData.get('notes')
     const rawData = {
       changeDate: formData.get('changeDate'),
@@ -98,8 +108,10 @@ export async function getOilChanges(filters?: {
       async () => {
         const conditions = [isNull(oilChangeHistory.deletedAt)]
 
-        // 항상 권한 있는 매장으로 필터링
-        conditions.push(inArray(oilChangeHistory.storeId, authorizedStoreIds))
+        // 권한 있는 매장 + storeId가 NULL인 레코드도 포함 (이전에 storeId 없이 저장된 데이터)
+        conditions.push(
+          sql`(${oilChangeHistory.storeId} IN (${sql.join(authorizedStoreIds.map(id => sql`${id}`), sql`, `)}) OR ${oilChangeHistory.storeId} IS NULL)`
+        )
 
         if (filters?.startDate) {
           conditions.push(
@@ -270,7 +282,7 @@ export async function getOilChangeStats(storeId?: string) {
         const recentConditions = [
           isNull(oilChangeHistory.deletedAt),
           sql`oil_change_history.change_date >= ${thirtyDaysAgo.toISOString().split('T')[0]}`,
-          inArray(oilChangeHistory.storeId, authorizedStoreIds),
+          sql`(${oilChangeHistory.storeId} IN (${sql.join(authorizedStoreIds.map(id => sql`${id}`), sql`, `)}) OR ${oilChangeHistory.storeId} IS NULL)`,
         ]
 
         if (storeId && authorizedStoreIds.includes(storeId)) {
@@ -287,7 +299,7 @@ export async function getOilChangeStats(storeId?: string) {
         // Get last change date for each fryer type
         const lastChangeConditions = [
           isNull(oilChangeHistory.deletedAt),
-          inArray(oilChangeHistory.storeId, authorizedStoreIds),
+          sql`(${oilChangeHistory.storeId} IN (${sql.join(authorizedStoreIds.map(id => sql`${id}`), sql`, `)}) OR ${oilChangeHistory.storeId} IS NULL)`,
         ]
         if (storeId && authorizedStoreIds.includes(storeId)) {
           lastChangeConditions.push(eq(oilChangeHistory.storeId, storeId))
