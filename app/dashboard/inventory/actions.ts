@@ -15,10 +15,14 @@ import {
   ingredients,
   stores,
 } from '@/lib/db/schema'
-import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
+import { eq, and, or, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { subDays, format } from 'date-fns'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import { getAuthorizedStoreIds, getOrganizationId } from '@/lib/auth-context'
+import {
+  recordAndDispatchAlerts,
+  type InventoryAlertItem,
+} from '@/lib/notifications/inventory-alert'
 
 // =====================
 // Inventory CRUD
@@ -492,14 +496,56 @@ export async function createAlertRule(formData: FormData) {
   }
 }
 
+/**
+ * 알림 규칙 수정/삭제 권한 확인.
+ * - 특정 매장 규칙: 권한 매장에 포함되어야 함
+ * - 전체 매장(NULL) 규칙: 재료의 조직이 사용자의 조직과 일치해야 함
+ */
+async function canManageAlertRule(
+  id: string,
+  authorizedStoreIds: string[],
+  organizationId: string | null
+): Promise<boolean> {
+  const [existing] = await db
+    .select({
+      storeId: inventoryAlertRules.storeId,
+      ingredientOrg: ingredients.organizationId,
+    })
+    .from(inventoryAlertRules)
+    .innerJoin(ingredients, eq(inventoryAlertRules.ingredientId, ingredients.id))
+    .where(
+      and(eq(inventoryAlertRules.id, id), isNull(inventoryAlertRules.deletedAt))
+    )
+    .limit(1)
+
+  if (!existing) return false
+  if (existing.storeId) {
+    return authorizedStoreIds.includes(existing.storeId)
+  }
+  return organizationId != null && existing.ingredientOrg === organizationId
+}
+
 export async function updateAlertRule(id: string, formData: FormData) {
   try {
     // 권한 검사
     const authorizedStoreIds = await getAuthorizedStoreIds()
+    const organizationId = await getOrganizationId()
     if (authorizedStoreIds.length === 0) {
       return {
         success: false,
         error: '권한이 없습니다',
+      }
+    }
+
+    const canManage = await canManageAlertRule(
+      id,
+      authorizedStoreIds,
+      organizationId
+    )
+    if (!canManage) {
+      return {
+        success: false,
+        error: '수정할 레코드를 찾을 수 없거나 권한이 없습니다',
       }
     }
 
@@ -513,7 +559,17 @@ export async function updateAlertRule(id: string, formData: FormData) {
 
     const validatedData = inventoryAlertRuleSchema.parse(rawData)
 
-    // 레코드가 권한 있는 매장 소속인지 확인하면서 업데이트
+    // 변경하려는 대상이 특정 매장이면 그 매장 권한 확인
+    if (
+      validatedData.storeId &&
+      !authorizedStoreIds.includes(validatedData.storeId)
+    ) {
+      return {
+        success: false,
+        error: '해당 매장에 대한 권한이 없습니다',
+      }
+    }
+
     const [rule] = await db
       .update(inventoryAlertRules)
       .set({
@@ -521,12 +577,7 @@ export async function updateAlertRule(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(
-        and(
-          eq(inventoryAlertRules.id, id),
-          inArray(inventoryAlertRules.storeId, authorizedStoreIds)
-        )
-      )
+      .where(eq(inventoryAlertRules.id, id))
       .returning()
 
     if (!rule) {
@@ -568,10 +619,23 @@ export async function deleteAlertRule(id: string) {
   try {
     // 권한 검사
     const authorizedStoreIds = await getAuthorizedStoreIds()
+    const organizationId = await getOrganizationId()
     if (authorizedStoreIds.length === 0) {
       return {
         success: false,
         error: '권한이 없습니다',
+      }
+    }
+
+    const canManage = await canManageAlertRule(
+      id,
+      authorizedStoreIds,
+      organizationId
+    )
+    if (!canManage) {
+      return {
+        success: false,
+        error: '삭제할 레코드를 찾을 수 없거나 권한이 없습니다',
       }
     }
 
@@ -581,12 +645,7 @@ export async function deleteAlertRule(id: string) {
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(
-        and(
-          eq(inventoryAlertRules.id, id),
-          inArray(inventoryAlertRules.storeId, authorizedStoreIds)
-        )
-      )
+      .where(eq(inventoryAlertRules.id, id))
       .returning({ id: inventoryAlertRules.id })
 
     if (result.length === 0) {
@@ -619,14 +678,19 @@ async function fetchAlertRules(storeId: string, authorizedStoreIds: string[]) {
     return []
   }
 
+  // storeId가 NULL인 규칙은 "전체 매장" 적용이므로 항상 포함한다
   const conditions = [
     isNull(inventoryAlertRules.deletedAt),
-    inArray(inventoryAlertRules.storeId, authorizedStoreIds),
+    storeId !== 'all' && authorizedStoreIds.includes(storeId)
+      ? or(
+          eq(inventoryAlertRules.storeId, storeId),
+          isNull(inventoryAlertRules.storeId)
+        )
+      : or(
+          inArray(inventoryAlertRules.storeId, authorizedStoreIds),
+          isNull(inventoryAlertRules.storeId)
+        ),
   ]
-
-  if (storeId !== 'all' && authorizedStoreIds.includes(storeId)) {
-    conditions.push(eq(inventoryAlertRules.storeId, storeId))
-  }
 
   const rules = await db
     .select({
@@ -818,5 +882,146 @@ export async function checkInventoryAlerts(storeId: string): Promise<{
   } catch (error) {
     logger.error('Failed to check inventory alerts:', errorToContext(error))
     return { alerts: [], store: { id: '', storeName: '', managerPhone: '' } }
+  }
+}
+
+// =====================
+// Low-stock Alerts (화면 표시 + 발송)
+// =====================
+
+/**
+ * 권한 범위 내 활성 알림 규칙을 평가하여 재고 부족 항목 목록을 반환합니다.
+ * - storeId 지정 시 해당 매장만, 미지정/'all'이면 권한 매장 전체를 대상으로 평가
+ * - 규칙의 storeId가 NULL(전체 매장)이면 대상 매장 각각에 대해 평가
+ */
+export async function getLowStockAlerts(
+  storeId?: string
+): Promise<InventoryAlertItem[]> {
+  try {
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return []
+    }
+
+    const targetStoreIds =
+      storeId && storeId !== 'all' && authorizedStoreIds.includes(storeId)
+        ? [storeId]
+        : authorizedStoreIds
+
+    const rules = await db
+      .select({
+        storeId: inventoryAlertRules.storeId,
+        ingredientId: inventoryAlertRules.ingredientId,
+        alertThresholdDays: inventoryAlertRules.alertThresholdDays,
+        predictionPeriodDays: inventoryAlertRules.predictionPeriodDays,
+        ingredientName: ingredients.ingredientName,
+      })
+      .from(inventoryAlertRules)
+      .innerJoin(
+        ingredients,
+        eq(inventoryAlertRules.ingredientId, ingredients.id)
+      )
+      .where(
+        and(
+          eq(inventoryAlertRules.isActive, true),
+          isNull(inventoryAlertRules.deletedAt)
+        )
+      )
+
+    if (rules.length === 0) {
+      return []
+    }
+
+    const storeRows = await db
+      .select({
+        id: stores.id,
+        storeName: stores.storeName,
+        managerPhone: stores.managerPhone,
+      })
+      .from(stores)
+      .where(
+        and(isNull(stores.deletedAt), inArray(stores.id, authorizedStoreIds))
+      )
+    const storeMap = new Map(storeRows.map((s) => [s.id, s]))
+
+    const alerts: InventoryAlertItem[] = []
+    const seen = new Set<string>()
+
+    for (const rule of rules) {
+      // 규칙이 특정 매장이면 그 매장만, 전체 매장이면 대상 매장 전체
+      const evalStoreIds = rule.storeId
+        ? targetStoreIds.includes(rule.storeId)
+          ? [rule.storeId]
+          : []
+        : targetStoreIds
+
+      for (const sId of evalStoreIds) {
+        const dedupeKey = `${sId}:${rule.ingredientId}`
+        if (seen.has(dedupeKey)) continue
+
+        const { daysRemaining } = await calculateDaysRemaining(
+          sId,
+          rule.ingredientId,
+          rule.predictionPeriodDays
+        )
+
+        if (daysRemaining !== Infinity && daysRemaining <= rule.alertThresholdDays) {
+          seen.add(dedupeKey)
+          const store = storeMap.get(sId)
+          alerts.push({
+            storeId: sId,
+            storeName: store?.storeName ?? '',
+            managerPhone: store?.managerPhone ?? '',
+            ingredientId: rule.ingredientId,
+            ingredientName: rule.ingredientName,
+            daysRemaining,
+            thresholdDays: rule.alertThresholdDays,
+          })
+        }
+      }
+    }
+
+    // 잔여일이 적은 순으로 정렬
+    alerts.sort((a, b) => a.daysRemaining - b.daysRemaining)
+    return alerts
+  } catch (error) {
+    logger.error('Failed to get low stock alerts:', errorToContext(error))
+    return []
+  }
+}
+
+/**
+ * 재고 부족 점검을 실행하고 알림을 발송(또는 이력 기록)합니다.
+ * 화면의 "지금 점검" 버튼에서 호출됩니다.
+ */
+export async function runInventoryAlertCheck(storeId?: string): Promise<{
+  success: boolean
+  total: number
+  sent: number
+  failed: number
+  pending: number
+  error?: string
+}> {
+  const empty = { total: 0, sent: 0, failed: 0, pending: 0 }
+  try {
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return { success: false, error: '권한이 없습니다', ...empty }
+    }
+
+    const alerts = await getLowStockAlerts(storeId)
+    const result = await recordAndDispatchAlerts(alerts)
+
+    revalidatePath('/dashboard/inventory')
+
+    return { success: true, ...result }
+  } catch (error) {
+    logger.error('Failed to run inventory alert check:', errorToContext(error))
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : '재고 점검에 실패했습니다',
+      ...empty,
+    }
   }
 }

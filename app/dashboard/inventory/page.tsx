@@ -1,10 +1,14 @@
-import { getInventory, getAlertRules, checkInventoryAlerts } from './actions'
+import { getInventory, getAlertRules, getLowStockAlerts } from './actions'
 import { getActiveStores } from '../stores/actions'
 import { getIngredients } from '../master-data/ingredients/actions'
 import InventoryForm from './inventory-form'
 import EventForm from './event-form'
 import AlertRuleForm from './alert-rule-form'
 import InventoryCard from './inventory-card'
+import InventoryRow from './inventory-row'
+import AlertRuleRow from './alert-rule-row'
+import AlertRuleCard from './alert-rule-card'
+import AlertCheckButton from './alert-check-button'
 
 export default async function InventoryPage({
   searchParams,
@@ -14,12 +18,13 @@ export default async function InventoryPage({
   const params = await searchParams
   const storeId = params.storeId || ''
 
-  const [inventoryList, alertRules, activeStores, ingredientList] =
+  const [inventoryList, alertRules, activeStores, ingredientList, lowStock] =
     await Promise.all([
       getInventory(storeId),
       getAlertRules(storeId),
       getActiveStores(),
       getIngredients(),
+      getLowStockAlerts(storeId),
     ])
 
   // UUID를 화면에 노출하지 않도록 선택용 옵션 데이터만 폼에 전달
@@ -32,6 +37,10 @@ export default async function InventoryPage({
     id: i.id,
     ingredientName: i.ingredientName,
     unit: i.unit,
+  }))
+  const storeNameOptions = activeStores.map((s) => ({
+    id: s.id,
+    storeName: s.storeName,
   }))
 
   return (
@@ -53,10 +62,35 @@ export default async function InventoryPage({
             stores={storeOptions}
             ingredients={ingredientOptions}
           />
+          <AlertCheckButton storeId={storeId || undefined} />
         </div>
       </div>
 
-      {/* Mobile View - Cards */}
+      {/* 재고 부족 경고 배너 */}
+      {lowStock.length > 0 && (
+        <div className="mt-6 border-3 border-brutal-black bg-brutal-pink p-4 shadow-brutal">
+          <p className="mb-2 text-sm font-black uppercase tracking-wide text-brutal-black">
+            ⚠️ 재고 부족 예상 {lowStock.length}건
+          </p>
+          <ul className="space-y-1">
+            {lowStock.map((a) => (
+              <li
+                key={`${a.storeId}:${a.ingredientId}`}
+                className="flex flex-wrap items-center gap-x-2 text-sm font-bold text-brutal-black"
+              >
+                <span>🏪 {a.storeName}</span>
+                <span>·</span>
+                <span>{a.ingredientName}</span>
+                <span className="border-2 border-brutal-black bg-brutal-white px-2 py-0.5 text-xs">
+                  잔여 약 {a.daysRemaining}일 (임계값 {a.thresholdDays}일)
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* 재고 현황 - Mobile View */}
       <div className="mt-6 space-y-4 md:hidden">
         {inventoryList.length === 0 ? (
           <div className="border-3 border-dashed border-brutal-black bg-brutal-white p-12 text-center">
@@ -80,8 +114,8 @@ export default async function InventoryPage({
         )}
       </div>
 
-      {/* Desktop View - Table */}
-      <div className="mt-8 flow-root hidden md:block">
+      {/* 재고 현황 - Desktop View */}
+      <div className="mt-8 hidden flow-root md:block">
         <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
             <table className="min-w-full divide-y divide-gray-300">
@@ -102,6 +136,9 @@ export default async function InventoryPage({
                   <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                     마지막 갱신
                   </th>
+                  <th className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                    관리
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -116,33 +153,91 @@ export default async function InventoryPage({
                   </tr>
                 ) : (
                   inventoryList.map((item) => (
-                    <tr key={item.id}>
-                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
-                        {item.ingredientName}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {item.storeName}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-right text-sm text-gray-900">
-                        {Number(item.currentQuantity).toFixed(2)}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {item.unit || '-'}
-                      </td>
-                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                        {item.lastUpdated
-                          ? new Date(item.lastUpdated).toLocaleDateString(
-                              'ko-KR'
-                            )
-                          : '-'}
-                      </td>
-                    </tr>
+                    <InventoryRow
+                      key={item.id}
+                      item={{
+                        ...item,
+                        lastUpdated: item.lastUpdated
+                          ? new Date(item.lastUpdated).toISOString()
+                          : null,
+                      }}
+                    />
                   ))
                 )}
               </tbody>
             </table>
           </div>
         </div>
+      </div>
+
+      {/* 알림 규칙 */}
+      <div className="mt-12">
+        <h2 className="text-xl font-bold text-gray-900">알림 규칙</h2>
+        <p className="mt-1 text-sm text-gray-700">
+          재료별 재고 부족 예측 알림 설정 (전체 매장 또는 특정 매장)
+        </p>
+
+        {alertRules.length === 0 ? (
+          <div className="mt-4 border-3 border-dashed border-brutal-black bg-brutal-white p-8 text-center">
+            <p className="text-sm font-medium text-brutal-black/70">
+              등록된 알림 규칙이 없습니다
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile View */}
+            <div className="mt-4 space-y-4 md:hidden">
+              {alertRules.map((rule) => (
+                <AlertRuleCard
+                  key={rule.id}
+                  rule={rule}
+                  stores={storeNameOptions}
+                />
+              ))}
+            </div>
+
+            {/* Desktop View */}
+            <div className="mt-4 hidden flow-root md:block">
+              <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                  <table className="min-w-full divide-y divide-gray-300">
+                    <thead>
+                      <tr>
+                        <th className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                          재료명
+                        </th>
+                        <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                          적용 매장
+                        </th>
+                        <th className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                          임계값
+                        </th>
+                        <th className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                          예측 기간
+                        </th>
+                        <th className="px-3 py-3.5 text-center text-sm font-semibold text-gray-900">
+                          상태
+                        </th>
+                        <th className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900">
+                          관리
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {alertRules.map((rule) => (
+                        <AlertRuleRow
+                          key={rule.id}
+                          rule={rule}
+                          stores={storeNameOptions}
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   )
