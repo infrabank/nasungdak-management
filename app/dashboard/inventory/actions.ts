@@ -716,11 +716,10 @@ export async function calculateDaysRemaining(
         AND sr.sale_date >= ${startDate}::date
         AND sr.deleted_at IS NULL
         AND sr.sku_id IN (
-          SELECT sku.id FROM skus s 
-          INNER JOIN menu_ingredients mi ON s.menu_id = mi.menu_id 
+          SELECT s.id FROM skus s
+          INNER JOIN menu_ingredients mi ON s.menu_id = mi.menu_id
           WHERE mi.ingredient_id = ${ingredientId}
         )
-      )
     `)
 
     const totalSold = Number(salesResult.rows[0]?.total_sold || 0)
