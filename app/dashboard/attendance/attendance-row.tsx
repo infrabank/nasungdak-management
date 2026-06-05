@@ -203,7 +203,7 @@ export default function AttendanceRow({ record }: AttendanceRowProps) {
       className={`${isDeleting ? 'opacity-50' : ''} ${record.employeeDeleted ? 'bg-brutal-black/5' : ''}`}
     >
       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brutal-black sm:pl-6">
-        {formatDate(new Date(record.workDate), 'yyyy-MM-dd')}
+        {formatDate(new Date(record.workDate), 'yy-MM-dd(EEE)')}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black">
         {displayName}

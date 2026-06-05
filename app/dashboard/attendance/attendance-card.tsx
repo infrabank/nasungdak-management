@@ -224,7 +224,7 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
         <div className="flex items-center gap-2">
           <span className="text-sm">📅</span>
           <span className="font-bold text-brutal-black">
-            {formatDate(new Date(record.workDate), 'yyyy-MM-dd')}
+            {formatDate(new Date(record.workDate), 'yy-MM-dd(EEE)')}
           </span>
         </div>
         <span className="font-bold text-brutal-black">👤 {displayName}</span>
