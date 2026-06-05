@@ -9,36 +9,10 @@ import InventoryCard from './inventory-card'
 export default async function InventoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ storeId?: string; debug?: string }>
+  searchParams: Promise<{ storeId?: string }>
 }) {
   const params = await searchParams
   const storeId = params.storeId || ''
-
-  // TEMP DIAGNOSTIC (gated): isolate which data call throws on Vercel.
-  if (params.debug === '1') {
-    const out: string[] = []
-    const probes: [string, () => Promise<unknown>][] = [
-      ['getInventory', () => getInventory(storeId)],
-      ['getAlertRules', () => getAlertRules(storeId)],
-      ['getActiveStores', () => getActiveStores()],
-      ['getIngredients', () => getIngredients()],
-    ]
-    for (const [name, fn] of probes) {
-      try {
-        const r = await fn()
-        out.push(`${name}: OK (${Array.isArray(r) ? r.length + ' rows' : typeof r})`)
-      } catch (e) {
-        out.push(
-          `${name}: THREW\n${e instanceof Error ? (e.stack ?? e.message) : String(e)}`
-        )
-      }
-    }
-    return (
-      <pre style={{ whiteSpace: 'pre-wrap', fontSize: 12 }}>
-        {out.join('\n\n')}
-      </pre>
-    )
-  }
 
   const [inventoryList, alertRules, activeStores, ingredientList] =
     await Promise.all([
@@ -96,8 +70,9 @@ export default async function InventoryPage({
               key={item.id}
               item={{
                 ...item,
+                // unstable_cache 역직렬화 시 Date가 문자열로 올 수 있어 new Date()로 정규화
                 lastUpdated: item.lastUpdated
-                  ? item.lastUpdated.toISOString()
+                  ? new Date(item.lastUpdated).toISOString()
                   : null,
               }}
             />
