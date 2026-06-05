@@ -1,29 +1,63 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { createInventoryEvent } from './actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Combobox, type ComboboxOption } from '@/components/ui/combobox'
+import type { StoreOption, IngredientOption } from './inventory-form'
 
-export default function EventForm() {
+interface EventFormProps {
+  stores: StoreOption[]
+  ingredients: IngredientOption[]
+}
+
+export default function EventForm({ stores, ingredients }: EventFormProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const defaultStoreId = stores.length === 1 ? stores[0].id : ''
+  const [storeId, setStoreId] = useState(defaultStoreId)
+  const [ingredientId, setIngredientId] = useState('')
+
+  const storeOptions: ComboboxOption[] = useMemo(
+    () =>
+      stores.map((s) => ({
+        value: s.id,
+        label: s.storeName,
+        sublabel: s.storeCode,
+      })),
+    [stores]
+  )
+
+  const ingredientOptions: ComboboxOption[] = useMemo(
+    () =>
+      ingredients.map((i) => ({
+        value: i.id,
+        label: i.ingredientName,
+        sublabel: i.unit,
+      })),
+    [ingredients]
+  )
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    const formData = new FormData(e.currentTarget)
+    const form = e.currentTarget
+    const formData = new FormData(form)
 
     try {
       const result = await createInventoryEvent(formData)
 
       if (result.success) {
         setIsOpen(false)
-        e.currentTarget.reset()
+        form.reset()
+        setStoreId(defaultStoreId)
+        setIngredientId('')
       } else {
         alert(result.error)
       }
@@ -50,8 +84,15 @@ export default function EventForm() {
               onClick={() => setIsOpen(false)}
             />
 
-            <div className="relative transform overflow-hidden border-3 border-brutal-black bg-brutal-white px-4 pb-4 pt-5 text-left shadow-brutal-lg transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+            <div className="relative w-full transform border-3 border-brutal-black bg-brutal-white px-4 pb-4 pt-5 text-left shadow-brutal-lg transition-all sm:my-8 sm:max-w-lg sm:p-6">
               <form onSubmit={handleSubmit}>
+                <input type="hidden" name="storeId" value={storeId} />
+                <input
+                  type="hidden"
+                  name="ingredientId"
+                  value={ingredientId}
+                />
+
                 <div>
                   <h3 className="mb-4 text-lg font-semibold leading-6 text-gray-900">
                     재고 이벤트 등록
@@ -60,23 +101,25 @@ export default function EventForm() {
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="storeId">매장 *</Label>
-                      <Input
-                        type="text"
-                        name="storeId"
+                      <Combobox
                         id="storeId"
+                        options={storeOptions}
+                        value={storeId}
+                        onChange={setStoreId}
+                        placeholder="매장을 선택하세요"
                         required
-                        placeholder="매장 ID"
                       />
                     </div>
 
                     <div>
                       <Label htmlFor="ingredientId">재료 *</Label>
-                      <Input
-                        type="text"
-                        name="ingredientId"
+                      <Combobox
                         id="ingredientId"
+                        options={ingredientOptions}
+                        value={ingredientId}
+                        onChange={setIngredientId}
+                        placeholder="재료를 검색하세요"
                         required
-                        placeholder="재료 ID"
                       />
                     </div>
 
@@ -99,6 +142,7 @@ export default function EventForm() {
                         name="quantityChange"
                         id="quantityChange"
                         required
+                        inputMode="decimal"
                         step="0.01"
                         placeholder="양수: 증가, 음수: 감소"
                       />

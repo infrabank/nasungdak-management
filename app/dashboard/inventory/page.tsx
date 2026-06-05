@@ -1,4 +1,6 @@
 import { getInventory, getAlertRules, checkInventoryAlerts } from './actions'
+import { getActiveStores } from '../stores/actions'
+import { getIngredients } from '../master-data/ingredients/actions'
 import InventoryForm from './inventory-form'
 import EventForm from './event-form'
 import AlertRuleForm from './alert-rule-form'
@@ -12,10 +14,25 @@ export default async function InventoryPage({
   const params = await searchParams
   const storeId = params.storeId || ''
 
-  const [inventoryList, alertRules] = await Promise.all([
-    getInventory(storeId),
-    getAlertRules(storeId),
-  ])
+  const [inventoryList, alertRules, activeStores, ingredientList] =
+    await Promise.all([
+      getInventory(storeId),
+      getAlertRules(storeId),
+      getActiveStores(),
+      getIngredients(),
+    ])
+
+  // UUID를 화면에 노출하지 않도록 선택용 옵션 데이터만 폼에 전달
+  const storeOptions = activeStores.map((s) => ({
+    id: s.id,
+    storeName: s.storeName,
+    storeCode: s.storeCode,
+  }))
+  const ingredientOptions = ingredientList.map((i) => ({
+    id: i.id,
+    ingredientName: i.ingredientName,
+    unit: i.unit,
+  }))
 
   return (
     <div>
@@ -27,9 +44,15 @@ export default async function InventoryPage({
           </p>
         </div>
         <div className="mt-4 flex flex-col gap-2 sm:ml-16 sm:mt-0 sm:flex-none sm:flex-row sm:gap-3">
-          <EventForm />
-          <InventoryForm />
-          <AlertRuleForm />
+          <EventForm stores={storeOptions} ingredients={ingredientOptions} />
+          <InventoryForm
+            stores={storeOptions}
+            ingredients={ingredientOptions}
+          />
+          <AlertRuleForm
+            stores={storeOptions}
+            ingredients={ingredientOptions}
+          />
         </div>
       </div>
 
