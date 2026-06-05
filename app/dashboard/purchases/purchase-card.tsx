@@ -243,7 +243,7 @@ export default function PurchaseCard({ purchase }: { purchase: Purchase }) {
       <div className="flex items-center justify-between border-b-2 border-brutal-black bg-brutal-yellow/30 p-4">
         <div className="flex items-center gap-2">
           <span className="font-bold text-brutal-black">
-            {formatDate(new Date(purchase.transactionDate), 'yyyy-MM-dd')}
+            {formatDate(new Date(purchase.transactionDate), 'yy-MM-dd(EEE)')}
           </span>
         </div>
       </div>

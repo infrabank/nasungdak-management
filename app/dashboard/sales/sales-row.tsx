@@ -204,7 +204,7 @@ export default function SalesRow({
         />
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm font-bold text-brutal-black">
-        {formatDate(sale.saleDate, 'yyyy-MM-dd')}
+        {formatDate(sale.saleDate, 'yy-MM-dd(EEE)')}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black">
         {sale.menuName}

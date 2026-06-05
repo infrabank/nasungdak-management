@@ -178,7 +178,7 @@ export default function FixedCostRow({ cost }: FixedCostRowProps) {
   return (
     <tr className={isDeleting ? 'opacity-50' : ''}>
       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brutal-black sm:pl-6">
-        {formatDate(new Date(cost.costDate), 'yyyy-MM-dd')}
+        {formatDate(new Date(cost.costDate), 'yy-MM-dd(EEE)')}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm">
         <span

@@ -220,7 +220,7 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
         <div className="flex items-center gap-2">
           <span className="text-sm">📅</span>
           <span className="font-bold text-brutal-black">
-            {formatDate(new Date(cost.costDate), 'yyyy-MM-dd')}
+            {formatDate(new Date(cost.costDate), 'yy-MM-dd(EEE)')}
           </span>
         </div>
         <span

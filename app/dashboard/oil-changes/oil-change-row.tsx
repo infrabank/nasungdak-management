@@ -144,7 +144,7 @@ export default function OilChangeRow({ oilChange }: OilChangeRowProps) {
   return (
     <tr className={`hover:bg-gray-50 ${isDeleting ? 'opacity-50' : ''}`}>
       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
-        {formatDate(new Date(oilChange.changeDate), 'yyyy-MM-dd')}
+        {formatDate(new Date(oilChange.changeDate), 'yy-MM-dd(EEE)')}
       </td>
       <td className="whitespace-nowrap px-6 py-4">
         <span

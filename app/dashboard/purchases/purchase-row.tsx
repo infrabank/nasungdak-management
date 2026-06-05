@@ -208,7 +208,7 @@ export default function PurchaseRow({ purchase }: { purchase: Purchase }) {
       className={`transition-colors hover:bg-brutal-yellow/20 ${isDeleting ? 'opacity-50' : ''}`}
     >
       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-bold text-brutal-black sm:pl-6">
-        {formatDate(new Date(purchase.transactionDate), 'yyyy-MM-dd')}
+        {formatDate(new Date(purchase.transactionDate), 'yy-MM-dd(EEE)')}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm font-medium text-brutal-black">
         {purchase.ingredientName || '-'}

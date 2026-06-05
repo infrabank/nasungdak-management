@@ -228,7 +228,7 @@ export default function EmployeeCard({ employee }: EmployeeCardProps) {
             </p>
             <p className="font-medium text-brutal-black">
               {employee.hireDate
-                ? formatDate(new Date(employee.hireDate), 'yyyy-MM-dd')
+                ? formatDate(new Date(employee.hireDate), 'yy-MM-dd(EEE)')
                 : '-'}
             </p>
           </div>

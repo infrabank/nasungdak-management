@@ -170,7 +170,7 @@ export default function EmployeeRow({ employee }: EmployeeRowProps) {
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black">
         {employee.hireDate
-          ? formatDate(new Date(employee.hireDate), 'yyyy-MM-dd')
+          ? formatDate(new Date(employee.hireDate), 'yy-MM-dd(EEE)')
           : '-'}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-center text-sm">

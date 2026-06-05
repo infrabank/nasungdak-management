@@ -62,9 +62,9 @@ export default function CostRuleCard({ rule }: CostRuleCardProps) {
             <span>유효 기간</span>
           </div>
           <div className="text-right text-sm font-bold text-brutal-black">
-            {formatDate(rule.effectiveFrom, 'yyyy-MM-dd')}
+            {formatDate(rule.effectiveFrom, 'yy-MM-dd(EEE)')}
             {rule.effectiveTo &&
-              ` ~ ${formatDate(rule.effectiveTo, 'yyyy-MM-dd')}`}
+              ` ~ ${formatDate(rule.effectiveTo, 'yy-MM-dd(EEE)')}`}
             {!rule.effectiveTo && ' ~ '}
           </div>
         </div>

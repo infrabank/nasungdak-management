@@ -174,7 +174,7 @@ export default function OilChangeCard({ oilChange }: OilChangeCardProps) {
         <div className="flex items-center gap-2">
           <span className="text-sm">📅</span>
           <span className="font-bold text-brutal-black">
-            {formatDate(new Date(oilChange.changeDate), 'yyyy-MM-dd')}
+            {formatDate(new Date(oilChange.changeDate), 'yy-MM-dd(EEE)')}
           </span>
         </div>
         <span

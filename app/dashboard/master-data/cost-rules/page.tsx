@@ -92,9 +92,9 @@ export default async function CostRulesPage() {
                         {Number(rule.distributionPercent).toFixed(2)}%
                       </td>
                       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black/70">
-                        {formatDate(rule.effectiveFrom, 'yyyy-MM-dd')}
+                        {formatDate(rule.effectiveFrom, 'yy-MM-dd(EEE)')}
                         {rule.effectiveTo &&
-                          ` ~ ${formatDate(rule.effectiveTo, 'yyyy-MM-dd')}`}
+                          ` ~ ${formatDate(rule.effectiveTo, 'yy-MM-dd(EEE)')}`}
                         {!rule.effectiveTo && ' ~ '}
                       </td>
                       <td className="relative whitespace-nowrap py-4 pl-3 pr-6 text-right text-sm font-medium">

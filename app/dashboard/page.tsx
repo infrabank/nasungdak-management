@@ -206,7 +206,7 @@ export default async function DashboardPage() {
                         {purchase.ingredientName}
                       </p>
                       <p className="text-xs font-medium text-brutal-black/70">
-                        {formatDate(new Date(purchase.date), 'yyyy-MM-dd')}
+                        {formatDate(new Date(purchase.date), 'yy-MM-dd(EEE)')}
                       </p>
                     </div>
                     <div className="ml-4">
@@ -251,7 +251,7 @@ export default async function DashboardPage() {
                         {sale.skuName}
                       </p>
                       <p className="text-xs font-medium text-brutal-black/70">
-                        {formatDate(new Date(sale.date), 'yyyy-MM-dd')} ·{' '}
+                        {formatDate(new Date(sale.date), 'yy-MM-dd(EEE)')} ·{' '}
                         {sale.quantity}개
                       </p>
                     </div>

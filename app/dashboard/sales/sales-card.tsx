@@ -207,7 +207,7 @@ export default function SalesCard({
           />
           <div>
             <p className="text-sm font-bold text-brutal-black">
-              📅 {formatDate(sale.saleDate, 'yyyy-MM-dd')}
+              📅 {formatDate(sale.saleDate, 'yy-MM-dd(EEE)')}
             </p>
           </div>
         </div>

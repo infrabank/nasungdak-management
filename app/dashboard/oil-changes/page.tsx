@@ -83,7 +83,7 @@ export default async function OilChangesPage({
             {stats.lastChangeByFryer['초벌']
               ? formatDate(
                   new Date(stats.lastChangeByFryer['초벌'].changeDate),
-                  'MM/dd'
+                  'yy-MM-dd(EEE)'
                 )
               : '-'}
           </p>
