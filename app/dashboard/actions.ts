@@ -140,11 +140,9 @@ async function fetchDashboardStats(
     db.execute(sql`
       SELECT
         pt.transaction_date,
-        mc.menu_name,
         i.ingredient_name,
         pt.total_amount
       FROM purchase_transactions pt
-      LEFT JOIN menu_categories mc ON pt.menu_id = mc.id
       LEFT JOIN ingredients i ON pt.ingredient_id = i.id
       WHERE pt.deleted_at IS NULL
         ${ptStoreFilter}

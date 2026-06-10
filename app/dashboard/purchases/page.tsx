@@ -4,7 +4,6 @@
  * Parameters passed to actions:
  * - startDate: REQUIRED (defaults to 30 days ago if not provided)
  * - endDate: REQUIRED (defaults to today if not provided)
- * - menuId: OPTIONAL (undefined = no filter, never empty string)
  * - ingredientId: OPTIONAL (undefined = no filter, never empty string)
  * - storeId: OPTIONAL (undefined = no filter, never empty string)
  *
@@ -40,7 +39,6 @@ import { normalizeOptionalParam } from '@/lib/params'
 interface SearchParams {
   startDate?: string
   endDate?: string
-  menuId?: string
   ingredientId?: string
   storeId?: string
   page?: string
@@ -61,14 +59,13 @@ export default async function PurchasesPage({
   // Normalize parameters: dates have defaults, filters use undefined for "no filter"
   const startDate = params.startDate || formatDate(thirtyDaysAgo, 'yyyy-MM-dd')
   const endDate = params.endDate || formatDate(today, 'yyyy-MM-dd')
-  const menuId = normalizeOptionalParam(params.menuId)
   const ingredientId = normalizeOptionalParam(params.ingredientId)
   const storeId = normalizeOptionalParam(params.storeId)
   const page = Math.max(1, parseInt(params.page || '1', 10) || 1)
 
   const [purchasesResult, totals, ingredientsList] = await Promise.all([
-    getPurchases(startDate, endDate, menuId, ingredientId, storeId, page),
-    getPurchasesTotals(startDate, endDate, menuId, ingredientId, storeId),
+    getPurchases(startDate, endDate, ingredientId, storeId, page),
+    getPurchasesTotals(startDate, endDate, ingredientId, storeId),
     getIngredientsForFilter(),
   ])
 

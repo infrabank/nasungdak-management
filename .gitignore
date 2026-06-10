@@ -147,3 +147,4 @@ SNS_MARKETING_STRATEGY.md
 # Data files (should not be in repo)
 *.xlsx
 *.csv
+.backup-legacy-cost-model.json

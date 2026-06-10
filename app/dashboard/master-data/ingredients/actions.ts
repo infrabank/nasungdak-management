@@ -3,13 +3,7 @@
 import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
-import {
-  ingredients,
-  menuIngredients,
-  menuCategories,
-  purchaseTransactions,
-  stores,
-} from '@/lib/db/schema'
+import { ingredients, purchaseTransactions, stores } from '@/lib/db/schema'
 import { eq, isNull, and, desc } from 'drizzle-orm'
 import { z } from 'zod'
 import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
@@ -284,24 +278,6 @@ export async function lookupByBarcode(barcode: string) {
       }
     }
 
-    const menuMappings = await db
-      .select({
-        menuId: menuIngredients.menuId,
-        menuName: menuCategories.menuName,
-      })
-      .from(menuIngredients)
-      .innerJoin(menuCategories, eq(menuIngredients.menuId, menuCategories.id))
-      .where(
-        and(
-          eq(menuIngredients.ingredientId, ingredient.id),
-          eq(menuIngredients.organizationId, organizationId),
-          isNull(menuIngredients.deletedAt),
-          isNull(menuCategories.deletedAt),
-          eq(menuCategories.isActive, true)
-        )
-      )
-      .orderBy(menuCategories.menuName)
-
     const [latestPurchase] = await db
       .select({
         unitPrice: purchaseTransactions.unitPrice,
@@ -328,7 +304,6 @@ export async function lookupByBarcode(barcode: string) {
         ...ingredient,
         lastPurchaseUnitPrice: latestPurchase?.unitPrice ?? null,
       },
-      menuMappings,
     }
   } catch (error) {
     logger.error(
@@ -344,14 +319,12 @@ export async function lookupByBarcode(barcode: string) {
 
 /**
  * 매입 등록 화면에서 미등록 바코드 스캔 시 원스텝 등록
- * 재료 생성 + 메뉴-재료 매핑을 한 번에 처리
  */
 export async function quickRegisterIngredient(data: {
   barcode: string
   ingredientName: string
   unit: string
   unitCost?: string
-  menuId?: string
 }) {
   try {
     const organizationId = await requireOrganizationId()
@@ -393,24 +366,7 @@ export async function quickRegisterIngredient(data: {
       })
       .returning()
 
-    // 3. 메뉴-재료 매핑 (메뉴 선택 시)
-    if (data.menuId) {
-      try {
-        await db.insert(menuIngredients).values({
-          menuId: data.menuId,
-          ingredientId: ingredient.id,
-          organizationId,
-          requiredQuantity: '1',
-          createdBy: 'system',
-        })
-      } catch {
-        // 매핑 실패해도 재료는 이미 등록됨 — 무시
-        logger.warn('Menu-ingredient mapping failed but ingredient was created')
-      }
-    }
-
     revalidatePath('/dashboard/master-data/ingredients')
-    revalidatePath('/dashboard/master-data/menu-ingredients')
     revalidateTag('ingredients:active')
 
     return {
@@ -420,7 +376,6 @@ export async function quickRegisterIngredient(data: {
         ingredientName: ingredient.ingredientName,
         unit: ingredient.unit,
       },
-      menuId: data.menuId || null,
     }
   } catch (error) {
     logger.error('Failed to quick-register ingredient:', errorToContext(error))

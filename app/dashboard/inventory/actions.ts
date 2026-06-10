@@ -773,18 +773,17 @@ export async function calculateDaysRemaining(
       'yyyy-MM-dd'
     )
 
-    // Calculate total quantity sold in the month period (30-day default)
+    // 기간 내 레시피(sku_recipes) 기반 재료 사용량 합계: 판매량 x 레시피 소모량
     const salesResult = await db.execute(sql`
-      SELECT COALESCE(SUM(sr.quantity_sold), 0) as total_sold
+      SELECT COALESCE(SUM(sr.quantity_sold * rec.quantity), 0) as total_sold
       FROM sales_records sr
+      INNER JOIN sku_recipes rec
+        ON rec.sku_id = sr.sku_id
+        AND rec.deleted_at IS NULL
+        AND rec.ingredient_id = ${ingredientId}
       WHERE sr.store_id = ${storeId}
         AND sr.sale_date >= ${startDate}::date
         AND sr.deleted_at IS NULL
-        AND sr.sku_id IN (
-          SELECT s.id FROM skus s
-          INNER JOIN menu_ingredients mi ON s.menu_id = mi.menu_id
-          WHERE mi.ingredient_id = ${ingredientId}
-        )
     `)
 
     const totalSold = Number(salesResult.rows[0]?.total_sold || 0)

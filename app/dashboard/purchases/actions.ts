@@ -6,7 +6,6 @@ import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import {
   purchaseTransactions,
-  menuCategories,
   ingredients,
   inventory,
   inventoryEvents,
@@ -84,10 +83,8 @@ export async function createPurchase(formData: FormData) {
     }
 
     const notes = formData.get('notes')
-    const menuIdRaw = formData.get('menuId')
     const rawData = {
       transactionDate: formData.get('transactionDate'),
-      menuId: menuIdRaw && String(menuIdRaw).trim() ? menuIdRaw : null,
       ingredientId: formData.get('ingredientId'),
       supplierName: formData.get('supplierName'),
       quantity: formData.get('quantity'),
@@ -106,7 +103,6 @@ export async function createPurchase(formData: FormData) {
         .values({
           ...validatedData,
           storeId,
-          isValid: true,
           createdBy: 'system',
         })
         .returning()
@@ -164,10 +160,8 @@ export async function createPurchase(formData: FormData) {
 export async function updatePurchase(id: string, formData: FormData) {
   try {
     const notes = formData.get('notes')
-    const menuIdRaw = formData.get('menuId')
     const rawData = {
       transactionDate: formData.get('transactionDate'),
-      menuId: menuIdRaw && String(menuIdRaw).trim() ? menuIdRaw : null,
       ingredientId: formData.get('ingredientId'),
       supplierName: formData.get('supplierName'),
       quantity: formData.get('quantity'),
@@ -184,7 +178,6 @@ export async function updatePurchase(id: string, formData: FormData) {
       .update(purchaseTransactions)
       .set({
         ...validatedData,
-        isValid: true,
         updatedAt: new Date(),
         updatedBy: 'system',
       })
@@ -266,7 +259,6 @@ const PURCHASES_PAGE_SIZE = 50
 async function fetchPurchases(
   startDate: string,
   endDate: string,
-  menuId: string,
   ingredientId: string,
   storeId: string,
   page: number,
@@ -285,10 +277,6 @@ async function fetchPurchases(
     )
   }
 
-  if (menuId !== 'all') {
-    conditions.push(eq(purchaseTransactions.menuId, menuId))
-  }
-
   if (ingredientId !== 'all') {
     conditions.push(eq(purchaseTransactions.ingredientId, ingredientId))
   }
@@ -304,22 +292,15 @@ async function fetchPurchases(
       id: purchaseTransactions.id,
       storeId: purchaseTransactions.storeId,
       transactionDate: purchaseTransactions.transactionDate,
-      menuId: purchaseTransactions.menuId,
-      menuName: menuCategories.menuName,
       ingredientId: purchaseTransactions.ingredientId,
       ingredientName: ingredients.ingredientName,
       supplierName: purchaseTransactions.supplierName,
       quantity: purchaseTransactions.quantity,
       unitPrice: purchaseTransactions.unitPrice,
       totalAmount: purchaseTransactions.totalAmount,
-      isValid: purchaseTransactions.isValid,
       notes: purchaseTransactions.notes,
     })
     .from(purchaseTransactions)
-    .leftJoin(
-      menuCategories,
-      eq(purchaseTransactions.menuId, menuCategories.id)
-    )
     .leftJoin(
       ingredients,
       eq(purchaseTransactions.ingredientId, ingredients.id)
@@ -338,7 +319,6 @@ async function fetchPurchases(
 export async function getPurchases(
   startDate?: string,
   endDate?: string,
-  menuId?: string,
   ingredientId?: string,
   storeId?: string,
   page: number = 1
@@ -351,7 +331,6 @@ export async function getPurchases(
 
     const normalizedStartDate = startDate ?? 'all'
     const normalizedEndDate = endDate ?? 'all'
-    const normalizedMenuId = menuId ?? 'all'
     const normalizedIngredientId = ingredientId ?? 'all'
     const normalizedStoreId = storeId ?? 'all'
     const normalizedPage = Math.max(1, page)
@@ -363,18 +342,16 @@ export async function getPurchases(
         fetchPurchases(
           normalizedStartDate,
           normalizedEndDate,
-          normalizedMenuId,
           normalizedIngredientId,
           normalizedStoreId,
           normalizedPage,
           authorizedStoreIds
         ),
       [
-        'purchases:list:v4',
+        'purchases:list:v5',
         storeKey,
         normalizedStartDate,
         normalizedEndDate,
-        normalizedMenuId,
         normalizedIngredientId,
         normalizedStoreId,
         String(normalizedPage),
@@ -386,36 +363,6 @@ export async function getPurchases(
   } catch (error) {
     logger.error('Failed to fetch purchases:', errorToContext(error))
     return { items: [], hasMore: false, page: 1 }
-  }
-}
-
-async function fetchMenusForFilter() {
-  const menus = await db
-    .select({
-      id: menuCategories.id,
-      menuName: menuCategories.menuName,
-    })
-    .from(menuCategories)
-    .where(
-      and(isNull(menuCategories.deletedAt), eq(menuCategories.isActive, true))
-    )
-    .orderBy(menuCategories.menuName)
-
-  return menus
-}
-
-export async function getMenusForFilter() {
-  try {
-    const getCachedMenusForFilter = unstable_cache(
-      fetchMenusForFilter,
-      ['menus:active'],
-      { tags: ['menus:active'] }
-    )
-
-    return await getCachedMenusForFilter()
-  } catch (error) {
-    logger.error('Failed to fetch menus:', errorToContext(error))
-    return []
   }
 }
 
@@ -469,7 +416,7 @@ export async function getSupplierSuggestions(): Promise<string[]> {
 
 interface CSVRow {
   날짜: string
-  메뉴?: string
+  메뉴?: string // 구버전 CSV 호환용 (무시됨)
   재료: string
   공급업체: string
   수량: string
@@ -478,7 +425,6 @@ interface CSVRow {
 }
 
 export interface PurchaseEntry {
-  menuId?: string | null
   ingredientId?: string
   quantity: string
   unitPrice: string
@@ -567,7 +513,6 @@ export async function createMultiplePurchases(
 
           const rawData = {
             transactionDate,
-            menuId: entry.menuId || null,
             ingredientId: resolvedIngredientId,
             supplierName,
             quantity: entry.quantity,
@@ -582,7 +527,6 @@ export async function createMultiplePurchases(
             .values({
               ...validatedData,
               storeId,
-              isValid: true,
               createdBy: 'system',
             })
             .returning()
@@ -665,17 +609,7 @@ export async function bulkCreatePurchases(
       storeId = authorizedStoreIds[0] || null
     }
 
-    // Fetch menus and ingredients for name-to-ID mapping
-    const menus = await db
-      .select({
-        id: menuCategories.id,
-        menuName: menuCategories.menuName,
-      })
-      .from(menuCategories)
-      .where(
-        and(isNull(menuCategories.deletedAt), eq(menuCategories.isActive, true))
-      )
-
+    // Fetch ingredients for name-to-ID mapping
     const ingredientsList = await db
       .select({
         id: ingredients.id,
@@ -684,7 +618,6 @@ export async function bulkCreatePurchases(
       .from(ingredients)
       .where(and(isNull(ingredients.deletedAt), eq(ingredients.isActive, true)))
 
-    const menuMap = new Map(menus.map((m) => [m.menuName, m.id]))
     const ingredientMap = new Map(
       ingredientsList.map((i) => [i.ingredientName, i.id])
     )
@@ -695,15 +628,7 @@ export async function bulkCreatePurchases(
         const rowNum = i + 1
 
         try {
-          // Menu is now optional in CSV
-          const menuId = row.메뉴 ? menuMap.get(row.메뉴) : null
           const ingredientId = ingredientMap.get(row.재료)
-
-          if (row.메뉴 && !menuId) {
-            errors.push(`${rowNum}행: 메뉴 '${row.메뉴}'를 찾을 수 없습니다`)
-            failedCount++
-            continue
-          }
 
           if (!ingredientId) {
             errors.push(`${rowNum}행: 재료 '${row.재료}'를 찾을 수 없습니다`)
@@ -713,7 +638,6 @@ export async function bulkCreatePurchases(
 
           const validatedData = purchaseSchema.parse({
             transactionDate: row.날짜,
-            menuId: menuId || null,
             ingredientId,
             supplierName: row.공급업체,
             quantity: row.수량,
@@ -724,7 +648,6 @@ export async function bulkCreatePurchases(
           await tx.insert(purchaseTransactions).values({
             ...validatedData,
             storeId,
-            isValid: true,
             createdBy: 'system',
           })
 
@@ -817,7 +740,6 @@ export async function getRecentPurchaseIngredients(): Promise<
 async function fetchPurchasesTotals(
   startDate: string,
   endDate: string,
-  menuId: string,
   ingredientId: string,
   storeId: string,
   authorizedStoreIds: string[]
@@ -833,10 +755,6 @@ async function fetchPurchasesTotals(
     conditions.push(
       sql`${purchaseTransactions.transactionDate} BETWEEN ${startDate}::date AND ${endDate}::date`
     )
-  }
-
-  if (menuId !== 'all') {
-    conditions.push(eq(purchaseTransactions.menuId, menuId))
   }
 
   if (ingredientId !== 'all') {
@@ -866,7 +784,6 @@ async function fetchPurchasesTotals(
 export async function getPurchasesTotals(
   startDate?: string,
   endDate?: string,
-  menuId?: string,
   ingredientId?: string,
   storeId?: string
 ) {
@@ -878,7 +795,6 @@ export async function getPurchasesTotals(
 
     const normalizedStartDate = startDate ?? 'all'
     const normalizedEndDate = endDate ?? 'all'
-    const normalizedMenuId = menuId ?? 'all'
     const normalizedIngredientId = ingredientId ?? 'all'
     const normalizedStoreId = storeId ?? 'all'
 
@@ -889,17 +805,15 @@ export async function getPurchasesTotals(
         fetchPurchasesTotals(
           normalizedStartDate,
           normalizedEndDate,
-          normalizedMenuId,
           normalizedIngredientId,
           normalizedStoreId,
           authorizedStoreIds
         ),
       [
-        'purchases:totals',
+        'purchases:totals:v2',
         storeKey,
         normalizedStartDate,
         normalizedEndDate,
-        normalizedMenuId,
         normalizedIngredientId,
         normalizedStoreId,
       ],
@@ -1033,7 +947,6 @@ export async function copyLastPurchasesToToday() {
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             storeId: item.storeId,
-            isValid: true,
             notes: `${result.date} 매입 복사`,
             createdBy: 'system',
           })

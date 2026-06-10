@@ -3,12 +3,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
-import {
-  menuCategories,
-  ingredients,
-  menuIngredients,
-  skus,
-} from '@/lib/db/schema'
+import { menuCategories, ingredients, skus } from '@/lib/db/schema'
 import { requireOrganizationId } from '@/lib/auth-context'
 import { z } from 'zod'
 
@@ -81,35 +76,17 @@ export async function createMenuSetup(data: MenuSetupData) {
         })
         .returning()
 
-      // 2. Create ingredients and menu-ingredient mappings
+      // 2. Create new ingredients (재료-메뉴 매핑은 SKU 레시피에서 관리함)
       for (const item of validated.ingredients) {
-        let ingredientId: string
-
-        if (item.existingId) {
-          ingredientId = item.existingId
-        } else if (item.newIngredient) {
-          const [newIng] = await tx
-            .insert(ingredients)
-            .values({
-              ingredientName: item.newIngredient.ingredientName,
-              unit: item.newIngredient.unit,
-              unitCost: item.newIngredient.unitCost || undefined,
-              organizationId,
-              createdBy: 'system',
-            })
-            .returning()
-          ingredientId = newIng.id
-        } else {
-          continue
+        if (!item.existingId && item.newIngredient) {
+          await tx.insert(ingredients).values({
+            ingredientName: item.newIngredient.ingredientName,
+            unit: item.newIngredient.unit,
+            unitCost: item.newIngredient.unitCost || undefined,
+            organizationId,
+            createdBy: 'system',
+          })
         }
-
-        await tx.insert(menuIngredients).values({
-          menuId: menu.id,
-          ingredientId,
-          requiredQuantity: item.requiredQuantity,
-          organizationId,
-          createdBy: 'system',
-        })
       }
 
       // 3. Create SKUs

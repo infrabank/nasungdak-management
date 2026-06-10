@@ -2,8 +2,6 @@ import { redirect } from 'next/navigation'
 import { getOrganizationSettings } from './actions'
 import GeneralForm from './general-form'
 import BrandingForm from './branding-form'
-import BillingSection from './billing-section'
-import MembersSection from './members-section'
 
 export default async function SettingsPage() {
   const settings = await getOrganizationSettings()
@@ -57,36 +55,7 @@ export default async function SettingsPage() {
           </div>
         </section>
 
-        {/* Billing */}
-        <section className="border-3 border-brutal-black bg-brutal-white">
-          <div className="border-b-2 border-brutal-black bg-brutal-yellow/20 px-6 py-4">
-            <h2 className="text-lg font-bold text-brutal-black">구독 & 결제</h2>
-          </div>
-          <div className="p-6">
-            <BillingSection
-              organization={settings.organization}
-              subscription={settings.subscription}
-              usage={settings.usage}
-              isOwner={settings.isOwner}
-            />
-          </div>
-        </section>
-
-        {/* Members */}
-        <section className="border-3 border-brutal-black bg-brutal-white">
-          <div className="border-b-2 border-brutal-black bg-brutal-yellow/20 px-6 py-4">
-            <h2 className="text-lg font-bold text-brutal-black">팀 멤버</h2>
-          </div>
-          <div className="p-6">
-            <MembersSection
-              members={settings.members}
-              pendingInvites={settings.pendingInvites}
-              maxUsers={settings.organization.maxUsers}
-              currentUserRole={settings.currentUserRole}
-              isOwner={settings.isOwner}
-            />
-          </div>
-        </section>
+        {/* 구독/결제 및 팀 멤버 섹션은 단일 매장 운영 집중을 위해 숨김 처리함 (SaaS 동결) */}
       </div>
     </div>
   )

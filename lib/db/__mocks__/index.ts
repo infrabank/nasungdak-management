@@ -33,7 +33,6 @@ export const createMockDb = () => ({
   query: {
     purchaseTransactions: createMockQueryResult(null),
     salesRecords: createMockQueryResult(null),
-    menuIngredients: createMockQueryResult(null),
     menuCategories: createMockQueryResult(null),
     ingredients: createMockQueryResult(null),
     skus: createMockQueryResult(null),
@@ -45,7 +44,6 @@ export const createMockDb = () => ({
     inventoryEvents: createMockQueryResult(null),
     inventoryAlertRules: createMockQueryResult(null),
     tossSkuMappings: createMockQueryResult(null),
-    costDistributionRules: createMockQueryResult(null),
   },
 })
 

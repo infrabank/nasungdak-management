@@ -3,7 +3,6 @@ import {
   menuCategories,
   ingredients,
   skus,
-  menuIngredients,
 } from '../lib/db/schema'
 
 async function seed() {
@@ -141,87 +140,6 @@ async function seed() {
 
     console.log(`✅ SKU 6개 생성 완료`)
 
-    // 4. 메뉴-재료 매핑 생성
-    console.log('🔗 메뉴-재료 매핑 생성 중...')
-    await db.insert(menuIngredients).values([
-      // 닭강정
-      {
-        menuId: menu1.id,
-        ingredientId: chicken.id,
-        requiredQuantity: '1.0',
-        createdBy: 'system',
-      },
-      {
-        menuId: menu1.id,
-        ingredientId: flour.id,
-        requiredQuantity: '0.2',
-        createdBy: 'system',
-      },
-      {
-        menuId: menu1.id,
-        ingredientId: sauce.id,
-        requiredQuantity: '0.15',
-        createdBy: 'system',
-      },
-      {
-        menuId: menu1.id,
-        ingredientId: oil.id,
-        requiredQuantity: '0.5',
-        createdBy: 'system',
-      },
-      // 순살치킨
-      {
-        menuId: menu2.id,
-        ingredientId: chicken.id,
-        requiredQuantity: '1.0',
-        createdBy: 'system',
-      },
-      {
-        menuId: menu2.id,
-        ingredientId: flour.id,
-        requiredQuantity: '0.25',
-        createdBy: 'system',
-      },
-      {
-        menuId: menu2.id,
-        ingredientId: oil.id,
-        requiredQuantity: '0.5',
-        createdBy: 'system',
-      },
-      // 양념치킨
-      {
-        menuId: menu3.id,
-        ingredientId: chicken.id,
-        requiredQuantity: '1.0',
-        createdBy: 'system',
-      },
-      {
-        menuId: menu3.id,
-        ingredientId: flour.id,
-        requiredQuantity: '0.2',
-        createdBy: 'system',
-      },
-      {
-        menuId: menu3.id,
-        ingredientId: sauce.id,
-        requiredQuantity: '0.2',
-        createdBy: 'system',
-      },
-      {
-        menuId: menu3.id,
-        ingredientId: oil.id,
-        requiredQuantity: '0.5',
-        createdBy: 'system',
-      },
-      {
-        menuId: menu3.id,
-        ingredientId: garlic.id,
-        requiredQuantity: '0.05',
-        createdBy: 'system',
-      },
-    ])
-
-    console.log(`✅ 메뉴-재료 매핑 12개 생성 완료`)
 
     console.log('\n✨ 시드 데이터 생성 완료!')
     console.log('\n📊 생성된 데이터:')

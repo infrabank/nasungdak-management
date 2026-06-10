@@ -287,7 +287,7 @@ async function fetchAnalysis(
   )
 
   // Execute queries in parallel for better performance
-  // SKU cost: BOM-based (sku_recipes × purchase avg unit price) with menu fallback
+  // SKU cost: BOM-based (sku_recipes × purchase avg unit price). BOM 미등록 SKU는 원가 0 + has_bom=false
   const [skuResult, totalCostsResult, fixedCostsResult] = await Promise.all([
     // SKU-level sales with BOM-based cost calculation
     db.execute(sql`
@@ -295,7 +295,6 @@ async function fetchAnalysis(
         SELECT
           sr.sku_id,
           s.sku_name,
-          s.menu_id,
           SUM(sr.quantity_sold) AS total_quantity,
           SUM(sr.total_revenue) AS total_revenue
         FROM sales_records sr
@@ -304,7 +303,7 @@ async function fetchAnalysis(
           AND sr.deleted_at IS NULL
           AND s.deleted_at IS NULL
           ${salesStoreFilter}
-        GROUP BY sr.sku_id, s.sku_name, s.menu_id
+        GROUP BY sr.sku_id, s.sku_name
       ),
       ingredient_avg_price AS (
         -- Weighted average unit price per ingredient from purchase data
@@ -341,46 +340,21 @@ async function fetchAnalysis(
         WHERE rec.deleted_at IS NULL
           AND ing.deleted_at IS NULL
         GROUP BY rec.sku_id
-      ),
-      cost_by_menu AS (
-        -- Fallback: purchase costs by menu (for SKUs without BOM)
-        SELECT
-          pt.menu_id,
-          SUM(pt.total_amount) AS total_cost
-        FROM purchase_transactions pt
-        WHERE pt.transaction_date BETWEEN ${startDate}::date AND ${endDate}::date
-          AND pt.deleted_at IS NULL
-          AND pt.menu_id IS NOT NULL
-          ${purchaseStoreFilter}
-        GROUP BY pt.menu_id
       )
       SELECT
         ss.sku_name,
         ss.total_quantity AS quantity_sold,
         ss.total_revenue AS revenue,
-        CASE
-          WHEN buc.cost_per_unit IS NOT NULL
-          THEN buc.cost_per_unit * ss.total_quantity
-          ELSE COALESCE(cm.total_cost, 0)
-        END AS cost,
-        ss.total_revenue - CASE
-          WHEN buc.cost_per_unit IS NOT NULL
-          THEN buc.cost_per_unit * ss.total_quantity
-          ELSE COALESCE(cm.total_cost, 0)
-        END AS profit,
+        COALESCE(buc.cost_per_unit * ss.total_quantity, 0) AS cost,
+        ss.total_revenue - COALESCE(buc.cost_per_unit * ss.total_quantity, 0) AS profit,
         CASE
           WHEN ss.total_revenue > 0
-          THEN ((ss.total_revenue - CASE
-            WHEN buc.cost_per_unit IS NOT NULL
-            THEN buc.cost_per_unit * ss.total_quantity
-            ELSE COALESCE(cm.total_cost, 0)
-          END) / ss.total_revenue * 100)
+          THEN ((ss.total_revenue - COALESCE(buc.cost_per_unit * ss.total_quantity, 0)) / ss.total_revenue * 100)
           ELSE 0
         END AS margin_percent,
         CASE WHEN buc.cost_per_unit IS NOT NULL THEN true ELSE false END AS has_bom
       FROM sales_summary ss
       LEFT JOIN bom_unit_cost buc ON ss.sku_id = buc.sku_id
-      LEFT JOIN cost_by_menu cm ON ss.menu_id = cm.menu_id
       ORDER BY revenue DESC
     `),
     // Total variable costs (all valid purchases - same as dashboard)

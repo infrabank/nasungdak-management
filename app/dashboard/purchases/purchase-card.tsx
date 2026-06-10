@@ -11,8 +11,6 @@ import type { Ingredient } from '@/lib/db/schema'
 interface Purchase {
   id: string
   transactionDate: string
-  menuId?: string | null
-  menuName: string | null
   ingredientId?: string
   ingredientName: string | null
   supplierName: string
