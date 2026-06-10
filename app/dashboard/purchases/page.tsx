@@ -31,6 +31,7 @@ import {
 } from './actions'
 import CSVUpload from './csv-upload'
 import CopyLastPurchaseButton from './copy-last-purchase-button'
+import PurchaseTemplatesButton from './purchase-templates-button'
 import PurchaseRow from './purchase-row'
 import PurchaseCard from './purchase-card'
 import { formatDate, formatCurrency } from '@/lib/utils/format'
@@ -111,6 +112,7 @@ export default async function PurchasesPage({
         </div>
         {/* Desktop buttons */}
         <div className="hidden sm:flex sm:gap-3">
+          <PurchaseTemplatesButton />
           <CopyLastPurchaseButton />
           <CSVUpload />
           <Link
@@ -367,6 +369,7 @@ export default async function PurchasesPage({
       {/* Mobile: Fixed Bottom Action Bar - positioned above bottom nav */}
       <div className="fixed bottom-14 left-0 right-0 z-20 border-t-3 border-brutal-black bg-brutal-yellow p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:hidden">
         <div className="flex gap-3">
+          <PurchaseTemplatesButton />
           <CopyLastPurchaseButton />
           <CSVUpload />
           <Link

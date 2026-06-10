@@ -535,6 +535,57 @@ export const dailyClosings = pgTable(
   ]
 )
 
+// 매입 템플릿 (자주 쓰는 매입 묶음)
+export const purchaseTemplates = pgTable(
+  'purchase_templates',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    storeId: uuid('store_id').references(() => stores.id),
+    templateName: varchar('template_name', { length: 100 }).notNull(),
+    supplierName: varchar('supplier_name', { length: 200 }).notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('ptpl_store_id_idx').on(table.storeId),
+    index('ptpl_deleted_at_idx').on(table.deletedAt),
+  ]
+)
+
+// 매입 템플릿 품목
+export const purchaseTemplateItems = pgTable(
+  'purchase_template_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    templateId: uuid('template_id')
+      .notNull()
+      .references(() => purchaseTemplates.id),
+    ingredientId: uuid('ingredient_id')
+      .notNull()
+      .references(() => ingredients.id),
+    defaultQuantity: decimal('default_quantity', {
+      precision: 10,
+      scale: 2,
+    }).notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('ptpli_template_id_idx').on(table.templateId),
+    index('ptpli_deleted_at_idx').on(table.deletedAt),
+  ]
+)
+
 // =====================
 // SaaS: 사용자 관리 & 권한
 // =====================
@@ -949,6 +1000,12 @@ export type NewAlertHistory = typeof alertHistory.$inferInsert
 
 export type DailyClosing = typeof dailyClosings.$inferSelect
 export type NewDailyClosing = typeof dailyClosings.$inferInsert
+
+export type PurchaseTemplate = typeof purchaseTemplates.$inferSelect
+export type NewPurchaseTemplate = typeof purchaseTemplates.$inferInsert
+
+export type PurchaseTemplateItem = typeof purchaseTemplateItems.$inferSelect
+export type NewPurchaseTemplateItem = typeof purchaseTemplateItems.$inferInsert
 
 export type Supplier = typeof suppliers.$inferSelect
 export type NewSupplier = typeof suppliers.$inferInsert
