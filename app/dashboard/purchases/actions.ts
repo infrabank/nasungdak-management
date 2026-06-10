@@ -11,7 +11,7 @@ import {
   inventory,
   inventoryEvents,
 } from '@/lib/db/schema'
-import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
+import { eq, and, isNull, desc, sql, inArray, or } from 'drizzle-orm'
 import { z } from 'zod'
 import { getAuthorizedStoreIds, getOrganizationId } from '@/lib/auth-context'
 
@@ -903,5 +903,163 @@ export async function getPurchasesTotals(
   } catch (error) {
     logger.error('Failed to fetch purchases totals:', errorToContext(error))
     return { totalCount: 0, totalQuantity: 0, totalAmount: 0 }
+  }
+}
+
+// 가장 최근 매입일과 그날의 매입 항목 조회 (지난 매입 복사용)
+async function fetchLastPurchaseDay() {
+  const authorizedStoreIds = await getAuthorizedStoreIds()
+  if (authorizedStoreIds.length === 0) return null
+
+  const storeCondition = or(
+    inArray(purchaseTransactions.storeId, authorizedStoreIds),
+    isNull(purchaseTransactions.storeId)
+  )
+
+  const latest = await db
+    .select({ d: purchaseTransactions.transactionDate })
+    .from(purchaseTransactions)
+    .where(and(isNull(purchaseTransactions.deletedAt), storeCondition))
+    .orderBy(desc(purchaseTransactions.transactionDate))
+    .limit(1)
+
+  if (latest.length === 0) return null
+  const lastDate = latest[0].d
+
+  const items = await db
+    .select({
+      ingredientId: purchaseTransactions.ingredientId,
+      ingredientName: ingredients.ingredientName,
+      supplierName: purchaseTransactions.supplierName,
+      quantity: purchaseTransactions.quantity,
+      unitPrice: purchaseTransactions.unitPrice,
+      totalAmount: purchaseTransactions.totalAmount,
+      storeId: purchaseTransactions.storeId,
+    })
+    .from(purchaseTransactions)
+    .leftJoin(
+      ingredients,
+      eq(purchaseTransactions.ingredientId, ingredients.id)
+    )
+    .where(
+      and(
+        eq(purchaseTransactions.transactionDate, lastDate),
+        isNull(purchaseTransactions.deletedAt),
+        storeCondition
+      )
+    )
+
+  return { date: lastDate, items }
+}
+
+export interface LastPurchaseDaySummary {
+  date: string
+  totalAmount: number
+  items: Array<{
+    ingredientName: string
+    supplierName: string
+    quantity: number
+    unitPrice: number
+    totalAmount: number
+  }>
+}
+
+export async function getLastPurchaseDaySummary(): Promise<{
+  success: boolean
+  data?: LastPurchaseDaySummary | null
+  error?: string
+}> {
+  try {
+    const result = await fetchLastPurchaseDay()
+    if (!result) return { success: true, data: null }
+
+    return {
+      success: true,
+      data: {
+        date: result.date,
+        totalAmount: result.items.reduce(
+          (sum, item) => sum + Number(item.totalAmount ?? 0),
+          0
+        ),
+        items: result.items.map((item) => ({
+          ingredientName: item.ingredientName ?? '-',
+          supplierName: item.supplierName,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+          totalAmount: Number(item.totalAmount ?? 0),
+        })),
+      },
+    }
+  } catch (error) {
+    logger.error(
+      'Failed to fetch last purchase day summary:',
+      errorToContext(error)
+    )
+    return { success: false, error: '최근 매입 조회에 실패했습니다' }
+  }
+}
+
+export async function copyLastPurchasesToToday() {
+  try {
+    const result = await fetchLastPurchaseDay()
+    if (!result || result.items.length === 0) {
+      return { success: false, error: '복사할 매입 내역이 없습니다' }
+    }
+
+    const today = new Date().toISOString().split('T')[0]
+    if (result.date === today) {
+      return {
+        success: false,
+        error: '가장 최근 매입이 이미 오늘 날짜입니다',
+      }
+    }
+
+    let totalAmount = 0
+    await db.transaction(async (tx) => {
+      for (const item of result.items) {
+        const [transaction] = await tx
+          .insert(purchaseTransactions)
+          .values({
+            transactionDate: today,
+            ingredientId: item.ingredientId,
+            supplierName: item.supplierName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            storeId: item.storeId,
+            isValid: true,
+            notes: `${result.date} 매입 복사`,
+            createdBy: 'system',
+          })
+          .returning()
+
+        totalAmount += Number(transaction.totalAmount ?? 0)
+
+        if (transaction.storeId) {
+          await syncPurchaseToInventory(
+            tx,
+            transaction.storeId,
+            transaction.ingredientId,
+            transaction.quantity,
+            transaction.id,
+            transaction.transactionDate
+          )
+        }
+      }
+    })
+
+    revalidatePath('/dashboard/purchases')
+    revalidateTag('purchases:all')
+    revalidateTag('inventory:all')
+    revalidateTag('dashboard:stats')
+
+    return {
+      success: true,
+      count: result.items.length,
+      totalAmount,
+      sourceDate: result.date,
+    }
+  } catch (error) {
+    logger.error('Failed to copy last purchases:', errorToContext(error))
+    return { success: false, error: '매입 복사에 실패했습니다' }
   }
 }
