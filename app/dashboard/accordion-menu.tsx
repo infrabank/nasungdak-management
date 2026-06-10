@@ -18,6 +18,7 @@ export const menuGroups: MenuGroup[] = [
   {
     label: '운영 관리',
     items: [
+      { label: '일일 마감', href: '/dashboard/closing' },
       { label: '매입 관리', href: '/dashboard/purchases' },
       { label: '판매 관리', href: '/dashboard/sales' },
       { label: '기름 교체', href: '/dashboard/oil-changes' },

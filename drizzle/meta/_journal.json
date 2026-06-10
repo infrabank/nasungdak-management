@@ -43,6 +43,13 @@
       "when": 1775481710377,
       "tag": "0005_bent_galactus",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781098815315,
+      "tag": "0006_striped_blacklash",
+      "breakpoints": true
     }
   ]
 }

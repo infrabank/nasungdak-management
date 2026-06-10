@@ -504,6 +504,37 @@ export const alertHistory = pgTable(
   ]
 )
 
+// 일일 마감 테이블 (결제수단별 매출 합계 + 메모)
+export const dailyClosings = pgTable(
+  'daily_closings',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    storeId: uuid('store_id').references(() => stores.id),
+    closingDate: date('closing_date').notNull(),
+    cardSales: decimal('card_sales', { precision: 14, scale: 2 })
+      .notNull()
+      .default('0'),
+    cashSales: decimal('cash_sales', { precision: 14, scale: 2 })
+      .notNull()
+      .default('0'),
+    deliverySales: decimal('delivery_sales', { precision: 14, scale: 2 })
+      .notNull()
+      .default('0'),
+    memo: text('memo'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('dc_store_id_idx').on(table.storeId),
+    index('dc_closing_date_idx').on(table.closingDate.desc()),
+    unique('dc_store_date_unique').on(table.storeId, table.closingDate),
+  ]
+)
+
 // =====================
 // SaaS: 사용자 관리 & 권한
 // =====================
@@ -915,6 +946,9 @@ export type InventoryEvent = typeof inventoryEvents.$inferSelect
 export type NewInventoryEvent = typeof inventoryEvents.$inferInsert
 export type AlertHistory = typeof alertHistory.$inferSelect
 export type NewAlertHistory = typeof alertHistory.$inferInsert
+
+export type DailyClosing = typeof dailyClosings.$inferSelect
+export type NewDailyClosing = typeof dailyClosings.$inferInsert
 
 export type Supplier = typeof suppliers.$inferSelect
 export type NewSupplier = typeof suppliers.$inferInsert

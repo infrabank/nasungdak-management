@@ -59,6 +59,24 @@ function CalculatorIcon({ className }: { className?: string }) {
   )
 }
 
+function ClipboardCheckIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M10.125 2.25h-4.5c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125v-17.25c0-.621-.504-1.125-1.125-1.125h-4.5m-5.25 0h5.25m-5.25 0a2.25 2.25 0 0 1 2.25-2.25h.75a2.25 2.25 0 0 1 2.25 2.25m-7.5 7.5 2.25 2.25 4.5-4.5"
+      />
+    </svg>
+  )
+}
+
 function Squares2X2Icon({ className }: { className?: string }) {
   return (
     <svg
@@ -84,6 +102,11 @@ export default function MobileBottomNav() {
   const isActive = (href: string) => pathname.startsWith(href)
 
   const navItems = [
+    {
+      label: '마감',
+      href: '/dashboard/closing',
+      icon: ClipboardCheckIcon,
+    },
     {
       label: '매입',
       href: '/dashboard/purchases',
