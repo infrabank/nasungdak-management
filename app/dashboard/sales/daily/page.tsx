@@ -41,7 +41,7 @@ export default async function DailySalesPage({
             먼저 매장을 등록해주세요
           </p>
           <Link
-            href="/dashboard/stores/new"
+            href="/dashboard/stores"
             className="mt-4 inline-block border-2 border-brutal-black bg-brutal-white px-6 py-2 font-bold text-brutal-black shadow-brutal transition-all hover:shadow-brutal-lg"
           >
             매장 등록하기

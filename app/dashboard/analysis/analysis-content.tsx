@@ -107,12 +107,12 @@ export default async function AnalysisContent({
             <li>선택한 기간에 매입 기록이 있는지 확인하세요</li>
             <li>
               <Link
-                href="/dashboard/master-data/cost-rules"
+                href="/dashboard/master-data/sku-recipes"
                 className="font-bold underline"
               >
-                원가 배분 규칙
+                SKU 레시피
               </Link>
-              이 설정되어 있는지 확인하세요
+              가 등록되어 있는지 확인하세요 (원가 계산 기준)
             </li>
           </ul>
         </div>
