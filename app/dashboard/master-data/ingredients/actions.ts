@@ -39,6 +39,27 @@ const ingredientSchema = z.object({
     }),
   description: z.string().max(500).optional(),
   isActive: z.boolean().default(true),
+  managementLevel: z.enum(['core', 'simple', 'expense']).default('core'),
+  purchaseUnit: z
+    .string()
+    .max(20)
+    .optional()
+    .transform((val) => val?.trim() || undefined),
+  conversionFactor: z.coerce
+    .string()
+    .optional()
+    .transform((val, ctx) => {
+      if (!val || val === '') return undefined
+      const num = Number(val)
+      if (isNaN(num) || num <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '변환 계수는 0보다 커야 합니다',
+        })
+        return z.NEVER
+      }
+      return val
+    }),
 })
 
 export async function createIngredient(formData: FormData) {
@@ -51,6 +72,9 @@ export async function createIngredient(formData: FormData) {
       unitCost: formData.get('unitCost') || undefined,
       description: formData.get('description') || '',
       isActive: formData.get('isActive') === 'true',
+      managementLevel: formData.get('managementLevel') || 'core',
+      purchaseUnit: formData.get('purchaseUnit') || undefined,
+      conversionFactor: formData.get('conversionFactor') || undefined,
     }
 
     const validatedData = ingredientSchema.parse(rawData)
@@ -63,6 +87,9 @@ export async function createIngredient(formData: FormData) {
         barcode: validatedData.barcode ?? null,
         unitCost: validatedData.unitCost,
         description: validatedData.description,
+        managementLevel: validatedData.managementLevel,
+        purchaseUnit: validatedData.purchaseUnit ?? null,
+        conversionFactor: validatedData.conversionFactor ?? null,
         organizationId,
         createdBy: 'system',
       })
@@ -102,6 +129,9 @@ export async function updateIngredient(id: string, formData: FormData) {
       unitCost: formData.get('unitCost') || undefined,
       description: formData.get('description') || '',
       isActive: formData.get('isActive') === 'true',
+      managementLevel: formData.get('managementLevel') || 'core',
+      purchaseUnit: formData.get('purchaseUnit') || undefined,
+      conversionFactor: formData.get('conversionFactor') || undefined,
     }
 
     const validatedData = ingredientSchema.parse(rawData)
@@ -115,6 +145,9 @@ export async function updateIngredient(id: string, formData: FormData) {
         unitCost: validatedData.unitCost,
         description: validatedData.description,
         isActive: validatedData.isActive,
+        managementLevel: validatedData.managementLevel,
+        purchaseUnit: validatedData.purchaseUnit ?? null,
+        conversionFactor: validatedData.conversionFactor ?? null,
         updatedAt: new Date(),
         updatedBy: 'system',
       })

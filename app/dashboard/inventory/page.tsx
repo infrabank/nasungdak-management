@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { getInventory, getAlertRules, getLowStockAlerts } from './actions'
 import { getActiveStores } from '../stores/actions'
 import { getIngredients } from '../master-data/ingredients/actions'
@@ -13,10 +14,12 @@ import AlertCheckButton from './alert-check-button'
 export default async function InventoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ storeId?: string }>
+  searchParams: Promise<{ storeId?: string; level?: string }>
 }) {
   const params = await searchParams
   const storeId = params.storeId || ''
+  // 기본은 핵심 재료만 표시 (재고 등급제)
+  const level = params.level === 'all' ? 'all' : 'core'
 
   const [inventoryList, alertRules, activeStores, ingredientList, lowStock] =
     await Promise.all([
@@ -42,6 +45,20 @@ export default async function InventoryPage({
     id: s.id,
     storeName: s.storeName,
   }))
+
+  // 등급 필터 적용
+  const filteredInventory =
+    level === 'all'
+      ? inventoryList
+      : inventoryList.filter((item) => item.managementLevel === 'core')
+
+  const buildLevelUrl = (targetLevel: 'core' | 'all') => {
+    const sp = new URLSearchParams()
+    if (storeId) sp.set('storeId', storeId)
+    if (targetLevel === 'all') sp.set('level', 'all')
+    const query = sp.toString()
+    return `/dashboard/inventory${query ? `?${query}` : ''}`
+  }
 
   return (
     <div>
@@ -90,16 +107,44 @@ export default async function InventoryPage({
         </div>
       )}
 
+      {/* 등급 필터 */}
+      <div className="mt-6 flex items-center gap-2">
+        <Link
+          href={buildLevelUrl('core')}
+          className={`border-2 border-brutal-black px-4 py-2 text-sm font-bold text-brutal-black transition-all ${
+            level === 'core' ? 'bg-brutal-yellow shadow-brutal-sm' : 'bg-brutal-white'
+          }`}
+        >
+          핵심 재료
+        </Link>
+        <Link
+          href={buildLevelUrl('all')}
+          className={`border-2 border-brutal-black px-4 py-2 text-sm font-bold text-brutal-black transition-all ${
+            level === 'all' ? 'bg-brutal-yellow shadow-brutal-sm' : 'bg-brutal-white'
+          }`}
+        >
+          전체
+        </Link>
+        <span className="ml-2 text-sm font-medium text-brutal-black/60">
+          {filteredInventory.length}개 표시
+          {level === 'core' &&
+            inventoryList.length > filteredInventory.length &&
+            ` (보조/비용 ${inventoryList.length - filteredInventory.length}개 숨김)`}
+        </span>
+      </div>
+
       {/* 재고 현황 - Mobile View */}
       <div className="mt-6 space-y-4 md:hidden">
-        {inventoryList.length === 0 ? (
+        {filteredInventory.length === 0 ? (
           <div className="border-3 border-dashed border-brutal-black bg-brutal-white p-12 text-center">
             <p className="text-sm font-medium text-brutal-black/70">
-              재고 데이터가 없습니다
+              {level === 'core'
+                ? '핵심 등급 재고가 없습니다. 기초 데이터에서 재료의 관리 등급을 핵심으로 지정하세요.'
+                : '재고 데이터가 없습니다'}
             </p>
           </div>
         ) : (
-          inventoryList.map((item) => (
+          filteredInventory.map((item) => (
             <InventoryCard
               key={item.id}
               item={{
@@ -142,17 +187,19 @@ export default async function InventoryPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {inventoryList.length === 0 ? (
+                {filteredInventory.length === 0 ? (
                   <tr>
                     <td
                       colSpan={6}
                       className="py-10 text-center text-sm text-gray-500"
                     >
-                      재고 데이터가 없습니다
+                      {level === 'core'
+                        ? '핵심 등급 재고가 없습니다. 기초 데이터에서 재료의 관리 등급을 핵심으로 지정하세요.'
+                        : '재고 데이터가 없습니다'}
                     </td>
                   </tr>
                 ) : (
-                  inventoryList.map((item) => (
+                  filteredInventory.map((item) => (
                     <InventoryRow
                       key={item.id}
                       item={{

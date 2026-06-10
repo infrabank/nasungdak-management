@@ -244,6 +244,7 @@ async function fetchInventory(storeId: string, authorizedStoreIds: string[]) {
       unit: inventory.unit,
       lastUpdated: inventory.lastUpdated,
       ingredientName: ingredients.ingredientName,
+      managementLevel: ingredients.managementLevel,
       storeName: stores.storeName,
     })
     .from(inventory)
@@ -270,7 +271,7 @@ export async function getInventory(storeId?: string) {
 
     const getCachedInventory = unstable_cache(
       () => fetchInventory(normalizedStoreId, authorizedStoreIds),
-      ['inventory:list', storeKey, normalizedStoreId],
+      ['inventory:list:v2', storeKey, normalizedStoreId],
       { tags: [`inventory:${normalizedStoreId}`] }
     )
 

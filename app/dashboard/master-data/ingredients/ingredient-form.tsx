@@ -111,15 +111,65 @@ export default function IngredientForm({ ingredient }: IngredientFormProps) {
                     </div>
 
                     <div>
-                      <Label htmlFor="unit">단위 *</Label>
+                      <Label htmlFor="managementLevel">관리 등급 *</Label>
+                      <select
+                        name="managementLevel"
+                        id="managementLevel"
+                        defaultValue={ingredient?.managementLevel ?? 'core'}
+                        className="block w-full border-2 border-brutal-black bg-brutal-white px-3 py-2 text-sm font-medium text-brutal-black"
+                      >
+                        <option value="core">핵심 (재고+원가 관리)</option>
+                        <option value="simple">보조 (매입 기록만)</option>
+                        <option value="expense">비용 (매입비 집계만)</option>
+                      </select>
+                      <p className="mt-1 text-xs text-brutal-black/60">
+                        핵심 재료만 재고 화면에 기본 표시됩니다
+                      </p>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="unit">사용 단위 *</Label>
                       <Input
                         type="text"
                         name="unit"
                         id="unit"
                         required
                         defaultValue={ingredient?.unit}
-                        placeholder="예: kg, g, L, ml, 개"
+                        placeholder="예: g, ml, 개 (레시피/재고 기준)"
                       />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="purchaseUnit">구매 단위</Label>
+                        <Input
+                          type="text"
+                          name="purchaseUnit"
+                          id="purchaseUnit"
+                          defaultValue={ingredient?.purchaseUnit || ''}
+                          placeholder="예: box, 포"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="conversionFactor">변환 계수</Label>
+                        <Input
+                          type="number"
+                          name="conversionFactor"
+                          id="conversionFactor"
+                          min="0"
+                          step="any"
+                          defaultValue={
+                            ingredient?.conversionFactor
+                              ? Number(ingredient.conversionFactor)
+                              : ''
+                          }
+                          placeholder="구매 1 = 사용 N"
+                        />
+                      </div>
+                      <p className="col-span-2 -mt-2 text-xs text-brutal-black/60">
+                        예: 1박스 = 10000g이면 구매 단위 box, 변환 계수 10000.
+                        비워두면 매입 수량이 그대로 재고에 반영됩니다
+                      </p>
                     </div>
 
                     <div>

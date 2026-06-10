@@ -57,6 +57,13 @@
       "when": 1781099483815,
       "tag": "0007_premium_stark_industries",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1781100044560,
+      "tag": "0008_curious_cammi",
+      "breakpoints": true
     }
   ]
 }

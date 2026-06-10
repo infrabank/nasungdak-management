@@ -23,12 +23,25 @@ async function syncPurchaseToInventory(
   purchaseId: string,
   transactionDate: string
 ) {
+  // 구매 단위 → 사용 단위 변환 (변환 계수 미설정 시 1:1)
+  const ingredient = await tx.query.ingredients.findFirst({
+    where: and(eq(ingredients.id, ingredientId), isNull(ingredients.deletedAt)),
+    columns: {
+      unit: true,
+      conversionFactor: true,
+    },
+  })
+  const factor = ingredient?.conversionFactor
+    ? Number(ingredient.conversionFactor)
+    : 1
+  const convertedQuantity = String(Number(quantity) * factor)
+
   await tx.insert(inventoryEvents).values({
     storeId,
     ingredientId,
     eventType: 'purchase',
-    quantityChange: quantity,
-    reason: '매입 자동 반영',
+    quantityChange: convertedQuantity,
+    reason: factor === 1 ? '매입 자동 반영' : `매입 자동 반영 (x${factor})`,
     eventDate: transactionDate,
     referenceId: purchaseId,
     createdBy: 'system',
@@ -45,24 +58,17 @@ async function syncPurchaseToInventory(
     await tx
       .update(inventory)
       .set({
-        currentQuantity: sql`${inventory.currentQuantity} + ${quantity}`,
+        currentQuantity: sql`${inventory.currentQuantity} + ${convertedQuantity}`,
         lastUpdated: new Date(),
       })
       .where(eq(inventory.id, existingInventory.id))
     return
   }
 
-  const ingredient = await tx.query.ingredients.findFirst({
-    where: and(eq(ingredients.id, ingredientId), isNull(ingredients.deletedAt)),
-    columns: {
-      unit: true,
-    },
-  })
-
   await tx.insert(inventory).values({
     storeId,
     ingredientId,
-    currentQuantity: quantity,
+    currentQuantity: convertedQuantity,
     unit: ingredient?.unit ?? null,
     lastUpdated: new Date(),
   })
@@ -546,6 +552,7 @@ export async function createMultiplePurchases(
                   ingredientName: trimmedName,
                   unit: trimmedUnit,
                   isOneTime: true,
+                  managementLevel: 'expense', // 일회성 재료는 비용 처리
                   organizationId: organizationId || undefined,
                   createdBy: 'system',
                 })
