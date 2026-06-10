@@ -17,8 +17,7 @@
       "Agent(*)",
       "Skill(*)",
       "WebFetch(*)",
-      "WebSearch(*)",
-      "mcp__*"
+      "WebSearch(*)"
     ]
   },
   "statusLine": {
