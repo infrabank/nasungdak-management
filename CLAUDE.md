@@ -29,399 +29,197 @@ Default to 1-2 sentence explanations. Only expand when complexity absolutely req
 
 ## Overview
 
-사장북(sajangbook.com) 관리 시스템 - A Next.js 15 management web application using App Router, Drizzle ORM, and Vercel Postgres.
+사장북(sajangbook.com) - 요식업 매장 관리 SaaS. Next.js 15 (App Router) + Drizzle ORM + Vercel Postgres. 멀티 조직/매장/유저, Stripe 구독 결제, 카카오 알림톡 발송.
 
 ## Development Commands
 
-### Core Development
-
 ```bash
-npm run dev              # Start dev server (localhost:3000)
+npm run dev              # Dev server (localhost:3000)
 npm run build            # Production build
-npm start                # Start production server
-npm run type-check       # TypeScript type checking
+npm run type-check       # TypeScript check
 npm run lint             # ESLint
-npm run format           # Prettier formatting
+npm run format           # Prettier
+
+npm run db:generate      # Generate migrations from schema
+npm run db:migrate       # Apply migrations
+npm run db:studio        # Drizzle Studio
+npm run db:seed          # Seed sample data (also: scripts/seed-admin.ts, seed-plans.ts, seed-roles.ts)
+
+npm run test             # Vitest
+npm run test:e2e         # Playwright
 ```
 
-### Database Operations
-
-```bash
-npm run db:generate      # Generate migration files from schema
-npm run db:migrate       # Apply migrations to database
-npm run db:studio        # Open Drizzle Studio (DB GUI)
-npm run db:seed          # Seed database with sample data
-npm run import:excel     # Import data from Excel (scripts/import-excel.ts)
-```
-
-### Testing
-
-```bash
-npm run test             # Run Vitest unit tests
-npm run test:e2e         # Run Playwright E2E tests
-```
-
-## Architecture Overview
+## Architecture
 
 ### Tech Stack
 
-- **Frontend**: Next.js 15 (App Router), React 19, Tailwind CSS
-- **Backend**: Next.js Server Actions (serverless)
-- **Database**: Vercel Postgres (PostgreSQL) with Drizzle ORM
-- **Validation**: Zod schemas
-- **Authentication**: JWT tokens (jose library) with HTTP-only cookies
-- **Deployment**: Vercel
+- **Frontend**: Next.js 15 App Router, React 19, Tailwind CSS, Recharts, sonner(toast), framer-motion
+- **Backend**: Server Actions (mutations), Route Handlers (webhooks/auth/upload only)
+- **DB**: Vercel Postgres + Drizzle ORM
+- **Validation**: Zod
+- **Auth**: JWT (jose) access/refresh token, HTTP-only cookies
+- **Billing**: Stripe subscriptions
+- **Notifications**: Kakao AlimTalk (`lib/kakao/alimtalk.ts`, `lib/notifications/`)
 
-### Route Structure
+### Routes
 
-```
-app/
-├── (auth)/login/              # Unauthenticated login page → /login
-└── dashboard/                 # Protected routes (JWT middleware)
-    ├── page.tsx               # Dashboard home → /dashboard
-    ├── purchases/             # Purchase management → /dashboard/purchases
-    ├── sales/                 # Sales management → /dashboard/sales
-    ├── fixed-costs/           # Fixed costs management → /dashboard/fixed-costs
-    ├── analysis/              # Period analysis → /dashboard/analysis
-    └── master-data/           # Base data → /dashboard/master-data
-```
+**Public**: `/` (home), `/login`, `/signup`, `/onboarding`, `/pricing`, `/guide`, `/invite/[token]`
 
-**URL Paths:**
+**Protected** (`/dashboard/*`):
 
-- `/login` - Login page (public)
-- `/dashboard` - Dashboard home (protected)
-- `/dashboard/purchases` - Purchase management (protected)
-- `/dashboard/sales` - Sales management (protected)
-- `/dashboard/fixed-costs` - Fixed costs management (protected)
-- `/dashboard/analysis` - Period analysis (protected)
-- `/dashboard/master-data` - Master data management (protected)
+| Route | Feature |
+|-------|---------|
+| `purchases` | 매입 관리 (간편 매입 포함) |
+| `sales` | 매출 관리 (CSV import, bulk delete) |
+| `inventory` | 재고 관리 + 부족 알림 규칙/발송 |
+| `fixed-costs` | 고정비 (인건비/임대료/관리비/기타) |
+| `analysis` | 분석: 마진, 메뉴 엔지니어링, 손익분기점, 재료 가격 추이, 요일별 판매 |
+| `attendance` | 출퇴근 기록 |
+| `employees` | 직원 관리 |
+| `oil-changes` | 기름 교체 이력 |
+| `stores` | 매장 관리 |
+| `master-data` | 기준 데이터 (메뉴/재료/SKU 등) |
+| `settings` | 조직/구독/멤버 설정 |
 
-All routes except `/login` and static assets are protected by middleware (middleware.ts) which validates JWT session tokens.
+**Admin**: `/admin` (organizations, users) - separate admin session cookie (`lib/admin-auth.ts`)
 
-### Database Schema Pattern
+**API routes**: `/api/auth/refresh`, `/api/health`, `/api/setup/seed-admin`, `/api/upload` (Vercel Blob), `/api/webhooks/stripe`
 
-All tables follow a consistent pattern:
+Middleware (`middleware.ts`) protects everything except public routes and static assets.
 
-- **Primary Key**: `id` (UUID, auto-generated)
-- **Audit Fields**: `createdAt`, `updatedAt`, `createdBy`, `updatedBy`
-- **Soft Delete**: `deletedAt`, `deletedBy` (never hard delete records)
-- **Active Status**: `isActive` boolean (where applicable)
+### Database Schema (`lib/db/schema.ts`)
 
-Key tables:
+All tables: UUID PK `id`, audit fields (`createdAt/updatedAt/createdBy/updatedBy`), soft delete (`deletedAt/deletedBy`). Never hard delete.
 
-- `menu_categories` - Menu items
-- `ingredients` - Ingredient master data
-- `skus` - Stock keeping units (sales items linked to menus)
-- `menu_ingredients` - Junction table for menu-ingredient mapping
-- `purchase_transactions` - Purchase records with auto-validation
-- `sales_records` - Sales records
-- `fixed_costs` - Fixed cost records (labor, rent, management fees, etc.)
-- `cost_distribution_rules` - Cost allocation rules with date ranges
+**Domain groups**:
 
-**Important**: `purchaseTransactions.totalAmount` and `salesRecords.totalRevenue` are **generated columns** computed by the database. Do not try to insert/update these fields directly.
+- **Core**: `stores`, `suppliers`, `menu_categories`, `ingredients`, `skus`, `menu_ingredients`, `purchase_transactions`, `sales_records`, `cost_distribution_rules`, `fixed_costs`
+- **Operations**: `oil_change_history`, `employees`, `attendance_records`
+- **Inventory**: `inventory`, `inventory_alert_rules`, `inventory_events`, `alert_history`
+- **Auth/SaaS**: `users`, `user_sessions`, `roles`, `user_store_assignments`, `audit_logs`, `organizations`, `organization_members`, `organization_invitations`, `subscriptions`, `invoices`, `webhook_events`, `usage_metrics`, `plan_features`
+- **Recipes**: `sku_recipes`, `sales_menus`, `sales_menu_items`
+
+**Generated columns - never insert/update directly**:
+
+- `purchase_transactions.total_amount` = `quantity * unit_price`
+- `sales_records.total_revenue` = `quantity_sold * unit_price`
+
+Most business tables are scoped by `storeId`; always filter by the user's accessible stores.
+
+### Authentication
+
+Multi-user JWT auth (access + refresh token):
+
+- **Access token**: `session` cookie, 15min. **Refresh token**: `refresh_token` cookie, 7 days (DB-backed in `user_sessions`)
+- Middleware verifies access token; near expiry sets `X-Token-Refresh-Needed` header; expired → redirects to `/api/auth/refresh`
+- JWT payload: `userId`, `email`, `name`, `storeIds`, `permissions` (role-based, from `roles` + `user_store_assignments`)
+- **`SESSION_SECRET` must come from `@/lib/auth/constants`** (throws in production if env missing; never hardcode fallbacks)
+- Key files: `lib/auth.ts` (getAuthContext), `lib/auth/constants.ts` (secret, cookie names, durations), `lib/auth-context.ts`, `middleware.ts`, `app/api/auth/refresh`
+- Org membership/plan limits: `lib/features.ts`, usage tracking: `lib/usage.ts`, audit: `lib/audit.ts`
 
 ### Server Actions Pattern
 
-Each feature area has an `actions.ts` file with CRUD operations following this standard pattern:
-
-**Location**: `app/dashboard/[feature]/actions.ts`
-
-**Standard Structure**:
+`app/dashboard/[feature]/actions.ts`:
 
 ```typescript
 'use server'
 
-import { revalidatePath } from 'next/cache'
-import { db } from '@/lib/db'
-import { [table], ... } from '@/lib/db/schema'
-import { [schema] } from '@/lib/utils/validation'
-
 export async function create[Entity](formData: FormData) {
-  // 1. Parse and validate with Zod
-  // 2. Business logic (e.g., validation checks)
-  // 3. Database insert/update
-  // 4. revalidatePath() to clear cache
+  // 1. getAuthContext() - verify auth + store access
+  // 2. Parse/validate with Zod (lib/utils/validation.ts)
+  // 3. DB insert/update (soft delete only)
+  // 4. revalidatePath()
   // 5. Return { success: boolean, data?: T, error?: string }
 }
 ```
 
-**Key Conventions**:
+- Input is `FormData`, not JSON
+- Soft delete: set `deletedAt`, never `.delete()`
+- Always `revalidatePath()` after mutations
 
-- All server actions use `FormData` as input (not JSON)
-- Use Zod schemas from `lib/utils/validation.ts` for validation
-- Always call `revalidatePath()` after mutations
-- Soft delete: Set `deletedAt` timestamp, don't use `.delete()`
-- Return consistent response shape with success/error fields
+### Forms
 
-### Authentication System
-
-**Single-password authentication** (not multi-user):
-
-- Password stored as bcrypt hash in `AUTH_PASSWORD_HASH` env variable
-- JWT tokens created with `jose` library, signed with `SESSION_SECRET`
-- Tokens stored in HTTP-only cookies (7-day expiration)
-- Middleware validates all requests except `/login` and static files
-
-**Key Files**:
-
-- `app/(auth)/login/actions.ts` - Login/logout server actions
-- `middleware.ts` - JWT verification and redirect logic
-- `app/dashboard/logout-button.tsx` - Logout client component
-
-### Form Implementation Pattern
-
-Forms are client components that submit to server actions:
-
-**Pattern**:
+Client components with React 19 `useActionState`:
 
 ```typescript
-'use client'
-
-import { useActionState } from 'react'
-import { create[Entity] } from './actions'
-
-export default function [Entity]Form() {
-  const [state, formAction, isPending] = useActionState(create[Entity], null)
-
-  // Handle form submission with FormData
-  // Display validation errors from server action
-  // Use HTML5 validation (required, type, min, max, step)
-}
+const [state, formAction, isPending] = useActionState(createEntity, null)
 ```
 
-**Notes**:
-
-- Uses React 19's `useActionState` hook (not react-hook-form in most places)
-- Server actions receive raw FormData
-- Forms use native HTML inputs styled with Tailwind
-- No global form library - simple, direct approach
+Native HTML inputs + Tailwind. No global form library (react-hook-form used in a few places).
 
 ### Data Fetching
 
-**Server Components** (default):
+Server Components by default, direct `await` calls. Query conventions:
+
+- Filter soft-deleted: `where(isNull(table.deletedAt))`
+- Filter by accessible `storeId`
+- `orderBy(desc(table.createdAt))`, `.limit(100)` (no pagination yet)
+
+### Validation
+
+`lib/utils/validation.ts`. Decimal fields accept string or number:
 
 ```typescript
-export default async function [Entity]Page() {
-  const data = await get[Entities]()  // Direct async/await in component
-  return <div>{/* Render data */}</div>
-}
+z.union([z.number(), z.string().transform(...)]).pipe(z.number().positive())
 ```
 
-**Client Components** (when needed):
+### Formatting
 
-```typescript
-useEffect(() => {
-  get[Entities]().then(setData)
-}, [])
-```
-
-**Query Patterns**:
-
-- Use Drizzle's query builder with explicit joins
-- Always filter out soft-deleted records: `where(isNull(table.deletedAt))`
-- Limit queries to 100 records (no pagination implemented yet)
-- Use `orderBy(desc(table.createdAt))` for chronological ordering
-
-### Validation with Zod
-
-**Location**: `lib/utils/validation.ts`
-
-**Custom Number Transform** (important for decimal fields):
-
-```typescript
-const decimalSchema = z
-  .union([
-    z.number(),
-    z.string().transform((val) => {
-      const num = parseFloat(val)
-      if (isNaN(num)) throw new Error('Invalid number')
-      return num
-    }),
-  ])
-  .pipe(z.number().positive())
-```
-
-This pattern handles both string and numeric inputs from forms and ensures positive numbers.
-
-### Utility Functions
-
-**Location**: `lib/utils/format.ts`
-
-```typescript
-formatCurrency(amount: number)        // ₩15,000 (Korean won)
-formatDate(date, format)              // Uses date-fns with ko locale
-formatPercentage(value)               // 40.0%
-```
-
-All formatting uses Korean locale (ko-KR).
+`lib/utils/format.ts`: `formatCurrency` (₩), `formatDate` (date-fns ko locale, YY-MM-DD(요일) 형식), `formatPercentage`. All Korean locale.
 
 ## Business Logic Notes
 
-### Purchase Transaction Validation
-
-When creating a purchase transaction, the system automatically validates whether the menu-ingredient combination is valid:
-
-1. Check if `menu_ingredients` table has a mapping for the selected menuId + ingredientId
-2. Set `isValid` field accordingly
-3. Users can manually toggle validation status via `togglePurchaseValidation()` action
-
-This ensures purchases match expected ingredient usage for each menu item.
-
-### Cost Distribution Rules
-
-Cost distribution rules define how to allocate purchase costs to menus:
-
-- Must have `effective_from` and optional `effective_to` dates
-- Sum of `distribution_percent` for same menu + date range must equal 100%
-- Used in period analysis queries to calculate cost of goods sold
-
-### Fixed Costs Management
-
-Fixed costs (고정비) track recurring expenses that don't vary with production:
-
-- **Cost Types**: Labor costs (인건비), Rent (임대료), Management fees (관리비), Other (기타)
-- **Date-Based**: Each cost record is associated with a specific date for period-based analysis
-- **Margin Calculation**: Fixed costs are added to variable costs (ingredient costs) when calculating net profit
-- **Formula**: Net Profit = Revenue - (Variable Costs + Fixed Costs)
-- **Margin %**: (Net Profit / Revenue) × 100
-
-Fixed costs are accessible via quick action button on the dashboard and have their own management page at `/dashboard/fixed-costs`.
-
-### Sales Bulk Operations
-
-Sales management includes bulk operations for efficiency:
-
-- **Bulk Selection**: Checkbox-based selection with "Select All" functionality
-- **Bulk Delete**: Soft-delete multiple sales records at once
-- **Client-side State**: Selection state managed in client component (`SalesList`)
-- **Server Action**: `bulkDeleteSalesRecords()` processes multiple IDs with loop-based approach
-- **User Feedback**: Confirmation dialogs and success/error messages
-
-### CSV Import Auto-Pricing
-
-When uploading sales data via CSV:
-
-- CSV files contain only: date, SKU name, and quantity (no prices)
-- Unit prices are automatically fetched from SKU master data during import
-- System creates a Map of `SKU name → {id, unitPrice}` for fast lookup
-- Each sales record is saved with the current unit price from master data
-- This approach:
-  - Eliminates repetitive price entry
-  - Maintains price history (records prices at time of sale)
-  - Prevents manual entry errors
-  - Centralizes price management in SKU master data
-
-### Database-Computed Fields
-
-**Never insert/update these generated columns**:
-
-- `purchase_transactions.total_amount` = `quantity * unit_price`
-- `sales_records.total_revenue` = `quantity_sold * (SELECT unit_price FROM skus WHERE id = sku_id)`
-
-The database computes these automatically using `generatedAlwaysAs()`.
+- **매입 원가 산정**: 매입 시 메뉴 선택 없음 (`isValid` 검증은 폐기됨). 원가 배분은 `cost_distribution_rules`로 처리
+- **Cost distribution rules**: `effective_from`/`effective_to` 기간별, 같은 메뉴+기간의 `distribution_percent` 합계 = 100%
+- **순이익**: Revenue - (Variable Costs + Fixed Costs)
+- **CSV 매출 import**: 날짜/SKU명/수량만 입력, 단가는 SKU 마스터에서 자동 적용 (판매 시점 가격 기록)
+- **재고 알림**: `inventory_alert_rules` 기준 부족 감지 → 알림톡 발송, `alert_history`에 기록
 
 ## Common Patterns
 
-### Soft Delete Pattern
+### Soft Delete
 
 ```typescript
-// Soft delete (correct)
-await db
-  .update(table)
-  .set({ deletedAt: new Date(), deletedBy: 'user-id' })
-  .where(eq(table.id, id))
-
-// Hard delete (never do this)
-await db.delete(table).where(eq(table.id, id))
+await db.update(table).set({ deletedAt: new Date(), deletedBy: userId }).where(eq(table.id, id))
 ```
 
-### Query with Joins
+### Decimal Fields
+
+Postgres decimal columns return strings. Convert: `Number(record.totalAmount)`
+
+### Type Inference
 
 ```typescript
-const results = await db
-  .select({
-    id: table1.id,
-    name: table1.name,
-    relatedName: table2.name,
-  })
-  .from(table1)
-  .leftJoin(table2, eq(table1.relatedId, table2.id))
-  .where(isNull(table1.deletedAt))
-  .orderBy(desc(table1.createdAt))
-  .limit(100)
-```
-
-### Revalidation After Mutations
-
-```typescript
-await db.insert(table).values(data)
-revalidatePath('/dashboard/[feature]') // Clear Next.js cache
+export type Entity = typeof entities.$inferSelect
+export type NewEntity = typeof entities.$inferInsert
 ```
 
 ## Environment Variables
 
-Required environment variables (see `.env`):
-
 ```env
-# Database (auto-provided by Vercel Postgres)
-POSTGRES_URL=
-POSTGRES_PRISMA_URL=
-POSTGRES_URL_NO_SSL=
-POSTGRES_URL_NON_POOLING=
-
-# Authentication
-SESSION_SECRET=          # JWT signing key (generate random string)
-AUTH_PASSWORD_HASH=      # Bcrypt hash of login password
-```
-
-To generate password hash:
-
-```typescript
-import bcrypt from 'bcryptjs'
-const hash = await bcrypt.hash('your-password', 10)
+POSTGRES_URL=                  # + other POSTGRES_* from Vercel
+SESSION_SECRET=                # JWT signing key (required in production)
+SETUP_SECRET=                  # /api/setup/seed-admin protection
+ADMIN_EMAIL= ADMIN_PASSWORD= ADMIN_NAME=   # admin seed
+STRIPE_SECRET_KEY= STRIPE_WEBHOOK_SECRET=
+STRIPE_PRICE_{BASIC,STANDARD,PRO}_{MONTHLY,YEARLY}=
+NEXT_PUBLIC_APP_URL=
+LOG_LEVEL= ALERT_WEBHOOK_URL=  # optional, lib/logger.ts
 ```
 
 ## Database Migrations
 
-When modifying schema in `lib/db/schema.ts`:
-
-1. Generate migration: `npm run db:generate`
-2. Review generated SQL in `drizzle/` directory
-3. Apply migration: `npm run db:migrate`
-4. Restart TypeScript server in IDE to pick up new types
-
-## Type Safety
-
-**Drizzle Type Inference**:
-
-```typescript
-export type MenuCategory = typeof menuCategories.$inferSelect
-export type NewMenuCategory = typeof menuCategories.$inferInsert
-```
-
-Use `$inferSelect` for read types and `$inferInsert` for create/update types.
-
-**Decimal Fields**: Database decimal columns are returned as strings by the Postgres driver. Convert to numbers for calculations:
-
-```typescript
-const amount = Number(record.totalAmount)
-```
+1. Edit `lib/db/schema.ts`
+2. `npm run db:generate` → review SQL in `drizzle/`
+3. `npm run db:migrate`
 
 ## Code Style
 
-- **Naming**: Database columns use `snake_case`, TypeScript uses `camelCase`
-- **UI**: Tailwind CSS throughout, no CSS modules or styled-components
-- **File naming**: `kebab-case.tsx` for files
-- **No global state**: Component-level state with useState, server actions for mutations
-- **Korean language**: All user-facing text and error messages in Korean
+- DB columns `snake_case`, TypeScript `camelCase`, files `kebab-case.tsx`
+- Tailwind only (no CSS modules)
+- No global state library; useState + server actions
+- All user-facing text and errors in Korean
 
 ## Documentation
 
-Detailed specs and planning docs in `specs/1-purchase-sales-management/`:
-
-- `spec.md` - Feature specifications
-- `data-model.md` - Database schema documentation
-- `plan.md` - Implementation plan
-- `tasks.md` - Task breakdown
-
-See `QUICKSTART.md` for setup guide and `IMPLEMENTATION_GUIDE.md` for detailed implementation patterns.
+Specs in `specs/`: `1-purchase-sales-management/`, `saas-conversion/`, `mobile-ux-conversion-plan.md`
