@@ -58,6 +58,7 @@ async function fetchDashboardStats(
         monthlyPurchases: 0,
         monthlySales: 0,
         monthlyFixedCosts: 0,
+        todaySales: 0,
         purchaseCount: 0,
         salesCount: 0,
         marginPercent: 0,
@@ -108,6 +109,14 @@ async function fetchDashboardStats(
         WHERE cost_date BETWEEN ${startDate}::date AND ${endDate}::date
           AND deleted_at IS NULL
           ${storeFilterWithNull}
+      ),
+      today_sales AS (
+        SELECT
+          COALESCE(SUM(total_revenue), 0) as today_total
+        FROM sales_records
+        WHERE sale_date = ${endDate}::date
+          AND deleted_at IS NULL
+          ${storeFilter}
       )
       SELECT
         pc.count as purchase_count,
@@ -115,6 +124,7 @@ async function fetchDashboardStats(
         ms.sales_count,
         ms.total_sales,
         mfc.total_fixed_costs,
+        ts.today_total,
         CASE
           WHEN ms.total_sales > 0
           THEN ((ms.total_sales - cs.total_actual_cost - mfc.total_fixed_costs) / ms.total_sales * 100)
@@ -124,6 +134,7 @@ async function fetchDashboardStats(
       CROSS JOIN monthly_sales ms
       CROSS JOIN purchase_count pc
       CROSS JOIN monthly_fixed_costs mfc
+      CROSS JOIN today_sales ts
     `),
     // Get recent purchases
     db.execute(sql`
@@ -164,6 +175,7 @@ async function fetchDashboardStats(
       monthlyPurchases: Number(stats.total_actual_cost),
       monthlySales: Number(stats.total_sales),
       monthlyFixedCosts: Number(stats.total_fixed_costs),
+      todaySales: Number(stats.today_total),
       purchaseCount: Number(stats.purchase_count),
       salesCount: Number(stats.sales_count),
       marginPercent: Number(stats.margin_percent),
@@ -193,6 +205,7 @@ export async function getDashboardStats() {
           monthlyPurchases: 0,
           monthlySales: 0,
           monthlyFixedCosts: 0,
+          todaySales: 0,
           purchaseCount: 0,
           salesCount: 0,
           marginPercent: 0,
