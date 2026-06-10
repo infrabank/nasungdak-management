@@ -30,6 +30,7 @@ export const menuGroups: MenuGroup[] = [
   {
     label: '비용/분석',
     items: [
+      { label: '월간 리포트', href: '/dashboard/analysis/monthly-report' },
       { label: '기간 분석', href: '/dashboard/analysis' },
       { label: '마진 분석', href: '/dashboard/analysis/margin' },
       { label: '메뉴 엔지니어링', href: '/dashboard/analysis/menu-engineering' },
