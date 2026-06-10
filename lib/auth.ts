@@ -8,9 +8,8 @@ import { eq, and, isNull } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
 import { logger, errorToContext } from '@/lib/logger'
 
-const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
-)
+import { SESSION_SECRET } from '@/lib/auth/constants'
+
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000 // 7 days
 
 // 인증 컨텍스트 타입

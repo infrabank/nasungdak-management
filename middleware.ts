@@ -3,15 +3,12 @@ import type { NextRequest } from 'next/server'
 import { jwtVerify } from 'jose'
 import { logger, errorToContext } from '@/lib/logger'
 
-// 환경 변수에서 직접 읽기 (middleware는 Edge Runtime에서 실행)
-const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
-)
-
-// Constants (lib/auth/constants.ts와 동일하게 유지)
-const SESSION_COOKIE_NAME = 'session'
-const REFRESH_COOKIE_NAME = 'refresh_token'
-const TOKEN_REFRESH_THRESHOLD = 5 * 60 * 1000 // 5분
+import {
+  SESSION_SECRET,
+  SESSION_COOKIE_NAME,
+  REFRESH_COOKIE_NAME,
+  TOKEN_REFRESH_THRESHOLD,
+} from '@/lib/auth/constants'
 
 // Public routes that don't require authentication
 const PUBLIC_ROUTES = [

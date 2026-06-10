@@ -8,17 +8,10 @@ import {
   subscriptions,
 } from '@/lib/db/schema'
 import { eq, and, isNull, desc } from 'drizzle-orm'
-import {
-  PLANS,
-  type PlanType,
-  normalizePlanType,
-  getPlanConfig,
-} from '@/lib/features'
+import { normalizePlanType, getPlanConfig } from '@/lib/features'
 import { CreditCard, AlertTriangle, ArrowRight } from 'lucide-react'
 
-const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
-)
+import { SESSION_SECRET } from '@/lib/auth/constants'
 
 async function getCurrentUserId(): Promise<string | null> {
   try {

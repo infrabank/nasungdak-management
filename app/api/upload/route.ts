@@ -4,9 +4,7 @@ import { cookies } from 'next/headers'
 import { jwtVerify } from 'jose'
 import { logger, errorToContext } from '@/lib/logger'
 
-const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
-)
+import { SESSION_SECRET } from '@/lib/auth/constants'
 
 // Verify user is authenticated
 async function getCurrentUserId(): Promise<string | null> {

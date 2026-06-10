@@ -16,7 +16,6 @@ import { eq, and, isNull, desc, gte } from 'drizzle-orm'
 import { z } from 'zod'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import {
-  PLANS,
   type PlanType,
   normalizePlanType,
   getPlanConfig,
@@ -24,9 +23,7 @@ import {
 import { createBillingPortalSession, createCheckoutSession } from '@/lib/stripe'
 import crypto from 'crypto'
 
-const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
-)
+import { SESSION_SECRET } from '@/lib/auth/constants'
 
 // Schema for organization update
 const updateOrgSchema = z.object({

@@ -6,7 +6,6 @@ import { db } from '@/lib/db'
 import {
   organizationInvitations,
   organizationMembers,
-  users,
   roles,
   userStoreAssignments,
   stores,
@@ -15,9 +14,7 @@ import { eq, and, isNull, gte } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { logger, errorToContext } from '@/lib/logger'
 
-const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
-)
+import { SESSION_SECRET } from '@/lib/auth/constants'
 
 interface ActionResult {
   success: boolean

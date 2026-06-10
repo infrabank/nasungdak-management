@@ -13,9 +13,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import AcceptInviteButton from './accept-button'
 
-const SESSION_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'default-secret-key-change-in-production'
-)
+import { SESSION_SECRET } from '@/lib/auth/constants'
 
 interface Props {
   params: Promise<{ token: string }>
