@@ -28,7 +28,13 @@ export interface MonthlyReport {
   estimatedProfit: number
   prevEstimatedProfit: number
   costRate: number // 매입비/매출 (%)
-  payments: { card: number; cash: number; delivery: number } | null
+  payments: {
+    card: number
+    cash: number
+    transfer: number
+    simplePay: number
+    totalFee: number
+  } | null
   topQuantityMenus: MonthlyReportMenu[]
   topRevenueMenus: MonthlyReportMenu[]
   highCostMenus: MonthlyReportMenu[] // 원가율 40% 이상
@@ -118,7 +124,9 @@ export async function getMonthlyReport(
         SELECT
           COALESCE(SUM(card_sales), 0) as card,
           COALESCE(SUM(cash_sales), 0) as cash,
-          COALESCE(SUM(delivery_sales), 0) as delivery,
+          COALESCE(SUM(transfer_sales), 0) as transfer,
+          COALESCE(SUM(simple_pay_sales), 0) as simple_pay,
+          COALESCE(SUM(card_sales * card_fee_rate / 100 + simple_pay_sales * simple_pay_fee_rate / 100), 0) as total_fee,
           COUNT(*) as closing_count
         FROM daily_closings
         WHERE closing_date BETWEEN ${cur.start}::date AND ${cur.end}::date
@@ -296,7 +304,9 @@ export async function getMonthlyReport(
             ? {
                 card: Number(payments.rows[0].card),
                 cash: Number(payments.rows[0].cash),
-                delivery: Number(payments.rows[0].delivery),
+                transfer: Number(payments.rows[0].transfer),
+                simplePay: Number(payments.rows[0].simple_pay),
+                totalFee: Number(payments.rows[0].total_fee),
               }
             : null,
         topQuantityMenus,

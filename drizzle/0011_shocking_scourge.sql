@@ -1,0 +1,1 @@
+ALTER TABLE "daily_closings" DROP COLUMN IF EXISTS "delivery_sales";

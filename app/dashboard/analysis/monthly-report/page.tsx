@@ -193,7 +193,7 @@ export default async function MonthlyReportPage({
           <h3 className="mb-3 text-sm font-black uppercase tracking-wide text-brutal-black">
             결제수단 구성 (일일 마감 기준)
           </h3>
-          <div className="grid grid-cols-3 gap-3 text-center">
+          <div className="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
             <div>
               <div className="text-xs font-bold text-brutal-black/60">카드</div>
               <div className="text-lg font-black text-brutal-black">
@@ -208,13 +208,27 @@ export default async function MonthlyReportPage({
             </div>
             <div>
               <div className="text-xs font-bold text-brutal-black/60">
-                배달앱
+                계좌이체
               </div>
               <div className="text-lg font-black text-brutal-black">
-                {formatCurrency(r.payments.delivery)}
+                {formatCurrency(r.payments.transfer)}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs font-bold text-brutal-black/60">
+                간편결제
+              </div>
+              <div className="text-lg font-black text-brutal-black">
+                {formatCurrency(r.payments.simplePay)}
               </div>
             </div>
           </div>
+          {r.payments.totalFee > 0 && (
+            <div className="mt-3 flex items-center justify-between border-t-2 border-brutal-black/20 pt-3 text-sm font-bold text-brutal-black">
+              <span>카드/간편결제 수수료 합계</span>
+              <span>{formatCurrency(r.payments.totalFee)}</span>
+            </div>
+          )}
         </div>
       )}
 

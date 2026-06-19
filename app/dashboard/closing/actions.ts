@@ -18,13 +18,21 @@ const moneySchema = z.coerce
   .min(0, '0 이상의 금액을 입력해주세요')
   .max(999_999_999, '금액이 너무 큽니다')
 
+const feeRateSchema = z.coerce
+  .number()
+  .min(0, '0 이상의 수수료율을 입력해주세요')
+  .max(100, '수수료율은 100% 이하여야 합니다')
+
 const closingSchema = z.object({
   closingDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, '날짜를 선택해주세요'),
   cardSales: moneySchema,
   cashSales: moneySchema,
-  deliverySales: moneySchema,
+  transferSales: moneySchema,
+  simplePaySales: moneySchema,
+  cardFeeRate: feeRateSchema,
+  simplePayFeeRate: feeRateSchema,
   memo: z.string().max(2000, '메모가 너무 깁니다').optional(),
 })
 
@@ -41,9 +49,17 @@ export interface ClosingFormData {
   closing: {
     cardSales: string
     cashSales: string
-    deliverySales: string
+    transferSales: string
+    simplePaySales: string
+    cardFeeRate: string
+    simplePayFeeRate: string
     memo: string | null
   } | null
+  // 오늘 마감이 없을 때, 직전 마감의 수수료율을 기본값으로 채우기 위함
+  defaultFeeRates: {
+    cardFeeRate: string
+    simplePayFeeRate: string
+  }
   skuRows: ClosingSkuRow[]
   lastSaleDate: string | null
 }
@@ -61,13 +77,23 @@ export async function getClosingFormData(
 ): Promise<ClosingFormData> {
   await assertStoreAccess(storeId)
 
-  const [closing, skuList, currentRows, lastDateRow] = await Promise.all([
+  const [closing, latestClosing, skuList, currentRows, lastDateRow] =
+    await Promise.all([
     db.query.dailyClosings.findFirst({
       where: and(
         eq(dailyClosings.storeId, storeId),
         eq(dailyClosings.closingDate, date),
         isNull(dailyClosings.deletedAt)
       ),
+    }),
+    // 직전 마감의 수수료율 (오늘 마감이 없을 때 기본값으로 사용)
+    db.query.dailyClosings.findFirst({
+      where: and(
+        eq(dailyClosings.storeId, storeId),
+        isNull(dailyClosings.deletedAt)
+      ),
+      orderBy: desc(dailyClosings.closingDate),
+      columns: { cardFeeRate: true, simplePayFeeRate: true },
     }),
     db
       .select({
@@ -151,10 +177,17 @@ export async function getClosingFormData(
       ? {
           cardSales: closing.cardSales,
           cashSales: closing.cashSales,
-          deliverySales: closing.deliverySales,
+          transferSales: closing.transferSales,
+          simplePaySales: closing.simplePaySales,
+          cardFeeRate: closing.cardFeeRate,
+          simplePayFeeRate: closing.simplePayFeeRate,
           memo: closing.memo,
         }
       : null,
+    defaultFeeRates: {
+      cardFeeRate: latestClosing?.cardFeeRate ?? '0',
+      simplePayFeeRate: latestClosing?.simplePayFeeRate ?? '0',
+    },
     skuRows,
     lastSaleDate,
   }
@@ -165,7 +198,10 @@ export interface SaveClosingInput {
   closingDate: string
   cardSales: string
   cashSales: string
-  deliverySales: string
+  transferSales: string
+  simplePaySales: string
+  cardFeeRate: string
+  simplePayFeeRate: string
   memo?: string
   quantities: Array<{ skuId: string; quantitySold: string }>
 }
@@ -178,7 +214,10 @@ export async function saveDailyClosing(input: SaveClosingInput) {
       closingDate: input.closingDate,
       cardSales: input.cardSales || '0',
       cashSales: input.cashSales || '0',
-      deliverySales: input.deliverySales || '0',
+      transferSales: input.transferSales || '0',
+      simplePaySales: input.simplePaySales || '0',
+      cardFeeRate: input.cardFeeRate || '0',
+      simplePayFeeRate: input.simplePayFeeRate || '0',
       memo: input.memo?.trim() || undefined,
     })
 
@@ -248,7 +287,10 @@ export async function saveDailyClosing(input: SaveClosingInput) {
       const closingValues = {
         cardSales: String(validated.cardSales),
         cashSales: String(validated.cashSales),
-        deliverySales: String(validated.deliverySales),
+        transferSales: String(validated.transferSales),
+        simplePaySales: String(validated.simplePaySales),
+        cardFeeRate: String(validated.cardFeeRate),
+        simplePayFeeRate: String(validated.simplePayFeeRate),
         memo: validated.memo ?? null,
       }
 
@@ -285,12 +327,20 @@ export async function saveDailyClosing(input: SaveClosingInput) {
       0
     )
     const paymentTotal =
-      validated.cardSales + validated.cashSales + validated.deliverySales
+      validated.cardSales +
+      validated.cashSales +
+      validated.transferSales +
+      validated.simplePaySales
+    const totalFee =
+      (validated.cardSales * validated.cardFeeRate) / 100 +
+      (validated.simplePaySales * validated.simplePayFeeRate) / 100
 
     return {
       success: true,
       salesTotal,
       paymentTotal,
+      totalFee,
+      netTotal: paymentTotal - totalFee,
       recordCount: validQuantities.length,
     }
   } catch (error) {

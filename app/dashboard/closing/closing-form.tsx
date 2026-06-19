@@ -26,7 +26,10 @@ export default function ClosingForm({ storeId }: ClosingFormProps) {
   const [closingDate, setClosingDate] = useState(todayString)
   const [cardSales, setCardSales] = useState('')
   const [cashSales, setCashSales] = useState('')
-  const [deliverySales, setDeliverySales] = useState('')
+  const [transferSales, setTransferSales] = useState('')
+  const [simplePaySales, setSimplePaySales] = useState('')
+  const [cardFeeRate, setCardFeeRate] = useState('')
+  const [simplePayFeeRate, setSimplePayFeeRate] = useState('')
   const [memo, setMemo] = useState('')
   const [skuRows, setSkuRows] = useState<ClosingSkuRow[]>([])
   const [lastSaleDate, setLastSaleDate] = useState<string | null>(null)
@@ -46,9 +49,22 @@ export default function ClosingForm({ storeId }: ClosingFormProps) {
         // 기존 마감/판매 기록이 있으면 현재 값으로 채움
         setCardSales(data.closing ? String(Number(data.closing.cardSales)) : '')
         setCashSales(data.closing ? String(Number(data.closing.cashSales)) : '')
-        setDeliverySales(
-          data.closing ? String(Number(data.closing.deliverySales)) : ''
+        setTransferSales(
+          data.closing ? String(Number(data.closing.transferSales)) : ''
         )
+        setSimplePaySales(
+          data.closing ? String(Number(data.closing.simplePaySales)) : ''
+        )
+        // 수수료율: 오늘 마감이 있으면 그 값, 없으면 직전 마감 값으로 기본 채움
+        const cardRate = Number(
+          data.closing?.cardFeeRate ?? data.defaultFeeRates.cardFeeRate
+        )
+        const simpleRate = Number(
+          data.closing?.simplePayFeeRate ??
+            data.defaultFeeRates.simplePayFeeRate
+        )
+        setCardFeeRate(cardRate > 0 ? String(cardRate) : '')
+        setSimplePayFeeRate(simpleRate > 0 ? String(simpleRate) : '')
         setMemo(data.closing?.memo ?? '')
         const initial: Record<string, string> = {}
         for (const row of data.skuRows) {
@@ -85,6 +101,18 @@ export default function ClosingForm({ storeId }: ClosingFormProps) {
     []
   )
 
+  // 수수료율: 소수점 둘째 자리까지, 0~100 허용
+  const handleRateChange = useCallback(
+    (setter: (v: string) => void) => (value: string) => {
+      if (value === '' || /^\d{0,3}(\.\d{0,2})?$/.test(value)) {
+        if (value === '' || Number(value) <= 100) {
+          setter(value)
+        }
+      }
+    },
+    []
+  )
+
   const salesTotal = useMemo(
     () =>
       skuRows.reduce((total, row) => {
@@ -96,9 +124,21 @@ export default function ClosingForm({ storeId }: ClosingFormProps) {
 
   const paymentTotal = useMemo(
     () =>
-      Number(cardSales || 0) + Number(cashSales || 0) + Number(deliverySales || 0),
-    [cardSales, cashSales, deliverySales]
+      Number(cardSales || 0) +
+      Number(cashSales || 0) +
+      Number(transferSales || 0) +
+      Number(simplePaySales || 0),
+    [cardSales, cashSales, transferSales, simplePaySales]
   )
+
+  // 카드/간편결제 수수료 자동 계산 + 실수령액
+  const totalFee = useMemo(
+    () =>
+      (Number(cardSales || 0) * Number(cardFeeRate || 0)) / 100 +
+      (Number(simplePaySales || 0) * Number(simplePayFeeRate || 0)) / 100,
+    [cardSales, cardFeeRate, simplePaySales, simplePayFeeRate]
+  )
+  const netTotal = paymentTotal - totalFee
 
   const difference = paymentTotal - salesTotal
   const hasPayment = paymentTotal > 0
@@ -119,7 +159,10 @@ export default function ClosingForm({ storeId }: ClosingFormProps) {
         closingDate,
         cardSales: cardSales || '0',
         cashSales: cashSales || '0',
-        deliverySales: deliverySales || '0',
+        transferSales: transferSales || '0',
+        simplePaySales: simplePaySales || '0',
+        cardFeeRate: cardFeeRate || '0',
+        simplePayFeeRate: simplePayFeeRate || '0',
         memo,
         quantities: Object.entries(quantities).map(([skuId, quantitySold]) => ({
           skuId,
@@ -163,7 +206,7 @@ export default function ClosingForm({ storeId }: ClosingFormProps) {
         <h3 className="mb-4 text-sm font-black uppercase tracking-wide text-brutal-black">
           결제수단별 매출
         </h3>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
             <Label htmlFor="cardSales">카드</Label>
             <Input
@@ -189,14 +232,28 @@ export default function ClosingForm({ storeId }: ClosingFormProps) {
             />
           </div>
           <div>
-            <Label htmlFor="deliverySales">배달앱</Label>
+            <Label htmlFor="transferSales">계좌이체</Label>
             <Input
               type="text"
               inputMode="numeric"
-              id="deliverySales"
-              value={deliverySales}
+              id="transferSales"
+              value={transferSales}
               onChange={(e) =>
-                handleMoneyChange(setDeliverySales)(e.target.value)
+                handleMoneyChange(setTransferSales)(e.target.value)
+              }
+              placeholder="0"
+              className="text-right text-lg font-black"
+            />
+          </div>
+          <div>
+            <Label htmlFor="simplePaySales">간편결제</Label>
+            <Input
+              type="text"
+              inputMode="numeric"
+              id="simplePaySales"
+              value={simplePaySales}
+              onChange={(e) =>
+                handleMoneyChange(setSimplePaySales)(e.target.value)
               }
               placeholder="0"
               className="text-right text-lg font-black"
@@ -209,6 +266,60 @@ export default function ClosingForm({ storeId }: ClosingFormProps) {
             {formatCurrency(paymentTotal)}
           </span>
         </div>
+      </div>
+
+      {/* 결제 수수료율 */}
+      <div className="mb-4 border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal">
+        <h3 className="mb-1 text-sm font-black uppercase tracking-wide text-brutal-black">
+          결제 수수료율
+        </h3>
+        <p className="mb-4 text-xs font-medium text-brutal-black/60">
+          카드/간편결제 수수료율(%)을 입력하면 실수령액을 자동 계산합니다
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <Label htmlFor="cardFeeRate">카드 수수료율 (%)</Label>
+            <Input
+              type="text"
+              inputMode="decimal"
+              id="cardFeeRate"
+              value={cardFeeRate}
+              onChange={(e) => handleRateChange(setCardFeeRate)(e.target.value)}
+              placeholder="0"
+              className="text-right text-lg font-black"
+            />
+          </div>
+          <div>
+            <Label htmlFor="simplePayFeeRate">간편결제 수수료율 (%)</Label>
+            <Input
+              type="text"
+              inputMode="decimal"
+              id="simplePayFeeRate"
+              value={simplePayFeeRate}
+              onChange={(e) =>
+                handleRateChange(setSimplePayFeeRate)(e.target.value)
+              }
+              placeholder="0"
+              className="text-right text-lg font-black"
+            />
+          </div>
+        </div>
+        {totalFee > 0 && (
+          <div className="mt-3 space-y-1 border-t-2 border-brutal-black/20 pt-3">
+            <div className="flex items-center justify-between text-sm font-bold text-brutal-black">
+              <span>수수료 합계</span>
+              <span>- {formatCurrency(totalFee)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-brutal-black">
+                실수령액
+              </span>
+              <span className="text-xl font-black text-brutal-black">
+                {formatCurrency(netTotal)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 메뉴별 판매량 */}

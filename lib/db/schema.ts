@@ -451,7 +451,7 @@ export const alertHistory = pgTable(
   ]
 )
 
-// 일일 마감 테이블 (결제수단별 매출 합계 + 메모)
+// 일일 마감 테이블 (결제수단별 매출 합계 + 수수료율 + 메모)
 export const dailyClosings = pgTable(
   'daily_closings',
   {
@@ -464,7 +464,17 @@ export const dailyClosings = pgTable(
     cashSales: decimal('cash_sales', { precision: 14, scale: 2 })
       .notNull()
       .default('0'),
-    deliverySales: decimal('delivery_sales', { precision: 14, scale: 2 })
+    transferSales: decimal('transfer_sales', { precision: 14, scale: 2 })
+      .notNull()
+      .default('0'),
+    simplePaySales: decimal('simple_pay_sales', { precision: 14, scale: 2 })
+      .notNull()
+      .default('0'),
+    // 결제수단 수수료율 (%) - 카드/간편결제 수수료 자동 계산용
+    cardFeeRate: decimal('card_fee_rate', { precision: 5, scale: 2 })
+      .notNull()
+      .default('0'),
+    simplePayFeeRate: decimal('simple_pay_fee_rate', { precision: 5, scale: 2 })
       .notNull()
       .default('0'),
     memo: text('memo'),
