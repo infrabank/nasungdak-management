@@ -299,16 +299,15 @@ export async function getSkusWithRecipes() {
           // Calculate total cost
           let totalCost = 0
           const recipeDetails = recipes.map((recipe) => {
-            // Use purchase avg price, fallback to ingredients.unit_cost
+            // Master 단가(unitCost) takes priority when entered; fall back to the
+            // weighted-average purchase price only when no master cost is set.
             const purchaseAvgPrice = recipe.ingredientId
               ? (avgPriceMap.get(recipe.ingredientId) ?? 0)
               : 0
             const ingredientCost =
-              purchaseAvgPrice > 0
-                ? purchaseAvgPrice
-                : recipe.ingredientUnitCost
-                  ? Number(recipe.ingredientUnitCost)
-                  : 0
+              recipe.ingredientUnitCost != null
+                ? Number(recipe.ingredientUnitCost)
+                : purchaseAvgPrice
             const quantity = Number(recipe.quantity)
 
             // Unit conversion (recipe unit -> ingredient base unit)

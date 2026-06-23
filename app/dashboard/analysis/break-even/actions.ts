@@ -112,7 +112,7 @@ export async function getBreakEvenAnalysis(
           SELECT
             rec.sku_id,
             SUM(
-              COALESCE(iap.avg_unit_price, COALESCE(ing.unit_cost, 0)) *
+              COALESCE(ing.unit_cost, iap.avg_unit_price, 0) *
               CASE
                 WHEN ing.unit = 'kg' AND rec.unit = 'g' THEN rec.quantity / 1000
                 WHEN ing.unit = 'L' AND rec.unit = 'ml' THEN rec.quantity / 1000
