@@ -8,6 +8,23 @@ import { eq, isNull, and, desc } from 'drizzle-orm'
 import { z } from 'zod'
 import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
 
+/**
+ * Invalidate every cache that derives from ingredient data (including unit cost).
+ * The ingredient list is cached per-org under `ingredients:<orgId>`, and recipe /
+ * margin costs are computed from `ingredients.unitCost`, so all of them must be
+ * busted when an ingredient changes. The legacy `ingredients:active` tag is kept
+ * for the purchases-page cache that still uses it.
+ */
+function revalidateIngredientCaches(organizationId: string) {
+  revalidatePath('/dashboard/master-data/ingredients')
+  revalidatePath('/dashboard/master-data/sku-recipes')
+  revalidateTag(`ingredients:${organizationId}`)
+  revalidateTag('ingredients:all')
+  revalidateTag('ingredients:active')
+  revalidateTag(`sku-recipes:${organizationId}`)
+  revalidateTag(`margin-analysis:${organizationId}`)
+}
+
 const ingredientSchema = z.object({
   ingredientName: z.string().min(1, '재료명을 입력해주세요').max(100),
   unit: z.string().min(1, '단위를 입력해주세요').max(20),
@@ -89,8 +106,7 @@ export async function createIngredient(formData: FormData) {
       })
       .returning()
 
-    revalidatePath('/dashboard/master-data/ingredients')
-    revalidateTag('ingredients:active')
+    revalidateIngredientCaches(organizationId)
 
     return {
       success: true,
@@ -153,8 +169,7 @@ export async function updateIngredient(id: string, formData: FormData) {
       )
       .returning()
 
-    revalidatePath('/dashboard/master-data/ingredients')
-    revalidateTag('ingredients:active')
+    revalidateIngredientCaches(organizationId)
 
     return {
       success: true,
@@ -193,8 +208,7 @@ export async function deleteIngredient(id: string) {
         )
       )
 
-    revalidatePath('/dashboard/master-data/ingredients')
-    revalidateTag('ingredients:active')
+    revalidateIngredientCaches(organizationId)
 
     return {
       success: true,
@@ -366,8 +380,7 @@ export async function quickRegisterIngredient(data: {
       })
       .returning()
 
-    revalidatePath('/dashboard/master-data/ingredients')
-    revalidateTag('ingredients:active')
+    revalidateIngredientCaches(organizationId)
 
     return {
       success: true,
@@ -457,8 +470,7 @@ export async function bulkCreateIngredients(rows: CSVRow[]) {
       }
     }
 
-    revalidatePath('/dashboard/master-data/ingredients')
-    revalidateTag('ingredients:active')
+    revalidateIngredientCaches(organizationId)
 
     return {
       success: true,
