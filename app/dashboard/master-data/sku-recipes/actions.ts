@@ -10,7 +10,7 @@ import {
   menuCategories,
   purchaseTransactions,
 } from '@/lib/db/schema'
-import { eq, isNull, and, sum, sql } from 'drizzle-orm'
+import { eq, isNull, and, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
 
@@ -45,14 +45,53 @@ export async function createSkuRecipe(formData: FormData) {
 
     const validatedData = skuRecipeSchema.parse(rawData)
 
-    const [recipe] = await db
-      .insert(skuRecipes)
-      .values({
-        ...validatedData,
-        organizationId,
-        createdBy: 'system',
-      })
-      .returning()
+    // Check for an existing row (including soft-deleted) for this SKU+ingredient.
+    // A soft-deleted row still occupies the unique pair, so we revive it instead
+    // of inserting a new one, which would otherwise hit the unique constraint.
+    const [existing] = await db
+      .select({ id: skuRecipes.id, deletedAt: skuRecipes.deletedAt })
+      .from(skuRecipes)
+      .where(
+        and(
+          eq(skuRecipes.skuId, validatedData.skuId),
+          eq(skuRecipes.ingredientId, validatedData.ingredientId),
+          eq(skuRecipes.organizationId, organizationId)
+        )
+      )
+      .limit(1)
+
+    let recipe
+
+    if (existing) {
+      if (existing.deletedAt === null) {
+        return {
+          success: false,
+          error: '이미 해당 SKU에 동일한 원재료가 등록되어 있습니다',
+        }
+      }
+
+      // Revive the soft-deleted recipe with the new values.
+      ;[recipe] = await db
+        .update(skuRecipes)
+        .set({
+          ...validatedData,
+          deletedAt: null,
+          deletedBy: null,
+          updatedAt: new Date(),
+          updatedBy: 'system',
+        })
+        .where(eq(skuRecipes.id, existing.id))
+        .returning()
+    } else {
+      ;[recipe] = await db
+        .insert(skuRecipes)
+        .values({
+          ...validatedData,
+          organizationId,
+          createdBy: 'system',
+        })
+        .returning()
+    }
 
     revalidatePath('/dashboard/master-data/sku-recipes')
     revalidateTag('sku-recipes:all')

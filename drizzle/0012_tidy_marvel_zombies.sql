@@ -1,0 +1,2 @@
+ALTER TABLE "sku_recipes" DROP CONSTRAINT "sku_recipes_sku_ingredient_unique";--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "sku_recipes_sku_ingredient_unique" ON "sku_recipes" USING btree ("sku_id","ingredient_id") WHERE "sku_recipes"."deleted_at" IS NULL;

@@ -9,6 +9,7 @@ import {
   text,
   integer,
   unique,
+  uniqueIndex,
   jsonb,
   index,
 } from 'drizzle-orm/pg-core'
@@ -883,10 +884,11 @@ export const skuRecipes = pgTable(
     index('sku_recipes_org_id_idx').on(table.organizationId),
     index('sku_recipes_sku_id_idx').on(table.skuId),
     index('sku_recipes_deleted_at_idx').on(table.deletedAt),
-    unique('sku_recipes_sku_ingredient_unique').on(
-      table.skuId,
-      table.ingredientId
-    ),
+    // Partial unique: only active (non-deleted) rows are constrained so that a
+    // soft-deleted recipe can be re-added with the same SKU+ingredient pair.
+    uniqueIndex('sku_recipes_sku_ingredient_unique')
+      .on(table.skuId, table.ingredientId)
+      .where(sql`${table.deletedAt} IS NULL`),
   ]
 )
 
