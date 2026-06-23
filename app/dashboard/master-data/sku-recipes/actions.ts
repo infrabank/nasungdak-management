@@ -8,9 +8,8 @@ import {
   skus,
   ingredients,
   menuCategories,
-  purchaseTransactions,
 } from '@/lib/db/schema'
-import { eq, isNull, and, sql } from 'drizzle-orm'
+import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
 
@@ -262,28 +261,6 @@ export async function getSkusWithRecipes() {
             )
           )
 
-        // Get weighted average unit prices from purchase data per ingredient
-        const avgPrices = await db
-          .select({
-            ingredientId: purchaseTransactions.ingredientId,
-            avgUnitPrice: sql<string>`
-              CASE
-                WHEN SUM(${purchaseTransactions.quantity}) > 0
-                THEN SUM(${purchaseTransactions.totalAmount}) / SUM(${purchaseTransactions.quantity})
-                ELSE 0
-              END
-            `.as('avg_unit_price'),
-          })
-          .from(purchaseTransactions)
-          .where(isNull(purchaseTransactions.deletedAt))
-          .groupBy(purchaseTransactions.ingredientId)
-
-        // Build a map of ingredient_id -> avg unit price
-        const avgPriceMap = new Map<string, number>()
-        for (const row of avgPrices) {
-          avgPriceMap.set(row.ingredientId, Number(row.avgUnitPrice))
-        }
-
         // Build a Map for O(1) lookup
         const recipesBySkuId = new Map<string, typeof recipeList>()
         for (const recipe of recipeList) {
@@ -299,15 +276,11 @@ export async function getSkusWithRecipes() {
           // Calculate total cost
           let totalCost = 0
           const recipeDetails = recipes.map((recipe) => {
-            // Master 단가(unitCost) takes priority when entered; fall back to the
-            // weighted-average purchase price only when no master cost is set.
-            const purchaseAvgPrice = recipe.ingredientId
-              ? (avgPriceMap.get(recipe.ingredientId) ?? 0)
-              : 0
+            // Recipe cost uses the ingredient master 단가(unitCost) only.
             const ingredientCost =
               recipe.ingredientUnitCost != null
                 ? Number(recipe.ingredientUnitCost)
-                : purchaseAvgPrice
+                : 0
             const quantity = Number(recipe.quantity)
 
             // Unit conversion (recipe unit -> ingredient base unit)
