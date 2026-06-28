@@ -22,6 +22,7 @@ export const menuGroups: MenuGroup[] = [
       { label: '매입 관리', href: '/dashboard/purchases' },
       { label: '판매 관리', href: '/dashboard/sales' },
       { label: '기름 교체', href: '/dashboard/oil-changes' },
+      { label: '정비·청소', href: '/dashboard/maintenance' },
       { label: '고정비 관리', href: '/dashboard/fixed-costs' },
       { label: '직원 관리', href: '/dashboard/employees' },
       { label: '출퇴근 기록', href: '/dashboard/attendance' },

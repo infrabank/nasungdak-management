@@ -133,6 +133,24 @@ export const oilChangeSchema = z.object({
 
 export type OilChangeFormData = z.infer<typeof oilChangeSchema>
 
+// Maintenance log validation (정비·청소 기록)
+export const MAINTENANCE_TASK_TYPES = [
+  '아이스크림 반죽 투입',
+  '아이스크림 기계 청소',
+  '튀김 초벌기 청소',
+  '튀김 재벌기 청소',
+] as const
+
+export const maintenanceLogSchema = z.object({
+  performedDate: z.string().min(1, '날짜를 선택해주세요'),
+  taskType: z.enum(MAINTENANCE_TASK_TYPES, {
+    required_error: '항목을 선택해주세요',
+  }),
+  notes: z.string().optional().nullable(),
+})
+
+export type MaintenanceLogFormData = z.infer<typeof maintenanceLogSchema>
+
 // Store validation
 export const storeSchema = z.object({
   storeName: z

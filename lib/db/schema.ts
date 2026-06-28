@@ -284,6 +284,39 @@ export const oilChangeHistory = pgTable(
 )
 
 // =====================
+// 정비·청소 기록 (장비 유지보수 로그)
+// =====================
+
+// Maintenance Logs Table (정비·청소 수행 기록)
+// 아이스크림 반죽 투입/기계 청소, 튀김 초벌기/재벌기 청소 등 "언제 했는지" 기억용 날짜 로그
+export const maintenanceLogs = pgTable(
+  'maintenance_logs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    storeId: uuid('store_id').references(() => stores.id), // 다매장 지원
+    taskType: varchar('task_type', { length: 40 }).notNull(), // 정비·청소 항목
+    performedDate: date('performed_date').notNull(), // 수행일
+    intervalDays: integer('interval_days'), // 권장 주기(일) - 선택, 미정이면 null (향후 리마인더용)
+    notes: text('notes'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    createdBy: varchar('created_by', { length: 100 }),
+    updatedBy: varchar('updated_by', { length: 100 }),
+    deletedAt: timestamp('deleted_at'),
+    deletedBy: varchar('deleted_by', { length: 100 }),
+  },
+  (table) => [
+    index('ml_deleted_at_idx').on(table.deletedAt),
+    index('ml_store_id_idx').on(table.storeId),
+    index('ml_performed_date_idx').on(table.performedDate.desc()),
+    index('ml_task_type_idx').on(table.taskType),
+  ]
+)
+
+export type MaintenanceLog = typeof maintenanceLogs.$inferSelect
+export type NewMaintenanceLog = typeof maintenanceLogs.$inferInsert
+
+// =====================
 // 직원 관리 & 출퇴근 기록
 // =====================
 
