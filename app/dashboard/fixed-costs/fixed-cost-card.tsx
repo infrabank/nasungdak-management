@@ -9,7 +9,7 @@ interface FixedCostCardProps {
   cost: FixedCost
 }
 
-const COST_TYPES = ['인건비', '임대료', '관리비', '기타'] as const
+const COST_TYPES = ['인건비', '임대료', '관리비', '광고비', '기타'] as const
 
 export default function FixedCostCard({ cost }: FixedCostCardProps) {
   const [isDeleting, setIsDeleting] = useState(false)
@@ -88,6 +88,11 @@ export default function FixedCostCard({ cost }: FixedCostCardProps) {
         return {
           bg: 'bg-brutal-green border-2 border-brutal-black text-brutal-black',
           emoji: '🔧',
+        }
+      case '광고비':
+        return {
+          bg: 'bg-brutal-orange border-2 border-brutal-black text-brutal-black',
+          emoji: '📢',
         }
       case '기타':
         return {

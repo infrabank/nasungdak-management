@@ -85,6 +85,7 @@ export default function FixedCostForm({ storeId }: FixedCostFormProps) {
               <option value="인건비">인건비</option>
               <option value="임대료">임대료</option>
               <option value="관리비">관리비</option>
+              <option value="광고비">광고비</option>
               <option value="기타">기타</option>
             </Select>
           </div>

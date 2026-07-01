@@ -10,7 +10,7 @@ import { getAuthorizedStoreIds } from '@/lib/auth-context'
 
 const fixedCostSchema = z.object({
   costDate: z.string().min(1, '날짜를 선택해주세요'),
-  costType: z.enum(['인건비', '임대료', '관리비', '기타'], {
+  costType: z.enum(['인건비', '임대료', '관리비', '광고비', '기타'], {
     errorMap: () => ({ message: '비용 유형을 선택해주세요' }),
   }),
   costName: z.string().min(1, '비용 항목명을 입력해주세요'),

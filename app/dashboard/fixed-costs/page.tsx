@@ -58,6 +58,7 @@ export default async function FixedCostsPage({
     인건비: '👷',
     임대료: '🏠',
     관리비: '🔧',
+    광고비: '📢',
     기타: '📋',
   }
 

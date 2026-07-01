@@ -9,7 +9,7 @@ interface FixedCostRowProps {
   cost: FixedCost
 }
 
-const COST_TYPES = ['인건비', '임대료', '관리비', '기타'] as const
+const COST_TYPES = ['인건비', '임대료', '관리비', '광고비', '기타'] as const
 
 export default function FixedCostRow({ cost }: FixedCostRowProps) {
   const [isDeleting, setIsDeleting] = useState(false)
@@ -80,6 +80,8 @@ export default function FixedCostRow({ cost }: FixedCostRowProps) {
         return 'bg-brutal-purple border-2 border-brutal-black text-brutal-black'
       case '관리비':
         return 'bg-brutal-green border-2 border-brutal-black text-brutal-black'
+      case '광고비':
+        return 'bg-brutal-orange border-2 border-brutal-black text-brutal-black'
       case '기타':
         return 'bg-brutal-white border-2 border-brutal-black text-brutal-black'
       default:
