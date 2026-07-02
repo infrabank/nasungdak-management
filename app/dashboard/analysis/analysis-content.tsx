@@ -60,6 +60,9 @@ export default async function AnalysisContent({
           <div className="mt-2 text-3xl font-black text-brutal-black">
             {formatCurrency(result.data.summary.totalVariableCost)}
           </div>
+          <div className="mt-1 text-xs font-medium text-brutal-black/50">
+            기간 내 실제 매입액 기준 (메뉴별 원가는 레시피 단가 기준)
+          </div>
         </div>
 
         <div className="border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal">

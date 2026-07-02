@@ -12,6 +12,24 @@ import {
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
+import {
+  getRecipeToIngredientFactor,
+  validateRecipeUnit,
+} from '@/lib/costing'
+
+/** 레시피 단위가 재료 기준 단위와 호환되는지 확인. 문제 시 에러 메시지 반환 */
+async function checkRecipeUnitCompatibility(
+  ingredientId: string,
+  recipeUnit: string
+): Promise<string | null> {
+  const [ingredient] = await db
+    .select({ unit: ingredients.unit })
+    .from(ingredients)
+    .where(and(eq(ingredients.id, ingredientId), isNull(ingredients.deletedAt)))
+    .limit(1)
+  if (!ingredient) return null
+  return validateRecipeUnit(recipeUnit, ingredient.unit)
+}
 
 const skuRecipeSchema = z.object({
   skuId: z.string().uuid('SKU를 선택해주세요'),
@@ -43,6 +61,14 @@ export async function createSkuRecipe(formData: FormData) {
     }
 
     const validatedData = skuRecipeSchema.parse(rawData)
+
+    const unitError = await checkRecipeUnitCompatibility(
+      validatedData.ingredientId,
+      validatedData.unit
+    )
+    if (unitError) {
+      return { success: false, error: unitError }
+    }
 
     // Check for an existing row (including soft-deleted) for this SKU+ingredient.
     // A soft-deleted row still occupies the unique pair, so we revive it instead
@@ -136,6 +162,14 @@ export async function updateSkuRecipe(id: string, formData: FormData) {
     }
 
     const validatedData = skuRecipeSchema.parse(rawData)
+
+    const unitError = await checkRecipeUnitCompatibility(
+      validatedData.ingredientId,
+      validatedData.unit
+    )
+    if (unitError) {
+      return { success: false, error: unitError }
+    }
 
     const [recipe] = await db
       .update(skuRecipes)
@@ -283,17 +317,13 @@ export async function getSkusWithRecipes() {
                 : 0
             const quantity = Number(recipe.quantity)
 
-            // Unit conversion (recipe unit -> ingredient base unit)
-            let costPerUnit = ingredientCost
-            if (recipe.ingredientUnit === 'kg' && recipe.unit === 'g') {
-              costPerUnit = ingredientCost / 1000
-            } else if (recipe.ingredientUnit === 'L' && recipe.unit === 'ml') {
-              costPerUnit = ingredientCost / 1000
-            } else if (recipe.ingredientUnit === 'g' && recipe.unit === 'kg') {
-              costPerUnit = ingredientCost * 1000
-            } else if (recipe.ingredientUnit === 'ml' && recipe.unit === 'L') {
-              costPerUnit = ingredientCost * 1000
-            }
+            // 단위 환산 (lib/costing 공용 규칙)
+            const factor =
+              getRecipeToIngredientFactor(
+                recipe.unit,
+                recipe.ingredientUnit
+              ) ?? 1
+            const costPerUnit = ingredientCost * factor
 
             const subtotal = costPerUnit * quantity
             totalCost += subtotal
@@ -320,7 +350,7 @@ export async function getSkusWithRecipes() {
 
         return skusWithCosts
       },
-      ['sku-recipes:full', orgKey],
+      ['sku-recipes:full:v2', orgKey],
       { tags: [`sku-recipes:${orgKey}`] }
     )
 

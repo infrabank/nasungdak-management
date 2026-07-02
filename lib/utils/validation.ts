@@ -216,33 +216,45 @@ export const inventorySchema = z.object({
 export type InventoryFormData = z.infer<typeof inventorySchema>
 
 // Inventory Event validation
-export const inventoryEventSchema = z.object({
-  storeId: z.string().uuid('유효한 매장을 선택해주세요'),
-  ingredientId: z.string().uuid('유효한 재료를 선택해주세요'),
-  eventType: z.enum(['purchase', 'sale', 'waste', 'audit', 'adjustment'], {
-    required_error: '이벤트 유형을 선택해주세요',
-  }),
-  quantityChange: z.coerce.string().transform((val, ctx) => {
-    const num = parseFloat(val)
-    if (isNaN(num)) {
+export const inventoryEventSchema = z
+  .object({
+    storeId: z.string().uuid('유효한 매장을 선택해주세요'),
+    ingredientId: z.string().uuid('유효한 재료를 선택해주세요'),
+    eventType: z.enum(['purchase', 'sale', 'waste', 'audit', 'adjustment'], {
+      required_error: '이벤트 유형을 선택해주세요',
+    }),
+    quantityChange: z.coerce.string().transform((val, ctx) => {
+      const num = parseFloat(val)
+      if (isNaN(num)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '유효한 수량을 입력해주세요',
+        })
+        return z.NEVER
+      }
+      return val
+    }),
+    reason: z.string().optional().nullable(),
+    eventDate: z.string().min(1, '날짜를 선택해주세요'),
+  })
+  .superRefine((data, ctx) => {
+    const num = parseFloat(data.quantityChange)
+    // 실사(audit)는 측정한 절대 수량 입력이므로 0 허용 (재고 소진 확인)
+    if (data.eventType !== 'audit' && num === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: '유효한 수량을 입력해주세요',
-      })
-      return z.NEVER
-    }
-    if (num === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        path: ['quantityChange'],
         message: '수량 변동은 0이 아니어야 합니다',
       })
-      return z.NEVER
     }
-    return val
-  }),
-  reason: z.string().optional().nullable(),
-  eventDate: z.string().min(1, '날짜를 선택해주세요'),
-})
+    if (data.eventType === 'audit' && num < 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['quantityChange'],
+        message: '실사 수량은 0 이상이어야 합니다',
+      })
+    }
+  })
 
 export type InventoryEventData = z.infer<typeof inventoryEventSchema>
 

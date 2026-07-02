@@ -1,6 +1,10 @@
+import { and, eq, gt, inArray, ne } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { alertHistory } from '@/lib/db/schema'
 import { logger, errorToContext } from '@/lib/logger'
+
+// 같은 (매장, 재료) 알림의 재발송 억제 시간
+const ALERT_SUPPRESSION_HOURS = 24
 
 /**
  * 재고 부족 알림 1건의 정보
@@ -49,17 +53,70 @@ async function deliver(
 }
 
 /**
+ * 최근 억제 시간 내에 발송/기록된 (매장, 재료) 조합을 조회합니다.
+ * 실패(failed) 이력은 재시도할 수 있도록 억제하지 않습니다.
+ */
+async function getRecentlyAlertedKeys(
+  alerts: InventoryAlertItem[]
+): Promise<Set<string>> {
+  if (alerts.length === 0) return new Set()
+
+  const since = new Date(Date.now() - ALERT_SUPPRESSION_HOURS * 60 * 60 * 1000)
+  const storeIds = [...new Set(alerts.map((a) => a.storeId))]
+  const ingredientIds = [...new Set(alerts.map((a) => a.ingredientId))]
+
+  try {
+    const rows = await db
+      .select({
+        storeId: alertHistory.storeId,
+        ingredientId: alertHistory.ingredientId,
+      })
+      .from(alertHistory)
+      .where(
+        and(
+          eq(alertHistory.alertType, 'inventory_low'),
+          gt(alertHistory.createdAt, since),
+          ne(alertHistory.status, 'failed'),
+          inArray(alertHistory.storeId, storeIds),
+          inArray(alertHistory.ingredientId, ingredientIds)
+        )
+      )
+    return new Set(rows.map((r) => `${r.storeId}:${r.ingredientId}`))
+  } catch (error) {
+    logger.error(
+      'Failed to load recent alert history',
+      errorToContext(error)
+    )
+    return new Set()
+  }
+}
+
+/**
  * 재고 부족 알림 목록을 전송하고 `alert_history`에 발송 이력을 기록합니다.
- * 발송 채널이 구성되지 않은 환경에서도 안전하게 동작합니다(이력만 기록).
+ * - 최근 24시간 내 같은 (매장, 재료) 알림이 있으면 건너뜁니다 (중복 발송 방지)
+ * - 발송 채널이 구성되지 않은 환경에서도 안전하게 동작합니다(이력만 기록)
  */
 export async function recordAndDispatchAlerts(
   alerts: InventoryAlertItem[]
-): Promise<{ total: number; sent: number; failed: number; pending: number }> {
+): Promise<{
+  total: number
+  sent: number
+  failed: number
+  pending: number
+  skipped: number
+}> {
   let sent = 0
   let failed = 0
   let pending = 0
+  let skipped = 0
+
+  const recentKeys = await getRecentlyAlertedKeys(alerts)
 
   for (const alert of alerts) {
+    if (recentKeys.has(`${alert.storeId}:${alert.ingredientId}`)) {
+      skipped++
+      continue
+    }
     const message = `[재고 부족] ${alert.storeName} · ${alert.ingredientName} 잔여 약 ${alert.daysRemaining}일 (임계값 ${alert.thresholdDays}일)`
     const { status, channel } = await deliver(message, alert.managerPhone || null)
 
@@ -83,5 +140,5 @@ export async function recordAndDispatchAlerts(
     else pending++
   }
 
-  return { total: alerts.length, sent, failed, pending }
+  return { total: alerts.length, sent, failed, pending, skipped }
 }

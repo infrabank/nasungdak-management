@@ -33,6 +33,11 @@ export default async function MarginAnalysisPage() {
           <p className="mt-1 text-2xl font-black text-brutal-black">
             {summary.totalSkus}개
           </p>
+          {summary.noBomSkus > 0 && (
+            <p className="mt-1 text-xs font-medium text-brutal-black/50">
+              레시피 미등록 {summary.noBomSkus}개는 통계에서 제외
+            </p>
+          )}
         </div>
         <div className="border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal">
           <p className="text-sm font-medium text-brutal-black/70">

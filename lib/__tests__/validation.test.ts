@@ -17,7 +17,6 @@ import {
 describe('purchaseSchema', () => {
   const validData = {
     transactionDate: '2024-01-15',
-    menuId: '123e4567-e89b-12d3-a456-426614174000',
     ingredientId: '123e4567-e89b-12d3-a456-426614174001',
     supplierName: '테스트 공급업체',
     quantity: '10.5',
@@ -40,14 +39,14 @@ describe('purchaseSchema', () => {
     }
   })
 
-  it('rejects invalid menuId (not UUID)', () => {
+  it('rejects invalid ingredientId (not UUID)', () => {
     const result = purchaseSchema.safeParse({
       ...validData,
-      menuId: 'not-a-uuid',
+      ingredientId: 'not-a-uuid',
     })
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.errors[0].message).toBe('유효한 메뉴를 선택해주세요')
+      expect(result.error.errors[0].message).toBe('유효한 재료를 선택해주세요')
     }
   })
 
@@ -285,5 +284,28 @@ describe('inventoryEventSchema', () => {
       eventType: 'invalid',
     })
     expect(result.success).toBe(false)
+  })
+
+  it('accepts zero quantityChange for audit event (재고 소진 실사)', () => {
+    const result = inventoryEventSchema.safeParse({
+      ...validData,
+      eventType: 'audit',
+      quantityChange: '0',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('rejects negative quantityChange for audit event', () => {
+    const result = inventoryEventSchema.safeParse({
+      ...validData,
+      eventType: 'audit',
+      quantityChange: '-5',
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.errors[0].message).toBe(
+        '실사 수량은 0 이상이어야 합니다'
+      )
+    }
   })
 })

@@ -384,6 +384,15 @@ export default function PurchaseForm() {
         toast.success(
           `${result.successCount}건 매입이 등록되었습니다. 총 합계: ${totalAmount.toLocaleString()}원`
         )
+        // 마스터 단가와 괴리가 큰 재료는 단가 갱신 검토 안내 (자동 변경 없음)
+        if (result.priceAlerts && result.priceAlerts.length > 0) {
+          for (const alert of result.priceAlerts.slice(0, 3)) {
+            const direction = alert.diffPercent > 0 ? '높습니다' : '낮습니다'
+            toast.warning(
+              `${alert.ingredientName}: 매입 단가(${Math.round(alert.purchaseUnitCost).toLocaleString()}원/${alert.unit})가 마스터 단가(${Math.round(alert.masterUnitCost).toLocaleString()}원)보다 ${Math.abs(Math.round(alert.diffPercent))}% ${direction}. 기준 데이터에서 단가 갱신을 검토하세요.`
+            )
+          }
+        }
         router.push('/dashboard/purchases')
       } else {
         const errorMsg =

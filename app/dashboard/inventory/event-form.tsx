@@ -22,6 +22,20 @@ export default function EventForm({ stores, ingredients }: EventFormProps) {
   const defaultStoreId = stores.length === 1 ? stores[0].id : ''
   const [storeId, setStoreId] = useState(defaultStoreId)
   const [ingredientId, setIngredientId] = useState('')
+  const [eventType, setEventType] = useState('')
+
+  const quantityGuide =
+    eventType === 'waste'
+      ? { label: '폐기 수량 *', placeholder: '폐기한 수량 (재고에서 차감)' }
+      : eventType === 'audit'
+        ? {
+            label: '실사 수량 *',
+            placeholder: '실제로 센 재고 수량 (이 값으로 맞춰짐)',
+          }
+        : {
+            label: '수량 변동 *',
+            placeholder: '양수: 증가, 음수: 감소',
+          }
 
   const storeOptions: ComboboxOption[] = useMemo(
     () =>
@@ -58,6 +72,7 @@ export default function EventForm({ stores, ingredients }: EventFormProps) {
         form.reset()
         setStoreId(defaultStoreId)
         setIngredientId('')
+        setEventType('')
       } else {
         alert(result.error)
       }
@@ -125,18 +140,27 @@ export default function EventForm({ stores, ingredients }: EventFormProps) {
 
                     <div>
                       <Label htmlFor="eventType">이벤트 유형 *</Label>
-                      <Select name="eventType" id="eventType" required>
+                      <Select
+                        name="eventType"
+                        id="eventType"
+                        required
+                        value={eventType}
+                        onChange={(e) => setEventType(e.target.value)}
+                      >
                         <option value="">선택하세요</option>
-                        <option value="purchase">매입 (재고 증가)</option>
-                        <option value="sale">판매 (재고 감소)</option>
                         <option value="waste">폐기 (손실)</option>
-                        <option value="audit">실사 (조정)</option>
-                        <option value="adjustment">조정</option>
+                        <option value="audit">실사 (실제 수량으로 맞춤)</option>
+                        <option value="adjustment">조정 (증감 입력)</option>
                       </Select>
+                      <p className="mt-1 text-xs text-gray-500">
+                        매입/판매는 등록 시 재고에 자동 반영됩니다
+                      </p>
                     </div>
 
                     <div>
-                      <Label htmlFor="quantityChange">수량 변동 *</Label>
+                      <Label htmlFor="quantityChange">
+                        {quantityGuide.label}
+                      </Label>
                       <Input
                         type="number"
                         name="quantityChange"
@@ -144,7 +168,12 @@ export default function EventForm({ stores, ingredients }: EventFormProps) {
                         required
                         inputMode="decimal"
                         step="0.01"
-                        placeholder="양수: 증가, 음수: 감소"
+                        min={
+                          eventType === 'waste' || eventType === 'audit'
+                            ? 0
+                            : undefined
+                        }
+                        placeholder={quantityGuide.placeholder}
                       />
                     </div>
 

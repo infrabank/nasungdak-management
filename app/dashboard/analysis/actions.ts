@@ -3,7 +3,8 @@
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { sql } from 'drizzle-orm'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import { getAuthorizedStoreIds, getOrganizationId } from '@/lib/auth-context'
+import { bomUnitCostCte } from '@/lib/costing'
 
 export interface AnalysisResult {
   success: boolean
@@ -254,7 +255,8 @@ async function fetchAnalysis(
   startDate: string,
   endDate: string,
   storeId: string,
-  authorizedStoreIds: string[]
+  authorizedStoreIds: string[],
+  organizationId: string | null
 ): Promise<AnalysisResult> {
   // 권한이 있는 매장이 없으면 빈 결과 반환
   if (authorizedStoreIds.length === 0) {
@@ -287,7 +289,7 @@ async function fetchAnalysis(
   )
 
   // Execute queries in parallel for better performance
-  // SKU cost: BOM-based (sku_recipes × purchase avg unit price). BOM 미등록 SKU는 원가 0 + has_bom=false
+  // SKU cost: BOM-based (sku_recipes × ingredients.unit_cost). BOM 미등록 SKU는 원가 0 + has_bom=false
   const [skuResult, totalCostsResult, fixedCostsResult] = await Promise.all([
     // SKU-level sales with BOM-based cost calculation
     db.execute(sql`
@@ -305,42 +307,7 @@ async function fetchAnalysis(
           ${salesStoreFilter}
         GROUP BY sr.sku_id, s.sku_name
       ),
-      ingredient_avg_price AS (
-        -- Weighted average unit price per ingredient from purchase data
-        -- unit_price is price per ingredient's base unit (e.g., per kg)
-        SELECT
-          pt.ingredient_id,
-          CASE
-            WHEN SUM(pt.quantity) > 0
-            THEN SUM(pt.total_amount) / SUM(pt.quantity)
-            ELSE 0
-          END AS avg_unit_price
-        FROM purchase_transactions pt
-        WHERE pt.deleted_at IS NULL
-        GROUP BY pt.ingredient_id
-      ),
-      bom_unit_cost AS (
-        -- BOM-based per-unit cost for each SKU
-        -- recipe.quantity in recipe.unit × avg purchase price per ingredient base unit
-        SELECT
-          rec.sku_id,
-          SUM(
-            COALESCE(ing.unit_cost, 0) *
-            CASE
-              WHEN ing.unit = 'kg' AND rec.unit = 'g' THEN rec.quantity / 1000
-              WHEN ing.unit = 'L' AND rec.unit = 'ml' THEN rec.quantity / 1000
-              WHEN ing.unit = 'g' AND rec.unit = 'kg' THEN rec.quantity * 1000
-              WHEN ing.unit = 'ml' AND rec.unit = 'L' THEN rec.quantity * 1000
-              ELSE rec.quantity
-            END
-          ) AS cost_per_unit
-        FROM sku_recipes rec
-        JOIN ingredients ing ON rec.ingredient_id = ing.id
-        LEFT JOIN ingredient_avg_price iap ON rec.ingredient_id = iap.ingredient_id
-        WHERE rec.deleted_at IS NULL
-          AND ing.deleted_at IS NULL
-        GROUP BY rec.sku_id
-      )
+      ${bomUnitCostCte(organizationId)}
       SELECT
         ss.sku_name,
         ss.total_quantity AS quantity_sold,
@@ -439,7 +406,8 @@ async function fetchMonthlySkuAnalysis(
   startDate: string,
   endDate: string,
   storeId: string,
-  authorizedStoreIds: string[]
+  authorizedStoreIds: string[],
+  organizationId: string | null
 ): Promise<MonthlySkuAnalysisResult> {
   if (authorizedStoreIds.length === 0) {
     return { success: true, data: { monthlySkuData: [], skuCosts: [] } }
@@ -467,38 +435,7 @@ async function fetchMonthlySkuAnalysis(
     `),
     // Query 2: SKU BOM unit costs
     db.execute(sql`
-      WITH ingredient_avg_price AS (
-        SELECT
-          pt.ingredient_id,
-          CASE
-            WHEN SUM(pt.quantity) > 0
-            THEN SUM(pt.total_amount) / SUM(pt.quantity)
-            ELSE 0
-          END AS avg_unit_price
-        FROM purchase_transactions pt
-        WHERE pt.deleted_at IS NULL
-        GROUP BY pt.ingredient_id
-      ),
-      bom_unit_cost AS (
-        SELECT
-          rec.sku_id,
-          SUM(
-            COALESCE(ing.unit_cost, 0) *
-            CASE
-              WHEN ing.unit = 'kg' AND rec.unit = 'g' THEN rec.quantity / 1000
-              WHEN ing.unit = 'L' AND rec.unit = 'ml' THEN rec.quantity / 1000
-              WHEN ing.unit = 'g' AND rec.unit = 'kg' THEN rec.quantity * 1000
-              WHEN ing.unit = 'ml' AND rec.unit = 'L' THEN rec.quantity * 1000
-              ELSE rec.quantity
-            END
-          ) AS cost_per_unit
-        FROM sku_recipes rec
-        JOIN ingredients ing ON rec.ingredient_id = ing.id
-        LEFT JOIN ingredient_avg_price iap ON rec.ingredient_id = iap.ingredient_id
-        WHERE rec.deleted_at IS NULL
-          AND ing.deleted_at IS NULL
-        GROUP BY rec.sku_id
-      )
+      WITH ${bomUnitCostCte(organizationId)}
       SELECT
         s.id,
         s.sku_name,
@@ -508,6 +445,7 @@ async function fetchMonthlySkuAnalysis(
       FROM skus s
       LEFT JOIN bom_unit_cost buc ON s.id = buc.sku_id
       WHERE s.deleted_at IS NULL
+        ${organizationId ? sql`AND s.organization_id = ${organizationId}` : sql``}
     `),
   ])
 
@@ -544,12 +482,14 @@ export async function getMonthlySkuAnalysis(
     }
 
     const normalizedStoreId = storeId ?? 'all'
+    const organizationId = await getOrganizationId()
 
     return await fetchMonthlySkuAnalysis(
       startDate,
       endDate,
       normalizedStoreId,
-      authorizedStoreIds
+      authorizedStoreIds,
+      organizationId
     )
   } catch (error) {
     logger.error(
@@ -589,12 +529,14 @@ export async function getAnalysis(
     }
 
     const normalizedStoreId = storeId ?? 'all'
+    const organizationId = await getOrganizationId()
 
     return await fetchAnalysis(
       startDate,
       endDate,
       normalizedStoreId,
-      authorizedStoreIds
+      authorizedStoreIds,
+      organizationId
     )
   } catch (error) {
     logger.error('Failed to get analysis:', errorToContext(error))

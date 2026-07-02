@@ -20,17 +20,25 @@ export default function AlertCheckButton({ storeId }: AlertCheckButtonProps) {
         return
       }
 
+      const skippedNote = result.skipped
+        ? ` (최근 24시간 내 발송되어 건너뜀 ${result.skipped}건)`
+        : ''
+
       if (result.total === 0) {
         alert('재고 부족 항목이 없습니다.')
       } else if (result.sent > 0) {
         alert(
           `재고 부족 ${result.total}건 확인. 알림 ${result.sent}건 발송${
             result.failed ? `, 실패 ${result.failed}건` : ''
-          }.`
+          }.${skippedNote}`
+        )
+      } else if (result.skipped > 0 && result.pending === 0) {
+        alert(
+          `재고 부족 ${result.total}건 확인.${skippedNote}`
         )
       } else {
         alert(
-          `재고 부족 ${result.total}건을 확인해 이력에 기록했습니다. (발송 채널 미구성 시 대기 ${result.pending}건)`
+          `재고 부족 ${result.total}건을 확인해 이력에 기록했습니다. (발송 채널 미구성 시 대기 ${result.pending}건)${skippedNote}`
         )
       }
     } catch {

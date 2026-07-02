@@ -3,7 +3,8 @@
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { sql } from 'drizzle-orm'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import { getAuthorizedStoreIds, getOrganizationId } from '@/lib/auth-context'
+import { bomUnitCostCte } from '@/lib/costing'
 
 export type MenuCategory = 'star' | 'plowhorse' | 'puzzle' | 'dog'
 
@@ -76,6 +77,7 @@ export async function getMenuEngineering(
     }
 
     const normalizedStoreId = storeId ?? 'all'
+    const organizationId = await getOrganizationId()
     const salesStoreFilter = buildStoreFilter(
       normalizedStoreId,
       authorizedStoreIds,
@@ -97,38 +99,7 @@ export async function getMenuEngineering(
           ${salesStoreFilter}
         GROUP BY sr.sku_id, s.sku_name
       ),
-      ingredient_avg_price AS (
-        SELECT
-          pt.ingredient_id,
-          CASE
-            WHEN SUM(pt.quantity) > 0
-            THEN SUM(pt.total_amount) / SUM(pt.quantity)
-            ELSE 0
-          END AS avg_unit_price
-        FROM purchase_transactions pt
-        WHERE pt.deleted_at IS NULL
-        GROUP BY pt.ingredient_id
-      ),
-      bom_unit_cost AS (
-        SELECT
-          rec.sku_id,
-          SUM(
-            COALESCE(ing.unit_cost, 0) *
-            CASE
-              WHEN ing.unit = 'kg' AND rec.unit = 'g' THEN rec.quantity / 1000
-              WHEN ing.unit = 'L' AND rec.unit = 'ml' THEN rec.quantity / 1000
-              WHEN ing.unit = 'g' AND rec.unit = 'kg' THEN rec.quantity * 1000
-              WHEN ing.unit = 'ml' AND rec.unit = 'L' THEN rec.quantity * 1000
-              ELSE rec.quantity
-            END
-          ) AS cost_per_unit
-        FROM sku_recipes rec
-        JOIN ingredients ing ON rec.ingredient_id = ing.id
-        LEFT JOIN ingredient_avg_price iap ON rec.ingredient_id = iap.ingredient_id
-        WHERE rec.deleted_at IS NULL
-          AND ing.deleted_at IS NULL
-        GROUP BY rec.sku_id
-      )
+      ${bomUnitCostCte(organizationId)}
       SELECT
         ss.sku_name,
         ss.total_quantity AS quantity_sold,

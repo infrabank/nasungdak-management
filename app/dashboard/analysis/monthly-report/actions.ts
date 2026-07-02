@@ -3,7 +3,8 @@
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { sql } from 'drizzle-orm'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import { getAuthorizedStoreIds, getOrganizationId } from '@/lib/auth-context'
+import { bomUnitCostCte } from '@/lib/costing'
 
 export interface MonthlyReportMenu {
   skuName: string
@@ -70,6 +71,7 @@ export async function getMonthlyReport(
 
     const cur = monthRange(month)
     const prev = monthRange(prevMonth(month))
+    const organizationId = await getOrganizationId()
 
     // 권한 매장 필터 (storeId NULL 데이터 포함)
     const storeIn = sql.join(
@@ -144,16 +146,15 @@ export async function getMonthlyReport(
           AND (sr.store_id IN (${storeIn}) OR sr.store_id IS NULL)
         GROUP BY sr.sku_id, s.sku_name
       `),
-      // SKU별 레시피 원가 (재료 unitCost 기준)
+      // SKU별 레시피 원가 (재료 unitCost 기준, 단위 환산 포함 - lib/costing 공용 CTE)
       db.execute(sql`
+        WITH ${bomUnitCostCte(organizationId)}
         SELECT s.id as sku_id, s.unit_price,
-          SUM(r.quantity * COALESCE(i.unit_cost, 0)) as recipe_cost,
-          COUNT(r.id) as recipe_items
+          buc.cost_per_unit as recipe_cost
         FROM skus s
-        JOIN sku_recipes r ON r.sku_id = s.id AND r.deleted_at IS NULL
-        LEFT JOIN ingredients i ON i.id = r.ingredient_id AND i.deleted_at IS NULL
+        JOIN bom_unit_cost buc ON buc.sku_id = s.id
         WHERE s.deleted_at IS NULL
-        GROUP BY s.id, s.unit_price
+          ${organizationId ? sql`AND s.organization_id = ${organizationId}` : sql``}
       `),
       // 당월 재료별 매입액
       db.execute(sql`

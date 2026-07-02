@@ -7,6 +7,11 @@ import { salesRecords, skus, menuCategories } from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import {
+  syncSaleToInventory,
+  reverseInventoryByReferences,
+  fetchRecipesBySkuIds,
+} from '@/lib/inventory-sync'
 
 const salesRecordSchema = z.object({
   saleDate: z.string().min(1, '날짜를 선택해주세요'),
@@ -53,21 +58,38 @@ export async function createSalesRecord(formData: FormData) {
       }
     }
 
-    const [record] = await db
-      .insert(salesRecords)
-      .values({
-        ...validatedData,
-        storeId,
-        unitPrice: sku.unitPrice,
-        createdBy: 'system',
-      })
-      .returning()
+    const record = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(salesRecords)
+        .values({
+          ...validatedData,
+          storeId,
+          unitPrice: sku.unitPrice,
+          createdBy: 'system',
+        })
+        .returning()
+
+      // 레시피(sku_recipes) 기준 재고 자동 차감
+      if (created.storeId) {
+        await syncSaleToInventory(tx, {
+          storeId: created.storeId,
+          skuId: created.skuId,
+          quantitySold: Number(created.quantitySold),
+          saleId: created.id,
+          saleDate: created.saleDate,
+        })
+      }
+
+      return created
+    })
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')
     if (storeId) {
       revalidateTag(`sales:${storeId}`)
+      revalidateTag(`inventory:${storeId}`)
     }
+    revalidateTag('inventory:all')
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -104,21 +126,45 @@ export async function updateSalesRecord(id: string, formData: FormData) {
 
     const validatedData = salesRecordSchema.parse(rawData)
 
-    const [record] = await db
-      .update(salesRecords)
-      .set({
-        ...validatedData,
-        updatedAt: new Date(),
-        updatedBy: 'system',
-      })
-      .where(eq(salesRecords.id, id))
-      .returning()
+    const record = await db.transaction(async (tx) => {
+      const [updated] = await tx
+        .update(salesRecords)
+        .set({
+          ...validatedData,
+          updatedAt: new Date(),
+          updatedBy: 'system',
+        })
+        .where(eq(salesRecords.id, id))
+        .returning()
+
+      if (updated?.storeId) {
+        // 기존 차감분 원복 후 새 값으로 다시 차감
+        await reverseInventoryByReferences(
+          tx,
+          [id],
+          'adjustment',
+          '판매 수정 원복',
+          updated.saleDate
+        )
+        await syncSaleToInventory(tx, {
+          storeId: updated.storeId,
+          skuId: updated.skuId,
+          quantitySold: Number(updated.quantitySold),
+          saleId: updated.id,
+          saleDate: updated.saleDate,
+        })
+      }
+
+      return updated
+    })
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')
     if (record.storeId) {
       revalidateTag(`sales:${record.storeId}`)
+      revalidateTag(`inventory:${record.storeId}`)
     }
+    revalidateTag('inventory:all')
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -150,22 +196,35 @@ export async function deleteSalesRecord(id: string) {
     // Fetch storeId before soft delete for cache invalidation
     const existing = await db.query.salesRecords.findFirst({
       where: eq(salesRecords.id, id),
-      columns: { storeId: true },
+      columns: { storeId: true, saleDate: true },
     })
 
-    await db
-      .update(salesRecords)
-      .set({
-        deletedAt: new Date(),
-        deletedBy: 'system',
-      })
-      .where(eq(salesRecords.id, id))
+    await db.transaction(async (tx) => {
+      await tx
+        .update(salesRecords)
+        .set({
+          deletedAt: new Date(),
+          deletedBy: 'system',
+        })
+        .where(eq(salesRecords.id, id))
+
+      // 자동 차감된 재고를 원복 (차감 이력이 없으면 no-op)
+      await reverseInventoryByReferences(
+        tx,
+        [id],
+        'adjustment',
+        '판매 삭제 원복',
+        existing?.saleDate ?? new Date().toISOString().slice(0, 10)
+      )
+    })
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')
     if (existing?.storeId) {
       revalidateTag(`sales:${existing.storeId}`)
+      revalidateTag(`inventory:${existing.storeId}`)
     }
+    revalidateTag('inventory:all')
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -202,23 +261,35 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
       existingRecords.map((r) => r.storeId).filter(Boolean)
     )
 
-    // Perform bulk soft delete - SINGLE QUERY
-    const result = await db
-      .update(salesRecords)
-      .set({
-        deletedAt: new Date(),
-        deletedBy: 'system',
-      })
-      .where(inArray(salesRecords.id, ids))
-      .returning({ id: salesRecords.id })
+    // Perform bulk soft delete + 재고 원복
+    const deletedCount = await db.transaction(async (tx) => {
+      const result = await tx
+        .update(salesRecords)
+        .set({
+          deletedAt: new Date(),
+          deletedBy: 'system',
+        })
+        .where(inArray(salesRecords.id, ids))
+        .returning({ id: salesRecords.id })
 
-    const deletedCount = result.length
+      await reverseInventoryByReferences(
+        tx,
+        result.map((r) => r.id),
+        'adjustment',
+        '판매 일괄 삭제 원복',
+        new Date().toISOString().slice(0, 10)
+      )
+
+      return result.length
+    })
 
     revalidatePath('/dashboard/sales')
     revalidateTag('sales:all')
     for (const storeId of storeIds) {
       revalidateTag(`sales:${storeId}`)
+      revalidateTag(`inventory:${storeId}`)
     }
+    revalidateTag('inventory:all')
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -461,6 +532,14 @@ export async function createDailySales(
 
     // Use transaction for atomicity
     await db.transaction(async (tx) => {
+      // 재고 차감용 레시피 일괄 조회
+      const recipesBySkuId = storeId
+        ? await fetchRecipesBySkuIds(
+            tx,
+            validSales.map((s) => s.skuId)
+          )
+        : new Map()
+
       for (let i = 0; i < validSales.length; i++) {
         const sale = validSales[i]
 
@@ -481,12 +560,29 @@ export async function createDailySales(
           })
 
           // Insert sales record using transaction context
-          await tx.insert(salesRecords).values({
-            ...validatedData,
-            storeId: storeId || null,
-            unitPrice: sku.unitPrice,
-            createdBy: 'system',
-          })
+          const [created] = await tx
+            .insert(salesRecords)
+            .values({
+              ...validatedData,
+              storeId: storeId || null,
+              unitPrice: sku.unitPrice,
+              createdBy: 'system',
+            })
+            .returning()
+
+          if (created.storeId) {
+            await syncSaleToInventory(
+              tx,
+              {
+                storeId: created.storeId,
+                skuId: created.skuId,
+                quantitySold: Number(created.quantitySold),
+                saleId: created.id,
+                saleDate: created.saleDate,
+              },
+              recipesBySkuId.get(created.skuId) ?? []
+            )
+          }
 
           successCount++
         } catch (error) {
@@ -506,7 +602,9 @@ export async function createDailySales(
     revalidateTag('sales:all')
     if (storeId) {
       revalidateTag(`sales:${storeId}`)
+      revalidateTag(`inventory:${storeId}`)
     }
+    revalidateTag('inventory:all')
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -561,6 +659,14 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
 
     // Use transaction for atomicity
     await db.transaction(async (tx) => {
+      // 재고 차감용 레시피 일괄 조회
+      const recipesBySkuId = storeId
+        ? await fetchRecipesBySkuIds(
+            tx,
+            skuList.map((s) => s.id)
+          )
+        : new Map()
+
       for (let i = 0; i < rows.length; i++) {
         const row = rows[i]
         const rowNum = i + 1
@@ -583,12 +689,29 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
           })
 
           // Insert sales record using transaction context
-          await tx.insert(salesRecords).values({
-            ...validatedData,
-            storeId: storeId || null,
-            unitPrice: skuInfo.unitPrice,
-            createdBy: 'system',
-          })
+          const [created] = await tx
+            .insert(salesRecords)
+            .values({
+              ...validatedData,
+              storeId: storeId || null,
+              unitPrice: skuInfo.unitPrice,
+              createdBy: 'system',
+            })
+            .returning()
+
+          if (created.storeId) {
+            await syncSaleToInventory(
+              tx,
+              {
+                storeId: created.storeId,
+                skuId: created.skuId,
+                quantitySold: Number(created.quantitySold),
+                saleId: created.id,
+                saleDate: created.saleDate,
+              },
+              recipesBySkuId.get(created.skuId) ?? []
+            )
+          }
 
           successCount++
         } catch (error) {
@@ -608,7 +731,9 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
     revalidateTag('sales:all')
     if (storeId) {
       revalidateTag(`sales:${storeId}`)
+      revalidateTag(`inventory:${storeId}`)
     }
+    revalidateTag('inventory:all')
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')

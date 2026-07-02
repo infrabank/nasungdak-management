@@ -4,73 +4,64 @@ import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { purchaseSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
-import {
-  purchaseTransactions,
-  ingredients,
-  inventory,
-  inventoryEvents,
-} from '@/lib/db/schema'
+import { purchaseTransactions, ingredients } from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql, inArray, or } from 'drizzle-orm'
 import { z } from 'zod'
 import { getAuthorizedStoreIds, getOrganizationId } from '@/lib/auth-context'
+import {
+  syncPurchaseToInventory,
+  reverseInventoryByReferences,
+} from '@/lib/inventory-sync'
 
-async function syncPurchaseToInventory(
-  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
-  storeId: string,
+// 매입 단가가 마스터 단가와 이 비율(%) 이상 차이나면 갱신 제안을 반환
+const PRICE_DEVIATION_THRESHOLD_PERCENT = 10
+
+export interface PurchasePriceAlert {
+  ingredientName: string
+  unit: string
+  masterUnitCost: number
+  purchaseUnitCost: number // 사용 단위 환산 매입 단가
+  diffPercent: number
+}
+
+/**
+ * 매입 단가(사용 단위 환산)와 재료 마스터 단가의 괴리를 확인합니다.
+ * 임계값 미만이거나 마스터 단가 미설정 시 null. 자동 갱신은 하지 않고 제안만 반환합니다.
+ */
+async function buildPriceAlert(
   ingredientId: string,
-  quantity: string,
-  purchaseId: string,
-  transactionDate: string
-) {
-  // 구매 단위 → 사용 단위 변환 (변환 계수 미설정 시 1:1)
-  const ingredient = await tx.query.ingredients.findFirst({
+  purchaseUnitPrice: string
+): Promise<PurchasePriceAlert | null> {
+  const ingredient = await db.query.ingredients.findFirst({
     where: and(eq(ingredients.id, ingredientId), isNull(ingredients.deletedAt)),
     columns: {
+      ingredientName: true,
       unit: true,
+      unitCost: true,
       conversionFactor: true,
     },
   })
-  const factor = ingredient?.conversionFactor
+  if (!ingredient?.unitCost) return null
+
+  const masterUnitCost = Number(ingredient.unitCost)
+  if (masterUnitCost <= 0) return null
+
+  const factor = ingredient.conversionFactor
     ? Number(ingredient.conversionFactor)
     : 1
-  const convertedQuantity = String(Number(quantity) * factor)
+  const purchaseUnitCost = Number(purchaseUnitPrice) / (factor || 1)
+  const diffPercent =
+    ((purchaseUnitCost - masterUnitCost) / masterUnitCost) * 100
 
-  await tx.insert(inventoryEvents).values({
-    storeId,
-    ingredientId,
-    eventType: 'purchase',
-    quantityChange: convertedQuantity,
-    reason: factor === 1 ? '매입 자동 반영' : `매입 자동 반영 (x${factor})`,
-    eventDate: transactionDate,
-    referenceId: purchaseId,
-    createdBy: 'system',
-  })
+  if (Math.abs(diffPercent) < PRICE_DEVIATION_THRESHOLD_PERCENT) return null
 
-  const existingInventory = await tx.query.inventory.findFirst({
-    where: and(
-      eq(inventory.storeId, storeId),
-      eq(inventory.ingredientId, ingredientId)
-    ),
-  })
-
-  if (existingInventory) {
-    await tx
-      .update(inventory)
-      .set({
-        currentQuantity: sql`${inventory.currentQuantity} + ${convertedQuantity}`,
-        lastUpdated: new Date(),
-      })
-      .where(eq(inventory.id, existingInventory.id))
-    return
+  return {
+    ingredientName: ingredient.ingredientName,
+    unit: ingredient.unit,
+    masterUnitCost,
+    purchaseUnitCost,
+    diffPercent,
   }
-
-  await tx.insert(inventory).values({
-    storeId,
-    ingredientId,
-    currentQuantity: convertedQuantity,
-    unit: ingredient?.unit ?? null,
-    lastUpdated: new Date(),
-  })
 }
 
 export async function createPurchase(formData: FormData) {
@@ -108,18 +99,22 @@ export async function createPurchase(formData: FormData) {
         .returning()
 
       if (createdPurchase.storeId) {
-        await syncPurchaseToInventory(
-          tx,
-          createdPurchase.storeId,
-          createdPurchase.ingredientId,
-          createdPurchase.quantity,
-          createdPurchase.id,
-          createdPurchase.transactionDate
-        )
+        await syncPurchaseToInventory(tx, {
+          storeId: createdPurchase.storeId,
+          ingredientId: createdPurchase.ingredientId,
+          quantity: createdPurchase.quantity,
+          purchaseId: createdPurchase.id,
+          transactionDate: createdPurchase.transactionDate,
+        })
       }
 
       return createdPurchase
     })
+
+    const priceAlert = await buildPriceAlert(
+      transaction.ingredientId,
+      transaction.unitPrice
+    )
 
     revalidatePath('/dashboard/purchases')
     revalidateTag('purchases:all')
@@ -137,6 +132,7 @@ export async function createPurchase(formData: FormData) {
       data: {
         id: transaction.id,
         totalAmount: Number(transaction.totalAmount),
+        priceAlert,
       },
     }
   } catch (error) {
@@ -174,21 +170,45 @@ export async function updatePurchase(id: string, formData: FormData) {
 
     const validatedData = purchaseSchema.parse(rawData)
 
-    const [transaction] = await db
-      .update(purchaseTransactions)
-      .set({
-        ...validatedData,
-        updatedAt: new Date(),
-        updatedBy: 'system',
-      })
-      .where(eq(purchaseTransactions.id, id))
-      .returning()
+    const transaction = await db.transaction(async (tx) => {
+      const [updated] = await tx
+        .update(purchaseTransactions)
+        .set({
+          ...validatedData,
+          updatedAt: new Date(),
+          updatedBy: 'system',
+        })
+        .where(eq(purchaseTransactions.id, id))
+        .returning()
+
+      if (updated?.storeId) {
+        // 기존 자동 반영분을 원복한 뒤 새 값으로 다시 반영
+        await reverseInventoryByReferences(
+          tx,
+          [id],
+          'adjustment',
+          '매입 수정 원복',
+          updated.transactionDate
+        )
+        await syncPurchaseToInventory(tx, {
+          storeId: updated.storeId,
+          ingredientId: updated.ingredientId,
+          quantity: updated.quantity,
+          purchaseId: updated.id,
+          transactionDate: updated.transactionDate,
+        })
+      }
+
+      return updated
+    })
 
     revalidatePath('/dashboard/purchases')
     revalidateTag('purchases:all')
     if (transaction.storeId) {
       revalidateTag(`purchases:${transaction.storeId}`)
+      revalidateTag(`inventory:${transaction.storeId}`)
     }
+    revalidateTag('inventory:all')
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -220,22 +240,35 @@ export async function deletePurchase(id: string) {
     // Fetch storeId before soft delete for cache invalidation
     const existing = await db.query.purchaseTransactions.findFirst({
       where: eq(purchaseTransactions.id, id),
-      columns: { storeId: true },
+      columns: { storeId: true, transactionDate: true },
     })
 
-    await db
-      .update(purchaseTransactions)
-      .set({
-        deletedAt: new Date(),
-        deletedBy: 'system',
-      })
-      .where(eq(purchaseTransactions.id, id))
+    await db.transaction(async (tx) => {
+      await tx
+        .update(purchaseTransactions)
+        .set({
+          deletedAt: new Date(),
+          deletedBy: 'system',
+        })
+        .where(eq(purchaseTransactions.id, id))
+
+      // 자동 반영된 재고를 원복 (반영 이력이 없으면 no-op)
+      await reverseInventoryByReferences(
+        tx,
+        [id],
+        'adjustment',
+        '매입 삭제 원복',
+        existing?.transactionDate ?? new Date().toISOString().slice(0, 10)
+      )
+    })
 
     revalidatePath('/dashboard/purchases')
     revalidateTag('purchases:all')
     if (existing?.storeId) {
       revalidateTag(`purchases:${existing.storeId}`)
+      revalidateTag(`inventory:${existing.storeId}`)
     }
+    revalidateTag('inventory:all')
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -447,6 +480,7 @@ export async function createMultiplePurchases(
     id: string
     totalAmount: number
   }> = []
+  const createdEntries: Array<{ ingredientId: string; unitPrice: string }> = []
 
   try {
     let storeId = formStoreId || null
@@ -532,14 +566,13 @@ export async function createMultiplePurchases(
             .returning()
 
           if (transaction.storeId) {
-            await syncPurchaseToInventory(
-              tx,
-              transaction.storeId,
-              transaction.ingredientId,
-              transaction.quantity,
-              transaction.id,
-              transaction.transactionDate
-            )
+            await syncPurchaseToInventory(tx, {
+              storeId: transaction.storeId,
+              ingredientId: transaction.ingredientId,
+              quantity: transaction.quantity,
+              purchaseId: transaction.id,
+              transactionDate: transaction.transactionDate,
+            })
           }
 
           successCount++
@@ -547,6 +580,10 @@ export async function createMultiplePurchases(
             index: i,
             id: transaction.id,
             totalAmount: Number(transaction.totalAmount),
+          })
+          createdEntries.push({
+            ingredientId: transaction.ingredientId,
+            unitPrice: transaction.unitPrice,
           })
         } catch (error) {
           failedCount++
@@ -572,11 +609,22 @@ export async function createMultiplePurchases(
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
 
+    // 마스터 단가와 크게 차이나는 매입 단가 감지 (재료별 1회)
+    const priceAlerts: PurchasePriceAlert[] = []
+    const checkedIngredients = new Set<string>()
+    for (const entry of createdEntries) {
+      if (checkedIngredients.has(entry.ingredientId)) continue
+      checkedIngredients.add(entry.ingredientId)
+      const alert = await buildPriceAlert(entry.ingredientId, entry.unitPrice)
+      if (alert) priceAlerts.push(alert)
+    }
+
     return {
       success: failedCount === 0,
       successCount,
       failedCount,
       results,
+      priceAlerts,
       errors: errors.slice(0, 20),
     }
   } catch (error) {
@@ -645,11 +693,24 @@ export async function bulkCreatePurchases(
             notes: row.비고 && row.비고.trim() ? row.비고.trim() : null,
           })
 
-          await tx.insert(purchaseTransactions).values({
-            ...validatedData,
-            storeId,
-            createdBy: 'system',
-          })
+          const [transaction] = await tx
+            .insert(purchaseTransactions)
+            .values({
+              ...validatedData,
+              storeId,
+              createdBy: 'system',
+            })
+            .returning()
+
+          if (transaction.storeId) {
+            await syncPurchaseToInventory(tx, {
+              storeId: transaction.storeId,
+              ingredientId: transaction.ingredientId,
+              quantity: transaction.quantity,
+              purchaseId: transaction.id,
+              transactionDate: transaction.transactionDate,
+            })
+          }
 
           successCount++
         } catch (error) {
@@ -669,7 +730,9 @@ export async function bulkCreatePurchases(
     revalidateTag('purchases:all')
     if (storeId) {
       revalidateTag(`purchases:${storeId}`)
+      revalidateTag(`inventory:${storeId}`)
     }
+    revalidateTag('inventory:all')
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
@@ -955,14 +1018,13 @@ export async function copyLastPurchasesToToday() {
         totalAmount += Number(transaction.totalAmount ?? 0)
 
         if (transaction.storeId) {
-          await syncPurchaseToInventory(
-            tx,
-            transaction.storeId,
-            transaction.ingredientId,
-            transaction.quantity,
-            transaction.id,
-            transaction.transactionDate
-          )
+          await syncPurchaseToInventory(tx, {
+            storeId: transaction.storeId,
+            ingredientId: transaction.ingredientId,
+            quantity: transaction.quantity,
+            purchaseId: transaction.id,
+            transactionDate: transaction.transactionDate,
+          })
         }
       }
     })

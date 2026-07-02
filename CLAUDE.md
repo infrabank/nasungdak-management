@@ -59,7 +59,7 @@ npm run test:e2e         # Playwright
 - **Validation**: Zod
 - **Auth**: JWT (jose) access/refresh token, HTTP-only cookies
 - **Billing**: Stripe subscriptions
-- **Notifications**: Kakao AlimTalk (`lib/kakao/alimtalk.ts`, `lib/notifications/`)
+- **Notifications**: 재고 부족 알림 웹훅 (`lib/notifications/`, `ALERT_WEBHOOK_URL`), 자동 점검 크론 `/api/cron/inventory-alerts` (`CRON_SECRET`)
 
 ### Routes
 
@@ -205,6 +205,7 @@ STRIPE_SECRET_KEY= STRIPE_WEBHOOK_SECRET=
 STRIPE_PRICE_{BASIC,STANDARD,PRO}_{MONTHLY,YEARLY}=
 NEXT_PUBLIC_APP_URL=
 LOG_LEVEL= ALERT_WEBHOOK_URL=  # optional, lib/logger.ts
+CRON_SECRET=                   # /api/cron/* Bearer 인증
 ```
 
 ## Database Migrations

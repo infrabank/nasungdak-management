@@ -4,8 +4,9 @@ import { unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { skuRecipes, skus, ingredients, menuCategories } from '@/lib/db/schema'
-import { eq, isNull, and, desc } from 'drizzle-orm'
+import { eq, isNull, and } from 'drizzle-orm'
 import { getOrganizationId } from '@/lib/auth-context'
+import { getRecipeToIngredientFactor } from '@/lib/costing'
 
 export interface SkuMarginData {
   id: string
@@ -15,6 +16,7 @@ export interface SkuMarginData {
   totalCost: number
   margin: number
   marginPercent: number
+  hasBom: boolean
   recipes: {
     ingredientName: string | null
     quantity: string | null
@@ -27,6 +29,7 @@ export interface SkuMarginData {
 
 export interface MarginSummary {
   totalSkus: number
+  noBomSkus: number // 레시피 미등록 (요약 통계에서 제외됨)
   avgMarginPercent: number
   lowMarginSkus: number // < 30%
   healthyMarginSkus: number // >= 30%
@@ -106,13 +109,13 @@ export async function getSkuMarginAnalysis(): Promise<{
               : 0
             const quantity = Number(recipe.quantity || 0)
 
-            // Unit conversion
-            let costPerUnit = ingredientCost
-            if (recipe.ingredientUnit === 'kg' && recipe.unit === 'g') {
-              costPerUnit = ingredientCost / 1000
-            } else if (recipe.ingredientUnit === 'L' && recipe.unit === 'ml') {
-              costPerUnit = ingredientCost / 1000
-            }
+            // 단위 환산 (lib/costing 공용 규칙)
+            const factor =
+              getRecipeToIngredientFactor(
+                recipe.unit,
+                recipe.ingredientUnit
+              ) ?? 1
+            const costPerUnit = ingredientCost * factor
 
             const subtotal = costPerUnit * quantity
             totalCost += subtotal
@@ -144,6 +147,7 @@ export async function getSkuMarginAnalysis(): Promise<{
             totalCost,
             margin,
             marginPercent,
+            hasBom: recipes.length > 0,
             recipes: recipeDetails,
           }
         })
@@ -154,32 +158,36 @@ export async function getSkuMarginAnalysis(): Promise<{
         )
 
         // Calculate summary
+        // 레시피 미등록 SKU는 원가 0 -> 마진 100%로 잡혀 평균을 왜곡하므로 요약 통계에서 제외
+        const bomSkus = skusWithMargin.filter((s) => s.hasBom)
         const totalSkus = skusWithMargin.length
+        const noBomSkus = totalSkus - bomSkus.length
         const avgMarginPercent =
-          totalSkus > 0
-            ? skusWithMargin.reduce((sum, s) => sum + s.marginPercent, 0) /
-              totalSkus
+          bomSkus.length > 0
+            ? bomSkus.reduce((sum, s) => sum + s.marginPercent, 0) /
+              bomSkus.length
             : 0
-        const lowMarginSkus = skusWithMargin.filter(
+        const lowMarginSkus = bomSkus.filter(
           (s) => s.marginPercent < 30
         ).length
-        const healthyMarginSkus = skusWithMargin.filter(
+        const healthyMarginSkus = bomSkus.filter(
           (s) => s.marginPercent >= 30
         ).length
 
-        const highestMargin = skusWithMargin.reduce(
+        const highestMargin = bomSkus.reduce(
           (max, s) => (s.marginPercent > max.marginPercent ? s : max),
-          skusWithMargin[0] || { marginPercent: 0, skuName: null }
+          bomSkus[0] || { marginPercent: 0, skuName: null }
         )
-        const lowestMargin = skusWithMargin.reduce(
+        const lowestMargin = bomSkus.reduce(
           (min, s) => (s.marginPercent < min.marginPercent ? s : min),
-          skusWithMargin[0] || { marginPercent: 0, skuName: null }
+          bomSkus[0] || { marginPercent: 0, skuName: null }
         )
 
         return {
           skus: sortedSkus,
           summary: {
             totalSkus,
+            noBomSkus,
             avgMarginPercent,
             lowMarginSkus,
             healthyMarginSkus,
@@ -188,7 +196,7 @@ export async function getSkuMarginAnalysis(): Promise<{
           },
         }
       },
-      ['margin-analysis:list', orgKey],
+      ['margin-analysis:list:v2', orgKey],
       { tags: [`margin-analysis:${orgKey}`] }
     )
     return await getCached()
@@ -198,6 +206,7 @@ export async function getSkuMarginAnalysis(): Promise<{
       skus: [],
       summary: {
         totalSkus: 0,
+        noBomSkus: 0,
         avgMarginPercent: 0,
         lowMarginSkus: 0,
         healthyMarginSkus: 0,

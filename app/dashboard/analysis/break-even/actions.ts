@@ -3,12 +3,14 @@
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { sql } from 'drizzle-orm'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import { getAuthorizedStoreIds, getOrganizationId } from '@/lib/auth-context'
+import { bomUnitCostCte } from '@/lib/costing'
 
 export interface BreakEvenSkuData {
   skuName: string
   unitPrice: number
   variableCost: number
+  hasBom: boolean
   contributionMargin: number
   contributionMarginPercent: number
   bepQuantity: number
@@ -67,6 +69,7 @@ export async function getBreakEvenAnalysis(
     }
 
     const normalizedStoreId = storeId ?? 'all'
+    const organizationId = await getOrganizationId()
     const salesStoreFilter = buildStoreFilter(
       normalizedStoreId,
       authorizedStoreIds,
@@ -96,42 +99,12 @@ export async function getBreakEvenAnalysis(
       `),
       // SKU sales + BOM unit cost
       db.execute(sql`
-        WITH ingredient_avg_price AS (
-          SELECT
-            pt.ingredient_id,
-            CASE
-              WHEN SUM(pt.quantity) > 0
-              THEN SUM(pt.total_amount) / SUM(pt.quantity)
-              ELSE 0
-            END AS avg_unit_price
-          FROM purchase_transactions pt
-          WHERE pt.deleted_at IS NULL
-          GROUP BY pt.ingredient_id
-        ),
-        bom_unit_cost AS (
-          SELECT
-            rec.sku_id,
-            SUM(
-              COALESCE(ing.unit_cost, 0) *
-              CASE
-                WHEN ing.unit = 'kg' AND rec.unit = 'g' THEN rec.quantity / 1000
-                WHEN ing.unit = 'L' AND rec.unit = 'ml' THEN rec.quantity / 1000
-                WHEN ing.unit = 'g' AND rec.unit = 'kg' THEN rec.quantity * 1000
-                WHEN ing.unit = 'ml' AND rec.unit = 'L' THEN rec.quantity * 1000
-                ELSE rec.quantity
-              END
-            ) AS cost_per_unit
-          FROM sku_recipes rec
-          JOIN ingredients ing ON rec.ingredient_id = ing.id
-          LEFT JOIN ingredient_avg_price iap ON rec.ingredient_id = iap.ingredient_id
-          WHERE rec.deleted_at IS NULL
-            AND ing.deleted_at IS NULL
-          GROUP BY rec.sku_id
-        )
+        WITH ${bomUnitCostCte(organizationId)}
         SELECT
           s.sku_name,
           s.unit_price,
           COALESCE(buc.cost_per_unit, 0) AS variable_cost,
+          (buc.cost_per_unit IS NOT NULL) AS has_bom,
           COALESCE(SUM(sr.quantity_sold), 0) AS actual_quantity,
           COALESCE(SUM(sr.total_revenue), 0) AS actual_revenue
         FROM skus s
@@ -160,6 +133,7 @@ export async function getBreakEvenAnalysis(
         skuName: row.sku_name as string,
         unitPrice: Number(row.unit_price),
         variableCost: Number(row.variable_cost),
+        hasBom: row.has_bom === true,
         actualQuantity: Number(row.actual_quantity),
         actualRevenue,
       }
@@ -187,6 +161,7 @@ export async function getBreakEvenAnalysis(
         skuName: sku.skuName,
         unitPrice: sku.unitPrice,
         variableCost: sku.variableCost,
+        hasBom: sku.hasBom,
         contributionMargin,
         contributionMarginPercent,
         bepQuantity,
@@ -200,14 +175,21 @@ export async function getBreakEvenAnalysis(
       (s) => s.actualQuantity > 0 || s.bepQuantity > 0
     )
 
-    const totalContributionMargin = meaningfulSkus.reduce(
-      (sum, s) => sum + s.contributionMarginPercent,
+    // 매출 가중 공헌이익률: 판매 믹스를 반영해 Σ(공헌이익 x 판매량) / Σ(판매가 x 판매량)
+    // 레시피(BOM) 미등록 SKU는 변동원가 0으로 잡혀 공헌이익이 과대 계상되므로 제외
+    const weightedBase = rawSkus.filter(
+      (s) => s.hasBom && s.actualQuantity > 0 && s.unitPrice > 0
+    )
+    const weightedRevenue = weightedBase.reduce(
+      (sum, s) => sum + s.unitPrice * s.actualQuantity,
+      0
+    )
+    const weightedContribution = weightedBase.reduce(
+      (sum, s) => sum + (s.unitPrice - s.variableCost) * s.actualQuantity,
       0
     )
     const avgContributionMarginPercent =
-      meaningfulSkus.length > 0
-        ? totalContributionMargin / meaningfulSkus.length
-        : 0
+      weightedRevenue > 0 ? (weightedContribution / weightedRevenue) * 100 : 0
 
     const totalBreakEvenRevenue =
       avgContributionMarginPercent > 0

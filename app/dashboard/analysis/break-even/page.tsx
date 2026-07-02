@@ -90,10 +90,13 @@ export default async function BreakEvenPage({
             </div>
             <div className="border-3 border-brutal-black bg-brutal-white p-4 shadow-brutal">
               <p className="text-sm font-medium text-brutal-black/70">
-                평균 공헌이익률
+                공헌이익률 (매출 가중)
               </p>
               <p className="mt-1 text-2xl font-black text-brutal-black">
                 {result.data.avgContributionMarginPercent.toFixed(1)}%
+              </p>
+              <p className="mt-1 text-xs font-medium text-brutal-black/50">
+                판매 비중 반영, 레시피 미등록 SKU 제외
               </p>
             </div>
             <div className="border-3 border-brutal-black bg-brutal-yellow p-4 shadow-brutal">

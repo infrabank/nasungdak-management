@@ -15,14 +15,19 @@ import {
   ingredients,
   stores,
 } from '@/lib/db/schema'
-import { eq, and, or, isNull, desc, sql, inArray } from 'drizzle-orm'
+import { eq, and, or, isNull, desc, inArray } from 'drizzle-orm'
 import { z } from 'zod'
-import { subDays, format } from 'date-fns'
 import { getAuthorizedStoreIds, getOrganizationId } from '@/lib/auth-context'
 import {
   recordAndDispatchAlerts,
   type InventoryAlertItem,
 } from '@/lib/notifications/inventory-alert'
+import { applyInventoryDelta } from '@/lib/inventory-sync'
+import {
+  getActiveAlertRules,
+  expandRulesToTasks,
+  evaluateLowStock,
+} from '@/lib/inventory/alert-service'
 
 // =====================
 // Inventory CRUD
@@ -310,40 +315,89 @@ export async function createInventoryEvent(formData: FormData) {
 
     const validatedData = inventoryEventSchema.parse(rawData)
 
-    // Create inventory event
-    const [event] = await db
-      .insert(inventoryEvents)
-      .values({
-        ...validatedData,
-        createdBy: 'system',
-      })
-      .returning()
-
-    // Update inventory quantity
-    const currentInventory = await db.query.inventory.findFirst({
-      where: and(
-        eq(inventory.storeId, validatedData.storeId),
-        eq(inventory.ingredientId, validatedData.ingredientId)
-      ),
-    })
-
-    if (currentInventory) {
-      const newQuantity =
-        validatedData.eventType === 'waste' ||
-        validatedData.eventType === 'sale'
-          ? Number(currentInventory.currentQuantity) -
-            Number(validatedData.quantityChange)
-          : Number(currentInventory.currentQuantity) +
-            Number(validatedData.quantityChange)
-
-      await db
-        .update(inventory)
-        .set({
-          currentQuantity: String(newQuantity),
-          lastUpdated: new Date(),
-        })
-        .where(eq(inventory.id, currentInventory.id))
+    // 매입/판매는 매입·판매 등록 시 자동으로 기록되므로 수동 입력을 막는다 (중복 방지)
+    if (
+      validatedData.eventType === 'purchase' ||
+      validatedData.eventType === 'sale'
+    ) {
+      return {
+        success: false,
+        error: '매입/판매는 매입·판매 등록 시 재고에 자동 반영됩니다',
+      }
     }
+
+    const quantity = Number(validatedData.quantityChange)
+
+    // 이벤트 기록 + 재고 반영을 트랜잭션으로 묶어 원장 정합성 보장
+    const event = await db.transaction(async (tx) => {
+      if (validatedData.eventType === 'audit') {
+        // 실사: 입력값 = 측정한 실제 재고(절대값). 현재 재고와의 차이를 이벤트로 기록
+        const [current] = await tx
+          .select({
+            id: inventory.id,
+            currentQuantity: inventory.currentQuantity,
+          })
+          .from(inventory)
+          .where(
+            and(
+              eq(inventory.storeId, validatedData.storeId),
+              eq(inventory.ingredientId, validatedData.ingredientId)
+            )
+          )
+          .for('update')
+          .limit(1)
+
+        const currentQty = current ? Number(current.currentQuantity) : 0
+        const delta = quantity - currentQty
+
+        const [auditEvent] = await tx
+          .insert(inventoryEvents)
+          .values({
+            storeId: validatedData.storeId,
+            ingredientId: validatedData.ingredientId,
+            eventType: 'audit',
+            quantityChange: String(delta),
+            reason: validatedData.reason || `실사 조정 (측정값 ${quantity})`,
+            eventDate: validatedData.eventDate,
+            createdBy: 'system',
+          })
+          .returning()
+
+        if (current) {
+          await tx
+            .update(inventory)
+            .set({
+              currentQuantity: String(quantity),
+              lastUpdated: new Date(),
+            })
+            .where(eq(inventory.id, current.id))
+        } else {
+          await tx.insert(inventory).values({
+            storeId: validatedData.storeId,
+            ingredientId: validatedData.ingredientId,
+            currentQuantity: String(quantity),
+            lastUpdated: new Date(),
+          })
+        }
+        return auditEvent
+      }
+
+      // 폐기: 입력값을 감소량으로 처리 (부호 무관), 조정: 부호 그대로 반영
+      const delta =
+        validatedData.eventType === 'waste' ? -Math.abs(quantity) : quantity
+
+      return applyInventoryDelta(tx, {
+        storeId: validatedData.storeId,
+        ingredientId: validatedData.ingredientId,
+        delta,
+        eventType: validatedData.eventType,
+        reason:
+          validatedData.reason ||
+          (validatedData.eventType === 'waste' ? '폐기' : '수동 조정'),
+        eventDate: validatedData.eventDate,
+        createIfMissing: true,
+      })
+    })
 
     revalidatePath('/dashboard/inventory')
     revalidateTag(`inventory:${validatedData.storeId}`)
@@ -446,15 +500,18 @@ export async function createAlertRule(formData: FormData) {
 
     const validatedData = inventoryAlertRuleSchema.parse(rawData)
 
-    // Check if rule already exists
+    // 같은 (매장, 재료) 조합의 활성 규칙이 이미 있는지 확인
     const existingRule = await db.query.inventoryAlertRules.findFirst({
       where: and(
         eq(inventoryAlertRules.ingredientId, validatedData.ingredientId),
+        validatedData.storeId
+          ? eq(inventoryAlertRules.storeId, validatedData.storeId)
+          : isNull(inventoryAlertRules.storeId),
         isNull(inventoryAlertRules.deletedAt)
       ),
     })
 
-    if (existingRule && existingRule.storeId === validatedData.storeId) {
+    if (existingRule) {
       return {
         success: false,
         error: '이미 존재하는 알림 규칙입니다',
@@ -741,156 +798,12 @@ export async function getAlertRules(storeId?: string) {
 }
 
 // =====================
-// Inventory Prediction (30-day default)
-// =====================
-
-export async function calculateDaysRemaining(
-  storeId: string,
-  ingredientId: string,
-  predictionPeriodDays: number = 30
-): Promise<{ daysRemaining: number; avgDailySales: number }> {
-  try {
-    // Get current inventory
-    const inventoryData = await db.query.inventory.findFirst({
-      where: and(
-        eq(inventory.storeId, storeId),
-        eq(inventory.ingredientId, ingredientId)
-      ),
-    })
-
-    if (!inventoryData) {
-      return { daysRemaining: 0, avgDailySales: 0 }
-    }
-
-    const currentStock = Number(inventoryData.currentQuantity)
-    if (currentStock <= 0) {
-      return { daysRemaining: 0, avgDailySales: 0 }
-    }
-
-    // Get sales history for the prediction period
-    const startDate = format(
-      subDays(new Date(), predictionPeriodDays),
-      'yyyy-MM-dd'
-    )
-
-    // 기간 내 레시피(sku_recipes) 기반 재료 사용량 합계: 판매량 x 레시피 소모량
-    const salesResult = await db.execute(sql`
-      SELECT COALESCE(SUM(sr.quantity_sold * rec.quantity), 0) as total_sold
-      FROM sales_records sr
-      INNER JOIN sku_recipes rec
-        ON rec.sku_id = sr.sku_id
-        AND rec.deleted_at IS NULL
-        AND rec.ingredient_id = ${ingredientId}
-      WHERE sr.store_id = ${storeId}
-        AND sr.sale_date >= ${startDate}::date
-        AND sr.deleted_at IS NULL
-    `)
-
-    const totalSold = Number(salesResult.rows[0]?.total_sold || 0)
-    const avgDailySales = totalSold / predictionPeriodDays
-
-    if (avgDailySales <= 0) {
-      // No sales history - return infinity
-      return { daysRemaining: Infinity, avgDailySales: 0 }
-    }
-
-    const daysRemaining = Math.floor(currentStock / avgDailySales)
-
-    return { daysRemaining, avgDailySales }
-  } catch (error) {
-    logger.error('Failed to calculate days remaining:', errorToContext(error))
-    return { daysRemaining: 0, avgDailySales: 0 }
-  }
-}
-
-export async function checkInventoryAlerts(storeId: string): Promise<{
-  alerts: Array<{
-    ingredientId: string
-    ingredientName: string
-    daysRemaining: number
-    avgDailySales: number
-  }>
-  store: {
-    id: string
-    storeName: string
-    managerPhone: string
-  }
-}> {
-  try {
-    // Get store info (must not be deleted)
-    const store = await db.query.stores.findFirst({
-      where: and(eq(stores.id, storeId), isNull(stores.deletedAt)),
-    })
-
-    if (!store) {
-      return { alerts: [], store: { id: '', storeName: '', managerPhone: '' } }
-    }
-
-    // Get all active alert rules
-    const rules = await db
-      .select({
-        id: inventoryAlertRules.id,
-        storeId: inventoryAlertRules.storeId,
-        ingredientId: inventoryAlertRules.ingredientId,
-        alertThresholdDays: inventoryAlertRules.alertThresholdDays,
-        predictionPeriodDays: inventoryAlertRules.predictionPeriodDays,
-        ingredientName: ingredients.ingredientName,
-      })
-      .from(inventoryAlertRules)
-      .innerJoin(
-        ingredients,
-        eq(inventoryAlertRules.ingredientId, ingredients.id)
-      )
-      .where(
-        and(
-          eq(inventoryAlertRules.isActive, true),
-          isNull(inventoryAlertRules.deletedAt)
-        )
-      )
-
-    // Check each rule
-    const alerts = []
-
-    for (const rule of rules) {
-      const { daysRemaining } = await calculateDaysRemaining(
-        rule.storeId || storeId,
-        rule.ingredientId,
-        rule.predictionPeriodDays
-      )
-
-      if (
-        daysRemaining <= rule.alertThresholdDays &&
-        daysRemaining !== Infinity
-      ) {
-        alerts.push({
-          ingredientId: rule.ingredientId,
-          ingredientName: rule.ingredientName,
-          daysRemaining,
-          avgDailySales: 0,
-        })
-      }
-    }
-
-    return {
-      alerts,
-      store: {
-        id: store.id,
-        storeName: store.storeName,
-        managerPhone: store.managerPhone || '',
-      },
-    }
-  } catch (error) {
-    logger.error('Failed to check inventory alerts:', errorToContext(error))
-    return { alerts: [], store: { id: '', storeName: '', managerPhone: '' } }
-  }
-}
-
-// =====================
 // Low-stock Alerts (화면 표시 + 발송)
 // =====================
 
 /**
  * 권한 범위 내 활성 알림 규칙을 평가하여 재고 부족 항목 목록을 반환합니다.
+ * - 규칙은 반드시 사용자의 조직 범위로 필터링 (lib/inventory/alert-service)
  * - storeId 지정 시 해당 매장만, 미지정/'all'이면 권한 매장 전체를 대상으로 평가
  * - 규칙의 storeId가 NULL(전체 매장)이면 대상 매장 각각에 대해 평가
  */
@@ -908,26 +821,8 @@ export async function getLowStockAlerts(
         ? [storeId]
         : authorizedStoreIds
 
-    const rules = await db
-      .select({
-        storeId: inventoryAlertRules.storeId,
-        ingredientId: inventoryAlertRules.ingredientId,
-        alertThresholdDays: inventoryAlertRules.alertThresholdDays,
-        predictionPeriodDays: inventoryAlertRules.predictionPeriodDays,
-        ingredientName: ingredients.ingredientName,
-      })
-      .from(inventoryAlertRules)
-      .innerJoin(
-        ingredients,
-        eq(inventoryAlertRules.ingredientId, ingredients.id)
-      )
-      .where(
-        and(
-          eq(inventoryAlertRules.isActive, true),
-          isNull(inventoryAlertRules.deletedAt)
-        )
-      )
-
+    const organizationId = await getOrganizationId()
+    const rules = await getActiveAlertRules(organizationId, authorizedStoreIds)
     if (rules.length === 0) {
       return []
     }
@@ -937,6 +832,7 @@ export async function getLowStockAlerts(
         id: stores.id,
         storeName: stores.storeName,
         managerPhone: stores.managerPhone,
+        organizationId: stores.organizationId,
       })
       .from(stores)
       .where(
@@ -944,46 +840,15 @@ export async function getLowStockAlerts(
       )
     const storeMap = new Map(storeRows.map((s) => [s.id, s]))
 
-    const alerts: InventoryAlertItem[] = []
-    const seen = new Set<string>()
-
-    for (const rule of rules) {
-      // 규칙이 특정 매장이면 그 매장만, 전체 매장이면 대상 매장 전체
-      const evalStoreIds = rule.storeId
+    const tasks = expandRulesToTasks(rules, (rule) =>
+      rule.storeId
         ? targetStoreIds.includes(rule.storeId)
           ? [rule.storeId]
           : []
         : targetStoreIds
+    )
 
-      for (const sId of evalStoreIds) {
-        const dedupeKey = `${sId}:${rule.ingredientId}`
-        if (seen.has(dedupeKey)) continue
-
-        const { daysRemaining } = await calculateDaysRemaining(
-          sId,
-          rule.ingredientId,
-          rule.predictionPeriodDays
-        )
-
-        if (daysRemaining !== Infinity && daysRemaining <= rule.alertThresholdDays) {
-          seen.add(dedupeKey)
-          const store = storeMap.get(sId)
-          alerts.push({
-            storeId: sId,
-            storeName: store?.storeName ?? '',
-            managerPhone: store?.managerPhone ?? '',
-            ingredientId: rule.ingredientId,
-            ingredientName: rule.ingredientName,
-            daysRemaining,
-            thresholdDays: rule.alertThresholdDays,
-          })
-        }
-      }
-    }
-
-    // 잔여일이 적은 순으로 정렬
-    alerts.sort((a, b) => a.daysRemaining - b.daysRemaining)
-    return alerts
+    return await evaluateLowStock(tasks, storeMap)
   } catch (error) {
     logger.error('Failed to get low stock alerts:', errorToContext(error))
     return []
@@ -1000,9 +865,10 @@ export async function runInventoryAlertCheck(storeId?: string): Promise<{
   sent: number
   failed: number
   pending: number
+  skipped: number
   error?: string
 }> {
-  const empty = { total: 0, sent: 0, failed: 0, pending: 0 }
+  const empty = { total: 0, sent: 0, failed: 0, pending: 0, skipped: 0 }
   try {
     const authorizedStoreIds = await getAuthorizedStoreIds()
     if (authorizedStoreIds.length === 0) {

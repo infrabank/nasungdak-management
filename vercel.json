@@ -50,5 +50,11 @@
     }
   ],
   "rewrites": [],
-  "redirects": []
+  "redirects": [],
+  "crons": [
+    {
+      "path": "/api/cron/inventory-alerts",
+      "schedule": "0 22 * * *"
+    }
+  ]
 }
