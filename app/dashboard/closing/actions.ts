@@ -12,6 +12,11 @@ import {
 import { eq, and, isNull, desc, sql, lt } from 'drizzle-orm'
 import { z } from 'zod'
 import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import {
+  fetchRecipesBySkuIds,
+  reverseInventoryByReferences,
+  syncSaleToInventory,
+} from '@/lib/inventory-sync'
 
 const moneySchema = z.coerce
   .number()
@@ -252,7 +257,7 @@ export async function saveDailyClosing(input: SaveClosingInput) {
 
     await db.transaction(async (tx) => {
       // 마감은 해당 날짜 판매량의 확정값임: 기존 기록을 대체함
-      await tx
+      const replaced = await tx
         .update(salesRecords)
         .set({ deletedAt: new Date(), deletedBy: 'daily-closing' })
         .where(
@@ -262,17 +267,47 @@ export async function saveDailyClosing(input: SaveClosingInput) {
             isNull(salesRecords.deletedAt)
           )
         )
+        .returning({ id: salesRecords.id })
+
+      // 대체되는 기록의 재고 자동 차감분 원복
+      await reverseInventoryByReferences(
+        tx,
+        replaced.map((r) => r.id),
+        'sale',
+        '마감 재작성 원복',
+        validated.closingDate
+      )
+
+      const recipesBySkuId = await fetchRecipesBySkuIds(
+        tx,
+        validQuantities.map((q) => q.skuId)
+      )
 
       for (const q of validQuantities) {
         const sku = skuMap.get(q.skuId)!
-        await tx.insert(salesRecords).values({
-          storeId: input.storeId,
-          saleDate: validated.closingDate,
-          skuId: q.skuId,
-          quantitySold: String(q.quantitySold),
-          unitPrice: sku.unitPrice,
-          createdBy: 'daily-closing',
-        })
+        const [created] = await tx
+          .insert(salesRecords)
+          .values({
+            storeId: input.storeId,
+            saleDate: validated.closingDate,
+            skuId: q.skuId,
+            quantitySold: String(q.quantitySold),
+            unitPrice: sku.unitPrice,
+            createdBy: 'daily-closing',
+          })
+          .returning({ id: salesRecords.id })
+
+        await syncSaleToInventory(
+          tx,
+          {
+            storeId: input.storeId,
+            skuId: q.skuId,
+            quantitySold: q.quantitySold,
+            saleId: created.id,
+            saleDate: validated.closingDate,
+          },
+          recipesBySkuId.get(q.skuId)
+        )
       }
 
       // 마감 upsert
@@ -316,8 +351,10 @@ export async function saveDailyClosing(input: SaveClosingInput) {
     revalidatePath('/dashboard')
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/closing')
+    revalidatePath('/dashboard/inventory')
     revalidateTag('sales:all')
     revalidateTag(`sales:${input.storeId}`)
+    revalidateTag(`inventory:${input.storeId}`)
     revalidateTag('dashboard:stats')
     revalidateTag('analysis:sku')
     revalidateTag('analysis:monthly')
