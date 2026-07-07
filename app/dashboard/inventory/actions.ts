@@ -269,7 +269,7 @@ export async function getInventory(storeId?: string) {
       return []
     }
 
-    const normalizedStoreId = storeId ?? 'all'
+    const normalizedStoreId = storeId || 'all'
 
     // 캐시 키에 사용자의 권한 정보 포함
     const storeKey = authorizedStoreIds.sort().join(',')
@@ -779,7 +779,7 @@ export async function getAlertRules(storeId?: string) {
       return []
     }
 
-    const normalizedStoreId = storeId ?? 'all'
+    const normalizedStoreId = storeId || 'all'
 
     // 캐시 키에 사용자의 권한 정보 포함
     const storeKey = authorizedStoreIds.sort().join(',')

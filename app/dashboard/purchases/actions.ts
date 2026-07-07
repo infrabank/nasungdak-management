@@ -365,7 +365,7 @@ export async function getPurchases(
     const normalizedStartDate = startDate ?? 'all'
     const normalizedEndDate = endDate ?? 'all'
     const normalizedIngredientId = ingredientId ?? 'all'
-    const normalizedStoreId = storeId ?? 'all'
+    const normalizedStoreId = storeId || 'all'
     const normalizedPage = Math.max(1, page)
 
     const storeKey = authorizedStoreIds.sort().join(',')
@@ -859,7 +859,7 @@ export async function getPurchasesTotals(
     const normalizedStartDate = startDate ?? 'all'
     const normalizedEndDate = endDate ?? 'all'
     const normalizedIngredientId = ingredientId ?? 'all'
-    const normalizedStoreId = storeId ?? 'all'
+    const normalizedStoreId = storeId || 'all'
 
     const storeKey = authorizedStoreIds.sort().join(',')
 
