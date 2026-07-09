@@ -119,7 +119,8 @@ export async function createSkuRecipe(formData: FormData) {
     }
 
     revalidatePath('/dashboard/master-data/sku-recipes')
-    revalidateTag('sku-recipes:all')
+    revalidateTag(`sku-recipes:${organizationId}`)
+    revalidateTag(`margin-analysis:${organizationId}`)
 
     return {
       success: true,
@@ -187,7 +188,8 @@ export async function updateSkuRecipe(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/sku-recipes')
-    revalidateTag('sku-recipes:all')
+    revalidateTag(`sku-recipes:${organizationId}`)
+    revalidateTag(`margin-analysis:${organizationId}`)
 
     return {
       success: true,
@@ -227,7 +229,8 @@ export async function deleteSkuRecipe(id: string) {
       )
 
     revalidatePath('/dashboard/master-data/sku-recipes')
-    revalidateTag('sku-recipes:all')
+    revalidateTag(`sku-recipes:${organizationId}`)
+    revalidateTag(`margin-analysis:${organizationId}`)
 
     return {
       success: true,
