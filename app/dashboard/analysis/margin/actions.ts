@@ -7,6 +7,7 @@ import { skuRecipes, skus, ingredients, menuCategories } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { getOrganizationId } from '@/lib/auth-context'
 import { getRecipeToIngredientFactor } from '@/lib/costing'
+import { cacheTags } from '@/lib/cache-tags'
 
 export interface SkuMarginData {
   id: string
@@ -197,7 +198,7 @@ export async function getSkuMarginAnalysis(): Promise<{
         }
       },
       ['margin-analysis:list:v2', orgKey],
-      { tags: [`margin-analysis:${orgKey}`] }
+      { tags: [cacheTags.marginAnalysis(organizationId)] }
     )
     return await getCached()
   } catch (error) {

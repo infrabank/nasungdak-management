@@ -1,12 +1,13 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { menuCategories } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
+import { cacheTags, revalidateMenuData } from '@/lib/cache-tags'
 
 const menuSchema = z.object({
   menuName: z.string().min(1, '메뉴명을 입력해주세요').max(100),
@@ -36,7 +37,7 @@ export async function createMenu(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/menus')
-    revalidateTag('menus:active')
+    revalidateMenuData(organizationId)
 
     return {
       success: true,
@@ -88,7 +89,7 @@ export async function updateMenu(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/menus')
-    revalidateTag('menus:active')
+    revalidateMenuData(organizationId)
 
     return {
       success: true,
@@ -128,7 +129,7 @@ export async function deleteMenu(id: string) {
       )
 
     revalidatePath('/dashboard/master-data/menus')
-    revalidateTag('menus:active')
+    revalidateMenuData(organizationId)
 
     return {
       success: true,
@@ -164,7 +165,7 @@ export async function getMenus() {
           .limit(500)
       },
       ['menus:list', orgKey],
-      { tags: [`menus:${orgKey}`] }
+      { tags: [cacheTags.menus(organizationId)] }
     )
 
     return await getCached()
@@ -228,7 +229,7 @@ export async function bulkCreateMenus(rows: CSVRow[]) {
     }
 
     revalidatePath('/dashboard/master-data/menus')
-    revalidateTag('menus:active')
+    revalidateMenuData(organizationId)
 
     return {
       success: true,

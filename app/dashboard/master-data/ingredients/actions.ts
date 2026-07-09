@@ -1,28 +1,18 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { ingredients, purchaseTransactions, stores } from '@/lib/db/schema'
 import { eq, isNull, and, desc } from 'drizzle-orm'
 import { z } from 'zod'
 import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
+import { cacheTags, revalidateIngredientData } from '@/lib/cache-tags'
 
-/**
- * Invalidate every cache that derives from ingredient data (including unit cost).
- * The ingredient list is cached per-org under `ingredients:<orgId>`, and recipe /
- * margin costs are computed from `ingredients.unitCost`, so all of them must be
- * busted when an ingredient changes. The legacy `ingredients:active` tag is kept
- * for the purchases-page cache that still uses it.
- */
 function revalidateIngredientCaches(organizationId: string) {
   revalidatePath('/dashboard/master-data/ingredients')
   revalidatePath('/dashboard/master-data/sku-recipes')
-  revalidateTag(`ingredients:${organizationId}`)
-  revalidateTag('ingredients:all')
-  revalidateTag('ingredients:active')
-  revalidateTag(`sku-recipes:${organizationId}`)
-  revalidateTag(`margin-analysis:${organizationId}`)
+  revalidateIngredientData(organizationId)
 }
 
 const ingredientSchema = z.object({
@@ -248,7 +238,7 @@ export async function getIngredients(includeOneTime?: boolean) {
           .limit(500)
       },
       ['ingredients:list', orgKey, oneTimeKey],
-      { tags: [`ingredients:${orgKey}`] }
+      { tags: [cacheTags.ingredients(organizationId)] }
     )
 
     return await getCached()

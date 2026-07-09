@@ -1,11 +1,16 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { menuCategories, ingredients, skus } from '@/lib/db/schema'
 import { requireOrganizationId } from '@/lib/auth-context'
 import { z } from 'zod'
+import {
+  revalidateMenuData,
+  revalidateIngredientData,
+  revalidateSkuData,
+} from '@/lib/cache-tags'
 
 const menuSetupSchema = z.object({
   menu: z.object({
@@ -111,16 +116,10 @@ export async function createMenuSetup(data: MenuSetupData) {
     revalidatePath('/dashboard/master-data/menu-ingredients')
     revalidatePath('/dashboard/master-data/sku-recipes')
     revalidatePath('/dashboard/inventory')
-    revalidateTag('menus:active')
-    revalidateTag('skus:active')
-    // 재료 목록은 org 스코프 태그(ingredients:<orgId>)로 캐시되므로, 레거시
-    // 'ingredients:active'만 무효화하면 레시피·매입등록 화면에 새 재료가 안 보인다.
-    // 일반 재료 추가 경로의 revalidateIngredientCaches()와 동일하게 털어준다.
-    revalidateTag(`ingredients:${organizationId}`)
-    revalidateTag('ingredients:active')
-    revalidateTag('ingredients:all')
-    revalidateTag(`sku-recipes:${organizationId}`)
-    revalidateTag(`margin-analysis:${organizationId}`)
+    // 메뉴 셋업은 메뉴+재료+SKU를 한 번에 만들므로 세 도메인 캐시를 모두 턴다.
+    revalidateMenuData(organizationId)
+    revalidateIngredientData(organizationId)
+    revalidateSkuData(organizationId)
 
     return {
       success: true,

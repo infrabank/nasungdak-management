@@ -1,12 +1,13 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { skus, menuCategories } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
+import { cacheTags, revalidateSkuData } from '@/lib/cache-tags'
 
 const skuSchema = z.object({
   skuName: z.string().min(1, 'SKU명을 입력해주세요').max(100),
@@ -50,10 +51,7 @@ export async function createSku(formData: FormData) {
 
     revalidatePath('/dashboard/master-data/skus')
     revalidatePath('/dashboard/master-data/sku-recipes')
-    revalidateTag('skus:active')
-    revalidateTag('skus:filter')
-    revalidateTag(`skus:${organizationId}`)
-    revalidateTag(`sku-recipes:${organizationId}`)
+    revalidateSkuData(organizationId)
 
     return {
       success: true,
@@ -101,10 +99,7 @@ export async function updateSku(id: string, formData: FormData) {
 
     revalidatePath('/dashboard/master-data/skus')
     revalidatePath('/dashboard/master-data/sku-recipes')
-    revalidateTag('skus:active')
-    revalidateTag('skus:filter')
-    revalidateTag(`skus:${organizationId}`)
-    revalidateTag(`sku-recipes:${organizationId}`)
+    revalidateSkuData(organizationId)
 
     return {
       success: true,
@@ -140,10 +135,7 @@ export async function deleteSku(id: string) {
 
     revalidatePath('/dashboard/master-data/skus')
     revalidatePath('/dashboard/master-data/sku-recipes')
-    revalidateTag('skus:active')
-    revalidateTag('skus:filter')
-    revalidateTag(`skus:${organizationId}`)
-    revalidateTag(`sku-recipes:${organizationId}`)
+    revalidateSkuData(organizationId)
 
     return {
       success: true,
@@ -189,7 +181,7 @@ export async function getSkus() {
           .limit(500)
       },
       ['skus:list', orgKey],
-      { tags: [`skus:${orgKey}`] }
+      { tags: [cacheTags.skus(organizationId)] }
     )
 
     return await getCached()
@@ -284,10 +276,7 @@ export async function bulkCreateSkus(rows: CSVRow[]) {
 
     revalidatePath('/dashboard/master-data/skus')
     revalidatePath('/dashboard/master-data/sku-recipes')
-    revalidateTag('skus:active')
-    revalidateTag('skus:filter')
-    revalidateTag(`skus:${organizationId}`)
-    revalidateTag(`sku-recipes:${organizationId}`)
+    revalidateSkuData(organizationId)
 
     return {
       success: true,

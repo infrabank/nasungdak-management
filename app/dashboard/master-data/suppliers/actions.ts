@@ -1,12 +1,13 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { suppliers } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
+import { cacheTags, revalidateSupplierData } from '@/lib/cache-tags'
 
 const supplierSchema = z.object({
   supplierName: z.string().min(1, '공급업체명을 입력해주세요').max(200),
@@ -52,6 +53,7 @@ export async function createSupplier(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/suppliers')
+    revalidateSupplierData(organizationId)
 
     return {
       success: true,
@@ -104,6 +106,7 @@ export async function updateSupplier(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/suppliers')
+    revalidateSupplierData(organizationId)
 
     return {
       success: true,
@@ -140,6 +143,7 @@ export async function deleteSupplier(id: string) {
       )
 
     revalidatePath('/dashboard/master-data/suppliers')
+    revalidateSupplierData(organizationId)
 
     return {
       success: true,
@@ -175,7 +179,7 @@ export async function getSuppliers() {
           .limit(500)
       },
       ['suppliers:list', orgKey],
-      { tags: [`suppliers:${orgKey}`] }
+      { tags: [cacheTags.suppliers(organizationId)] }
     )
 
     return await getCached()
@@ -210,7 +214,7 @@ export async function getActiveSuppliers() {
           .limit(500)
       },
       ['suppliers:active', orgKey],
-      { tags: [`suppliers:${orgKey}`] }
+      { tags: [cacheTags.suppliers(organizationId)] }
     )
 
     return await getCached()

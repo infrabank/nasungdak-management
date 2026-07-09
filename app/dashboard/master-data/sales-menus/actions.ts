@@ -1,12 +1,13 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { salesMenus, salesMenuItems, skus } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
 import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
+import { cacheTags, revalidateSalesMenuData } from '@/lib/cache-tags'
 
 const salesMenuSchema = z.object({
   menuName: z.string().min(1, '메뉴명을 입력해주세요').max(100),
@@ -66,7 +67,7 @@ export async function createSalesMenu(formData: FormData) {
     }
 
     revalidatePath('/dashboard/master-data/sales-menus')
-    revalidateTag('sales-menus:all')
+    revalidateSalesMenuData(organizationId)
 
     return {
       success: true,
@@ -119,7 +120,7 @@ export async function updateSalesMenu(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/sales-menus')
-    revalidateTag('sales-menus:all')
+    revalidateSalesMenuData(organizationId)
 
     return {
       success: true,
@@ -175,7 +176,7 @@ export async function deleteSalesMenu(id: string) {
       )
 
     revalidatePath('/dashboard/master-data/sales-menus')
-    revalidateTag('sales-menus:all')
+    revalidateSalesMenuData(organizationId)
 
     return {
       success: true,
@@ -210,7 +211,7 @@ export async function addMenuItemToBundle(
       .returning()
 
     revalidatePath('/dashboard/master-data/sales-menus')
-    revalidateTag('sales-menus:all')
+    revalidateSalesMenuData(organizationId)
 
     return {
       success: true,
@@ -243,7 +244,7 @@ export async function removeMenuItemFromBundle(itemId: string) {
       )
 
     revalidatePath('/dashboard/master-data/sales-menus')
-    revalidateTag('sales-menus:all')
+    revalidateSalesMenuData(organizationId)
 
     return {
       success: true,
@@ -316,7 +317,7 @@ export async function getSalesMenus() {
         return menusWithItems
       },
       ['sales-menus:list', orgKey],
-      { tags: [`sales-menus:${orgKey}`] }
+      { tags: [cacheTags.salesMenus(organizationId)] }
     )
 
     return await getCached()
@@ -353,7 +354,7 @@ export async function getSkusForSelect() {
           .limit(500)
       },
       ['skus:select', orgKey],
-      { tags: [`skus:${orgKey}`] }
+      { tags: [cacheTags.skus(organizationId)] }
     )
 
     return await getCached()

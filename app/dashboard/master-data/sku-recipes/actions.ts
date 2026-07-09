@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import {
@@ -16,6 +16,7 @@ import {
   getRecipeToIngredientFactor,
   validateRecipeUnit,
 } from '@/lib/costing'
+import { cacheTags, revalidateRecipeData } from '@/lib/cache-tags'
 
 /** 레시피 단위가 재료 기준 단위와 호환되는지 확인. 문제 시 에러 메시지 반환 */
 async function checkRecipeUnitCompatibility(
@@ -119,8 +120,7 @@ export async function createSkuRecipe(formData: FormData) {
     }
 
     revalidatePath('/dashboard/master-data/sku-recipes')
-    revalidateTag(`sku-recipes:${organizationId}`)
-    revalidateTag(`margin-analysis:${organizationId}`)
+    revalidateRecipeData(organizationId)
 
     return {
       success: true,
@@ -188,8 +188,7 @@ export async function updateSkuRecipe(id: string, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/master-data/sku-recipes')
-    revalidateTag(`sku-recipes:${organizationId}`)
-    revalidateTag(`margin-analysis:${organizationId}`)
+    revalidateRecipeData(organizationId)
 
     return {
       success: true,
@@ -229,8 +228,7 @@ export async function deleteSkuRecipe(id: string) {
       )
 
     revalidatePath('/dashboard/master-data/sku-recipes')
-    revalidateTag(`sku-recipes:${organizationId}`)
-    revalidateTag(`margin-analysis:${organizationId}`)
+    revalidateRecipeData(organizationId)
 
     return {
       success: true,
@@ -354,7 +352,7 @@ export async function getSkusWithRecipes() {
         return skusWithCosts
       },
       ['sku-recipes:full:v2', orgKey],
-      { tags: [`sku-recipes:${orgKey}`] }
+      { tags: [cacheTags.skuRecipes(organizationId)] }
     )
 
     return await getCached()
@@ -390,7 +388,7 @@ export async function getSkus() {
           .limit(500)
       },
       ['skus:active', orgKey],
-      { tags: [`skus:${orgKey}`] }
+      { tags: [cacheTags.skus(organizationId)] }
     )
 
     return await getCached()
@@ -428,7 +426,7 @@ export async function getIngredients() {
           .limit(500)
       },
       ['ingredients:active', orgKey],
-      { tags: [`ingredients:${orgKey}`] }
+      { tags: [cacheTags.ingredients(organizationId)] }
     )
 
     return await getCached()
