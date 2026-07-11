@@ -46,11 +46,14 @@ export default async function InventoryPage({
     storeName: s.storeName,
   }))
 
-  // 등급 필터 적용
+  // 등급 필터 적용 (봉 단위 관리 재료는 활성 관리 대상이므로 기본 뷰에 포함)
   const filteredInventory =
     level === 'all'
       ? inventoryList
-      : inventoryList.filter((item) => item.managementLevel === 'core')
+      : inventoryList.filter(
+          (item) =>
+            item.managementLevel === 'core' || item.managementLevel === 'bag'
+        )
 
   const buildLevelUrl = (targetLevel: 'core' | 'all') => {
     const sp = new URLSearchParams()
@@ -99,7 +102,9 @@ export default async function InventoryPage({
                 <span>·</span>
                 <span>{a.ingredientName}</span>
                 <span className="border-2 border-brutal-black bg-brutal-white px-2 py-0.5 text-xs">
-                  잔여 약 {a.daysRemaining}일 (임계값 {a.thresholdDays}일)
+                  {a.bagMode
+                    ? `잔여 ${a.bagCount}봉`
+                    : `잔여 약 ${a.daysRemaining}일 (임계값 ${a.thresholdDays}일)`}
                 </span>
               </li>
             ))}

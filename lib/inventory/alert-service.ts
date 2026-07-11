@@ -133,6 +133,7 @@ export async function evaluateLowStock(
       JOIN sku_recipes rec
         ON rec.sku_id = sr.sku_id AND rec.deleted_at IS NULL
       JOIN ingredients ing ON ing.id = rec.ingredient_id
+        AND ing.management_level != 'bag'
       WHERE sr.deleted_at IS NULL
         AND sr.sale_date >= ${startDate}::date
         AND sr.store_id IN (${storeIn})
@@ -180,6 +181,62 @@ export async function evaluateLowStock(
   }
 
   alerts.sort((a, b) => a.daysRemaining - b.daysRemaining)
+  return alerts
+}
+
+// 봉 단위 관리 재료의 알림 임계값: 잔여 1봉 이하
+const BAG_ALERT_THRESHOLD = 1
+
+/**
+ * 봉 단위(managementLevel='bag') 재료의 재고 부족을 평가합니다.
+ * 규칙 등록 없이 자동 적용: 잔여 수량이 1봉 이하면 알림.
+ * 대상 매장의 재고 행이 있는 (매장, 재료) 조합만 평가합니다.
+ */
+export async function evaluateBagLowStock(
+  storeIds: string[],
+  storeMap: Map<string, StoreInfo>,
+  organizationId?: string | null
+): Promise<InventoryAlertItem[]> {
+  if (storeIds.length === 0) return []
+
+  const conditions = [
+    eq(ingredients.managementLevel, 'bag'),
+    isNull(ingredients.deletedAt),
+    inArray(inventory.storeId, storeIds),
+    sql`${inventory.currentQuantity} <= ${BAG_ALERT_THRESHOLD}`,
+  ]
+  if (organizationId) {
+    conditions.push(eq(ingredients.organizationId, organizationId))
+  }
+
+  const rows = await db
+    .select({
+      storeId: inventory.storeId,
+      ingredientId: inventory.ingredientId,
+      ingredientName: ingredients.ingredientName,
+      currentQuantity: inventory.currentQuantity,
+    })
+    .from(inventory)
+    .innerJoin(ingredients, eq(inventory.ingredientId, ingredients.id))
+    .where(and(...conditions))
+
+  const alerts: InventoryAlertItem[] = rows.map((r) => {
+    const store = storeMap.get(r.storeId)
+    const count = Math.max(0, Math.floor(Number(r.currentQuantity)))
+    return {
+      storeId: r.storeId,
+      storeName: store?.storeName ?? '',
+      managerPhone: store?.managerPhone ?? '',
+      ingredientId: r.ingredientId,
+      ingredientName: r.ingredientName,
+      daysRemaining: count,
+      thresholdDays: BAG_ALERT_THRESHOLD,
+      bagMode: true,
+      bagCount: count,
+    }
+  })
+
+  alerts.sort((a, b) => (a.bagCount ?? 0) - (b.bagCount ?? 0))
   return alerts
 }
 
@@ -240,8 +297,7 @@ export async function evaluateLowStockForAllOrgs(): Promise<
         )
       )
 
-    if (rules.length === 0) return []
-
+    // 규칙이 없어도 봉 단위 자동 알림은 평가해야 하므로 여기서 조기 반환하지 않는다
     const storeRows = await db
       .select({
         id: stores.id,
@@ -270,7 +326,14 @@ export async function evaluateLowStockForAllOrgs(): Promise<
       return storesByOrg.get(rule.ingredientOrgId) ?? []
     })
 
-    return await evaluateLowStock(tasks, storeMap)
+    const ruleAlerts =
+      tasks.length > 0 ? await evaluateLowStock(tasks, storeMap) : []
+    // 봉 단위 재료는 규칙 없이 자동 평가 (잔여 1봉 이하)
+    const bagAlerts = await evaluateBagLowStock(
+      storeRows.map((s) => s.id),
+      storeMap
+    )
+    return [...bagAlerts, ...ruleAlerts]
   } catch (error) {
     logger.error(
       'Failed to evaluate low stock for all orgs:',

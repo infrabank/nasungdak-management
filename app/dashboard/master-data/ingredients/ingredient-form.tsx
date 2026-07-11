@@ -119,11 +119,16 @@ export default function IngredientForm({ ingredient }: IngredientFormProps) {
                         className="block w-full border-2 border-brutal-black bg-brutal-white px-3 py-2 text-sm font-medium text-brutal-black"
                       >
                         <option value="core">핵심 (재고+원가 관리)</option>
+                        <option value="bag">
+                          봉 단위 (뜯을 때마다 수동 기록, 소스·파우더)
+                        </option>
                         <option value="simple">보조 (매입 기록만)</option>
                         <option value="expense">비용 (매입비 집계만)</option>
                       </select>
                       <p className="mt-1 text-xs text-brutal-black/60">
-                        핵심 재료만 재고 화면에 기본 표시됩니다
+                        핵심·봉 단위 재료만 재고 화면에 기본 표시됩니다. 봉
+                        단위는 판매 자동 차감 없이 1봉 사용 버튼으로 기록하고,
+                        1봉 남으면 알림이 표시됩니다.
                       </p>
                     </div>
 

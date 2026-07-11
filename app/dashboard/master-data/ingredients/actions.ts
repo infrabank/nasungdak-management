@@ -44,7 +44,7 @@ const ingredientSchema = z.object({
     }),
   description: z.string().max(500).optional(),
   isActive: z.boolean().default(true),
-  managementLevel: z.enum(['core', 'simple', 'expense']).default('core'),
+  managementLevel: z.enum(['core', 'bag', 'simple', 'expense']).default('core'),
   purchaseUnit: z
     .string()
     .max(20)

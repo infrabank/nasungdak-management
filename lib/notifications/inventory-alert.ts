@@ -7,7 +7,8 @@ import { logger, errorToContext } from '@/lib/logger'
 const ALERT_SUPPRESSION_HOURS = 24
 
 /**
- * 재고 부족 알림 1건의 정보
+ * 재고 부족 알림 1건의 정보.
+ * bagMode=true면 봉 단위 임계 알림 (daysRemaining/thresholdDays 대신 bagCount 사용)
  */
 export interface InventoryAlertItem {
   storeId: string
@@ -17,6 +18,8 @@ export interface InventoryAlertItem {
   ingredientName: string
   daysRemaining: number
   thresholdDays: number
+  bagMode?: boolean
+  bagCount?: number
 }
 
 type DeliveryStatus = 'sent' | 'failed' | 'pending'
@@ -117,7 +120,9 @@ export async function recordAndDispatchAlerts(
       skipped++
       continue
     }
-    const message = `[재고 부족] ${alert.storeName} · ${alert.ingredientName} 잔여 약 ${alert.daysRemaining}일 (임계값 ${alert.thresholdDays}일)`
+    const message = alert.bagMode
+      ? `[재고 부족] ${alert.storeName} · ${alert.ingredientName} 잔여 ${alert.bagCount}봉`
+      : `[재고 부족] ${alert.storeName} · ${alert.ingredientName} 잔여 약 ${alert.daysRemaining}일 (임계값 ${alert.thresholdDays}일)`
     const { status, channel } = await deliver(message, alert.managerPhone || null)
 
     try {

@@ -123,6 +123,22 @@ export async function syncPurchaseToInventory(
   // 삭제된 재료(조회 실패)는 재고 반영하지 않는다
   if (!ingredient) return
 
+  // 'bag'(봉 단위 관리): 매입 수량 = 봉 수 그대로 재고 가산 (환산 계수 미적용)
+  if (ingredient.managementLevel === 'bag') {
+    await applyInventoryDelta(tx, {
+      storeId: params.storeId,
+      ingredientId: params.ingredientId,
+      delta: Number(params.quantity),
+      eventType: 'purchase',
+      reason: '매입 자동 반영 (봉 단위)',
+      eventDate: params.transactionDate,
+      referenceId: params.purchaseId,
+      createIfMissing: true,
+      unit: '봉',
+    })
+    return
+  }
+
   const factor = ingredient.conversionFactor
     ? Number(ingredient.conversionFactor)
     : 1
@@ -191,6 +207,7 @@ export interface RecipeLine {
   quantity: string
   unit: string
   ingredientUnit: string
+  managementLevel: string
 }
 
 /**
@@ -210,6 +227,7 @@ export async function fetchRecipesBySkuIds(
       quantity: skuRecipes.quantity,
       unit: skuRecipes.unit,
       ingredientUnit: ingredients.unit,
+      managementLevel: ingredients.managementLevel,
     })
     .from(skuRecipes)
     .innerJoin(ingredients, eq(skuRecipes.ingredientId, ingredients.id))
@@ -251,6 +269,9 @@ export async function syncSaleToInventory(
     []
 
   for (const line of lines) {
+    // 'bag'(봉 단위 관리) 재료는 판매 매칭 차감 대상이 아님 — 봉 사용 버튼으로 수동 기록
+    if (line.managementLevel === 'bag') continue
+
     const factor =
       getRecipeToIngredientFactor(line.unit, line.ingredientUnit) ?? 1
     const consumed = Number(line.quantity) * factor * params.quantitySold

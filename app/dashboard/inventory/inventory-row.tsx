@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { updateInventory, deleteInventory } from './actions'
+import { updateInventory, deleteInventory, recordBagUsage } from './actions'
 
 export interface InventoryRowItem {
   id: string
@@ -12,6 +12,7 @@ export interface InventoryRowItem {
   lastUpdated: string | Date | null
   ingredientName: string
   storeName: string
+  managementLevel?: string | null
 }
 
 const inputClass =
@@ -24,10 +25,30 @@ export default function InventoryRow({ item }: { item: InventoryRowItem }) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isUsing, setIsUsing] = useState(false)
   const [editData, setEditData] = useState({
     currentQuantity: String(item.currentQuantity),
     unit: item.unit || '',
   })
+
+  const isBag = item.managementLevel === 'bag'
+  const bagCount = Math.floor(Number(item.currentQuantity))
+  const bagLow = isBag && bagCount <= 1
+
+  const handleUseBag = async () => {
+    if (isUsing) return
+    if (bagCount <= 0 && !confirm('재고가 0봉입니다. 그래도 사용을 기록할까요?'))
+      return
+    setIsUsing(true)
+    try {
+      const result = await recordBagUsage(item.id)
+      if (!result.success) {
+        alert(result.error || '봉 사용 기록에 실패했습니다')
+      }
+    } finally {
+      setIsUsing(false)
+    }
+  }
 
   const handleDelete = async () => {
     if (!confirm(`${item.ingredientName} 재고 기록을 삭제하시겠습니까?`)) return
@@ -129,15 +150,27 @@ export default function InventoryRow({ item }: { item: InventoryRowItem }) {
   }
 
   return (
-    <tr className={isDeleting ? 'opacity-50' : ''}>
+    <tr
+      className={`${isDeleting ? 'opacity-50' : ''} ${bagLow ? 'bg-brutal-pink/20' : ''}`}
+    >
       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brutal-black sm:pl-6">
         {item.ingredientName}
+        {isBag && (
+          <span className="ml-2 border-2 border-brutal-black bg-brutal-yellow px-1.5 py-0.5 text-xs font-bold">
+            봉
+          </span>
+        )}
+        {bagLow && (
+          <span className="ml-1 border-2 border-brutal-black bg-brutal-pink px-1.5 py-0.5 text-xs font-bold">
+            ⚠️ {bagCount}봉 남음
+          </span>
+        )}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black/70">
         {item.storeName}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-right text-sm text-brutal-black">
-        {Number(item.currentQuantity).toFixed(2)}
+        {isBag ? bagCount : Number(item.currentQuantity).toFixed(2)}
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-sm text-brutal-black/70">
         {item.unit || '-'}
@@ -149,6 +182,15 @@ export default function InventoryRow({ item }: { item: InventoryRowItem }) {
       </td>
       <td className="whitespace-nowrap px-3 py-4 text-right text-sm">
         <div className="flex justify-end gap-2">
+          {isBag && (
+            <button
+              onClick={handleUseBag}
+              disabled={isDeleting || isUsing}
+              className={`${actionBtn} bg-brutal-yellow`}
+            >
+              {isUsing ? '기록 중...' : '1봉 사용'}
+            </button>
+          )}
           <button
             onClick={() => setIsEditing(true)}
             disabled={isDeleting}

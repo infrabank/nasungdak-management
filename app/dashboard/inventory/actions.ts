@@ -36,6 +36,7 @@ import {
   getActiveAlertRules,
   expandRulesToTasks,
   evaluateLowStock,
+  evaluateBagLowStock,
 } from '@/lib/inventory/alert-service'
 
 // =====================
@@ -252,6 +253,56 @@ export async function deleteInventory(id: string) {
       success: false,
       error:
         error instanceof Error ? error.message : '재고 삭제에 실패했습니다',
+    }
+  }
+}
+
+/**
+ * 봉 단위 재료 사용 기록: 재고에서 1봉 차감 + 원장(inventory_events) 기록.
+ * 소스·파우더류는 판매 매칭 대신 봉을 뜯을 때마다 이 액션으로 기록한다.
+ */
+export async function recordBagUsage(inventoryId: string) {
+  try {
+    await assertPermission('inventory', 'write')
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return { success: false, error: '권한이 없습니다' }
+    }
+
+    const existing = await db.query.inventory.findFirst({
+      where: and(
+        eq(inventory.id, inventoryId),
+        inArray(inventory.storeId, authorizedStoreIds)
+      ),
+      columns: { id: true, storeId: true, ingredientId: true, currentQuantity: true },
+    })
+    if (!existing) {
+      return { success: false, error: '재고 기록을 찾을 수 없거나 권한이 없습니다' }
+    }
+
+    await db.transaction(async (tx) => {
+      await applyInventoryDelta(tx, {
+        storeId: existing.storeId,
+        ingredientId: existing.ingredientId,
+        delta: -1,
+        eventType: 'adjustment',
+        reason: '1봉 사용',
+        eventDate: new Date().toISOString().slice(0, 10),
+        createIfMissing: false,
+      })
+    })
+
+    revalidatePath('/dashboard/inventory')
+    revalidateInventoryData(existing.storeId)
+
+    const remaining = Number(existing.currentQuantity) - 1
+    return { success: true, remaining }
+  } catch (error) {
+    logger.error('Failed to use bag inventory:', errorToContext(error))
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : '봉 사용 기록에 실패했습니다',
     }
   }
 }
@@ -882,9 +933,6 @@ export async function getLowStockAlerts(
 
     const organizationId = await getOrganizationId()
     const rules = await getActiveAlertRules(organizationId, authorizedStoreIds)
-    if (rules.length === 0) {
-      return []
-    }
 
     const storeRows = await db
       .select({
@@ -907,7 +955,15 @@ export async function getLowStockAlerts(
         : targetStoreIds
     )
 
-    return await evaluateLowStock(tasks, storeMap)
+    const ruleAlerts =
+      tasks.length > 0 ? await evaluateLowStock(tasks, storeMap) : []
+    // 봉 단위 재료: 규칙 없이 잔여 1봉 이하 자동 알림
+    const bagAlerts = await evaluateBagLowStock(
+      targetStoreIds,
+      storeMap,
+      organizationId
+    )
+    return [...bagAlerts, ...ruleAlerts]
   } catch (error) {
     logger.error('Failed to get low stock alerts:', errorToContext(error))
     return []
