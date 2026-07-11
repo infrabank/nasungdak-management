@@ -6,7 +6,11 @@ import { logger, errorToContext } from '@/lib/logger'
 import { suppliers } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
+import {
+  getOrganizationId,
+  requireOrganizationId,
+  assertPermission,
+} from '@/lib/auth-context'
 import { cacheTags, revalidateSupplierData } from '@/lib/cache-tags'
 
 const supplierSchema = z.object({
@@ -28,6 +32,7 @@ const supplierSchema = z.object({
 
 export async function createSupplier(formData: FormData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
     const rawData = {
       supplierName: formData.get('supplierName'),
@@ -78,6 +83,7 @@ export async function createSupplier(formData: FormData) {
 
 export async function updateSupplier(id: string, formData: FormData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
     const rawData = {
       supplierName: formData.get('supplierName'),

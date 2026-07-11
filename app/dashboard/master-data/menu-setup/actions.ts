@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { menuCategories, ingredients, skus } from '@/lib/db/schema'
-import { requireOrganizationId } from '@/lib/auth-context'
+import { requireOrganizationId, assertPermission } from '@/lib/auth-context'
 import { z } from 'zod'
 import {
   revalidateMenuData,
@@ -64,6 +64,7 @@ export type MenuSetupData = z.infer<typeof menuSetupSchema>
 
 export async function createMenuSetup(data: MenuSetupData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
 
     // Validate all data before starting transaction

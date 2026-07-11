@@ -14,7 +14,8 @@ import {
 } from '@/lib/db/schema'
 import { eq, and, isNull, desc, gte } from 'drizzle-orm'
 import { z } from 'zod'
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
+import { revalidateOrganizationData } from '@/lib/cache-tags'
 import {
   type PlanType,
   normalizePlanType,
@@ -239,7 +240,7 @@ export async function updateOrganization(
       .where(eq(organizations.id, membership.organization.id))
 
     revalidatePath('/dashboard/settings')
-    revalidateTag(`org:${membership.organization.id}`)
+    revalidateOrganizationData(membership.organization.id)
 
     return { success: true }
   } catch (error) {
@@ -547,7 +548,7 @@ export async function updateBranding(
 
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard')
-    revalidateTag(`org:${membership.organization.id}`)
+    revalidateOrganizationData(membership.organization.id)
 
     return { success: true }
   } catch (error) {

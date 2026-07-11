@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { sql } from 'drizzle-orm'
+import { logger, errorToContext } from '@/lib/logger'
 
 interface HealthStatus {
   status: 'healthy' | 'degraded' | 'unhealthy'
@@ -77,11 +78,12 @@ async function checkDatabase(): Promise<CheckResult> {
       responseTime: Date.now() - start,
     }
   } catch (error) {
+    // 원문 에러(연결 문자열 힌트 등)는 로그로만 남기고 응답에는 노출하지 않는다
+    logger.error('Health check DB error', errorToContext(error))
     return {
       status: 'fail',
       responseTime: Date.now() - start,
-      message:
-        error instanceof Error ? error.message : 'Database connection failed',
+      message: 'Database connection failed',
     }
   }
 }

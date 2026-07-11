@@ -3,7 +3,15 @@ import { refreshSession } from '@/app/(auth)/login/actions'
 import { logger, errorToContext } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
-  const redirect = request.nextUrl.searchParams.get('redirect') || '/dashboard'
+  const rawRedirect =
+    request.nextUrl.searchParams.get('redirect') || '/dashboard'
+  // 오픈 리다이렉트 방지: 앱 내부 경로(/로 시작, //·/\ 제외)만 허용
+  const redirect =
+    rawRedirect.startsWith('/') &&
+    !rawRedirect.startsWith('//') &&
+    !rawRedirect.startsWith('/\\')
+      ? rawRedirect
+      : '/dashboard'
 
   try {
     const result = await refreshSession()

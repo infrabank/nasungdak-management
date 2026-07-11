@@ -7,6 +7,7 @@ import {
   userStoreAssignments,
   organizationMembers,
   organizations,
+  roles,
 } from '@/lib/db/schema'
 import { eq, and, isNull } from 'drizzle-orm'
 import { SESSION_SECRET, SESSION_COOKIE_NAME } from '@/lib/auth/constants'
@@ -67,11 +68,13 @@ export async function getUserContext(): Promise<UserContext> {
     let organizationId = jwtPayload.organizationId || null
 
     if (!organizationId) {
+      // 다중 조직 소속 시 가장 오래된 멤버십으로 결정 (비결정적 선택 방지)
       const membership = await db.query.organizationMembers.findFirst({
         where: and(
           eq(organizationMembers.userId, jwtPayload.userId),
           isNull(organizationMembers.deletedAt)
         ),
+        orderBy: (m, { asc }) => asc(m.invitedAt),
       })
       organizationId = membership?.organizationId || null
     }
@@ -107,6 +110,98 @@ export async function canAccessStore(storeId: string): Promise<boolean> {
 export async function getAuthorizedStoreIds(): Promise<string[]> {
   const context = await getUserContext()
   return context.storeIds
+}
+
+/**
+ * 특정 매장 접근 권한을 강제합니다. 권한이 없으면 throw합니다.
+ * 서버 액션의 update/delete에서 대상 레코드의 storeId를 넘겨 소유권을 검증하는 용도.
+ */
+export async function assertStoreAccess(storeId: string | null | undefined): Promise<void> {
+  if (!storeId) {
+    throw new Error('매장 정보가 없어 접근 권한을 확인할 수 없습니다.')
+  }
+  const ok = await canAccessStore(storeId)
+  if (!ok) {
+    throw new Error('접근 권한이 없는 매장입니다.')
+  }
+}
+
+/**
+ * 클라이언트가 보낸 storeId를 검증해 반환합니다.
+ * - storeId가 주어지면 반드시 권한 보유 매장인지 확인(없으면 throw).
+ * - storeId가 없으면 첫 번째 권한 매장으로 대체.
+ * 생성 계열 액션에서 "클라이언트 storeId 그대로 신뢰" 취약점을 막는 용도.
+ */
+export async function resolveStoreId(
+  storeId: string | null | undefined
+): Promise<string> {
+  const authorized = await getAuthorizedStoreIds()
+  if (authorized.length === 0) {
+    throw new Error('접근 가능한 매장이 없습니다.')
+  }
+  if (storeId) {
+    if (!authorized.includes(storeId)) {
+      throw new Error('접근 권한이 없는 매장입니다.')
+    }
+    return storeId
+  }
+  return authorized[0]
+}
+
+/**
+ * 사용자의 역할(userStoreAssignments -> roles)에서 권한 매트릭스를 병합해 반환합니다.
+ * 여러 매장/역할에 배정된 경우 합집합.
+ */
+async function getUserPermissions(
+  userId: string
+): Promise<Record<string, string[]>> {
+  const rows = await db
+    .select({ permissions: roles.permissions })
+    .from(userStoreAssignments)
+    .innerJoin(roles, eq(userStoreAssignments.roleId, roles.id))
+    .where(
+      and(
+        eq(userStoreAssignments.userId, userId),
+        isNull(userStoreAssignments.deletedAt)
+      )
+    )
+
+  const merged: Record<string, string[]> = {}
+  for (const row of rows) {
+    const perms = (row.permissions ?? {}) as Record<string, string[]>
+    for (const [resource, actions] of Object.entries(perms)) {
+      const set = new Set(merged[resource] ?? [])
+      for (const a of actions) set.add(a)
+      merged[resource] = Array.from(set)
+    }
+  }
+  return merged
+}
+
+/**
+ * 역할 기반 권한을 강제합니다. 권한이 없으면 throw합니다.
+ *
+ * 안전장치(lockout 방지): 사용자에게 권한 데이터가 전혀 없으면(레거시/미구성 배포)
+ * 차단하지 않고 통과시킨다. 권한이 하나라도 구성돼 있으면 해당 리소스/액션을 엄격히 검사한다.
+ * 이 방식으로 restricted 역할(staff/viewer 등)의 무단 쓰기/삭제만 막고,
+ * 권한 미구성 사용자는 기존처럼 동작한다.
+ */
+export async function assertPermission(
+  resource: string,
+  action: 'read' | 'write' | 'delete'
+): Promise<void> {
+  const context = await getUserContext()
+  if (!context.isAuthenticated || !context.userId) {
+    throw new Error('로그인이 필요합니다.')
+  }
+
+  const perms = await getUserPermissions(context.userId)
+  // 권한 데이터가 전혀 없으면 enforcement 미적용 (lockout 방지)
+  if (Object.keys(perms).length === 0) return
+
+  if (!perms[resource]?.includes(action)) {
+    throw new Error('이 작업을 수행할 권한이 없습니다.')
+  }
 }
 
 /**

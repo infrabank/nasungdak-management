@@ -69,13 +69,32 @@ export async function applyInventoryDelta(
       })
       .where(eq(inventory.id, existing.id))
   } else {
-    await tx.insert(inventory).values({
-      storeId: input.storeId,
-      ingredientId: input.ingredientId,
-      currentQuantity: String(input.delta),
-      unit: input.unit ?? null,
-      lastUpdated: new Date(),
-    })
+    // 재고 unit은 항상 재료 마스터 unit을 복사한다 (unit=null 행 생성 방지, 스캔 check 1 원인 제거)
+    let unit = input.unit ?? null
+    if (unit == null) {
+      const ing = await tx.query.ingredients.findFirst({
+        where: eq(ingredients.id, input.ingredientId),
+        columns: { unit: true },
+      })
+      unit = ing?.unit ?? null
+    }
+    // upsert: (store, ingredient) unique 인덱스 기준. 동시 요청이 같은 행을 만들면 합산으로 병합
+    await tx
+      .insert(inventory)
+      .values({
+        storeId: input.storeId,
+        ingredientId: input.ingredientId,
+        currentQuantity: String(input.delta),
+        unit,
+        lastUpdated: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [inventory.storeId, inventory.ingredientId],
+        set: {
+          currentQuantity: sql`${inventory.currentQuantity} + ${String(input.delta)}`,
+          lastUpdated: new Date(),
+        },
+      })
   }
   return event
 }
@@ -98,9 +117,13 @@ export async function syncPurchaseToInventory(
       eq(ingredients.id, params.ingredientId),
       isNull(ingredients.deletedAt)
     ),
-    columns: { unit: true, conversionFactor: true },
+    columns: { unit: true, conversionFactor: true, managementLevel: true },
   })
-  const factor = ingredient?.conversionFactor
+
+  // 삭제된 재료(조회 실패)는 재고 반영하지 않는다
+  if (!ingredient) return
+
+  const factor = ingredient.conversionFactor
     ? Number(ingredient.conversionFactor)
     : 1
   const convertedQuantity = Number(params.quantity) * factor
@@ -113,8 +136,9 @@ export async function syncPurchaseToInventory(
     reason: factor === 1 ? '매입 자동 반영' : `매입 자동 반영 (x${factor})`,
     eventDate: params.transactionDate,
     referenceId: params.purchaseId,
-    createIfMissing: true,
-    unit: ingredient?.unit ?? null,
+    // 'core'(재고+원가)만 재고 행을 생성한다. 'simple'(매입만)/'expense'(비용)는 재고 미추적
+    createIfMissing: ingredient.managementLevel === 'core',
+    unit: ingredient.unit,
   })
 }
 

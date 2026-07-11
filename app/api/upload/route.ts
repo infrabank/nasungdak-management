@@ -97,8 +97,23 @@ export async function DELETE(request: Request): Promise<NextResponse> {
 
     const { url } = await request.json()
 
-    if (!url) {
+    if (!url || typeof url !== 'string') {
       return NextResponse.json({ error: 'URL이 없습니다' }, { status: 400 })
+    }
+
+    // 소유권 검증: 업로드 시 파일명은 항상 `logos/${userId}-...` 이므로
+    // 본인 소유 경로가 아니면 삭제를 거부한다 (타인 blob 삭제 방지)
+    let pathname: string
+    try {
+      pathname = new URL(url).pathname
+    } catch {
+      return NextResponse.json({ error: '잘못된 URL입니다' }, { status: 400 })
+    }
+    if (!pathname.includes(`/logos/${userId}-`)) {
+      return NextResponse.json(
+        { error: '해당 파일을 삭제할 권한이 없습니다' },
+        { status: 403 }
+      )
     }
 
     // Delete from Vercel Blob

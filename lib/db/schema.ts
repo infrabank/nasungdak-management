@@ -391,7 +391,7 @@ export const inventory = pgTable(
     ingredientId: uuid('ingredient_id')
       .notNull()
       .references(() => ingredients.id),
-    currentQuantity: decimal('current_quantity', { precision: 10, scale: 2 })
+    currentQuantity: decimal('current_quantity', { precision: 12, scale: 4 })
       .notNull()
       .default('0'),
     unit: varchar('unit', { length: 20 }),
@@ -400,7 +400,11 @@ export const inventory = pgTable(
   (table) => [
     index('inv_store_id_idx').on(table.storeId),
     index('inv_ingredient_id_idx').on(table.ingredientId),
-    index('inv_store_ingredient_idx').on(table.storeId, table.ingredientId),
+    // (store, ingredient)는 매장별 재료당 1행이어야 한다. 동시 요청 시 중복 행 생성 방지 + upsert 대상
+    uniqueIndex('inv_store_ingredient_unique').on(
+      table.storeId,
+      table.ingredientId
+    ),
   ]
 )
 
@@ -445,9 +449,9 @@ export const inventoryEvents = pgTable(
       .references(() => ingredients.id),
     eventType: varchar('event_type', { length: 20 }).notNull(), // 'purchase' | 'sale' | 'waste' | 'audit' | 'adjustment'
     quantityChange: decimal('quantity_change', {
-      precision: 10,
-      scale: 2,
-    }).notNull(), // 양수: 증가, 음수: 감소
+      precision: 12,
+      scale: 4,
+    }).notNull(), // 양수: 증가, 음수: 감소 (scale 4: 소량 소모 반올림 드리프트 방지)
     reason: text('reason'),
     eventDate: date('event_date').notNull(),
     referenceId: uuid('reference_id'), // 매입/판매 ID 참조

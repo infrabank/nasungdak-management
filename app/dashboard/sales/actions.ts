@@ -1,12 +1,23 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { salesRecords, skus, menuCategories } from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql, inArray } from 'drizzle-orm'
 import { z } from 'zod'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import {
+  getAuthorizedStoreIds,
+  getOrganizationId,
+  assertStoreAccess,
+  resolveStoreId,
+  assertPermission,
+} from '@/lib/auth-context'
+import {
+  revalidateSalesData,
+  revalidateSalesDataMany,
+  cacheTags,
+} from '@/lib/cache-tags'
 import {
   syncSaleToInventory,
   reverseInventoryByReferences,
@@ -14,7 +25,9 @@ import {
 } from '@/lib/inventory-sync'
 
 const salesRecordSchema = z.object({
-  saleDate: z.string().min(1, '날짜를 선택해주세요'),
+  saleDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, '날짜는 YYYY-MM-DD 형식이어야 합니다'),
   skuId: z.string().uuid('SKU를 선택해주세요'),
   quantitySold: z.coerce.string().transform((val, ctx) => {
     const num = Number(val)
@@ -31,12 +44,10 @@ const salesRecordSchema = z.object({
 
 export async function createSalesRecord(formData: FormData) {
   try {
-    // Get storeId from form or use user's first authorized store
-    let storeId = formData.get('storeId') as string | null
-    if (!storeId) {
-      const authorizedStoreIds = await getAuthorizedStoreIds()
-      storeId = authorizedStoreIds[0] || null
-    }
+    await assertPermission('sales', 'write')
+    // 클라이언트가 보낸 storeId는 반드시 권한 검증 (없으면 첫 권한 매장)
+    const storeId = await resolveStoreId(formData.get('storeId') as string | null)
+    const organizationId = await getOrganizationId()
 
     const rawData = {
       saleDate: formData.get('saleDate'),
@@ -46,9 +57,15 @@ export async function createSalesRecord(formData: FormData) {
 
     const validatedData = salesRecordSchema.parse(rawData)
 
-    // Get SKU unit price (must not be deleted)
+    // SKU 조회 (삭제되지 않고 사용자 조직 소속인지 확인)
     const sku = await db.query.skus.findFirst({
-      where: and(eq(skus.id, validatedData.skuId), isNull(skus.deletedAt)),
+      where: and(
+        eq(skus.id, validatedData.skuId),
+        isNull(skus.deletedAt),
+        organizationId
+          ? eq(skus.organizationId, organizationId)
+          : isNull(skus.organizationId)
+      ),
     })
 
     if (!sku) {
@@ -84,15 +101,7 @@ export async function createSalesRecord(formData: FormData) {
     })
 
     revalidatePath('/dashboard/sales')
-    revalidateTag('sales:all')
-    if (storeId) {
-      revalidateTag(`sales:${storeId}`)
-      revalidateTag(`inventory:${storeId}`)
-    }
-    revalidateTag('inventory:all')
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
+    revalidateSalesData(storeId)
 
     return {
       success: true,
@@ -118,6 +127,7 @@ export async function createSalesRecord(formData: FormData) {
 
 export async function updateSalesRecord(id: string, formData: FormData) {
   try {
+    await assertPermission('sales', 'write')
     const rawData = {
       saleDate: formData.get('saleDate'),
       skuId: formData.get('skuId'),
@@ -125,16 +135,42 @@ export async function updateSalesRecord(id: string, formData: FormData) {
     }
 
     const validatedData = salesRecordSchema.parse(rawData)
+    const organizationId = await getOrganizationId()
+
+    // 대상 레코드 소유권 검증 (삭제된 레코드는 부활 불가)
+    const existing = await db.query.salesRecords.findFirst({
+      where: and(eq(salesRecords.id, id), isNull(salesRecords.deletedAt)),
+      columns: { storeId: true },
+    })
+    if (!existing) {
+      return { success: false, error: '판매 기록을 찾을 수 없습니다' }
+    }
+    await assertStoreAccess(existing.storeId)
+
+    // 변경된 SKU의 판매 단가를 다시 적용 (단가 미갱신으로 매출-재고 불일치 방지)
+    const sku = await db.query.skus.findFirst({
+      where: and(
+        eq(skus.id, validatedData.skuId),
+        isNull(skus.deletedAt),
+        organizationId
+          ? eq(skus.organizationId, organizationId)
+          : isNull(skus.organizationId)
+      ),
+    })
+    if (!sku) {
+      return { success: false, error: 'SKU를 찾을 수 없습니다' }
+    }
 
     const record = await db.transaction(async (tx) => {
       const [updated] = await tx
         .update(salesRecords)
         .set({
           ...validatedData,
+          unitPrice: sku.unitPrice,
           updatedAt: new Date(),
           updatedBy: 'system',
         })
-        .where(eq(salesRecords.id, id))
+        .where(and(eq(salesRecords.id, id), isNull(salesRecords.deletedAt)))
         .returning()
 
       if (updated?.storeId) {
@@ -159,15 +195,7 @@ export async function updateSalesRecord(id: string, formData: FormData) {
     })
 
     revalidatePath('/dashboard/sales')
-    revalidateTag('sales:all')
-    if (record.storeId) {
-      revalidateTag(`sales:${record.storeId}`)
-      revalidateTag(`inventory:${record.storeId}`)
-    }
-    revalidateTag('inventory:all')
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
+    revalidateSalesData(record?.storeId ?? existing.storeId)
 
     return {
       success: true,
@@ -193,11 +221,16 @@ export async function updateSalesRecord(id: string, formData: FormData) {
 
 export async function deleteSalesRecord(id: string) {
   try {
-    // Fetch storeId before soft delete for cache invalidation
+    await assertPermission('sales', 'delete')
+    // Fetch storeId before soft delete for cache invalidation + 소유권 검증
     const existing = await db.query.salesRecords.findFirst({
-      where: eq(salesRecords.id, id),
+      where: and(eq(salesRecords.id, id), isNull(salesRecords.deletedAt)),
       columns: { storeId: true, saleDate: true },
     })
+    if (!existing) {
+      return { success: false, error: '판매 기록을 찾을 수 없습니다' }
+    }
+    await assertStoreAccess(existing.storeId)
 
     await db.transaction(async (tx) => {
       await tx
@@ -206,7 +239,7 @@ export async function deleteSalesRecord(id: string) {
           deletedAt: new Date(),
           deletedBy: 'system',
         })
-        .where(eq(salesRecords.id, id))
+        .where(and(eq(salesRecords.id, id), isNull(salesRecords.deletedAt)))
 
       // 자동 차감된 재고를 원복 (차감 이력이 없으면 no-op)
       await reverseInventoryByReferences(
@@ -214,20 +247,12 @@ export async function deleteSalesRecord(id: string) {
         [id],
         'adjustment',
         '판매 삭제 원복',
-        existing?.saleDate ?? new Date().toISOString().slice(0, 10)
+        existing.saleDate ?? new Date().toISOString().slice(0, 10)
       )
     })
 
     revalidatePath('/dashboard/sales')
-    revalidateTag('sales:all')
-    if (existing?.storeId) {
-      revalidateTag(`sales:${existing.storeId}`)
-      revalidateTag(`inventory:${existing.storeId}`)
-    }
-    revalidateTag('inventory:all')
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
+    revalidateSalesData(existing.storeId)
 
     return {
       success: true,
@@ -251,15 +276,30 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
       }
     }
 
-    // Fetch storeIds before deletion for cache invalidation - SINGLE QUERY
-    const existingRecords = await db
-      .select({ storeId: salesRecords.storeId })
-      .from(salesRecords)
-      .where(inArray(salesRecords.id, ids))
+    await assertPermission('sales', 'delete')
 
-    const storeIds = new Set(
-      existingRecords.map((r) => r.storeId).filter(Boolean)
-    )
+    // 권한 있는 매장의 미삭제 레코드만 대상으로 좁힌다 (타 조직 레코드 삭제 방지)
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) {
+      return { success: false, error: '접근 가능한 매장이 없습니다' }
+    }
+
+    const existingRecords = await db
+      .select({ id: salesRecords.id, storeId: salesRecords.storeId })
+      .from(salesRecords)
+      .where(
+        and(
+          inArray(salesRecords.id, ids),
+          isNull(salesRecords.deletedAt),
+          inArray(salesRecords.storeId, authorizedStoreIds)
+        )
+      )
+
+    const deletableIds = existingRecords.map((r) => r.id)
+    if (deletableIds.length === 0) {
+      return { success: false, error: '삭제 가능한 항목이 없습니다' }
+    }
+    const storeIds = existingRecords.map((r) => r.storeId)
 
     // Perform bulk soft delete + 재고 원복
     const deletedCount = await db.transaction(async (tx) => {
@@ -269,7 +309,12 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
           deletedAt: new Date(),
           deletedBy: 'system',
         })
-        .where(inArray(salesRecords.id, ids))
+        .where(
+          and(
+            inArray(salesRecords.id, deletableIds),
+            isNull(salesRecords.deletedAt)
+          )
+        )
         .returning({ id: salesRecords.id })
 
       await reverseInventoryByReferences(
@@ -284,15 +329,7 @@ export async function bulkDeleteSalesRecords(ids: string[]) {
     })
 
     revalidatePath('/dashboard/sales')
-    revalidateTag('sales:all')
-    for (const storeId of storeIds) {
-      revalidateTag(`sales:${storeId}`)
-      revalidateTag(`inventory:${storeId}`)
-    }
-    revalidateTag('inventory:all')
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
+    revalidateSalesDataMany(storeIds)
 
     return {
       success: true,
@@ -355,7 +392,7 @@ async function fetchSalesRecords(
       skuName: skus.skuName,
       menuName: menuCategories.menuName,
       quantitySold: salesRecords.quantitySold,
-      unitPrice: skus.unitPrice,
+      unitPrice: salesRecords.unitPrice,
       totalRevenue: salesRecords.totalRevenue,
     })
     .from(salesRecords)
@@ -415,7 +452,7 @@ export async function getSalesRecords(
         normalizedStoreId,
         String(normalizedPage),
       ],
-      { tags: [`sales:${normalizedStoreId}`] }
+      { tags: [cacheTags.sales(normalizedStoreId)] }
     )
 
     return await getCachedSalesRecords()
@@ -425,7 +462,7 @@ export async function getSalesRecords(
   }
 }
 
-async function fetchActiveSKUs() {
+async function fetchActiveSKUs(organizationId: string) {
   const skuList = await db
     .select({
       id: skus.id,
@@ -435,7 +472,13 @@ async function fetchActiveSKUs() {
     })
     .from(skus)
     .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-    .where(and(isNull(skus.deletedAt), eq(skus.isActive, true)))
+    .where(
+      and(
+        isNull(skus.deletedAt),
+        eq(skus.isActive, true),
+        eq(skus.organizationId, organizationId)
+      )
+    )
     .orderBy(menuCategories.menuName, skus.skuName)
 
   return skuList
@@ -443,10 +486,13 @@ async function fetchActiveSKUs() {
 
 export async function getActiveSKUs() {
   try {
+    const organizationId = await getOrganizationId()
+    if (!organizationId) return []
+
     const getCachedActiveSKUs = unstable_cache(
-      fetchActiveSKUs,
-      ['skus:active'],
-      { tags: ['skus:active'] }
+      () => fetchActiveSKUs(organizationId),
+      ['skus:active', organizationId],
+      { tags: [cacheTags.skusActive, cacheTags.skus(organizationId)] }
     )
 
     return await getCachedActiveSKUs()
@@ -456,7 +502,7 @@ export async function getActiveSKUs() {
   }
 }
 
-async function fetchSKUsForFilter() {
+async function fetchSKUsForFilter(organizationId: string) {
   const skuList = await db
     .select({
       id: skus.id,
@@ -465,7 +511,13 @@ async function fetchSKUsForFilter() {
     })
     .from(skus)
     .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-    .where(and(isNull(skus.deletedAt), eq(skus.isActive, true)))
+    .where(
+      and(
+        isNull(skus.deletedAt),
+        eq(skus.isActive, true),
+        eq(skus.organizationId, organizationId)
+      )
+    )
     .orderBy(menuCategories.menuName, skus.skuName)
 
   return skuList
@@ -473,10 +525,13 @@ async function fetchSKUsForFilter() {
 
 export async function getSKUsForFilter() {
   try {
+    const organizationId = await getOrganizationId()
+    if (!organizationId) return []
+
     const getCachedSKUsForFilter = unstable_cache(
-      fetchSKUsForFilter,
-      ['skus:filter'],
-      { tags: ['skus:filter'] }
+      () => fetchSKUsForFilter(organizationId),
+      ['skus:filter', organizationId],
+      { tags: [cacheTags.skusFilter, cacheTags.skus(organizationId)] }
     )
 
     return await getCachedSKUsForFilter()
@@ -498,11 +553,20 @@ export async function createDailySales(
 ) {
   'use server'
 
-  let successCount = 0
   let failedCount = 0
   const errors: string[] = []
 
   try {
+    await assertPermission('sales', 'write')
+    // 매장이 지정되면 반드시 권한 검증
+    if (storeId) {
+      await assertStoreAccess(storeId)
+    }
+    const organizationId = await getOrganizationId()
+    if (!organizationId) {
+      return { success: false, error: '조직 정보가 없습니다' }
+    }
+
     // Filter out entries with no quantity
     const validSales = sales.filter(
       (s) =>
@@ -518,7 +582,7 @@ export async function createDailySales(
       }
     }
 
-    // Get SKU prices
+    // Get SKU prices (조직 스코프)
     const skuList = await db
       .select({
         id: skus.id,
@@ -526,92 +590,93 @@ export async function createDailySales(
         unitPrice: skus.unitPrice,
       })
       .from(skus)
-      .where(and(isNull(skus.deletedAt), eq(skus.isActive, true)))
+      .where(
+        and(
+          isNull(skus.deletedAt),
+          eq(skus.isActive, true),
+          eq(skus.organizationId, organizationId)
+        )
+      )
 
     const skuMap = new Map(skuList.map((s) => [s.id, s]))
 
-    // Use transaction for atomicity
+    // DB 진입 전 전량 검증 (tx 중 abort로 인한 거짓 성공 보고 방지)
+    const prepared: Array<{
+      validatedData: z.infer<typeof salesRecordSchema>
+      unitPrice: string
+    }> = []
+    for (const sale of validSales) {
+      try {
+        const sku = skuMap.get(sale.skuId)
+        if (!sku) {
+          errors.push('SKU를 찾을 수 없습니다')
+          failedCount++
+          continue
+        }
+        const validatedData = salesRecordSchema.parse({
+          saleDate,
+          skuId: sale.skuId,
+          quantitySold: sale.quantitySold,
+        })
+        prepared.push({ validatedData, unitPrice: sku.unitPrice })
+      } catch (error) {
+        failedCount++
+        errors.push(
+          error instanceof z.ZodError
+            ? error.errors[0].message
+            : error instanceof Error
+              ? error.message
+              : '알 수 없는 오류'
+        )
+      }
+    }
+
+    if (prepared.length === 0) {
+      return { success: false, successCount: 0, failedCount, errors }
+    }
+
+    // Use transaction for atomicity - 검증된 행만 삽입, DB 오류는 tx 전체 롤백
     await db.transaction(async (tx) => {
-      // 재고 차감용 레시피 일괄 조회
       const recipesBySkuId = storeId
         ? await fetchRecipesBySkuIds(
             tx,
-            validSales.map((s) => s.skuId)
+            prepared.map((p) => p.validatedData.skuId)
           )
         : new Map()
 
-      for (let i = 0; i < validSales.length; i++) {
-        const sale = validSales[i]
-
-        try {
-          const sku = skuMap.get(sale.skuId)
-
-          if (!sku) {
-            errors.push(`SKU를 찾을 수 없습니다`)
-            failedCount++
-            continue
-          }
-
-          // Validate data
-          const validatedData = salesRecordSchema.parse({
-            saleDate,
-            skuId: sale.skuId,
-            quantitySold: sale.quantitySold,
+      for (const { validatedData, unitPrice } of prepared) {
+        const [created] = await tx
+          .insert(salesRecords)
+          .values({
+            ...validatedData,
+            storeId: storeId || null,
+            unitPrice,
+            createdBy: 'system',
           })
+          .returning()
 
-          // Insert sales record using transaction context
-          const [created] = await tx
-            .insert(salesRecords)
-            .values({
-              ...validatedData,
-              storeId: storeId || null,
-              unitPrice: sku.unitPrice,
-              createdBy: 'system',
-            })
-            .returning()
-
-          if (created.storeId) {
-            await syncSaleToInventory(
-              tx,
-              {
-                storeId: created.storeId,
-                skuId: created.skuId,
-                quantitySold: Number(created.quantitySold),
-                saleId: created.id,
-                saleDate: created.saleDate,
-              },
-              recipesBySkuId.get(created.skuId) ?? []
-            )
-          }
-
-          successCount++
-        } catch (error) {
-          failedCount++
-          if (error instanceof z.ZodError) {
-            errors.push(`${error.errors[0].message}`)
-          } else {
-            errors.push(
-              `${error instanceof Error ? error.message : '알 수 없는 오류'}`
-            )
-          }
+        if (created.storeId) {
+          await syncSaleToInventory(
+            tx,
+            {
+              storeId: created.storeId,
+              skuId: created.skuId,
+              quantitySold: Number(created.quantitySold),
+              saleId: created.id,
+              saleDate: created.saleDate,
+            },
+            recipesBySkuId.get(created.skuId) ?? []
+          )
         }
       }
     })
 
     revalidatePath('/dashboard/sales')
-    revalidateTag('sales:all')
-    if (storeId) {
-      revalidateTag(`sales:${storeId}`)
-      revalidateTag(`inventory:${storeId}`)
-    }
-    revalidateTag('inventory:all')
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
+    revalidateSalesData(storeId ?? null)
 
     return {
       success: true,
-      successCount,
+      successCount: prepared.length,
       failedCount,
       errors,
     }
@@ -619,7 +684,7 @@ export async function createDailySales(
     logger.error('Failed to create daily sales:', errorToContext(error))
     return {
       success: false,
-      successCount,
+      successCount: 0,
       failedCount,
       error:
         error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
@@ -637,12 +702,21 @@ interface CSVRow {
 export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
   'use server'
 
-  let successCount = 0
   let failedCount = 0
   const errors: string[] = []
 
   try {
-    // Fetch all SKUs for name-to-ID mapping
+    await assertPermission('sales', 'write')
+    // 매장이 지정되면 반드시 권한 검증
+    if (storeId) {
+      await assertStoreAccess(storeId)
+    }
+    const organizationId = await getOrganizationId()
+    if (!organizationId) {
+      return { success: false, error: '조직 정보가 없습니다' }
+    }
+
+    // Fetch all SKUs for name-to-ID mapping (조직 스코프)
     const skuList = await db
       .select({
         id: skus.id,
@@ -650,97 +724,105 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
         unitPrice: skus.unitPrice,
       })
       .from(skus)
-      .where(and(isNull(skus.deletedAt), eq(skus.isActive, true)))
+      .where(
+        and(
+          isNull(skus.deletedAt),
+          eq(skus.isActive, true),
+          eq(skus.organizationId, organizationId)
+        )
+      )
 
     // Create lookup map
     const skuMap = new Map(
       skuList.map((s) => [s.skuName, { id: s.id, unitPrice: s.unitPrice }])
     )
 
-    // Use transaction for atomicity
+    // DB 진입 전 전량 검증 (tx 중 abort로 인한 거짓 성공 보고 방지)
+    const prepared: Array<{
+      validatedData: z.infer<typeof salesRecordSchema>
+      unitPrice: string
+    }> = []
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i]
+      const rowNum = i + 1
+      try {
+        const skuInfo = skuMap.get(row.SKU)
+        if (!skuInfo) {
+          errors.push(`${rowNum}행: SKU '${row.SKU}'를 찾을 수 없습니다`)
+          failedCount++
+          continue
+        }
+        const validatedData = salesRecordSchema.parse({
+          saleDate: row.날짜,
+          skuId: skuInfo.id,
+          quantitySold: row.판매수량,
+        })
+        prepared.push({ validatedData, unitPrice: skuInfo.unitPrice })
+      } catch (error) {
+        failedCount++
+        errors.push(
+          `${rowNum}행: ${
+            error instanceof z.ZodError
+              ? error.errors[0].message
+              : error instanceof Error
+                ? error.message
+                : '알 수 없는 오류'
+          }`
+        )
+      }
+    }
+
+    if (prepared.length === 0) {
+      return {
+        success: false,
+        successCount: 0,
+        failedCount,
+        errors: errors.slice(0, 20),
+      }
+    }
+
+    // Use transaction for atomicity - DB 오류는 tx 전체 롤백
     await db.transaction(async (tx) => {
-      // 재고 차감용 레시피 일괄 조회
       const recipesBySkuId = storeId
         ? await fetchRecipesBySkuIds(
             tx,
-            skuList.map((s) => s.id)
+            prepared.map((p) => p.validatedData.skuId)
           )
         : new Map()
 
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i]
-        const rowNum = i + 1
-
-        try {
-          // Find SKU ID
-          const skuInfo = skuMap.get(row.SKU)
-
-          if (!skuInfo) {
-            errors.push(`${rowNum}행: SKU '${row.SKU}'를 찾을 수 없습니다`)
-            failedCount++
-            continue
-          }
-
-          // Validate data
-          const validatedData = salesRecordSchema.parse({
-            saleDate: row.날짜,
-            skuId: skuInfo.id,
-            quantitySold: row.판매수량,
+      for (const { validatedData, unitPrice } of prepared) {
+        const [created] = await tx
+          .insert(salesRecords)
+          .values({
+            ...validatedData,
+            storeId: storeId || null,
+            unitPrice,
+            createdBy: 'system',
           })
+          .returning()
 
-          // Insert sales record using transaction context
-          const [created] = await tx
-            .insert(salesRecords)
-            .values({
-              ...validatedData,
-              storeId: storeId || null,
-              unitPrice: skuInfo.unitPrice,
-              createdBy: 'system',
-            })
-            .returning()
-
-          if (created.storeId) {
-            await syncSaleToInventory(
-              tx,
-              {
-                storeId: created.storeId,
-                skuId: created.skuId,
-                quantitySold: Number(created.quantitySold),
-                saleId: created.id,
-                saleDate: created.saleDate,
-              },
-              recipesBySkuId.get(created.skuId) ?? []
-            )
-          }
-
-          successCount++
-        } catch (error) {
-          failedCount++
-          if (error instanceof z.ZodError) {
-            errors.push(`${rowNum}행: ${error.errors[0].message}`)
-          } else {
-            errors.push(
-              `${rowNum}행: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
-            )
-          }
+        if (created.storeId) {
+          await syncSaleToInventory(
+            tx,
+            {
+              storeId: created.storeId,
+              skuId: created.skuId,
+              quantitySold: Number(created.quantitySold),
+              saleId: created.id,
+              saleDate: created.saleDate,
+            },
+            recipesBySkuId.get(created.skuId) ?? []
+          )
         }
       }
     })
 
     revalidatePath('/dashboard/sales')
-    revalidateTag('sales:all')
-    if (storeId) {
-      revalidateTag(`sales:${storeId}`)
-      revalidateTag(`inventory:${storeId}`)
-    }
-    revalidateTag('inventory:all')
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
+    revalidateSalesData(storeId ?? null)
 
     return {
       success: true,
-      successCount,
+      successCount: prepared.length,
       failedCount,
       errors: errors.slice(0, 20), // Return first 20 errors
     }
@@ -748,7 +830,7 @@ export async function bulkCreateSales(rows: CSVRow[], storeId?: string) {
     logger.error('Failed to bulk create sales:', errorToContext(error))
     return {
       success: false,
-      successCount,
+      successCount: 0,
       failedCount,
       error:
         error instanceof Error ? error.message : '일괄 등록에 실패했습니다',
@@ -841,7 +923,7 @@ export async function getSalesTotals(
         normalizedSkuId,
         normalizedStoreId,
       ],
-      { tags: [`sales:${normalizedStoreId}`] }
+      { tags: [cacheTags.sales(normalizedStoreId)] }
     )
 
     return await getCachedSalesTotals()

@@ -116,7 +116,10 @@ export async function login(
 
     // Get user's store assignments
     const storeAssignments = await db.query.userStoreAssignments.findMany({
-      where: eq(userStoreAssignments.userId, user.id),
+      where: and(
+        eq(userStoreAssignments.userId, user.id),
+        isNull(userStoreAssignments.deletedAt)
+      ),
     })
     const storeIds = storeAssignments.map((sa) => sa.storeId)
 
@@ -293,7 +296,10 @@ export async function refreshSession(): Promise<{
 
     // Get store assignments
     const storeAssignments = await db.query.userStoreAssignments.findMany({
-      where: eq(userStoreAssignments.userId, user.id),
+      where: and(
+        eq(userStoreAssignments.userId, user.id),
+        isNull(userStoreAssignments.deletedAt)
+      ),
     })
     const storeIds = storeAssignments.map((sa) => sa.storeId)
 

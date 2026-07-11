@@ -11,7 +11,11 @@ import {
 } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
+import {
+  getOrganizationId,
+  requireOrganizationId,
+  assertPermission,
+} from '@/lib/auth-context'
 import {
   getRecipeToIngredientFactor,
   validateRecipeUnit,
@@ -52,6 +56,7 @@ const skuRecipeSchema = z.object({
 
 export async function createSkuRecipe(formData: FormData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
     const rawData = {
       skuId: formData.get('skuId'),
@@ -153,6 +158,7 @@ export async function createSkuRecipe(formData: FormData) {
 
 export async function updateSkuRecipe(id: string, formData: FormData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
     const rawData = {
       skuId: formData.get('skuId'),

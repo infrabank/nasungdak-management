@@ -6,7 +6,11 @@ import { logger, errorToContext } from '@/lib/logger'
 import { menuCategories } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
+import {
+  getOrganizationId,
+  requireOrganizationId,
+  assertPermission,
+} from '@/lib/auth-context'
 import { cacheTags, revalidateMenuData } from '@/lib/cache-tags'
 
 const menuSchema = z.object({
@@ -17,6 +21,7 @@ const menuSchema = z.object({
 
 export async function createMenu(formData: FormData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
     const description = formData.get('description')
     const rawData = {
@@ -64,6 +69,7 @@ export async function createMenu(formData: FormData) {
 
 export async function updateMenu(id: string, formData: FormData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
     const rawData = {
       menuName: formData.get('menuName'),

@@ -2,8 +2,9 @@
 
 import { cookies } from 'next/headers'
 import { jwtVerify, SignJWT } from 'jose'
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { storeSchema } from '@/lib/utils/validation'
+import { revalidateStoresData, cacheTags } from '@/lib/cache-tags'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import {
@@ -11,8 +12,9 @@ import {
   userStoreAssignments,
   roles,
   organizationMembers,
+  organizations,
 } from '@/lib/db/schema'
-import { eq, and, isNull, desc, inArray } from 'drizzle-orm'
+import { eq, and, isNull, desc, inArray, count } from 'drizzle-orm'
 import { z } from 'zod'
 import { getAuthorizedStoreIds, getUserContext } from '@/lib/auth-context'
 import {
@@ -67,6 +69,32 @@ export async function createStore(formData: FormData) {
       ),
     })
 
+    // 플랜 매장 한도 검증 (maxStores = -1 이면 무제한)
+    if (membership?.organizationId) {
+      const org = await db.query.organizations.findFirst({
+        where: eq(organizations.id, membership.organizationId),
+        columns: { maxStores: true },
+      })
+      const maxStores = org?.maxStores ?? 1
+      if (maxStores !== -1) {
+        const [{ value: storeCount }] = await db
+          .select({ value: count() })
+          .from(stores)
+          .where(
+            and(
+              eq(stores.organizationId, membership.organizationId),
+              isNull(stores.deletedAt)
+            )
+          )
+        if (storeCount >= maxStores) {
+          return {
+            success: false,
+            error: `현재 플랜의 매장 한도(${maxStores}개)에 도달했습니다. 플랜을 업그레이드해주세요.`,
+          }
+        }
+      }
+    }
+
     const [store] = await db
       .insert(stores)
       .values({
@@ -118,7 +146,7 @@ export async function createStore(formData: FormData) {
     await updateSessionWithNewStore(userContext.userId, store.id)
 
     revalidatePath('/dashboard/stores')
-    revalidateTag('stores:active')
+    revalidateStoresData()
 
     return {
       success: true,
@@ -194,6 +222,15 @@ async function updateSessionWithNewStore(
 
 export async function updateStore(id: string, formData: FormData) {
   try {
+    // 소유권 검증: 권한 있는 매장만 수정 가능 (managerPhone 등 탈취 방지)
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (!authorizedStoreIds.includes(id)) {
+      return {
+        success: false,
+        error: '해당 매장에 대한 권한이 없습니다',
+      }
+    }
+
     const rawData = {
       storeName: formData.get('storeName'),
       storeCode: formData.get('storeCode'),
@@ -227,11 +264,15 @@ export async function updateStore(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(eq(stores.id, id))
+      .where(and(eq(stores.id, id), isNull(stores.deletedAt)))
       .returning()
 
+    if (!store) {
+      return { success: false, error: '매장을 찾을 수 없습니다' }
+    }
+
     revalidatePath('/dashboard/stores')
-    revalidateTag('stores:active')
+    revalidateStoresData()
 
     return {
       success: true,
@@ -257,16 +298,25 @@ export async function updateStore(id: string, formData: FormData) {
 
 export async function deleteStore(id: string) {
   try {
+    // 소유권 검증: 권한 있는 매장만 삭제 가능
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (!authorizedStoreIds.includes(id)) {
+      return {
+        success: false,
+        error: '해당 매장에 대한 권한이 없습니다',
+      }
+    }
+
     await db
       .update(stores)
       .set({
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(eq(stores.id, id))
+      .where(and(eq(stores.id, id), isNull(stores.deletedAt)))
 
     revalidatePath('/dashboard/stores')
-    revalidateTag('stores:active')
+    revalidateStoresData()
 
     return {
       success: true,
@@ -342,7 +392,7 @@ export async function getActiveStores() {
     const getCachedActiveStores = unstable_cache(
       () => fetchActiveStores(authorizedStoreIds),
       ['stores:active', storeKey],
-      { tags: ['stores:active'] }
+      { tags: [cacheTags.storesActive] }
     )
 
     return await getCachedActiveStores()
@@ -354,6 +404,12 @@ export async function getActiveStores() {
 
 export async function getStoreById(id: string) {
   try {
+    // 소유권 검증: 권한 있는 매장만 조회 (주소·전화·managerPhone 노출 방지)
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (!authorizedStoreIds.includes(id)) {
+      return null
+    }
+
     const store = await db.query.stores.findFirst({
       where: and(eq(stores.id, id), isNull(stores.deletedAt)),
     })

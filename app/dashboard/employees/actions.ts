@@ -1,16 +1,22 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { employees } from '@/lib/db/schema'
 import { eq, isNull, desc, and, inArray } from 'drizzle-orm'
 import { z } from 'zod'
 import { employeeSchema } from '@/lib/utils/validation'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import {
+  getAuthorizedStoreIds,
+  assertStoreAccess,
+  assertPermission,
+} from '@/lib/auth-context'
+import { revalidateEmployeeData, cacheTags } from '@/lib/cache-tags'
 
 export async function createEmployee(prevState: any, formData: FormData) {
   try {
+    await assertPermission('employees', 'write')
     const storeId = formData.get('storeId') as string | null
 
     // storeId validation in action (not in Zod schema)
@@ -20,6 +26,8 @@ export async function createEmployee(prevState: any, formData: FormData) {
         error: '매장을 선택해주세요',
       }
     }
+    // 선택한 매장이 권한 매장인지 검증
+    await assertStoreAccess(storeId)
 
     const rawData = {
       employeeName: formData.get('employeeName'),
@@ -47,7 +55,7 @@ export async function createEmployee(prevState: any, formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/employees')
-    revalidateTag(`employees:${storeId}`)
+    revalidateEmployeeData(storeId)
 
     return {
       success: true,
@@ -73,6 +81,17 @@ export async function createEmployee(prevState: any, formData: FormData) {
 
 export async function updateEmployee(id: string, formData: FormData) {
   try {
+    await assertPermission('employees', 'write')
+    // 대상 직원 소유권 검증
+    const existing = await db.query.employees.findFirst({
+      where: and(eq(employees.id, id), isNull(employees.deletedAt)),
+      columns: { storeId: true },
+    })
+    if (!existing) {
+      return { success: false, error: '직원을 찾을 수 없습니다' }
+    }
+    await assertStoreAccess(existing.storeId)
+
     // Note: storeId is NOT updatable - ignored even if provided
     const rawData = {
       employeeName: formData.get('employeeName'),
@@ -97,13 +116,11 @@ export async function updateEmployee(id: string, formData: FormData) {
         updatedAt: new Date(),
         updatedBy: 'system',
       })
-      .where(eq(employees.id, id))
+      .where(and(eq(employees.id, id), isNull(employees.deletedAt)))
       .returning()
 
     revalidatePath('/dashboard/employees')
-    if (record?.storeId) {
-      revalidateTag(`employees:${record.storeId}`)
-    }
+    revalidateEmployeeData(record?.storeId ?? existing.storeId)
 
     return {
       success: true,
@@ -129,19 +146,28 @@ export async function updateEmployee(id: string, formData: FormData) {
 
 export async function deleteEmployee(id: string) {
   try {
+    await assertPermission('employees', 'delete')
+    // 대상 직원 소유권 검증
+    const existing = await db.query.employees.findFirst({
+      where: and(eq(employees.id, id), isNull(employees.deletedAt)),
+      columns: { storeId: true },
+    })
+    if (!existing) {
+      return { success: false, error: '직원을 찾을 수 없습니다' }
+    }
+    await assertStoreAccess(existing.storeId)
+
     const [deleted] = await db
       .update(employees)
       .set({
         deletedAt: new Date(),
         deletedBy: 'system',
       })
-      .where(eq(employees.id, id))
+      .where(and(eq(employees.id, id), isNull(employees.deletedAt)))
       .returning({ storeId: employees.storeId })
 
     revalidatePath('/dashboard/employees')
-    if (deleted?.storeId) {
-      revalidateTag(`employees:${deleted.storeId}`)
-    }
+    revalidateEmployeeData(deleted?.storeId ?? existing.storeId)
 
     return {
       success: true,
@@ -184,7 +210,7 @@ export async function getEmployees(storeId?: string) {
           .limit(1000)
       },
       ['employees:list', storeId],
-      { tags: [`employees:${storeId}`] }
+      { tags: [cacheTags.employees(storeId)] }
     )
     return await getCached()
   } catch (error) {
@@ -226,7 +252,7 @@ export async function getActiveEmployees(storeId?: string) {
           .limit(1000)
       },
       ['employees:active', storeId],
-      { tags: [`employees:${storeId}`] }
+      { tags: [cacheTags.employees(storeId)] }
     )
     return await getCached()
   } catch (error) {

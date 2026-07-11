@@ -6,7 +6,7 @@ import { logger, errorToContext } from '@/lib/logger'
 import { fixedCosts } from '@/lib/db/schema'
 import { eq, isNull, desc, sql, inArray, and, or } from 'drizzle-orm'
 import { z } from 'zod'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import { getAuthorizedStoreIds, assertPermission } from '@/lib/auth-context'
 
 const fixedCostSchema = z.object({
   costDate: z.string().min(1, '날짜를 선택해주세요'),
@@ -20,6 +20,7 @@ const fixedCostSchema = z.object({
 
 export async function createFixedCost(formData: FormData) {
   try {
+    await assertPermission('fixed-costs', 'write')
     // 권한 검사
     const authorizedStoreIds = await getAuthorizedStoreIds()
     const storeId = formData.get('storeId') as string | null
@@ -79,6 +80,7 @@ export async function createFixedCost(formData: FormData) {
 
 export async function updateFixedCost(id: string, formData: FormData) {
   try {
+    await assertPermission('fixed-costs', 'write')
     // 권한 검사: 레코드가 권한 있는 매장에 속하는지 확인
     const authorizedStoreIds = await getAuthorizedStoreIds()
     if (authorizedStoreIds.length === 0) {
@@ -149,6 +151,7 @@ export async function updateFixedCost(id: string, formData: FormData) {
 
 export async function deleteFixedCost(id: string) {
   try {
+    await assertPermission('fixed-costs', 'delete')
     // 권한 검사: 레코드가 권한 있는 매장에 속하는지 확인
     const authorizedStoreIds = await getAuthorizedStoreIds()
     if (authorizedStoreIds.length === 0) {

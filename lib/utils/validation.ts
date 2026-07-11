@@ -91,7 +91,9 @@ export const emailSchema = z
 
 // Purchase transaction validation
 export const purchaseSchema = z.object({
-  transactionDate: z.string().min(1, '날짜를 선택해주세요'),
+  transactionDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, '날짜는 YYYY-MM-DD 형식이어야 합니다'),
   ingredientId: z.string().uuid('유효한 재료를 선택해주세요'),
   supplierName: z.string().min(1, '공급업체명을 입력해주세요').max(200),
   quantity: z.coerce.string().transform((val, ctx) => {

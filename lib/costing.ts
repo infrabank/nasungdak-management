@@ -8,6 +8,7 @@ import { sql } from 'drizzle-orm'
  */
 
 // (재료 기준단위 -> 레시피 단위) 쌍의 환산 계수. 레시피 수량 x 계수 = 재료 기준단위 수량
+// key = `${ingredientUnit}:${recipeUnit}`. TS·SQL 두 경로가 이 표 하나에서 파생되어 드리프트가 없다.
 const RECIPE_TO_INGREDIENT_FACTORS: Record<string, number> = {
   'kg:g': 1 / 1000,
   'l:ml': 1 / 1000,
@@ -15,6 +16,8 @@ const RECIPE_TO_INGREDIENT_FACTORS: Record<string, number> = {
   'ml:l': 1000,
   'g:mg': 1 / 1000,
   'kg:mg': 1 / 1_000_000,
+  'mg:g': 1000,
+  'mg:kg': 1_000_000,
 }
 
 const STANDARD_UNITS = new Set(['g', 'kg', 'mg', 'ml', 'l'])
@@ -71,15 +74,21 @@ export function validateRecipeUnit(
 /**
  * SQL: 레시피 수량을 재료 기준단위로 환산하는 CASE 식.
  * rec = sku_recipes, ing = ingredients alias 기준.
+ * RECIPE_TO_INGREDIENT_FACTORS에서 생성하므로 TS 경로(calculateRecipeLineCost)와 항상 일치한다.
  */
-export const RECIPE_QTY_IN_INGREDIENT_UNIT_SQL = `CASE
+export const RECIPE_QTY_IN_INGREDIENT_UNIT_SQL = (() => {
+  const branches = Object.entries(RECIPE_TO_INGREDIENT_FACTORS)
+    .map(([pair, factor]) => {
+      const [ingredientUnit, recipeUnit] = pair.split(':')
+      return `WHEN LOWER(ing.unit) = '${ingredientUnit}' AND LOWER(rec.unit) = '${recipeUnit}' THEN rec.quantity * ${factor}`
+    })
+    .join('\n      ')
+  return `CASE
       WHEN LOWER(ing.unit) = LOWER(rec.unit) THEN rec.quantity
-      WHEN LOWER(ing.unit) = 'kg' AND LOWER(rec.unit) = 'g' THEN rec.quantity / 1000
-      WHEN LOWER(ing.unit) = 'l' AND LOWER(rec.unit) = 'ml' THEN rec.quantity / 1000
-      WHEN LOWER(ing.unit) = 'g' AND LOWER(rec.unit) = 'kg' THEN rec.quantity * 1000
-      WHEN LOWER(ing.unit) = 'ml' AND LOWER(rec.unit) = 'l' THEN rec.quantity * 1000
+      ${branches}
       ELSE rec.quantity
     END`
+})()
 
 /**
  * SQL: SKU 1개당 BOM 원가 CTE.

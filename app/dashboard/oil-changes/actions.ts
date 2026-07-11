@@ -1,26 +1,25 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { oilChangeSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { oilChangeHistory } from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import {
+  getAuthorizedStoreIds,
+  assertStoreAccess,
+  resolveStoreId,
+  assertPermission,
+} from '@/lib/auth-context'
+import { revalidateOilChangeData, cacheTags } from '@/lib/cache-tags'
 
 export async function createOilChange(prevState: any, formData: FormData) {
   try {
-    let storeId = formData.get('storeId') as string | null
-
-    // storeId가 없으면 사용자의 권한 있는 첫 번째 매장을 자동 할당
-    if (!storeId) {
-      const authorizedStoreIds = await getAuthorizedStoreIds()
-      if (authorizedStoreIds.length === 0) {
-        return { success: false, error: '접근 가능한 매장이 없습니다' }
-      }
-      storeId = authorizedStoreIds[0]
-    }
+    await assertPermission('oil-changes', 'write')
+    // 클라이언트가 보낸 storeId는 반드시 권한 검증 (없으면 첫 권한 매장)
+    const storeId = await resolveStoreId(formData.get('storeId') as string | null)
 
     const notes = formData.get('notes')
     const rawData = {
@@ -74,7 +73,7 @@ export async function createOilChange(prevState: any, formData: FormData) {
     })
 
     revalidatePath('/dashboard/oil-changes')
-    revalidateTag(`oil-changes:${storeId ?? 'all'}`)
+    revalidateOilChangeData(storeId)
 
     return { success: true, error: undefined }
   } catch (error) {
@@ -148,7 +147,7 @@ export async function getOilChanges(filters?: {
         filters?.endDate ?? 'all',
         filters?.fryerType ?? 'all',
       ],
-      { tags: [`oil-changes:${storeId}`] }
+      { tags: [cacheTags.oilChanges(storeId)] }
     )
     return await getCached()
   } catch (error) {
@@ -159,12 +158,19 @@ export async function getOilChanges(filters?: {
 
 export async function getOilChangeById(id: string) {
   try {
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) return null
+
     const result = await db.query.oilChangeHistory.findFirst({
       where: and(
         eq(oilChangeHistory.id, id),
         isNull(oilChangeHistory.deletedAt)
       ),
     })
+    // 권한 매장 소속(또는 매장 미지정 레거시)만 반환
+    if (result && result.storeId && !authorizedStoreIds.includes(result.storeId)) {
+      return null
+    }
     return result
   } catch (error) {
     logger.error('Error fetching oil change:', errorToContext(error))
@@ -174,6 +180,20 @@ export async function getOilChangeById(id: string) {
 
 export async function updateOilChange(id: string, formData: FormData) {
   try {
+    await assertPermission('oil-changes', 'write')
+    // 대상 레코드 소유권 검증
+    const existing = await db.query.oilChangeHistory.findFirst({
+      where: and(
+        eq(oilChangeHistory.id, id),
+        isNull(oilChangeHistory.deletedAt)
+      ),
+      columns: { storeId: true },
+    })
+    if (!existing) {
+      return { success: false, error: '기름 교체 이력을 찾을 수 없습니다' }
+    }
+    await assertStoreAccess(existing.storeId)
+
     const notes = formData.get('notes')
     const rawData = {
       changeDate: formData.get('changeDate'),
@@ -186,13 +206,17 @@ export async function updateOilChange(id: string, formData: FormData) {
 
     const validatedData = oilChangeSchema.parse(rawData)
 
-    // Calculate usage days automatically based on previous oil change history (excluding current record)
+    // Calculate usage days based on previous change in the SAME store (excluding current record)
+    const previousConditions = [
+      eq(oilChangeHistory.fryerType, validatedData.fryerType),
+      isNull(oilChangeHistory.deletedAt),
+      sql`${oilChangeHistory.id} != ${id}`,
+    ]
+    if (existing.storeId) {
+      previousConditions.push(eq(oilChangeHistory.storeId, existing.storeId))
+    }
     const previousChange = await db.query.oilChangeHistory.findFirst({
-      where: and(
-        eq(oilChangeHistory.fryerType, validatedData.fryerType),
-        isNull(oilChangeHistory.deletedAt),
-        sql`${oilChangeHistory.id} != ${id}`
-      ),
+      where: and(...previousConditions),
       orderBy: [desc(oilChangeHistory.changeDate)],
     })
 
@@ -221,7 +245,7 @@ export async function updateOilChange(id: string, formData: FormData) {
       .returning({ storeId: oilChangeHistory.storeId })
 
     revalidatePath('/dashboard/oil-changes')
-    revalidateTag(`oil-changes:${updated?.storeId ?? 'all'}`)
+    revalidateOilChangeData(updated?.storeId ?? existing.storeId)
 
     return { success: true, error: undefined }
   } catch (error) {
@@ -238,17 +262,33 @@ export async function updateOilChange(id: string, formData: FormData) {
 
 export async function deleteOilChange(id: string) {
   try {
+    await assertPermission('oil-changes', 'delete')
+    // 대상 레코드 소유권 검증
+    const existing = await db.query.oilChangeHistory.findFirst({
+      where: and(
+        eq(oilChangeHistory.id, id),
+        isNull(oilChangeHistory.deletedAt)
+      ),
+      columns: { storeId: true },
+    })
+    if (!existing) {
+      return { success: false, error: '기름 교체 이력을 찾을 수 없습니다' }
+    }
+    await assertStoreAccess(existing.storeId)
+
     const [deleted] = await db
       .update(oilChangeHistory)
       .set({
         deletedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(oilChangeHistory.id, id))
+      .where(
+        and(eq(oilChangeHistory.id, id), isNull(oilChangeHistory.deletedAt))
+      )
       .returning({ storeId: oilChangeHistory.storeId })
 
     revalidatePath('/dashboard/oil-changes')
-    revalidateTag(`oil-changes:${deleted?.storeId ?? 'all'}`)
+    revalidateOilChangeData(deleted?.storeId ?? existing.storeId)
 
     return { success: true, error: undefined }
   } catch (error) {
@@ -331,7 +371,7 @@ export async function getOilChangeStats(storeId?: string) {
         }
       },
       ['oil-changes:stats', storeKey],
-      { tags: [`oil-changes:${storeKey}`] }
+      { tags: [cacheTags.oilChanges(storeKey)] }
     )
     return await getCached()
   } catch (error) {

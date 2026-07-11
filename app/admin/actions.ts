@@ -12,6 +12,7 @@ import {
 import { eq, and, isNull, desc, count, sql } from 'drizzle-orm'
 import { requireSuperAdmin, getAdminContext } from '@/lib/admin-auth'
 import { revalidatePath } from 'next/cache'
+import { revalidateOrganizationData } from '@/lib/cache-tags'
 import { logger, errorToContext } from '@/lib/logger'
 
 export interface AdminStats {
@@ -321,6 +322,7 @@ export async function toggleOrganizationStatus(
 
     revalidatePath('/admin')
     revalidatePath(`/admin/organizations/${organizationId}`)
+    revalidateOrganizationData(organizationId)
 
     return { success: true }
   } catch (error) {
@@ -357,6 +359,7 @@ export async function updateOrganizationPlan(
 
     revalidatePath('/admin')
     revalidatePath(`/admin/organizations/${organizationId}`)
+    revalidateOrganizationData(organizationId)
 
     return { success: true }
   } catch (error) {
@@ -387,6 +390,7 @@ export async function deleteOrganization(
       .where(eq(organizations.id, organizationId))
 
     revalidatePath('/admin')
+    revalidateOrganizationData(organizationId)
 
     return { success: true }
   } catch (error) {
@@ -431,6 +435,7 @@ export async function extendTrial(
 
     revalidatePath('/admin')
     revalidatePath(`/admin/organizations/${organizationId}`)
+    revalidateOrganizationData(organizationId)
 
     return { success: true }
   } catch (error) {

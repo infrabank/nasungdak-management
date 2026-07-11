@@ -1,13 +1,25 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { purchaseSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { purchaseTransactions, ingredients } from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql, inArray, or } from 'drizzle-orm'
 import { z } from 'zod'
-import { getAuthorizedStoreIds, getOrganizationId } from '@/lib/auth-context'
+import {
+  getAuthorizedStoreIds,
+  getOrganizationId,
+  assertStoreAccess,
+  resolveStoreId,
+  assertPermission,
+} from '@/lib/auth-context'
+import {
+  revalidatePurchaseData,
+  revalidatePurchaseDataMany,
+  revalidateIngredientData,
+  cacheTags,
+} from '@/lib/cache-tags'
 import {
   syncPurchaseToInventory,
   reverseInventoryByReferences,
@@ -66,12 +78,9 @@ async function buildPriceAlert(
 
 export async function createPurchase(formData: FormData) {
   try {
-    // Get storeId from form or use user's first authorized store
-    let storeId = formData.get('storeId') as string | null
-    if (!storeId) {
-      const authorizedStoreIds = await getAuthorizedStoreIds()
-      storeId = authorizedStoreIds[0] || null
-    }
+    await assertPermission('purchases', 'write')
+    // 클라이언트가 보낸 storeId는 반드시 권한 검증 (없으면 첫 권한 매장)
+    const storeId = await resolveStoreId(formData.get('storeId') as string | null)
 
     const notes = formData.get('notes')
     const rawData = {
@@ -117,15 +126,7 @@ export async function createPurchase(formData: FormData) {
     )
 
     revalidatePath('/dashboard/purchases')
-    revalidateTag('purchases:all')
-    if (transaction.storeId) {
-      revalidateTag(`purchases:${transaction.storeId}`)
-      revalidateTag(`inventory:${transaction.storeId}`)
-    }
-    revalidateTag('inventory:all')
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
+    revalidatePurchaseData(transaction.storeId)
 
     return {
       success: true,
@@ -155,6 +156,7 @@ export async function createPurchase(formData: FormData) {
 
 export async function updatePurchase(id: string, formData: FormData) {
   try {
+    await assertPermission('purchases', 'write')
     const notes = formData.get('notes')
     const rawData = {
       transactionDate: formData.get('transactionDate'),
@@ -170,6 +172,19 @@ export async function updatePurchase(id: string, formData: FormData) {
 
     const validatedData = purchaseSchema.parse(rawData)
 
+    // 대상 레코드 소유권 검증 (삭제된 레코드는 부활 불가)
+    const existing = await db.query.purchaseTransactions.findFirst({
+      where: and(
+        eq(purchaseTransactions.id, id),
+        isNull(purchaseTransactions.deletedAt)
+      ),
+      columns: { storeId: true },
+    })
+    if (!existing) {
+      return { success: false, error: '매입 기록을 찾을 수 없습니다' }
+    }
+    await assertStoreAccess(existing.storeId)
+
     const transaction = await db.transaction(async (tx) => {
       const [updated] = await tx
         .update(purchaseTransactions)
@@ -178,7 +193,12 @@ export async function updatePurchase(id: string, formData: FormData) {
           updatedAt: new Date(),
           updatedBy: 'system',
         })
-        .where(eq(purchaseTransactions.id, id))
+        .where(
+          and(
+            eq(purchaseTransactions.id, id),
+            isNull(purchaseTransactions.deletedAt)
+          )
+        )
         .returning()
 
       if (updated?.storeId) {
@@ -203,15 +223,7 @@ export async function updatePurchase(id: string, formData: FormData) {
     })
 
     revalidatePath('/dashboard/purchases')
-    revalidateTag('purchases:all')
-    if (transaction.storeId) {
-      revalidateTag(`purchases:${transaction.storeId}`)
-      revalidateTag(`inventory:${transaction.storeId}`)
-    }
-    revalidateTag('inventory:all')
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
+    revalidatePurchaseData(transaction?.storeId ?? existing.storeId)
 
     return {
       success: true,
@@ -237,11 +249,19 @@ export async function updatePurchase(id: string, formData: FormData) {
 
 export async function deletePurchase(id: string) {
   try {
-    // Fetch storeId before soft delete for cache invalidation
+    await assertPermission('purchases', 'delete')
+    // Fetch storeId before soft delete for cache invalidation + 소유권 검증
     const existing = await db.query.purchaseTransactions.findFirst({
-      where: eq(purchaseTransactions.id, id),
+      where: and(
+        eq(purchaseTransactions.id, id),
+        isNull(purchaseTransactions.deletedAt)
+      ),
       columns: { storeId: true, transactionDate: true },
     })
+    if (!existing) {
+      return { success: false, error: '매입 기록을 찾을 수 없습니다' }
+    }
+    await assertStoreAccess(existing.storeId)
 
     await db.transaction(async (tx) => {
       await tx
@@ -250,7 +270,12 @@ export async function deletePurchase(id: string) {
           deletedAt: new Date(),
           deletedBy: 'system',
         })
-        .where(eq(purchaseTransactions.id, id))
+        .where(
+          and(
+            eq(purchaseTransactions.id, id),
+            isNull(purchaseTransactions.deletedAt)
+          )
+        )
 
       // 자동 반영된 재고를 원복 (반영 이력이 없으면 no-op)
       await reverseInventoryByReferences(
@@ -258,20 +283,12 @@ export async function deletePurchase(id: string) {
         [id],
         'adjustment',
         '매입 삭제 원복',
-        existing?.transactionDate ?? new Date().toISOString().slice(0, 10)
+        existing.transactionDate ?? new Date().toISOString().slice(0, 10)
       )
     })
 
     revalidatePath('/dashboard/purchases')
-    revalidateTag('purchases:all')
-    if (existing?.storeId) {
-      revalidateTag(`purchases:${existing.storeId}`)
-      revalidateTag(`inventory:${existing.storeId}`)
-    }
-    revalidateTag('inventory:all')
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
+    revalidatePurchaseData(existing.storeId)
 
     return {
       success: true,
@@ -389,7 +406,7 @@ export async function getPurchases(
         normalizedStoreId,
         String(normalizedPage),
       ],
-      { tags: [`purchases:${normalizedStoreId}`] }
+      { tags: [cacheTags.purchases(normalizedStoreId)] }
     )
 
     return await getCachedPurchases()
@@ -399,14 +416,20 @@ export async function getPurchases(
   }
 }
 
-async function fetchIngredientsForFilter() {
+async function fetchIngredientsForFilter(organizationId: string) {
   const ingredientsList = await db
     .select({
       id: ingredients.id,
       ingredientName: ingredients.ingredientName,
     })
     .from(ingredients)
-    .where(and(isNull(ingredients.deletedAt), eq(ingredients.isActive, true)))
+    .where(
+      and(
+        isNull(ingredients.deletedAt),
+        eq(ingredients.isActive, true),
+        eq(ingredients.organizationId, organizationId)
+      )
+    )
     .orderBy(ingredients.ingredientName)
 
   return ingredientsList
@@ -414,10 +437,15 @@ async function fetchIngredientsForFilter() {
 
 export async function getIngredientsForFilter() {
   try {
+    const organizationId = await getOrganizationId()
+    if (!organizationId) return []
+
     const getCachedIngredientsForFilter = unstable_cache(
-      fetchIngredientsForFilter,
-      ['ingredients:active'],
-      { tags: ['ingredients:active'] }
+      () => fetchIngredientsForFilter(organizationId),
+      ['ingredients:active', organizationId],
+      {
+        tags: [cacheTags.ingredientsActive, cacheTags.ingredients(organizationId)],
+      }
     )
 
     return await getCachedIngredientsForFilter()
@@ -429,14 +457,26 @@ export async function getIngredientsForFilter() {
 
 export async function getSupplierSuggestions(): Promise<string[]> {
   try {
+    // 매입처는 storeId, 공급업체 마스터는 organizationId로 스코핑 (타 조직 노출 방지)
+    const organizationId = await getOrganizationId()
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (!organizationId || authorizedStoreIds.length === 0) return []
+
+    const storeIdList = sql.join(
+      authorizedStoreIds.map((id) => sql`${id}::uuid`),
+      sql`, `
+    )
+
     const result = await db.execute(sql`
       SELECT DISTINCT supplier_name
       FROM purchase_transactions
       WHERE deleted_at IS NULL AND supplier_name IS NOT NULL
+        AND store_id IN (${storeIdList})
       UNION
       SELECT supplier_name
       FROM suppliers
       WHERE deleted_at IS NULL AND supplier_name IS NOT NULL
+        AND organization_id = ${organizationId}
       ORDER BY supplier_name
       LIMIT 200
     `)
@@ -482,13 +522,12 @@ export async function createMultiplePurchases(
   }> = []
   const createdEntries: Array<{ ingredientId: string; unitPrice: string }> = []
 
-  try {
-    let storeId = formStoreId || null
-    if (!storeId) {
-      const authorizedStoreIds = await getAuthorizedStoreIds()
-      storeId = authorizedStoreIds[0] || null
-    }
+  let createdIngredient = false
 
+  try {
+    await assertPermission('purchases', 'write')
+    // 클라이언트가 보낸 storeId는 반드시 권한 검증 (없으면 첫 권한 매장)
+    const storeId = await resolveStoreId(formStoreId ?? null)
     const organizationId = await getOrganizationId()
 
     await db.transaction(async (tx) => {
@@ -497,93 +536,101 @@ export async function createMultiplePurchases(
         const rowNum = i + 1
 
         try {
-          let resolvedIngredientId = entry.ingredientId
+          // 행별 savepoint: 한 행이 DB 에러로 실패해도 tx 전체가 abort되지 않는다
+          const outcome = await tx.transaction(async (sp) => {
+            let resolvedIngredientId = entry.ingredientId
+            let didCreateIngredient = false
 
-          // Handle quick (one-time) ingredient creation
-          if (
-            !resolvedIngredientId &&
-            entry.quickIngredientName &&
-            entry.quickIngredientUnit
-          ) {
-            const trimmedName = entry.quickIngredientName.trim()
-            const trimmedUnit = entry.quickIngredientUnit.trim()
+            // Handle quick (one-time) ingredient creation
+            if (
+              !resolvedIngredientId &&
+              entry.quickIngredientName &&
+              entry.quickIngredientUnit
+            ) {
+              const trimmedName = entry.quickIngredientName.trim()
+              const trimmedUnit = entry.quickIngredientUnit.trim()
 
-            // Search for existing one-time ingredient with same name + org
-            if (organizationId) {
-              const existing = await tx.query.ingredients.findFirst({
-                where: and(
-                  eq(ingredients.ingredientName, trimmedName),
-                  eq(ingredients.isOneTime, true),
-                  eq(ingredients.organizationId, organizationId),
-                  isNull(ingredients.deletedAt)
-                ),
-              })
+              // Search for existing one-time ingredient with same name + org
+              if (organizationId) {
+                const existing = await sp.query.ingredients.findFirst({
+                  where: and(
+                    eq(ingredients.ingredientName, trimmedName),
+                    eq(ingredients.isOneTime, true),
+                    eq(ingredients.organizationId, organizationId),
+                    isNull(ingredients.deletedAt)
+                  ),
+                })
 
-              if (existing) {
-                resolvedIngredientId = existing.id
+                if (existing) {
+                  resolvedIngredientId = existing.id
+                }
+              }
+
+              // Create new one-time ingredient if not found
+              if (!resolvedIngredientId) {
+                const [newIngredient] = await sp
+                  .insert(ingredients)
+                  .values({
+                    ingredientName: trimmedName,
+                    unit: trimmedUnit,
+                    isOneTime: true,
+                    managementLevel: 'expense', // 일회성 재료는 비용 처리
+                    organizationId: organizationId || undefined,
+                    createdBy: 'system',
+                  })
+                  .returning()
+                resolvedIngredientId = newIngredient.id
+                didCreateIngredient = true
               }
             }
 
-            // Create new one-time ingredient if not found
             if (!resolvedIngredientId) {
-              const [newIngredient] = await tx
-                .insert(ingredients)
-                .values({
-                  ingredientName: trimmedName,
-                  unit: trimmedUnit,
-                  isOneTime: true,
-                  managementLevel: 'expense', // 일회성 재료는 비용 처리
-                  organizationId: organizationId || undefined,
-                  createdBy: 'system',
-                })
-                .returning()
-              resolvedIngredientId = newIngredient.id
+              throw new Error('재료를 선택하거나 입력해주세요')
             }
-          }
 
-          if (!resolvedIngredientId) {
-            throw new Error('재료를 선택하거나 입력해주세요')
-          }
+            const rawData = {
+              transactionDate,
+              ingredientId: resolvedIngredientId,
+              supplierName,
+              quantity: entry.quantity,
+              unitPrice: entry.unitPrice,
+              notes: entry.notes?.trim() || null,
+            }
 
-          const rawData = {
-            transactionDate,
-            ingredientId: resolvedIngredientId,
-            supplierName,
-            quantity: entry.quantity,
-            unitPrice: entry.unitPrice,
-            notes: entry.notes?.trim() || null,
-          }
+            const validatedData = purchaseSchema.parse(rawData)
 
-          const validatedData = purchaseSchema.parse(rawData)
+            const [transaction] = await sp
+              .insert(purchaseTransactions)
+              .values({
+                ...validatedData,
+                storeId,
+                createdBy: 'system',
+              })
+              .returning()
 
-          const [transaction] = await tx
-            .insert(purchaseTransactions)
-            .values({
-              ...validatedData,
-              storeId,
-              createdBy: 'system',
-            })
-            .returning()
+            if (transaction.storeId) {
+              await syncPurchaseToInventory(sp, {
+                storeId: transaction.storeId,
+                ingredientId: transaction.ingredientId,
+                quantity: transaction.quantity,
+                purchaseId: transaction.id,
+                transactionDate: transaction.transactionDate,
+              })
+            }
 
-          if (transaction.storeId) {
-            await syncPurchaseToInventory(tx, {
-              storeId: transaction.storeId,
-              ingredientId: transaction.ingredientId,
-              quantity: transaction.quantity,
-              purchaseId: transaction.id,
-              transactionDate: transaction.transactionDate,
-            })
-          }
+            return { transaction, didCreateIngredient }
+          })
 
+          if (outcome.didCreateIngredient) createdIngredient = true
           successCount++
           results.push({
             index: i,
-            id: transaction.id,
-            totalAmount: Number(transaction.totalAmount),
+            id: outcome.transaction.id,
+            totalAmount: Number(outcome.transaction.totalAmount),
           })
           createdEntries.push({
-            ingredientId: transaction.ingredientId,
-            unitPrice: transaction.unitPrice,
+            ingredientId: outcome.transaction.ingredientId,
+            unitPrice: outcome.transaction.unitPrice,
           })
         } catch (error) {
           failedCount++
@@ -599,15 +646,11 @@ export async function createMultiplePurchases(
     })
 
     revalidatePath('/dashboard/purchases')
-    revalidateTag('purchases:all')
-    if (storeId) {
-      revalidateTag(`purchases:${storeId}`)
-      revalidateTag(`inventory:${storeId}`)
+    revalidatePurchaseData(storeId)
+    // 간편 매입으로 일회성 재료가 생성되었으면 재료 목록/필터 캐시도 무효화
+    if (createdIngredient) {
+      revalidateIngredientData(organizationId)
     }
-    revalidateTag('inventory:all')
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
 
     // 마스터 단가와 크게 차이나는 매입 단가 감지 (재료별 1회)
     const priceAlerts: PurchasePriceAlert[] = []
@@ -651,20 +694,28 @@ export async function bulkCreatePurchases(
   const errors: string[] = []
 
   try {
-    let storeId = formStoreId || null
-    if (!storeId) {
-      const authorizedStoreIds = await getAuthorizedStoreIds()
-      storeId = authorizedStoreIds[0] || null
+    await assertPermission('purchases', 'write')
+    // 클라이언트가 보낸 storeId는 반드시 권한 검증 (없으면 첫 권한 매장)
+    const storeId = await resolveStoreId(formStoreId ?? null)
+    const organizationId = await getOrganizationId()
+    if (!organizationId) {
+      return { success: false, error: '조직 정보가 없습니다' }
     }
 
-    // Fetch ingredients for name-to-ID mapping
+    // Fetch ingredients for name-to-ID mapping (조직 스코프)
     const ingredientsList = await db
       .select({
         id: ingredients.id,
         ingredientName: ingredients.ingredientName,
       })
       .from(ingredients)
-      .where(and(isNull(ingredients.deletedAt), eq(ingredients.isActive, true)))
+      .where(
+        and(
+          isNull(ingredients.deletedAt),
+          eq(ingredients.isActive, true),
+          eq(ingredients.organizationId, organizationId)
+        )
+      )
 
     const ingredientMap = new Map(
       ingredientsList.map((i) => [i.ingredientName, i.id])
@@ -693,24 +744,27 @@ export async function bulkCreatePurchases(
             notes: row.비고 && row.비고.trim() ? row.비고.trim() : null,
           })
 
-          const [transaction] = await tx
-            .insert(purchaseTransactions)
-            .values({
-              ...validatedData,
-              storeId,
-              createdBy: 'system',
-            })
-            .returning()
+          // 행별 savepoint: DB 에러가 나도 tx 전체가 abort되지 않는다
+          await tx.transaction(async (sp) => {
+            const [transaction] = await sp
+              .insert(purchaseTransactions)
+              .values({
+                ...validatedData,
+                storeId,
+                createdBy: 'system',
+              })
+              .returning()
 
-          if (transaction.storeId) {
-            await syncPurchaseToInventory(tx, {
-              storeId: transaction.storeId,
-              ingredientId: transaction.ingredientId,
-              quantity: transaction.quantity,
-              purchaseId: transaction.id,
-              transactionDate: transaction.transactionDate,
-            })
-          }
+            if (transaction.storeId) {
+              await syncPurchaseToInventory(sp, {
+                storeId: transaction.storeId,
+                ingredientId: transaction.ingredientId,
+                quantity: transaction.quantity,
+                purchaseId: transaction.id,
+                transactionDate: transaction.transactionDate,
+              })
+            }
+          })
 
           successCount++
         } catch (error) {
@@ -727,15 +781,7 @@ export async function bulkCreatePurchases(
     })
 
     revalidatePath('/dashboard/purchases')
-    revalidateTag('purchases:all')
-    if (storeId) {
-      revalidateTag(`purchases:${storeId}`)
-      revalidateTag(`inventory:${storeId}`)
-    }
-    revalidateTag('inventory:all')
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
+    revalidatePurchaseData(storeId)
 
     return {
       success: true,
@@ -880,7 +926,7 @@ export async function getPurchasesTotals(
         normalizedIngredientId,
         normalizedStoreId,
       ],
-      { tags: [`purchases:${normalizedStoreId}`] }
+      { tags: [cacheTags.purchases(normalizedStoreId)] }
     )
 
     return await getCachedPurchasesTotals()
@@ -985,6 +1031,7 @@ export async function getLastPurchaseDaySummary(): Promise<{
 
 export async function copyLastPurchasesToToday() {
   try {
+    await assertPermission('purchases', 'write')
     const result = await fetchLastPurchaseDay()
     if (!result || result.items.length === 0) {
       return { success: false, error: '복사할 매입 내역이 없습니다' }
@@ -999,6 +1046,7 @@ export async function copyLastPurchasesToToday() {
     }
 
     let totalAmount = 0
+    const affectedStoreIds: (string | null)[] = []
     await db.transaction(async (tx) => {
       for (const item of result.items) {
         const [transaction] = await tx
@@ -1016,6 +1064,7 @@ export async function copyLastPurchasesToToday() {
           .returning()
 
         totalAmount += Number(transaction.totalAmount ?? 0)
+        affectedStoreIds.push(transaction.storeId)
 
         if (transaction.storeId) {
           await syncPurchaseToInventory(tx, {
@@ -1030,9 +1079,8 @@ export async function copyLastPurchasesToToday() {
     })
 
     revalidatePath('/dashboard/purchases')
-    revalidateTag('purchases:all')
-    revalidateTag('inventory:all')
-    revalidateTag('dashboard:stats')
+    // 복사된 매입의 매장별 태그 + 전체 태그를 모두 무효화
+    revalidatePurchaseDataMany(affectedStoreIds)
 
     return {
       success: true,

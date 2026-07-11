@@ -1,26 +1,23 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { maintenanceLogSchema } from '@/lib/utils/validation'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { maintenanceLogs } from '@/lib/db/schema'
 import { eq, and, isNull, desc, sql } from 'drizzle-orm'
 import { z } from 'zod'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import {
+  getAuthorizedStoreIds,
+  assertStoreAccess,
+  resolveStoreId,
+} from '@/lib/auth-context'
+import { revalidateMaintenanceData, cacheTags } from '@/lib/cache-tags'
 
 export async function createMaintenanceLog(prevState: any, formData: FormData) {
   try {
-    let storeId = formData.get('storeId') as string | null
-
-    // storeId가 없으면 사용자의 권한 있는 첫 번째 매장을 자동 할당
-    if (!storeId) {
-      const authorizedStoreIds = await getAuthorizedStoreIds()
-      if (authorizedStoreIds.length === 0) {
-        return { success: false, error: '접근 가능한 매장이 없습니다' }
-      }
-      storeId = authorizedStoreIds[0]
-    }
+    // 클라이언트가 보낸 storeId는 반드시 권한 검증 (없으면 첫 권한 매장)
+    const storeId = await resolveStoreId(formData.get('storeId') as string | null)
 
     const notes = formData.get('notes')
     const rawData = {
@@ -42,7 +39,7 @@ export async function createMaintenanceLog(prevState: any, formData: FormData) {
     })
 
     revalidatePath('/dashboard/maintenance')
-    revalidateTag(`maintenance:${storeId ?? 'all'}`)
+    revalidateMaintenanceData(storeId)
 
     return { success: true, error: undefined }
   } catch (error) {
@@ -114,7 +111,7 @@ export async function getMaintenanceLogs(filters?: {
         filters?.endDate ?? 'all',
         filters?.taskType ?? 'all',
       ],
-      { tags: [`maintenance:${storeId}`] }
+      { tags: [cacheTags.maintenance(storeId)] }
     )
     return await getCached()
   } catch (error) {
@@ -125,9 +122,19 @@ export async function getMaintenanceLogs(filters?: {
 
 export async function getMaintenanceLogById(id: string) {
   try {
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) return null
+
     const result = await db.query.maintenanceLogs.findFirst({
       where: and(eq(maintenanceLogs.id, id), isNull(maintenanceLogs.deletedAt)),
     })
+    if (
+      result &&
+      result.storeId &&
+      !authorizedStoreIds.includes(result.storeId)
+    ) {
+      return null
+    }
     return result
   } catch (error) {
     logger.error('Error fetching maintenance log:', errorToContext(error))
@@ -137,6 +144,16 @@ export async function getMaintenanceLogById(id: string) {
 
 export async function updateMaintenanceLog(id: string, formData: FormData) {
   try {
+    // 대상 레코드 소유권 검증
+    const existing = await db.query.maintenanceLogs.findFirst({
+      where: and(eq(maintenanceLogs.id, id), isNull(maintenanceLogs.deletedAt)),
+      columns: { storeId: true },
+    })
+    if (!existing) {
+      return { success: false, error: '정비·청소 기록을 찾을 수 없습니다' }
+    }
+    await assertStoreAccess(existing.storeId)
+
     const notes = formData.get('notes')
     const rawData = {
       performedDate: formData.get('performedDate'),
@@ -161,7 +178,7 @@ export async function updateMaintenanceLog(id: string, formData: FormData) {
       .returning({ storeId: maintenanceLogs.storeId })
 
     revalidatePath('/dashboard/maintenance')
-    revalidateTag(`maintenance:${updated?.storeId ?? 'all'}`)
+    revalidateMaintenanceData(updated?.storeId ?? existing.storeId)
 
     return { success: true, error: undefined }
   } catch (error) {
@@ -178,17 +195,27 @@ export async function updateMaintenanceLog(id: string, formData: FormData) {
 
 export async function deleteMaintenanceLog(id: string) {
   try {
+    // 대상 레코드 소유권 검증
+    const existing = await db.query.maintenanceLogs.findFirst({
+      where: and(eq(maintenanceLogs.id, id), isNull(maintenanceLogs.deletedAt)),
+      columns: { storeId: true },
+    })
+    if (!existing) {
+      return { success: false, error: '정비·청소 기록을 찾을 수 없습니다' }
+    }
+    await assertStoreAccess(existing.storeId)
+
     const [deleted] = await db
       .update(maintenanceLogs)
       .set({
         deletedAt: new Date(),
         updatedAt: new Date(),
       })
-      .where(eq(maintenanceLogs.id, id))
+      .where(and(eq(maintenanceLogs.id, id), isNull(maintenanceLogs.deletedAt)))
       .returning({ storeId: maintenanceLogs.storeId })
 
     revalidatePath('/dashboard/maintenance')
-    revalidateTag(`maintenance:${deleted?.storeId ?? 'all'}`)
+    revalidateMaintenanceData(deleted?.storeId ?? existing.storeId)
 
     return { success: true, error: undefined }
   } catch (error) {
@@ -258,7 +285,7 @@ export async function getMaintenanceStats(storeId?: string) {
         return { recentCount: recent[0]?.count ?? 0, lastByType }
       },
       ['maintenance:stats', storeKey],
-      { tags: [`maintenance:${storeKey}`] }
+      { tags: [cacheTags.maintenance(storeKey)] }
     )
     return await getCached()
   } catch (error) {

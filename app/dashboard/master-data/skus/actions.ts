@@ -6,7 +6,11 @@ import { logger, errorToContext } from '@/lib/logger'
 import { skus, menuCategories } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
+import {
+  getOrganizationId,
+  requireOrganizationId,
+  assertPermission,
+} from '@/lib/auth-context'
 import { cacheTags, revalidateSkuData } from '@/lib/cache-tags'
 
 const skuSchema = z.object({
@@ -29,6 +33,7 @@ const skuSchema = z.object({
 
 export async function createSku(formData: FormData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
     const rawData = {
       skuName: formData.get('skuName'),
@@ -76,6 +81,7 @@ export async function createSku(formData: FormData) {
 
 export async function updateSku(id: string, formData: FormData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
     const rawData = {
       skuName: formData.get('skuName'),

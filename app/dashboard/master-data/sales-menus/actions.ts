@@ -6,7 +6,11 @@ import { logger, errorToContext } from '@/lib/logger'
 import { salesMenus, salesMenuItems, skus } from '@/lib/db/schema'
 import { eq, isNull, and } from 'drizzle-orm'
 import { z } from 'zod'
-import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
+import {
+  getOrganizationId,
+  requireOrganizationId,
+  assertPermission,
+} from '@/lib/auth-context'
 import { cacheTags, revalidateSalesMenuData } from '@/lib/cache-tags'
 
 const salesMenuSchema = z.object({
@@ -32,6 +36,7 @@ const salesMenuSchema = z.object({
 
 export async function createSalesMenu(formData: FormData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
     const rawData = {
       menuName: formData.get('menuName'),
@@ -92,6 +97,7 @@ export async function createSalesMenu(formData: FormData) {
 
 export async function updateSalesMenu(id: string, formData: FormData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
     const rawData = {
       menuName: formData.get('menuName'),

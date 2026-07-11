@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import {
@@ -9,9 +9,14 @@ import {
   skus,
   menuCategories,
 } from '@/lib/db/schema'
-import { eq, and, isNull, desc, sql, lt } from 'drizzle-orm'
+import { eq, and, isNull, desc, sql, lt, inArray } from 'drizzle-orm'
 import { z } from 'zod'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import {
+  getAuthorizedStoreIds,
+  getOrganizationId,
+  assertPermission,
+} from '@/lib/auth-context'
+import { revalidateClosingData } from '@/lib/cache-tags'
 import {
   fetchRecipesBySkuIds,
   reverseInventoryByReferences,
@@ -81,6 +86,7 @@ export async function getClosingFormData(
   date: string
 ): Promise<ClosingFormData> {
   await assertStoreAccess(storeId)
+  const organizationId = await getOrganizationId()
 
   const [closing, latestClosing, skuList, currentRows, lastDateRow] =
     await Promise.all([
@@ -109,7 +115,15 @@ export async function getClosingFormData(
       })
       .from(skus)
       .leftJoin(menuCategories, eq(skus.menuId, menuCategories.id))
-      .where(and(isNull(skus.deletedAt), eq(skus.isActive, true)))
+      .where(
+        and(
+          isNull(skus.deletedAt),
+          eq(skus.isActive, true),
+          organizationId
+            ? eq(skus.organizationId, organizationId)
+            : isNull(skus.organizationId)
+        )
+      )
       .orderBy(skus.skuName),
     db
       .select({
@@ -213,7 +227,9 @@ export interface SaveClosingInput {
 
 export async function saveDailyClosing(input: SaveClosingInput) {
   try {
+    await assertPermission('sales', 'write')
     await assertStoreAccess(input.storeId)
+    const organizationId = await getOrganizationId()
 
     const validated = closingSchema.parse({
       closingDate: input.closingDate,
@@ -242,12 +258,22 @@ export async function saveDailyClosing(input: SaveClosingInput) {
       }
     }
 
-    // SKU 단가 조회
+    // SKU 단가 조회 (조직 스코프)
     const skuList = await db
       .select({ id: skus.id, unitPrice: skus.unitPrice })
       .from(skus)
-      .where(and(isNull(skus.deletedAt), eq(skus.isActive, true)))
+      .where(
+        and(
+          isNull(skus.deletedAt),
+          eq(skus.isActive, true),
+          organizationId
+            ? eq(skus.organizationId, organizationId)
+            : isNull(skus.organizationId)
+        )
+      )
     const skuMap = new Map(skuList.map((s) => [s.id, s]))
+    // 마감 화면이 제어하는(활성) SKU 집합. 비활성/삭제된 SKU의 그날 판매는 보존한다.
+    const activeSkuIds = skuList.map((s) => s.id)
 
     for (const q of validQuantities) {
       if (!skuMap.has(q.skuId)) {
@@ -257,16 +283,19 @@ export async function saveDailyClosing(input: SaveClosingInput) {
 
     await db.transaction(async (tx) => {
       // 마감은 해당 날짜 판매량의 확정값임: 기존 기록을 대체함
+      // 단, 마감 화면에 표시되지 않는(비활성/삭제) SKU의 판매는 삭제하지 않아 매출 소실을 막는다
+      const replaceConditions = [
+        eq(salesRecords.storeId, input.storeId),
+        eq(salesRecords.saleDate, validated.closingDate),
+        isNull(salesRecords.deletedAt),
+      ]
+      if (activeSkuIds.length > 0) {
+        replaceConditions.push(inArray(salesRecords.skuId, activeSkuIds))
+      }
       const replaced = await tx
         .update(salesRecords)
         .set({ deletedAt: new Date(), deletedBy: 'daily-closing' })
-        .where(
-          and(
-            eq(salesRecords.storeId, input.storeId),
-            eq(salesRecords.saleDate, validated.closingDate),
-            isNull(salesRecords.deletedAt)
-          )
-        )
+        .where(and(...replaceConditions))
         .returning({ id: salesRecords.id })
 
       // 대체되는 기록의 재고 자동 차감분 원복
@@ -352,12 +381,8 @@ export async function saveDailyClosing(input: SaveClosingInput) {
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/closing')
     revalidatePath('/dashboard/inventory')
-    revalidateTag('sales:all')
-    revalidateTag(`sales:${input.storeId}`)
-    revalidateTag(`inventory:${input.storeId}`)
-    revalidateTag('dashboard:stats')
-    revalidateTag('analysis:sku')
-    revalidateTag('analysis:monthly')
+    // 판매+재고(전체 매장 포함)를 한 번에 무효화 — inventory:all 누락 방지
+    revalidateClosingData(input.storeId)
 
     const salesTotal = validQuantities.reduce(
       (sum, q) => sum + q.quantitySold * Number(skuMap.get(q.skuId)!.unitPrice),

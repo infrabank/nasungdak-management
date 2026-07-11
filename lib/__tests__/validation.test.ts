@@ -35,8 +35,18 @@ describe('purchaseSchema', () => {
     })
     expect(result.success).toBe(false)
     if (!result.success) {
-      expect(result.error.errors[0].message).toBe('날짜를 선택해주세요')
+      expect(result.error.errors[0].message).toBe(
+        '날짜는 YYYY-MM-DD 형식이어야 합니다'
+      )
     }
+  })
+
+  it('rejects malformed transactionDate (배치 tx abort 방지)', () => {
+    const result = purchaseSchema.safeParse({
+      ...validData,
+      transactionDate: '2024/13/45',
+    })
+    expect(result.success).toBe(false)
   })
 
   it('rejects invalid ingredientId (not UUID)', () => {

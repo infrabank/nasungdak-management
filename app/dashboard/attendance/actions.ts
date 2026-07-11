@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { db } from '@/lib/db'
 import { logger, errorToContext } from '@/lib/logger'
 import { attendanceRecords, employees, fixedCosts } from '@/lib/db/schema'
@@ -8,7 +8,12 @@ import { eq, isNull, desc, and, sql, gte, lte } from 'drizzle-orm'
 import { z } from 'zod'
 import { attendanceSchema } from '@/lib/utils/validation'
 import { formatDate } from '@/lib/utils/format'
-import { getAuthorizedStoreIds } from '@/lib/auth-context'
+import {
+  getAuthorizedStoreIds,
+  assertStoreAccess,
+  assertPermission,
+} from '@/lib/auth-context'
+import { revalidateAttendanceData, cacheTags } from '@/lib/cache-tags'
 
 export async function createAttendance(prevState: any, formData: FormData) {
   try {
@@ -21,7 +26,9 @@ export async function createAttendance(prevState: any, formData: FormData) {
       notes: formData.get('notes') || null,
     }
 
+    await assertPermission('attendance', 'write')
     const validatedData = attendanceSchema.parse(rawData)
+    const authorizedStoreIds = await getAuthorizedStoreIds()
 
     // Transaction: create attendance + fixed_cost
     const result = await db.transaction(async (tx) => {
@@ -47,6 +54,11 @@ export async function createAttendance(prevState: any, formData: FormData) {
 
       if (!employee.storeId) {
         throw new Error('매장에 소속되지 않은 직원입니다')
+      }
+
+      // 직원의 매장이 사용자 권한 범위인지 검증 (타 조직 직원으로 허위 근무·인건비 삽입 방지)
+      if (!authorizedStoreIds.includes(employee.storeId)) {
+        throw new Error('해당 매장에 대한 권한이 없습니다')
       }
 
       // 2. Calculate totalPay if not provided
@@ -98,12 +110,7 @@ export async function createAttendance(prevState: any, formData: FormData) {
     // Revalidate paths
     revalidatePath('/dashboard/attendance')
     revalidatePath('/dashboard/fixed-costs')
-    revalidateTag('fixed-costs:all')
-    revalidateTag('dashboard:stats')
-    if (result.attendance.storeId) {
-      revalidateTag(`attendance:${result.attendance.storeId}`)
-      revalidateTag(`employees:${result.attendance.storeId}`)
-    }
+    revalidateAttendanceData(result.attendance.storeId)
 
     return {
       success: true,
@@ -141,7 +148,21 @@ export async function updateAttendance(id: string, formData: FormData) {
       notes: formData.get('notes') || null,
     }
 
+    await assertPermission('attendance', 'write')
     const validatedData = attendanceSchema.parse(rawData)
+
+    // 대상 기록 소유권 검증
+    const existing = await db.query.attendanceRecords.findFirst({
+      where: and(
+        eq(attendanceRecords.id, id),
+        isNull(attendanceRecords.deletedAt)
+      ),
+      columns: { storeId: true, fixedCostId: true },
+    })
+    if (!existing) {
+      return { success: false, error: '출퇴근 기록을 찾을 수 없습니다' }
+    }
+    await assertStoreAccess(existing.storeId)
 
     // Calculate totalPay if not provided (same as create)
     let totalPay = validatedData.totalPay
@@ -152,25 +173,45 @@ export async function updateAttendance(id: string, formData: FormData) {
       totalPay = String(calculated)
     }
 
-    // Update attendance only (NOT fixed_costs)
-    const [record] = await db
-      .update(attendanceRecords)
-      .set({
-        workDate: validatedData.workDate,
-        workHours: validatedData.workHours,
-        hourlyRate: validatedData.hourlyRate,
-        totalPay,
-        notes: validatedData.notes,
-        updatedAt: new Date(),
-        updatedBy: 'system',
-      })
-      .where(eq(attendanceRecords.id, id))
-      .returning()
+    // 출퇴근 + 연동된 인건비(fixed_cost)를 함께 갱신 (인건비 desync 방지)
+    const record = await db.transaction(async (tx) => {
+      const [updated] = await tx
+        .update(attendanceRecords)
+        .set({
+          workDate: validatedData.workDate,
+          workHours: validatedData.workHours,
+          hourlyRate: validatedData.hourlyRate,
+          totalPay,
+          notes: validatedData.notes,
+          updatedAt: new Date(),
+          updatedBy: 'system',
+        })
+        .where(
+          and(
+            eq(attendanceRecords.id, id),
+            isNull(attendanceRecords.deletedAt)
+          )
+        )
+        .returning()
+
+      if (existing.fixedCostId) {
+        await tx
+          .update(fixedCosts)
+          .set({
+            costDate: validatedData.workDate,
+            amount: totalPay,
+            updatedAt: new Date(),
+            updatedBy: 'system',
+          })
+          .where(eq(fixedCosts.id, existing.fixedCostId))
+      }
+
+      return updated
+    })
 
     revalidatePath('/dashboard/attendance')
-    if (record?.storeId) {
-      revalidateTag(`attendance:${record.storeId}`)
-    }
+    revalidatePath('/dashboard/fixed-costs')
+    revalidateAttendanceData(record?.storeId ?? existing.storeId)
 
     return {
       success: true,
@@ -198,20 +239,49 @@ export async function updateAttendance(id: string, formData: FormData) {
 
 export async function deleteAttendance(id: string) {
   try {
-    // Soft delete (NOT touching fixed_costs)
-    const [deleted] = await db
-      .update(attendanceRecords)
-      .set({
-        deletedAt: new Date(),
-        deletedBy: 'system',
-      })
-      .where(eq(attendanceRecords.id, id))
-      .returning({ storeId: attendanceRecords.storeId })
+    await assertPermission('attendance', 'delete')
+    // 대상 기록 소유권 검증
+    const existing = await db.query.attendanceRecords.findFirst({
+      where: and(
+        eq(attendanceRecords.id, id),
+        isNull(attendanceRecords.deletedAt)
+      ),
+      columns: { storeId: true, fixedCostId: true },
+    })
+    if (!existing) {
+      return { success: false, error: '출퇴근 기록을 찾을 수 없습니다' }
+    }
+    await assertStoreAccess(existing.storeId)
+
+    // 출퇴근 소프트 삭제 + 연동된 인건비(fixed_cost)도 함께 삭제 (인건비 잔존 방지)
+    const deleted = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(attendanceRecords)
+        .set({
+          deletedAt: new Date(),
+          deletedBy: 'system',
+        })
+        .where(
+          and(
+            eq(attendanceRecords.id, id),
+            isNull(attendanceRecords.deletedAt)
+          )
+        )
+        .returning({ storeId: attendanceRecords.storeId })
+
+      if (existing.fixedCostId) {
+        await tx
+          .update(fixedCosts)
+          .set({ deletedAt: new Date(), deletedBy: 'system' })
+          .where(eq(fixedCosts.id, existing.fixedCostId))
+      }
+
+      return row
+    })
 
     revalidatePath('/dashboard/attendance')
-    if (deleted?.storeId) {
-      revalidateTag(`attendance:${deleted.storeId}`)
-    }
+    revalidatePath('/dashboard/fixed-costs')
+    revalidateAttendanceData(deleted?.storeId ?? existing.storeId)
 
     return {
       success: true,
@@ -329,7 +399,7 @@ export async function getAttendance(params: GetAttendanceParams) {
         effectiveEndDate,
         employeeId ?? 'all',
       ],
-      { tags: [`attendance:${storeId ?? 'all'}`] }
+      { tags: [cacheTags.attendance(storeId)] }
     )
     return await getCached()
   } catch (error) {
@@ -370,7 +440,7 @@ export async function getActiveEmployees(storeId?: string) {
           .limit(1000)
       },
       ['attendance:employees', storeId ?? 'all'],
-      { tags: [`employees:${storeId ?? 'all'}`] }
+      { tags: [cacheTags.employees(storeId)] }
     )
     return await getCached()
   } catch (error) {

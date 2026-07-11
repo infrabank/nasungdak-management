@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import {
   inventorySchema,
   inventoryEventSchema,
@@ -17,7 +17,16 @@ import {
 } from '@/lib/db/schema'
 import { eq, and, or, isNull, desc, inArray } from 'drizzle-orm'
 import { z } from 'zod'
-import { getAuthorizedStoreIds, getOrganizationId } from '@/lib/auth-context'
+import {
+  getAuthorizedStoreIds,
+  getOrganizationId,
+  assertPermission,
+} from '@/lib/auth-context'
+import {
+  revalidateInventoryData,
+  revalidateAlertRuleData,
+  cacheTags,
+} from '@/lib/cache-tags'
 import {
   recordAndDispatchAlerts,
   type InventoryAlertItem,
@@ -35,6 +44,7 @@ import {
 
 export async function createInventory(formData: FormData) {
   try {
+    await assertPermission('inventory', 'write')
     // 권한 검사
     const authorizedStoreIds = await getAuthorizedStoreIds()
     const storeId = formData.get('storeId') as string
@@ -76,8 +86,7 @@ export async function createInventory(formData: FormData) {
         .returning()
 
       revalidatePath('/dashboard/inventory')
-      revalidateTag(`inventory:${validatedData.storeId}`)
-      revalidateTag('inventory:all')
+      revalidateInventoryData(validatedData.storeId)
       return {
         success: true,
         data: updated,
@@ -93,8 +102,7 @@ export async function createInventory(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/inventory')
-    revalidateTag(`inventory:${validatedData.storeId}`)
-    revalidateTag('inventory:all')
+    revalidateInventoryData(validatedData.storeId)
 
     return {
       success: true,
@@ -120,6 +128,7 @@ export async function createInventory(formData: FormData) {
 
 export async function updateInventory(id: string, formData: FormData) {
   try {
+    await assertPermission('inventory', 'write')
     // 권한 검사
     const authorizedStoreIds = await getAuthorizedStoreIds()
     if (authorizedStoreIds.length === 0) {
@@ -137,6 +146,20 @@ export async function updateInventory(id: string, formData: FormData) {
     }
 
     const validatedData = inventorySchema.parse(rawData)
+
+    // 이동 대상 storeId도 반드시 권한 매장인지 검증 (타 매장으로 재고 이동 방지)
+    if (!authorizedStoreIds.includes(validatedData.storeId)) {
+      return {
+        success: false,
+        error: '해당 매장에 대한 권한이 없습니다',
+      }
+    }
+
+    // 기존 매장(태그 무효화용) 조회
+    const existing = await db.query.inventory.findFirst({
+      where: eq(inventory.id, id),
+      columns: { storeId: true },
+    })
 
     const [updated] = await db
       .update(inventory)
@@ -160,8 +183,11 @@ export async function updateInventory(id: string, formData: FormData) {
     }
 
     revalidatePath('/dashboard/inventory')
-    revalidateTag(`inventory:${validatedData.storeId}`)
-    revalidateTag('inventory:all')
+    // 이동 시 기존 매장과 새 매장 양쪽 화면을 갱신
+    revalidateInventoryData(validatedData.storeId)
+    if (existing?.storeId && existing.storeId !== validatedData.storeId) {
+      revalidateInventoryData(existing.storeId)
+    }
 
     return {
       success: true,
@@ -187,6 +213,7 @@ export async function updateInventory(id: string, formData: FormData) {
 
 export async function deleteInventory(id: string) {
   try {
+    await assertPermission('inventory', 'delete')
     // 권한 검사
     const authorizedStoreIds = await getAuthorizedStoreIds()
     if (authorizedStoreIds.length === 0) {
@@ -204,7 +231,7 @@ export async function deleteInventory(id: string) {
           inArray(inventory.storeId, authorizedStoreIds)
         )
       )
-      .returning({ id: inventory.id })
+      .returning({ id: inventory.id, storeId: inventory.storeId })
 
     if (result.length === 0) {
       return {
@@ -214,7 +241,7 @@ export async function deleteInventory(id: string) {
     }
 
     revalidatePath('/dashboard/inventory')
-    revalidateTag('inventory:all')
+    revalidateInventoryData(result[0].storeId)
 
     return {
       success: true,
@@ -277,7 +304,7 @@ export async function getInventory(storeId?: string) {
     const getCachedInventory = unstable_cache(
       () => fetchInventory(normalizedStoreId, authorizedStoreIds),
       ['inventory:list:v2', storeKey, normalizedStoreId],
-      { tags: [`inventory:${normalizedStoreId}`] }
+      { tags: [cacheTags.inventory(normalizedStoreId)] }
     )
 
     return await getCachedInventory()
@@ -293,6 +320,7 @@ export async function getInventory(storeId?: string) {
 
 export async function createInventoryEvent(formData: FormData) {
   try {
+    await assertPermission('inventory', 'write')
     // 권한 검사
     const authorizedStoreIds = await getAuthorizedStoreIds()
     const storeId = formData.get('storeId') as string
@@ -400,8 +428,7 @@ export async function createInventoryEvent(formData: FormData) {
     })
 
     revalidatePath('/dashboard/inventory')
-    revalidateTag(`inventory:${validatedData.storeId}`)
-    revalidateTag('inventory:all')
+    revalidateInventoryData(validatedData.storeId)
 
     return {
       success: true,
@@ -478,6 +505,7 @@ export async function getInventoryEvents(
 
 export async function createAlertRule(formData: FormData) {
   try {
+    await assertPermission('inventory', 'write')
     // 권한 검사
     const authorizedStoreIds = await getAuthorizedStoreIds()
     const storeId = formData.get('storeId') as string | null
@@ -499,6 +527,22 @@ export async function createAlertRule(formData: FormData) {
     }
 
     const validatedData = inventoryAlertRuleSchema.parse(rawData)
+
+    // 재료가 사용자 조직 소속인지 확인 (타 조직 재료로 규칙 생성 방지)
+    const organizationId = await getOrganizationId()
+    const ingredient = await db.query.ingredients.findFirst({
+      where: and(
+        eq(ingredients.id, validatedData.ingredientId),
+        isNull(ingredients.deletedAt)
+      ),
+      columns: { organizationId: true },
+    })
+    if (!ingredient || ingredient.organizationId !== organizationId) {
+      return {
+        success: false,
+        error: '해당 재료에 대한 권한이 없습니다',
+      }
+    }
 
     // 같은 (매장, 재료) 조합의 활성 규칙이 이미 있는지 확인
     const existingRule = await db.query.inventoryAlertRules.findFirst({
@@ -527,8 +571,7 @@ export async function createAlertRule(formData: FormData) {
       .returning()
 
     revalidatePath('/dashboard/inventory')
-    revalidateTag(`inventory:alerts:${validatedData.storeId ?? 'all'}`)
-    revalidateTag('inventory:alerts:all')
+    revalidateAlertRuleData(validatedData.storeId)
 
     return {
       success: true,
@@ -585,6 +628,7 @@ async function canManageAlertRule(
 
 export async function updateAlertRule(id: string, formData: FormData) {
   try {
+    await assertPermission('inventory', 'write')
     // 권한 검사
     const authorizedStoreIds = await getAuthorizedStoreIds()
     const organizationId = await getOrganizationId()
@@ -606,6 +650,12 @@ export async function updateAlertRule(id: string, formData: FormData) {
         error: '수정할 레코드를 찾을 수 없거나 권한이 없습니다',
       }
     }
+
+    // 기존 매장(태그 무효화용) 조회
+    const existingRule = await db.query.inventoryAlertRules.findFirst({
+      where: eq(inventoryAlertRules.id, id),
+      columns: { storeId: true },
+    })
 
     const rawData = {
       storeId: formData.get('storeId') || null,
@@ -646,8 +696,13 @@ export async function updateAlertRule(id: string, formData: FormData) {
     }
 
     revalidatePath('/dashboard/inventory')
-    revalidateTag(`inventory:alerts:${validatedData.storeId ?? 'all'}`)
-    revalidateTag('inventory:alerts:all')
+    revalidateAlertRuleData(validatedData.storeId)
+    if (
+      existingRule?.storeId &&
+      existingRule.storeId !== validatedData.storeId
+    ) {
+      revalidateAlertRuleData(existingRule.storeId)
+    }
 
     return {
       success: true,
@@ -675,6 +730,7 @@ export async function updateAlertRule(id: string, formData: FormData) {
 
 export async function deleteAlertRule(id: string) {
   try {
+    await assertPermission('inventory', 'delete')
     // 권한 검사
     const authorizedStoreIds = await getAuthorizedStoreIds()
     const organizationId = await getOrganizationId()
@@ -704,7 +760,10 @@ export async function deleteAlertRule(id: string) {
         deletedBy: 'system',
       })
       .where(eq(inventoryAlertRules.id, id))
-      .returning({ id: inventoryAlertRules.id })
+      .returning({
+        id: inventoryAlertRules.id,
+        storeId: inventoryAlertRules.storeId,
+      })
 
     if (result.length === 0) {
       return {
@@ -714,7 +773,7 @@ export async function deleteAlertRule(id: string) {
     }
 
     revalidatePath('/dashboard/inventory')
-    revalidateTag('inventory:alerts:all')
+    revalidateAlertRuleData(result[0].storeId)
 
     return {
       success: true,
@@ -787,7 +846,7 @@ export async function getAlertRules(storeId?: string) {
     const getCachedAlertRules = unstable_cache(
       () => fetchAlertRules(normalizedStoreId, authorizedStoreIds),
       ['inventory:alerts', storeKey, normalizedStoreId],
-      { tags: [`inventory:alerts:${normalizedStoreId}`] }
+      { tags: [cacheTags.inventoryAlerts(normalizedStoreId)] }
     )
 
     return await getCachedAlertRules()

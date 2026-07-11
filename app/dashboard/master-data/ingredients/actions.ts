@@ -6,7 +6,11 @@ import { logger, errorToContext } from '@/lib/logger'
 import { ingredients, purchaseTransactions, stores } from '@/lib/db/schema'
 import { eq, isNull, and, desc } from 'drizzle-orm'
 import { z } from 'zod'
-import { getOrganizationId, requireOrganizationId } from '@/lib/auth-context'
+import {
+  getOrganizationId,
+  requireOrganizationId,
+  assertPermission,
+} from '@/lib/auth-context'
 import { cacheTags, revalidateIngredientData } from '@/lib/cache-tags'
 
 function revalidateIngredientCaches(organizationId: string) {
@@ -61,10 +65,24 @@ const ingredientSchema = z.object({
       }
       return val
     }),
+}).superRefine((data, ctx) => {
+  // 구매 단위가 사용 단위와 다르면 변환 계수 필수 (미설정 시 구매량이 그대로 재고에 반영되는 버그 방지)
+  if (
+    data.purchaseUnit &&
+    data.purchaseUnit.trim().toLowerCase() !== data.unit.trim().toLowerCase() &&
+    !data.conversionFactor
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['conversionFactor'],
+      message: '구매 단위가 사용 단위와 다르면 변환 계수를 입력해주세요',
+    })
+  }
 })
 
 export async function createIngredient(formData: FormData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
     const rawData = {
       ingredientName: formData.get('ingredientName'),
@@ -121,6 +139,7 @@ export async function createIngredient(formData: FormData) {
 
 export async function updateIngredient(id: string, formData: FormData) {
   try {
+    await assertPermission('master-data', 'write')
     const organizationId = await requireOrganizationId()
     const rawData = {
       ingredientName: formData.get('ingredientName'),
