@@ -120,6 +120,7 @@ export async function updateMenu(id: string, formData: FormData) {
 
 export async function deleteMenu(id: string) {
   try {
+    await assertPermission('master-data', 'delete')
     const organizationId = await requireOrganizationId()
     await db
       .update(menuCategories)

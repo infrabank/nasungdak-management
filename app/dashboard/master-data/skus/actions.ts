@@ -130,6 +130,7 @@ export async function updateSku(id: string, formData: FormData) {
 
 export async function deleteSku(id: string) {
   try {
+    await assertPermission('master-data', 'delete')
     const organizationId = await requireOrganizationId()
     await db
       .update(skus)

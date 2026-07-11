@@ -151,6 +151,7 @@ export async function updateSalesMenu(id: string, formData: FormData) {
 
 export async function deleteSalesMenu(id: string) {
   try {
+    await assertPermission('master-data', 'delete')
     const organizationId = await requireOrganizationId()
 
     // Soft delete menu items first

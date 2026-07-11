@@ -1,6 +1,7 @@
 'use server'
 
 import { cookies } from 'next/headers'
+import { unstable_rethrow } from 'next/navigation'
 import { jwtVerify } from 'jose'
 import { db } from '@/lib/db'
 import {
@@ -88,6 +89,7 @@ export async function getUserContext(): Promise<UserContext> {
       isAuthenticated: true,
     }
   } catch (error) {
+    unstable_rethrow(error)
     logger.error('Get user context error', errorToContext(error))
     return defaultContext
   }
@@ -264,6 +266,7 @@ export async function getOrganizationBranding(): Promise<OrganizationBranding | 
       logoUrl: org.logoUrl,
     }
   } catch (error) {
+    unstable_rethrow(error)
     logger.error('Get organization branding error', errorToContext(error))
     return null
   }

@@ -219,6 +219,7 @@ export async function updateSkuRecipe(id: string, formData: FormData) {
 
 export async function deleteSkuRecipe(id: string) {
   try {
+    await assertPermission('master-data', 'delete')
     const organizationId = await requireOrganizationId()
     await db
       .update(skuRecipes)

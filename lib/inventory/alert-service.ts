@@ -201,6 +201,7 @@ export async function evaluateBagLowStock(
 
   const conditions = [
     eq(ingredients.managementLevel, 'bag'),
+    eq(ingredients.isActive, true),
     isNull(ingredients.deletedAt),
     inArray(inventory.storeId, storeIds),
     sql`${inventory.currentQuantity} <= ${BAG_ALERT_THRESHOLD}`,

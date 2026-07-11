@@ -93,7 +93,7 @@ export const ingredients = pgTable(
     unitCost: decimal('unit_cost', { precision: 12, scale: 2 }), // 단위당 원가 (원/unit)
     managementLevel: varchar('management_level', { length: 20 })
       .notNull()
-      .default('core'), // 'core'(핵심: 재고+원가) | 'simple'(보조: 매입만) | 'expense'(비용 처리)
+      .default('core'), // 'core'(재고+원가) | 'bag'(봉 단위) | 'simple'(매입만) | 'expense'(비용)
     purchaseUnit: varchar('purchase_unit', { length: 20 }), // 구매 단위 (예: box, 포)
     conversionFactor: decimal('conversion_factor', {
       precision: 12,

@@ -269,15 +269,37 @@ export async function recordBagUsage(inventoryId: string) {
       return { success: false, error: '권한이 없습니다' }
     }
 
-    const existing = await db.query.inventory.findFirst({
-      where: and(
-        eq(inventory.id, inventoryId),
-        inArray(inventory.storeId, authorizedStoreIds)
-      ),
-      columns: { id: true, storeId: true, ingredientId: true, currentQuantity: true },
-    })
+    const existing = await db
+      .select({
+        id: inventory.id,
+        storeId: inventory.storeId,
+        ingredientId: inventory.ingredientId,
+        currentQuantity: inventory.currentQuantity,
+        managementLevel: ingredients.managementLevel,
+      })
+      .from(inventory)
+      .innerJoin(ingredients, eq(inventory.ingredientId, ingredients.id))
+      .where(
+        and(
+          eq(inventory.id, inventoryId),
+          inArray(inventory.storeId, authorizedStoreIds),
+          isNull(ingredients.deletedAt)
+        )
+      )
+      .limit(1)
+      .then((rows) => rows[0])
     if (!existing) {
       return { success: false, error: '재고 기록을 찾을 수 없거나 권한이 없습니다' }
+    }
+    if (existing.managementLevel !== 'bag') {
+      return { success: false, error: '봉 단위 재료만 사용 기록할 수 있습니다' }
+    }
+    // 음수 재고 방지: 0봉 이하에서는 차감을 막는다 (봉 단위 도입 취지 = 음수 재고 제거)
+    if (Number(existing.currentQuantity) <= 0) {
+      return {
+        success: false,
+        error: '남은 봉이 없습니다. 매입 등록 후 사용해주세요.',
+      }
     }
 
     await db.transaction(async (tx) => {

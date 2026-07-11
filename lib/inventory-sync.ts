@@ -66,6 +66,8 @@ export async function applyInventoryDelta(
       .set({
         currentQuantity: sql`${inventory.currentQuantity} + ${String(input.delta)}`,
         lastUpdated: new Date(),
+        // 호출자가 unit을 넘기면 기존 행 unit도 최신화 (봉 전환 등 단위 변경 반영, unit 드리프트 방지)
+        ...(input.unit != null ? { unit: input.unit } : {}),
       })
       .where(eq(inventory.id, existing.id))
   } else {

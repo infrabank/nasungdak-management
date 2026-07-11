@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers'
+import { unstable_rethrow } from 'next/navigation'
 import { jwtVerify } from 'jose'
 import { db } from '@/lib/db'
 import { users, roles, userStoreAssignments } from '@/lib/db/schema'
@@ -78,6 +79,7 @@ export async function getAdminContext(): Promise<AdminContext> {
       isAuthenticated: true,
     }
   } catch (error) {
+    unstable_rethrow(error)
     logger.error('Admin context error', errorToContext(error))
     return defaultContext
   }

@@ -137,6 +137,7 @@ export async function updateSupplier(id: string, formData: FormData) {
 
 export async function deleteSupplier(id: string) {
   try {
+    await assertPermission('master-data', 'delete')
     const organizationId = await requireOrganizationId()
     await db
       .update(suppliers)

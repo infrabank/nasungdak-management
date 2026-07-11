@@ -9,6 +9,8 @@ import MobileBottomNav from './mobile-bottom-nav'
 import { getActiveStores } from './stores/actions'
 import { getOrganizationBranding } from '@/lib/auth-context'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardLayout({
   children,
 }: {

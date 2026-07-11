@@ -32,13 +32,14 @@ export default function InventoryRow({ item }: { item: InventoryRowItem }) {
   })
 
   const isBag = item.managementLevel === 'bag'
-  const bagCount = Math.floor(Number(item.currentQuantity))
-  const bagLow = isBag && bagCount <= 1
+  const rawQty = Number(item.currentQuantity)
+  // 표시는 0 이하로 내려가지 않게 클램프, 저재고 판정은 알림(evaluateBagLowStock)과 동일하게 원값 <= 1
+  const bagCount = Math.max(0, Math.floor(rawQty))
+  const bagLow = isBag && rawQty <= 1
+  const bagEmpty = isBag && rawQty <= 0
 
   const handleUseBag = async () => {
-    if (isUsing) return
-    if (bagCount <= 0 && !confirm('재고가 0봉입니다. 그래도 사용을 기록할까요?'))
-      return
+    if (isUsing || bagEmpty) return
     setIsUsing(true)
     try {
       const result = await recordBagUsage(item.id)
@@ -185,10 +186,10 @@ export default function InventoryRow({ item }: { item: InventoryRowItem }) {
           {isBag && (
             <button
               onClick={handleUseBag}
-              disabled={isDeleting || isUsing}
+              disabled={isDeleting || isUsing || bagEmpty}
               className={`${actionBtn} bg-brutal-yellow`}
             >
-              {isUsing ? '기록 중...' : '1봉 사용'}
+              {isUsing ? '기록 중...' : bagEmpty ? '재고 없음' : '1봉 사용'}
             </button>
           )}
           <button

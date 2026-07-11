@@ -203,6 +203,7 @@ export async function updateIngredient(id: string, formData: FormData) {
 
 export async function deleteIngredient(id: string) {
   try {
+    await assertPermission('master-data', 'delete')
     const organizationId = await requireOrganizationId()
     await db
       .update(ingredients)
