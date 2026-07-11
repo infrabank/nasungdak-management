@@ -188,6 +188,26 @@ export async function evaluateLowStock(
 const BAG_ALERT_THRESHOLD = 1
 
 /**
+ * 봉 알림 + 규칙 알림을 합치고 (매장, 재료) 기준으로 중복을 제거합니다.
+ * 봉 알림을 우선(먼저 넣음)하여, 같은 조합이 양쪽에 잡혀도 한 번만 발송됩니다.
+ */
+export function mergeAlerts(
+  ...groups: InventoryAlertItem[][]
+): InventoryAlertItem[] {
+  const seen = new Set<string>()
+  const merged: InventoryAlertItem[] = []
+  for (const group of groups) {
+    for (const a of group) {
+      const key = `${a.storeId}:${a.ingredientId}`
+      if (seen.has(key)) continue
+      seen.add(key)
+      merged.push(a)
+    }
+  }
+  return merged
+}
+
+/**
  * 봉 단위(managementLevel='bag') 재료의 재고 부족을 평가합니다.
  * 규칙 등록 없이 자동 적용: 잔여 수량이 1봉 이하면 알림.
  * 대상 매장의 재고 행이 있는 (매장, 재료) 조합만 평가합니다.
@@ -329,12 +349,12 @@ export async function evaluateLowStockForAllOrgs(): Promise<
 
     const ruleAlerts =
       tasks.length > 0 ? await evaluateLowStock(tasks, storeMap) : []
-    // 봉 단위 재료는 규칙 없이 자동 평가 (잔여 1봉 이하)
+    // 봉 단위 재료는 규칙 없이 자동 평가 (잔여 1봉 이하). 봉 우선으로 중복 제거.
     const bagAlerts = await evaluateBagLowStock(
       storeRows.map((s) => s.id),
       storeMap
     )
-    return [...bagAlerts, ...ruleAlerts]
+    return mergeAlerts(bagAlerts, ruleAlerts)
   } catch (error) {
     logger.error(
       'Failed to evaluate low stock for all orgs:',

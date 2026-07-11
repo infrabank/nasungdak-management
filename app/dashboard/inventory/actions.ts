@@ -37,6 +37,7 @@ import {
   expandRulesToTasks,
   evaluateLowStock,
   evaluateBagLowStock,
+  mergeAlerts,
 } from '@/lib/inventory/alert-service'
 
 // =====================
@@ -979,13 +980,13 @@ export async function getLowStockAlerts(
 
     const ruleAlerts =
       tasks.length > 0 ? await evaluateLowStock(tasks, storeMap) : []
-    // 봉 단위 재료: 규칙 없이 잔여 1봉 이하 자동 알림
+    // 봉 단위 재료: 규칙 없이 잔여 1봉 이하 자동 알림. 봉 우선으로 중복 제거.
     const bagAlerts = await evaluateBagLowStock(
       targetStoreIds,
       storeMap,
       organizationId
     )
-    return [...bagAlerts, ...ruleAlerts]
+    return mergeAlerts(bagAlerts, ruleAlerts)
   } catch (error) {
     logger.error('Failed to get low stock alerts:', errorToContext(error))
     return []
