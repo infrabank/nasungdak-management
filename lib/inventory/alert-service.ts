@@ -184,8 +184,8 @@ export async function evaluateLowStock(
   return alerts
 }
 
-// 봉 단위 관리 재료의 알림 임계값: 잔여 1봉 이하
-const BAG_ALERT_THRESHOLD = 1
+// 봉 단위 관리 재료의 알림 임계값: 마지막 봉을 뜯어 재고가 0봉이 되면 알림
+const BAG_ALERT_THRESHOLD = 0
 
 /**
  * 봉 알림 + 규칙 알림을 합치고 (매장, 재료) 기준으로 중복을 제거합니다.
@@ -209,7 +209,7 @@ export function mergeAlerts(
 
 /**
  * 봉 단위(managementLevel='bag') 재료의 재고 부족을 평가합니다.
- * 규칙 등록 없이 자동 적용: 잔여 수량이 1봉 이하면 알림.
+ * 규칙 등록 없이 자동 적용: 마지막 봉을 뜯어 재고가 0봉이 되면 알림.
  * 대상 매장의 재고 행이 있는 (매장, 재료) 조합만 평가합니다.
  */
 export async function evaluateBagLowStock(
@@ -349,7 +349,7 @@ export async function evaluateLowStockForAllOrgs(): Promise<
 
     const ruleAlerts =
       tasks.length > 0 ? await evaluateLowStock(tasks, storeMap) : []
-    // 봉 단위 재료는 규칙 없이 자동 평가 (잔여 1봉 이하). 봉 우선으로 중복 제거.
+    // 봉 단위 재료는 규칙 없이 자동 평가 (재고 0봉). 봉 우선으로 중복 제거.
     const bagAlerts = await evaluateBagLowStock(
       storeRows.map((s) => s.id),
       storeMap

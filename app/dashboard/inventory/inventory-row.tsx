@@ -33,9 +33,8 @@ export default function InventoryRow({ item }: { item: InventoryRowItem }) {
 
   const isBag = item.managementLevel === 'bag'
   const rawQty = Number(item.currentQuantity)
-  // 표시는 0 이하로 내려가지 않게 클램프, 저재고 판정은 알림(evaluateBagLowStock)과 동일하게 원값 <= 1
+  // 표시는 0 이하로 내려가지 않게 클램프, 저재고 판정은 알림(evaluateBagLowStock)과 동일하게 원값 <= 0
   const bagCount = Math.max(0, Math.floor(rawQty))
-  const bagLow = isBag && rawQty <= 1
   const bagEmpty = isBag && rawQty <= 0
 
   const handleUseBag = async () => {
@@ -152,7 +151,7 @@ export default function InventoryRow({ item }: { item: InventoryRowItem }) {
 
   return (
     <tr
-      className={`${isDeleting ? 'opacity-50' : ''} ${bagLow ? 'bg-brutal-pink/20' : ''}`}
+      className={`${isDeleting ? 'opacity-50' : ''} ${bagEmpty ? 'bg-brutal-pink/20' : ''}`}
     >
       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-brutal-black sm:pl-6">
         {item.ingredientName}
@@ -161,9 +160,9 @@ export default function InventoryRow({ item }: { item: InventoryRowItem }) {
             봉
           </span>
         )}
-        {bagLow && (
+        {bagEmpty && (
           <span className="ml-1 border-2 border-brutal-black bg-brutal-pink px-1.5 py-0.5 text-xs font-bold">
-            ⚠️ {bagCount}봉 남음
+            ⚠️ 재고 없음
           </span>
         )}
       </td>

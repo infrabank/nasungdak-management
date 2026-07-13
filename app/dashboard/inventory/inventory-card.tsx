@@ -34,9 +34,8 @@ export default function InventoryCard({ item }: { item: InventoryItem }) {
 
   const isBag = item.managementLevel === 'bag'
   const rawQty = Number(item.currentQuantity)
-  // 표시는 0 이하로 내려가지 않게 클램프, 저재고 판정은 알림(evaluateBagLowStock)과 동일하게 원값 <= 1
+  // 표시는 0 이하로 내려가지 않게 클램프, 저재고 판정은 알림(evaluateBagLowStock)과 동일하게 원값 <= 0
   const bagCount = Math.max(0, Math.floor(rawQty))
-  const bagLow = isBag && rawQty <= 1
   const bagEmpty = isBag && rawQty <= 0
 
   const handleUseBag = async () => {
@@ -90,15 +89,15 @@ export default function InventoryCard({ item }: { item: InventoryItem }) {
     >
       {/* Card Header */}
       <div
-        className={`flex items-center justify-between border-b-3 border-brutal-black p-4 ${bagLow ? 'bg-brutal-pink' : 'bg-brutal-yellow'}`}
+        className={`flex items-center justify-between border-b-3 border-brutal-black p-4 ${bagEmpty ? 'bg-brutal-pink' : 'bg-brutal-yellow'}`}
       >
         <div className="flex items-center gap-2">
           <span className="text-lg font-black text-brutal-black">
             📦 {item.ingredientName}
           </span>
-          {bagLow && (
+          {bagEmpty && (
             <span className="border-2 border-brutal-black bg-brutal-white px-1.5 py-0.5 text-xs font-bold">
-              ⚠️ {bagCount}봉 남음
+              ⚠️ 재고 없음
             </span>
           )}
         </div>
