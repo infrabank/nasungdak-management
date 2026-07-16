@@ -23,6 +23,7 @@ const PUBLIC_ROUTES = [
   '/api/setup',
   '/api/auth/refresh', // Refresh endpoint
   '/api/cron', // Vercel Cron (CRON_SECRET으로 자체 인증)
+  '/api/admin/revalidate', // 캐시 무효화 (CRON_SECRET으로 자체 인증)
 ]
 
 // Exact match public routes (not prefix match)
