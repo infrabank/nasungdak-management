@@ -67,48 +67,78 @@ export async function createInventory(formData: FormData) {
 
     const validatedData = inventorySchema.parse(rawData)
 
-    // Check if inventory already exists for this store + ingredient
-    const existingInventory = await db.query.inventory.findFirst({
-      where: and(
-        eq(inventory.storeId, validatedData.storeId),
-        eq(inventory.ingredientId, validatedData.ingredientId)
-      ),
-    })
+    // 등록/덮어쓰기 + 원장 기록을 트랜잭션으로 묶는다. sum(이벤트) = 현재 재고 정합성 유지
+    const saved = await db.transaction(async (tx) => {
+      const [existingInventory] = await tx
+        .select({ id: inventory.id, currentQuantity: inventory.currentQuantity })
+        .from(inventory)
+        .where(
+          and(
+            eq(inventory.storeId, validatedData.storeId),
+            eq(inventory.ingredientId, validatedData.ingredientId)
+          )
+        )
+        .for('update')
+        .limit(1)
 
-    if (existingInventory) {
-      // Update existing inventory
-      const [updated] = await db
-        .update(inventory)
-        .set({
-          currentQuantity: validatedData.currentQuantity,
-          unit: validatedData.unit,
-          lastUpdated: new Date(),
+      const newQty = Number(validatedData.currentQuantity)
+      const eventDate = new Date().toISOString().slice(0, 10)
+
+      if (existingInventory) {
+        // Update existing inventory
+        const [updated] = await tx
+          .update(inventory)
+          .set({
+            currentQuantity: validatedData.currentQuantity,
+            unit: validatedData.unit,
+            lastUpdated: new Date(),
+          })
+          .where(eq(inventory.id, existingInventory.id))
+          .returning()
+
+        const oldQty = Number(existingInventory.currentQuantity)
+        if (newQty !== oldQty) {
+          await tx.insert(inventoryEvents).values({
+            storeId: validatedData.storeId,
+            ingredientId: validatedData.ingredientId,
+            eventType: 'audit',
+            quantityChange: String(newQty - oldQty),
+            reason: `재고 직접 수정 (${oldQty} -> ${newQty})`,
+            eventDate,
+            createdBy: 'system',
+          })
+        }
+        return updated
+      }
+
+      // Create new inventory
+      const [newInventory] = await tx
+        .insert(inventory)
+        .values({
+          ...validatedData,
         })
-        .where(eq(inventory.id, existingInventory.id))
         .returning()
 
-      revalidatePath('/dashboard/inventory')
-      revalidateInventoryData(validatedData.storeId)
-      return {
-        success: true,
-        data: updated,
+      if (newQty !== 0) {
+        await tx.insert(inventoryEvents).values({
+          storeId: validatedData.storeId,
+          ingredientId: validatedData.ingredientId,
+          eventType: 'audit',
+          quantityChange: String(newQty),
+          reason: '재고 초기 등록',
+          eventDate,
+          createdBy: 'system',
+        })
       }
-    }
-
-    // Create new inventory
-    const [newInventory] = await db
-      .insert(inventory)
-      .values({
-        ...validatedData,
-      })
-      .returning()
+      return newInventory
+    })
 
     revalidatePath('/dashboard/inventory')
     revalidateInventoryData(validatedData.storeId)
 
     return {
       success: true,
-      data: newInventory,
+      data: saved,
     }
   } catch (error) {
     logger.error('Failed to create inventory:', errorToContext(error))
@@ -157,38 +187,98 @@ export async function updateInventory(id: string, formData: FormData) {
       }
     }
 
-    // 기존 매장(태그 무효화용) 조회
-    const existing = await db.query.inventory.findFirst({
-      where: eq(inventory.id, id),
-      columns: { storeId: true },
+    // 기존 행 잠금 조회(수량 delta 계산 + 태그 무효화용) + 수정 + 원장 기록을 트랜잭션으로 묶는다
+    const result = await db.transaction(async (tx) => {
+      const [existing] = await tx
+        .select({
+          storeId: inventory.storeId,
+          ingredientId: inventory.ingredientId,
+          currentQuantity: inventory.currentQuantity,
+        })
+        .from(inventory)
+        .where(
+          and(
+            eq(inventory.id, id),
+            inArray(inventory.storeId, authorizedStoreIds)
+          )
+        )
+        .for('update')
+        .limit(1)
+
+      if (!existing) return null
+
+      const [updated] = await tx
+        .update(inventory)
+        .set({
+          ...validatedData,
+          lastUpdated: new Date(),
+        })
+        .where(eq(inventory.id, id))
+        .returning()
+
+      // 수량 직접 수정도 원장(inventory_events)에 남긴다. sum(이벤트) = 현재 재고 정합성 유지
+      const oldQty = Number(existing.currentQuantity)
+      const newQty = Number(validatedData.currentQuantity)
+      const eventDate = new Date().toISOString().slice(0, 10)
+      const pairChanged =
+        existing.storeId !== validatedData.storeId ||
+        existing.ingredientId !== validatedData.ingredientId
+
+      if (pairChanged) {
+        // 매장/재료 변경(이동): 기존 쌍에서 전량 차감, 새 쌍에 전량 가산으로 기록
+        const moves = [
+          {
+            storeId: existing.storeId,
+            ingredientId: existing.ingredientId,
+            change: -oldQty,
+          },
+          {
+            storeId: validatedData.storeId,
+            ingredientId: validatedData.ingredientId,
+            change: newQty,
+          },
+        ].filter((m) => m.change !== 0)
+        if (moves.length > 0) {
+          await tx.insert(inventoryEvents).values(
+            moves.map((m) => ({
+              storeId: m.storeId,
+              ingredientId: m.ingredientId,
+              eventType: 'adjustment',
+              quantityChange: String(m.change),
+              reason: '재고 직접 수정 (매장/재료 변경)',
+              eventDate,
+              createdBy: 'system',
+            }))
+          )
+        }
+      } else if (newQty !== oldQty) {
+        await tx.insert(inventoryEvents).values({
+          storeId: validatedData.storeId,
+          ingredientId: validatedData.ingredientId,
+          eventType: 'audit',
+          quantityChange: String(newQty - oldQty),
+          reason: `재고 직접 수정 (${oldQty} -> ${newQty})`,
+          eventDate,
+          createdBy: 'system',
+        })
+      }
+
+      return { updated, previousStoreId: existing.storeId }
     })
 
-    const [updated] = await db
-      .update(inventory)
-      .set({
-        ...validatedData,
-        lastUpdated: new Date(),
-      })
-      .where(
-        and(
-          eq(inventory.id, id),
-          inArray(inventory.storeId, authorizedStoreIds)
-        )
-      )
-      .returning()
-
-    if (!updated) {
+    if (!result) {
       return {
         success: false,
         error: '수정할 레코드를 찾을 수 없거나 권한이 없습니다',
       }
     }
+    const { updated, previousStoreId } = result
 
     revalidatePath('/dashboard/inventory')
     // 이동 시 기존 매장과 새 매장 양쪽 화면을 갱신
     revalidateInventoryData(validatedData.storeId)
-    if (existing?.storeId && existing.storeId !== validatedData.storeId) {
-      revalidateInventoryData(existing.storeId)
+    if (previousStoreId !== validatedData.storeId) {
+      revalidateInventoryData(previousStoreId)
     }
 
     return {
@@ -225,15 +315,37 @@ export async function deleteInventory(id: string) {
       }
     }
 
-    const result = await db
-      .delete(inventory)
-      .where(
-        and(
-          eq(inventory.id, id),
-          inArray(inventory.storeId, authorizedStoreIds)
+    // 삭제 + 원장 기록을 트랜잭션으로 묶는다. 남은 수량을 차감 이벤트로 남겨 원장을 0으로 정리
+    const result = await db.transaction(async (tx) => {
+      const deleted = await tx
+        .delete(inventory)
+        .where(
+          and(
+            eq(inventory.id, id),
+            inArray(inventory.storeId, authorizedStoreIds)
+          )
         )
-      )
-      .returning({ id: inventory.id, storeId: inventory.storeId })
+        .returning({
+          id: inventory.id,
+          storeId: inventory.storeId,
+          ingredientId: inventory.ingredientId,
+          currentQuantity: inventory.currentQuantity,
+        })
+
+      const row = deleted[0]
+      if (row && Number(row.currentQuantity) !== 0) {
+        await tx.insert(inventoryEvents).values({
+          storeId: row.storeId,
+          ingredientId: row.ingredientId,
+          eventType: 'adjustment',
+          quantityChange: String(-Number(row.currentQuantity)),
+          reason: '재고 기록 삭제',
+          eventDate: new Date().toISOString().slice(0, 10),
+          createdBy: 'system',
+        })
+      }
+      return deleted
+    })
 
     if (result.length === 0) {
       return {
