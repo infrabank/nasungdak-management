@@ -589,6 +589,15 @@ export default function PurchaseForm() {
             const entryTotal = parseFloat(entry.totalPrice) || 0
             const isComplete =
               entry.ingredientId && entry.quantity && entry.totalPrice
+            // 매입 입력 기준 안내: 수량 = 구매 단위(포장) 수, 총금액 = 포장 전체 금액
+            const selectedIngredient = entry.isQuickEntry
+              ? undefined
+              : ingredients.find((i) => i.id === entry.ingredientId)
+            const buyUnit =
+              selectedIngredient?.purchaseUnit || selectedIngredient?.unit
+            const factor = selectedIngredient?.conversionFactor
+              ? Number(selectedIngredient.conversionFactor)
+              : 1
 
             return (
               <div
@@ -839,7 +848,9 @@ export default function PurchaseForm() {
 
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <Label>수량 *</Label>
+                        <Label>
+                          수량 *{buyUnit ? ` (${buyUnit})` : ''}
+                        </Label>
                         <Input
                           type="number"
                           required
@@ -852,6 +863,13 @@ export default function PurchaseForm() {
                           }
                           placeholder="예: 3"
                         />
+                        {selectedIngredient && (
+                          <p className="mt-1 text-xs font-medium text-brutal-black/60">
+                            {factor > 1 && selectedIngredient.purchaseUnit
+                              ? `${selectedIngredient.purchaseUnit} 수로 입력 (1${selectedIngredient.purchaseUnit} = ${factor}${selectedIngredient.unit})`
+                              : `${buyUnit} 단위로 입력`}
+                          </p>
+                        )}
                       </div>
                       <div>
                         <Label>총금액 (원) *</Label>
@@ -883,7 +901,7 @@ export default function PurchaseForm() {
                           원
                         </span>
                         <span className="ml-1 text-sm font-medium text-brutal-black/60">
-                          / 단위
+                          / {buyUnit || '단위'}
                         </span>
                       </div>
                     )}
