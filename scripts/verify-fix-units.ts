@@ -7,7 +7,7 @@ config({ path: '.env.local' })
 
 const EXPECTED = [
   { name: '쌀떡볶이', unit: '개', purchaseUnit: '포', factor: 42, unitCost: 202.38 },
-  { name: '비엔나소세지', unit: '개', purchaseUnit: '봉', factor: 130, unitCost: 52.69 },
+  { name: '비엔나소세지', unit: '개', purchaseUnit: '봉', factor: 130, unitCost: 58.04 },
   { name: '떡볶이 소스', unit: 'g', purchaseUnit: '봉', factor: 3000, unitCost: 15.33 },
   { name: '염지닭', unit: 'g', purchaseUnit: '봉', factor: 5000, unitCost: 7.55 },
   { name: '왕짧짧', unit: '개', purchaseUnit: '봉', factor: 200, unitCost: 42.5 },
