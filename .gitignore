@@ -148,3 +148,6 @@ SNS_MARKETING_STRATEGY.md
 *.xlsx
 *.csv
 .backup-legacy-cost-model.json
+
+.vercel
+.env*
