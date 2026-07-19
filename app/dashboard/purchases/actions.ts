@@ -936,160 +936,79 @@ export async function getPurchasesTotals(
   }
 }
 
-// 가장 최근 매입일과 그날의 매입 항목 조회 (지난 매입 복사용)
-async function fetchLastPurchaseDay() {
-  const authorizedStoreIds = await getAuthorizedStoreIds()
-  if (authorizedStoreIds.length === 0) return null
-
-  const storeCondition = or(
-    inArray(purchaseTransactions.storeId, authorizedStoreIds),
-    isNull(purchaseTransactions.storeId)
-  )
-
-  const latest = await db
-    .select({ d: purchaseTransactions.transactionDate })
-    .from(purchaseTransactions)
-    .where(and(isNull(purchaseTransactions.deletedAt), storeCondition))
-    .orderBy(desc(purchaseTransactions.transactionDate))
-    .limit(1)
-
-  if (latest.length === 0) return null
-  const lastDate = latest[0].d
-
-  const items = await db
-    .select({
-      ingredientId: purchaseTransactions.ingredientId,
-      ingredientName: ingredients.ingredientName,
-      supplierName: purchaseTransactions.supplierName,
-      quantity: purchaseTransactions.quantity,
-      unitPrice: purchaseTransactions.unitPrice,
-      totalAmount: purchaseTransactions.totalAmount,
-      storeId: purchaseTransactions.storeId,
-    })
-    .from(purchaseTransactions)
-    .leftJoin(
-      ingredients,
-      eq(purchaseTransactions.ingredientId, ingredients.id)
-    )
-    .where(
-      and(
-        eq(purchaseTransactions.transactionDate, lastDate),
-        isNull(purchaseTransactions.deletedAt),
-        storeCondition
-      )
-    )
-
-  return { date: lastDate, items }
+// 빠른 매입: 재료별 최근 매입 요약. 재료마다 매입 주기가 달라 "날짜 묶음 복사" 대신
+// 재료 단위로 골라 등록하는 방식이 실제 매입 패턴에 맞는다.
+export interface QuickPurchaseItem {
+  ingredientId: string
+  ingredientName: string
+  /** 매입 수량 단위 (구매 단위, 없으면 사용 단위) */
+  purchaseUnit: string | null
+  lastDate: string
+  lastQuantity: number
+  lastUnitPrice: number
+  supplierName: string
+  /** 최근 180일 매입 횟수 (정렬용) */
+  purchaseCount: number
 }
 
-export interface LastPurchaseDaySummary {
-  date: string
-  totalAmount: number
-  items: Array<{
-    ingredientName: string
-    supplierName: string
-    quantity: number
-    unitPrice: number
-    totalAmount: number
-  }>
-}
-
-export async function getLastPurchaseDaySummary(): Promise<{
+export async function getQuickPurchaseItems(): Promise<{
   success: boolean
-  data?: LastPurchaseDaySummary | null
+  data?: QuickPurchaseItem[]
   error?: string
 }> {
   try {
-    const result = await fetchLastPurchaseDay()
-    if (!result) return { success: true, data: null }
+    const authorizedStoreIds = await getAuthorizedStoreIds()
+    if (authorizedStoreIds.length === 0) return { success: true, data: [] }
 
-    return {
-      success: true,
-      data: {
-        date: result.date,
-        totalAmount: result.items.reduce(
-          (sum, item) => sum + Number(item.totalAmount ?? 0),
-          0
-        ),
-        items: result.items.map((item) => ({
-          ingredientName: item.ingredientName ?? '-',
-          supplierName: item.supplierName,
-          quantity: Number(item.quantity),
-          unitPrice: Number(item.unitPrice),
-          totalAmount: Number(item.totalAmount ?? 0),
-        })),
-      },
-    }
-  } catch (error) {
-    logger.error(
-      'Failed to fetch last purchase day summary:',
-      errorToContext(error)
+    const storeIn = sql.join(
+      authorizedStoreIds.map((id) => sql`${id}::uuid`),
+      sql`, `
     )
-    return { success: false, error: '최근 매입 조회에 실패했습니다' }
-  }
-}
+    const result = await db.execute(sql`
+      SELECT DISTINCT ON (p.ingredient_id)
+        p.ingredient_id, p.transaction_date, p.quantity, p.unit_price, p.supplier_name,
+        i.ingredient_name, i.purchase_unit, i.unit,
+        COUNT(*) OVER (PARTITION BY p.ingredient_id) AS purchase_count
+      FROM purchase_transactions p
+      JOIN ingredients i ON i.id = p.ingredient_id
+        AND i.deleted_at IS NULL AND i.is_active = true
+      WHERE p.deleted_at IS NULL
+        AND p.transaction_date >= CURRENT_DATE - INTERVAL '180 days'
+        AND (p.store_id IN (${storeIn}) OR p.store_id IS NULL)
+      ORDER BY p.ingredient_id, p.transaction_date DESC, p.created_at DESC
+    `)
 
-export async function copyLastPurchasesToToday() {
-  try {
-    await assertPermission('purchases', 'write')
-    const result = await fetchLastPurchaseDay()
-    if (!result || result.items.length === 0) {
-      return { success: false, error: '복사할 매입 내역이 없습니다' }
-    }
+    const items = (
+      result.rows as Array<{
+        ingredient_id: string
+        transaction_date: string
+        quantity: string
+        unit_price: string
+        supplier_name: string
+        ingredient_name: string
+        purchase_unit: string | null
+        unit: string
+        purchase_count: string
+      }>
+    ).map((r) => ({
+      ingredientId: r.ingredient_id,
+      ingredientName: r.ingredient_name,
+      purchaseUnit: r.purchase_unit ?? r.unit ?? null,
+      lastDate: String(r.transaction_date).slice(0, 10),
+      lastQuantity: Number(r.quantity),
+      lastUnitPrice: Number(r.unit_price),
+      supplierName: r.supplier_name,
+      purchaseCount: Number(r.purchase_count),
+    }))
 
-    const today = new Date().toISOString().split('T')[0]
-    if (result.date === today) {
-      return {
-        success: false,
-        error: '가장 최근 매입이 이미 오늘 날짜입니다',
-      }
-    }
-
-    let totalAmount = 0
-    const affectedStoreIds: (string | null)[] = []
-    await db.transaction(async (tx) => {
-      for (const item of result.items) {
-        const [transaction] = await tx
-          .insert(purchaseTransactions)
-          .values({
-            transactionDate: today,
-            ingredientId: item.ingredientId,
-            supplierName: item.supplierName,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            storeId: item.storeId,
-            notes: `${result.date} 매입 복사`,
-            createdBy: 'system',
-          })
-          .returning()
-
-        totalAmount += Number(transaction.totalAmount ?? 0)
-        affectedStoreIds.push(transaction.storeId)
-
-        if (transaction.storeId) {
-          await syncPurchaseToInventory(tx, {
-            storeId: transaction.storeId,
-            ingredientId: transaction.ingredientId,
-            quantity: transaction.quantity,
-            purchaseId: transaction.id,
-            transactionDate: transaction.transactionDate,
-          })
-        }
-      }
-    })
-
-    revalidatePath('/dashboard/purchases')
-    // 복사된 매입의 매장별 태그 + 전체 태그를 모두 무효화
-    revalidatePurchaseDataMany(affectedStoreIds)
-
-    return {
-      success: true,
-      count: result.items.length,
-      totalAmount,
-      sourceDate: result.date,
-    }
+    items.sort(
+      (a, b) =>
+        b.purchaseCount - a.purchaseCount ||
+        a.ingredientName.localeCompare(b.ingredientName, 'ko')
+    )
+    return { success: true, data: items.slice(0, 30) }
   } catch (error) {
-    logger.error('Failed to copy last purchases:', errorToContext(error))
-    return { success: false, error: '매입 복사에 실패했습니다' }
+    logger.error('Failed to fetch quick purchase items:', errorToContext(error))
+    return { success: false, error: '자주 사는 재료 조회에 실패했습니다' }
   }
 }
