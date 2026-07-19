@@ -13,7 +13,16 @@ import {
   resolveStoreId,
   assertPermission,
 } from '@/lib/auth-context'
-import { revalidateOilChangeData, cacheTags } from '@/lib/cache-tags'
+import {
+  revalidateOilChangeData,
+  revalidateMaintenanceData,
+  cacheTags,
+} from '@/lib/cache-tags'
+import {
+  FRYER_TO_CLEANING_TASK,
+  computeOilUsageDays,
+  insertCleaningLogIfMissing,
+} from '@/lib/fryer-maintenance'
 
 export async function createOilChange(prevState: any, formData: FormData) {
   try {
@@ -33,30 +42,12 @@ export async function createOilChange(prevState: any, formData: FormData) {
 
     const validatedData = oilChangeSchema.parse(rawData)
 
-    // Build conditions for finding last change
-    const lastChangeConditions = [
-      eq(oilChangeHistory.fryerType, validatedData.fryerType),
-      isNull(oilChangeHistory.deletedAt),
-    ]
-    if (storeId) {
-      lastChangeConditions.push(eq(oilChangeHistory.storeId, storeId))
-    }
-
     // Calculate usage days automatically based on previous oil change history
-    const lastChange = await db.query.oilChangeHistory.findFirst({
-      where: and(...lastChangeConditions),
-      orderBy: [desc(oilChangeHistory.changeDate)],
-    })
-
-    let usageDays = 0
-    if (lastChange && lastChange.changeDate) {
-      const daysDiff = Math.floor(
-        (new Date(validatedData.changeDate).getTime() -
-          new Date(lastChange.changeDate).getTime()) /
-          (1000 * 60 * 60 * 24)
-      )
-      usageDays = Math.max(0, daysDiff)
-    }
+    const usageDays = await computeOilUsageDays(
+      storeId || null,
+      validatedData.fryerType,
+      validatedData.changeDate
+    )
 
     // Insert oil change record
     await db.insert(oilChangeHistory).values({
@@ -71,6 +62,21 @@ export async function createOilChange(prevState: any, formData: FormData) {
       usageDays: usageDays,
       notes: validatedData.notes,
     })
+
+    // 기름 교체는 튀김기 청소와 함께 진행되므로 요청 시 청소 기록도 동시 등록 (같은 날짜 중복 방지)
+    const cleaningTask = FRYER_TO_CLEANING_TASK[validatedData.fryerType]
+    if (cleaningTask && formData.get('withCleaning') === 'on') {
+      const added = await insertCleaningLogIfMissing(
+        storeId || null,
+        validatedData.changeDate,
+        cleaningTask,
+        validatedData.notes ?? null
+      )
+      if (added) {
+        revalidatePath('/dashboard/maintenance')
+        revalidateMaintenanceData(storeId)
+      }
+    }
 
     revalidatePath('/dashboard/oil-changes')
     revalidateOilChangeData(storeId)

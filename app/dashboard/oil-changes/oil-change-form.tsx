@@ -58,6 +58,18 @@ export default function OilChangeForm({ storeId }: OilChangeFormProps) {
               <option value="재벌">재벌</option>
             </Select>
           </div>
+
+          <label className="flex cursor-pointer items-center gap-2 border-2 border-brutal-black bg-brutal-yellow/30 p-3">
+            <input
+              type="checkbox"
+              name="withCleaning"
+              defaultChecked
+              className="h-4 w-4 accent-brutal-black"
+            />
+            <span className="text-sm font-bold text-brutal-black">
+              🧽 튀김기 청소도 함께 기록 (같은 날짜로 청소 기록 자동 등록)
+            </span>
+          </label>
         </div>
       </div>
 

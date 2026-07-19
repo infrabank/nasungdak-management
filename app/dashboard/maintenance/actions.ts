@@ -12,7 +12,15 @@ import {
   assertStoreAccess,
   resolveStoreId,
 } from '@/lib/auth-context'
-import { revalidateMaintenanceData, cacheTags } from '@/lib/cache-tags'
+import {
+  revalidateMaintenanceData,
+  revalidateOilChangeData,
+  cacheTags,
+} from '@/lib/cache-tags'
+import {
+  CLEANING_TASK_TO_FRYER,
+  insertOilChangeIfMissing,
+} from '@/lib/fryer-maintenance'
 
 export async function createMaintenanceLog(prevState: any, formData: FormData) {
   try {
@@ -37,6 +45,21 @@ export async function createMaintenanceLog(prevState: any, formData: FormData) {
       performedDate: validatedData.performedDate,
       notes: validatedData.notes,
     })
+
+    // 튀김기 청소는 기름 교체와 함께 진행되므로 요청 시 교체 이력도 동시 등록 (같은 날짜 중복 방지)
+    const fryerType = CLEANING_TASK_TO_FRYER[validatedData.taskType]
+    if (fryerType && formData.get('withOilChange') === 'on') {
+      const added = await insertOilChangeIfMissing(
+        storeId || null,
+        validatedData.performedDate,
+        fryerType,
+        validatedData.notes ?? null
+      )
+      if (added) {
+        revalidatePath('/dashboard/oil-changes')
+        revalidateOilChangeData(storeId)
+      }
+    }
 
     revalidatePath('/dashboard/maintenance')
     revalidateMaintenanceData(storeId)

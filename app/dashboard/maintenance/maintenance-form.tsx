@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createMaintenanceLog } from './actions'
 import { MAINTENANCE_TASK_TYPES } from '@/lib/utils/validation'
@@ -15,8 +15,12 @@ interface MaintenanceFormProps {
   storeId?: string
 }
 
+// 튀김기 청소 항목: 기름 교체 동시 등록 옵션 노출 대상
+const FRYER_CLEANING_TASKS = ['튀김 초벌기 청소', '튀김 재벌기 청소']
+
 export default function MaintenanceForm({ storeId }: MaintenanceFormProps) {
   const router = useRouter()
+  const [taskType, setTaskType] = useState('')
   const [state, formAction, isPending] = useActionState(
     createMaintenanceLog,
     null
@@ -54,7 +58,12 @@ export default function MaintenanceForm({ storeId }: MaintenanceFormProps) {
             <Label>
               🧽 항목 <span className="text-red-500">*</span>
             </Label>
-            <Select name="taskType" required defaultValue="">
+            <Select
+              name="taskType"
+              required
+              value={taskType}
+              onChange={(e) => setTaskType(e.target.value)}
+            >
               <option value="">선택하세요</option>
               {MAINTENANCE_TASK_TYPES.map((t) => (
                 <option key={t} value={t}>
@@ -63,6 +72,20 @@ export default function MaintenanceForm({ storeId }: MaintenanceFormProps) {
               ))}
             </Select>
           </div>
+
+          {FRYER_CLEANING_TASKS.includes(taskType) && (
+            <label className="flex cursor-pointer items-center gap-2 border-2 border-brutal-black bg-brutal-yellow/30 p-3">
+              <input
+                type="checkbox"
+                name="withOilChange"
+                defaultChecked
+                className="h-4 w-4 accent-brutal-black"
+              />
+              <span className="text-sm font-bold text-brutal-black">
+                🛢️ 기름 교체도 함께 기록 (같은 날짜로 교체 이력 자동 등록)
+              </span>
+            </label>
+          )}
 
           <div>
             <Label>
