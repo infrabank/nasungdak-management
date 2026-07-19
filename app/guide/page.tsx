@@ -20,6 +20,7 @@ import {
   BookOpen,
 } from 'lucide-react'
 import PublicHeader from '@/components/public-header'
+import { getUserContext } from '@/lib/auth-context'
 
 export const metadata = {
   title: '설정 가이드 - 사장북',
@@ -160,7 +161,10 @@ const FAQ = [
   },
 ]
 
-export default function GuidePage() {
+export default async function GuidePage() {
+  const userContext = await getUserContext()
+  const isLoggedIn = userContext.isAuthenticated
+
   return (
     <div className="min-h-screen bg-brutal-white">
       {/* Header */}
@@ -333,26 +337,47 @@ export default function GuidePage() {
       {/* CTA */}
       <section className="border-t-3 border-brutal-black bg-brutal-yellow px-4 py-12">
         <div className="mx-auto max-w-5xl text-center">
-          <h2 className="text-2xl font-bold text-brutal-black">
-            준비되셨나요?
-          </h2>
-          <p className="mt-2 text-brutal-black/70">
-            지금 바로 회원가입하고 매장 관리를 시작하세요.
-          </p>
-          <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link
-              href="/signup"
-              className="border-2 border-brutal-black bg-brutal-black px-8 py-3 font-bold text-brutal-white transition-colors hover:bg-brutal-black/90"
-            >
-              회원가입
-            </Link>
-            <Link
-              href="/login"
-              className="border-2 border-brutal-black bg-brutal-white px-8 py-3 font-bold text-brutal-black transition-all hover:shadow-brutal"
-            >
-              로그인
-            </Link>
-          </div>
+          {isLoggedIn ? (
+            <>
+              <h2 className="text-2xl font-bold text-brutal-black">
+                설정을 이어가볼까요?
+              </h2>
+              <p className="mt-2 text-brutal-black/70">
+                대시보드로 이동해 매장 관리를 계속하세요.
+              </p>
+              <div className="mt-6 flex justify-center">
+                <Link
+                  href="/dashboard"
+                  className="border-2 border-brutal-black bg-brutal-black px-8 py-3 font-bold text-brutal-white transition-colors hover:bg-brutal-black/90"
+                >
+                  대시보드로 가기
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <h2 className="text-2xl font-bold text-brutal-black">
+                준비되셨나요?
+              </h2>
+              <p className="mt-2 text-brutal-black/70">
+                지금 바로 회원가입하고 매장 관리를 시작하세요.
+              </p>
+              <div className="mt-6 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                <Link
+                  href="/signup"
+                  className="border-2 border-brutal-black bg-brutal-black px-8 py-3 font-bold text-brutal-white transition-colors hover:bg-brutal-black/90"
+                >
+                  회원가입
+                </Link>
+                <Link
+                  href="/login"
+                  className="border-2 border-brutal-black bg-brutal-white px-8 py-3 font-bold text-brutal-black transition-all hover:shadow-brutal"
+                >
+                  로그인
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </section>
 
