@@ -354,6 +354,7 @@ export const attendanceRecords = pgTable(
       .notNull()
       .references(() => employees.id),
     workDate: date('work_date').notNull(),
+    status: varchar('status', { length: 20 }).notNull().default('work'), // 'work'(근무) | 'holiday'(공휴일) | 'absent'(결근)
     workHours: decimal('work_hours', { precision: 5, scale: 2 }).notNull(),
     hourlyRate: decimal('hourly_rate', { precision: 10, scale: 2 }).notNull(), // 스냅샷 (직원 시급 변경에 영향 안 받음)
     totalPay: decimal('total_pay', { precision: 14, scale: 2 }).notNull(), // application 계산, NOT generated (수정 가능)

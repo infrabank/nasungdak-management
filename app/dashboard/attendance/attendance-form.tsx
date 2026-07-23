@@ -9,6 +9,11 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  ATTENDANCE_STATUSES,
+  ATTENDANCE_STATUS_LABELS,
+  type AttendanceStatus,
+} from '@/lib/utils/validation'
 import type { Employee } from '@/lib/db/schema'
 
 interface AttendanceFormProps {
@@ -24,9 +29,12 @@ export default function AttendanceForm({
   const [state, formAction, isPending] = useActionState(createAttendance, null)
 
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('')
+  const [status, setStatus] = useState<AttendanceStatus>('work')
   const [workHours, setWorkHours] = useState('')
   const [hourlyRate, setHourlyRate] = useState('')
   const [totalPay, setTotalPay] = useState('')
+
+  const isWork = status === 'work'
 
   // Redirect on success
   if (state?.success) {
@@ -49,13 +57,14 @@ export default function AttendanceForm({
 
   // Auto-calculate totalPay when workHours or hourlyRate changes
   useEffect(() => {
+    if (!isWork) return
     const hours = Number(workHours)
     const rate = Number(hourlyRate)
     if (hours > 0 && rate > 0) {
       const calculated = Math.round(hours * rate)
       setTotalPay(String(calculated))
     }
-  }, [workHours, hourlyRate])
+  }, [workHours, hourlyRate, isWork])
 
   const today = formatDate(new Date(), 'yyyy-MM-dd')
 
@@ -127,59 +136,92 @@ export default function AttendanceForm({
             />
           </div>
 
-          {/* Work Hours */}
+          {/* Status */}
           <div>
-            <Label htmlFor="workHours">🕐 근무시간 *</Label>
-            <Input
-              type="number"
-              name="workHours"
-              id="workHours"
-              required
-              min="0.5"
-              max="24"
-              step="0.5"
-              placeholder="예: 8"
-              value={workHours}
-              onChange={(e) => setWorkHours(e.target.value)}
-            />
-            <p className="mt-1 text-xs text-brutal-black/60">
-              0.5시간(30분) 단위로 입력
-            </p>
+            <Label htmlFor="status">📋 근무 상태 *</Label>
+            <Select
+              id="status"
+              name="status"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as AttendanceStatus)}
+            >
+              {ATTENDANCE_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {ATTENDANCE_STATUS_LABELS[s]}
+                </option>
+              ))}
+            </Select>
+            {!isWork && (
+              <p className="mt-1 text-xs text-brutal-black/60">
+                {ATTENDANCE_STATUS_LABELS[status]}로 기록되며 지급액은 0원,
+                인건비에 반영되지 않습니다.
+              </p>
+            )}
           </div>
 
-          {/* Hourly Rate */}
-          <div>
-            <Label htmlFor="hourlyRate">💰 시급 (원) *</Label>
-            <Input
-              type="number"
-              name="hourlyRate"
-              id="hourlyRate"
-              required
-              min="0"
-              step="10"
-              placeholder="직원 선택 시 자동 입력"
-              value={hourlyRate}
-              onChange={(e) => setHourlyRate(e.target.value)}
-            />
-          </div>
+          {isWork ? (
+            <>
+              {/* Work Hours */}
+              <div>
+                <Label htmlFor="workHours">🕐 근무시간 *</Label>
+                <Input
+                  type="number"
+                  name="workHours"
+                  id="workHours"
+                  required
+                  min="0.5"
+                  max="24"
+                  step="0.5"
+                  placeholder="예: 8"
+                  value={workHours}
+                  onChange={(e) => setWorkHours(e.target.value)}
+                />
+                <p className="mt-1 text-xs text-brutal-black/60">
+                  0.5시간(30분) 단위로 입력
+                </p>
+              </div>
 
-          {/* Total Pay */}
-          <div>
-            <Label htmlFor="totalPay">💵 지급액 (원)</Label>
-            <Input
-              type="number"
-              name="totalPay"
-              id="totalPay"
-              min="0"
-              step="1"
-              placeholder="자동 계산됨"
-              value={totalPay}
-              onChange={(e) => setTotalPay(e.target.value)}
-            />
-            <p className="mt-1 text-xs text-brutal-black/60">
-              시급 × 근무시간으로 자동 계산됩니다. 수정 가능합니다.
-            </p>
-          </div>
+              {/* Hourly Rate */}
+              <div>
+                <Label htmlFor="hourlyRate">💰 시급 (원) *</Label>
+                <Input
+                  type="number"
+                  name="hourlyRate"
+                  id="hourlyRate"
+                  required
+                  min="0"
+                  step="10"
+                  placeholder="직원 선택 시 자동 입력"
+                  value={hourlyRate}
+                  onChange={(e) => setHourlyRate(e.target.value)}
+                />
+              </div>
+
+              {/* Total Pay */}
+              <div>
+                <Label htmlFor="totalPay">💵 지급액 (원)</Label>
+                <Input
+                  type="number"
+                  name="totalPay"
+                  id="totalPay"
+                  min="0"
+                  step="1"
+                  placeholder="자동 계산됨"
+                  value={totalPay}
+                  onChange={(e) => setTotalPay(e.target.value)}
+                />
+                <p className="mt-1 text-xs text-brutal-black/60">
+                  시급 × 근무시간으로 자동 계산됩니다. 수정 가능합니다.
+                </p>
+              </div>
+            </>
+          ) : (
+            <>
+              <input type="hidden" name="workHours" value="0" />
+              <input type="hidden" name="hourlyRate" value={hourlyRate || '0'} />
+              <input type="hidden" name="totalPay" value="0" />
+            </>
+          )}
 
           {/* Notes */}
           <div>

@@ -20,6 +20,7 @@ export async function createAttendance(prevState: any, formData: FormData) {
     const rawData = {
       employeeId: formData.get('employeeId'),
       workDate: formData.get('workDate'),
+      status: formData.get('status') || 'work',
       workHours: formData.get('workHours'),
       hourlyRate: formData.get('hourlyRate'),
       totalPay: formData.get('totalPay') || '',
@@ -61,9 +62,13 @@ export async function createAttendance(prevState: any, formData: FormData) {
         throw new Error('해당 매장에 대한 권한이 없습니다')
       }
 
-      // 2. Calculate totalPay if not provided
-      let totalPay = validatedData.totalPay
-      if (!totalPay) {
+      const status = validatedData.status ?? 'work'
+      const isWork = status === 'work'
+
+      // 공휴일/결근은 근무시간·지급액 0, 인건비 미생성
+      const workHours = isWork ? validatedData.workHours : '0'
+      let totalPay = isWork ? validatedData.totalPay : '0'
+      if (isWork && !totalPay) {
         const calculated = Math.round(
           Number(validatedData.workHours) * Number(validatedData.hourlyRate)
         )
@@ -77,34 +82,37 @@ export async function createAttendance(prevState: any, formData: FormData) {
           storeId: employee.storeId,
           employeeId: validatedData.employeeId,
           workDate: validatedData.workDate,
-          workHours: validatedData.workHours,
+          status,
+          workHours,
           hourlyRate: validatedData.hourlyRate,
-          totalPay,
+          totalPay: totalPay!,
           notes: validatedData.notes,
           createdBy: 'system',
         })
         .returning()
 
-      // 4. Insert fixed_cost record
-      const [fixedCost] = await tx
-        .insert(fixedCosts)
-        .values({
-          storeId: employee.storeId,
-          costDate: validatedData.workDate,
-          costType: '인건비',
-          costName: `${employee.employeeName} 급여 (${validatedData.workDate})`,
-          amount: totalPay,
-          createdBy: 'system',
-        })
-        .returning()
+      // 4. 근무일만 인건비(고정비) 연동. 공휴일/결근은 지급액이 없어 생략
+      if (isWork) {
+        const [fixedCost] = await tx
+          .insert(fixedCosts)
+          .values({
+            storeId: employee.storeId,
+            costDate: validatedData.workDate,
+            costType: '인건비',
+            costName: `${employee.employeeName} 급여 (${validatedData.workDate})`,
+            amount: totalPay!,
+            createdBy: 'system',
+          })
+          .returning()
 
-      // 5. Link attendance to fixed_cost
-      await tx
-        .update(attendanceRecords)
-        .set({ fixedCostId: fixedCost.id })
-        .where(eq(attendanceRecords.id, attendance.id))
+        // 5. Link attendance to fixed_cost
+        await tx
+          .update(attendanceRecords)
+          .set({ fixedCostId: fixedCost.id })
+          .where(eq(attendanceRecords.id, attendance.id))
+      }
 
-      return { attendance, fixedCost }
+      return { attendance }
     })
 
     // Revalidate paths
@@ -142,6 +150,7 @@ export async function updateAttendance(id: string, formData: FormData) {
     const rawData = {
       employeeId: formData.get('employeeId'), // Required for Zod but ignored
       workDate: formData.get('workDate'),
+      status: formData.get('status') || 'work',
       workHours: formData.get('workHours'),
       hourlyRate: formData.get('hourlyRate'),
       totalPay: formData.get('totalPay') || '',
@@ -157,16 +166,20 @@ export async function updateAttendance(id: string, formData: FormData) {
         eq(attendanceRecords.id, id),
         isNull(attendanceRecords.deletedAt)
       ),
-      columns: { storeId: true, fixedCostId: true },
+      columns: { storeId: true, fixedCostId: true, employeeId: true },
     })
     if (!existing) {
       return { success: false, error: '출퇴근 기록을 찾을 수 없습니다' }
     }
     await assertStoreAccess(existing.storeId)
 
-    // Calculate totalPay if not provided (same as create)
-    let totalPay = validatedData.totalPay
-    if (!totalPay) {
+    const status = validatedData.status ?? 'work'
+    const isWork = status === 'work'
+
+    // 공휴일/결근은 근무시간·지급액 0
+    const workHours = isWork ? validatedData.workHours : '0'
+    let totalPay = isWork ? validatedData.totalPay : '0'
+    if (isWork && !totalPay) {
       const calculated = Math.round(
         Number(validatedData.workHours) * Number(validatedData.hourlyRate)
       )
@@ -179,9 +192,10 @@ export async function updateAttendance(id: string, formData: FormData) {
         .update(attendanceRecords)
         .set({
           workDate: validatedData.workDate,
-          workHours: validatedData.workHours,
+          status,
+          workHours,
           hourlyRate: validatedData.hourlyRate,
-          totalPay,
+          totalPay: totalPay!,
           notes: validatedData.notes,
           updatedAt: new Date(),
           updatedBy: 'system',
@@ -194,16 +208,54 @@ export async function updateAttendance(id: string, formData: FormData) {
         )
         .returning()
 
-      if (existing.fixedCostId) {
+      if (isWork) {
+        if (existing.fixedCostId) {
+          // 기존 인건비 갱신
+          await tx
+            .update(fixedCosts)
+            .set({
+              costDate: validatedData.workDate,
+              amount: totalPay!,
+              updatedAt: new Date(),
+              updatedBy: 'system',
+            })
+            .where(eq(fixedCosts.id, existing.fixedCostId))
+        } else {
+          // 공휴일/결근 → 근무로 전환: 인건비 신규 생성 후 연동
+          const [employee] = await tx
+            .select({ employeeName: employees.employeeName })
+            .from(employees)
+            .where(eq(employees.id, existing.employeeId))
+            .limit(1)
+
+          const [fixedCost] = await tx
+            .insert(fixedCosts)
+            .values({
+              storeId: existing.storeId,
+              costDate: validatedData.workDate,
+              costType: '인건비',
+              costName: `${employee?.employeeName ?? '직원'} 급여 (${validatedData.workDate})`,
+              amount: totalPay!,
+              createdBy: 'system',
+            })
+            .returning()
+
+          await tx
+            .update(attendanceRecords)
+            .set({ fixedCostId: fixedCost.id })
+            .where(eq(attendanceRecords.id, id))
+        }
+      } else if (existing.fixedCostId) {
+        // 근무 → 공휴일/결근 전환: 연동된 인건비 소프트 삭제 + 연결 해제
         await tx
           .update(fixedCosts)
-          .set({
-            costDate: validatedData.workDate,
-            amount: totalPay,
-            updatedAt: new Date(),
-            updatedBy: 'system',
-          })
+          .set({ deletedAt: new Date(), deletedBy: 'system' })
           .where(eq(fixedCosts.id, existing.fixedCostId))
+
+        await tx
+          .update(attendanceRecords)
+          .set({ fixedCostId: null })
+          .where(eq(attendanceRecords.id, id))
       }
 
       return updated
@@ -351,6 +403,7 @@ export async function getAttendance(params: GetAttendanceParams) {
             storeId: attendanceRecords.storeId,
             employeeId: attendanceRecords.employeeId,
             workDate: attendanceRecords.workDate,
+            status: attendanceRecords.status,
             workHours: attendanceRecords.workHours,
             hourlyRate: attendanceRecords.hourlyRate,
             totalPay: attendanceRecords.totalPay,

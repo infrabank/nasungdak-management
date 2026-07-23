@@ -284,64 +284,99 @@ export const employeeSchema = z.object({
 
 export type EmployeeFormData = z.infer<typeof employeeSchema>
 
+// 출퇴근 근무 상태
+export const ATTENDANCE_STATUSES = ['work', 'holiday', 'absent'] as const
+export type AttendanceStatus = (typeof ATTENDANCE_STATUSES)[number]
+export const ATTENDANCE_STATUS_LABELS: Record<AttendanceStatus, string> = {
+  work: '근무',
+  holiday: '공휴일',
+  absent: '결근',
+}
+
 // Attendance record validation (storeId is set from employee, not validated here)
-export const attendanceSchema = z.object({
-  employeeId: z.string().uuid('직원을 선택해주세요'),
-  workDate: z.string().min(1, '근무일을 선택해주세요'),
-  workHours: z.coerce.string().transform((val, ctx) => {
-    const num = Number(val)
-    if (isNaN(num) || num <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: '근무시간은 0보다 커야 합니다',
+// 공휴일/결근은 근무시간·시급 0을 허용 (지급액 0, 인건비 미생성). 근무는 시간·시급 > 0 필수.
+export const attendanceSchema = z
+  .object({
+    employeeId: z.string().uuid('직원을 선택해주세요'),
+    workDate: z.string().min(1, '근무일을 선택해주세요'),
+    status: z
+      .enum(ATTENDANCE_STATUSES, {
+        errorMap: () => ({ message: '유효한 근무 상태를 선택해주세요' }),
       })
-      return z.NEVER
-    }
-    if (num > 24) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: '24시간을 초과할 수 없습니다',
-      })
-      return z.NEVER
-    }
-    return val
-  }),
-  hourlyRate: z.coerce.string().transform((val, ctx) => {
-    const num = Number(val)
-    if (isNaN(num) || num <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: '시급은 0보다 커야 합니다',
-      })
-      return z.NEVER
-    }
-    return val
-  }),
-  // totalPay: optional - if undefined, server calculates Math.round(workHours * hourlyRate)
-  totalPay: z.coerce
-    .string()
-    .optional()
-    .transform((val, ctx) => {
-      if (!val || val === '') return undefined // Missing → server calculates
+      .optional()
+      .default('work'),
+    workHours: z.coerce.string().transform((val, ctx) => {
       const num = Number(val)
       if (isNaN(num) || num < 0) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: '지급액은 0 이상이어야 합니다',
+          message: '근무시간은 0 이상이어야 합니다',
         })
         return z.NEVER
       }
-      if (!Number.isInteger(num)) {
+      if (num > 24) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: '지급액은 정수여야 합니다',
+          message: '24시간을 초과할 수 없습니다',
         })
         return z.NEVER
       }
       return val
     }),
-  notes: z.string().optional().nullable(),
-})
+    hourlyRate: z.coerce.string().transform((val, ctx) => {
+      const num = Number(val)
+      if (isNaN(num) || num < 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: '시급은 0 이상이어야 합니다',
+        })
+        return z.NEVER
+      }
+      return val
+    }),
+    // totalPay: optional - if undefined, server calculates Math.round(workHours * hourlyRate)
+    totalPay: z.coerce
+      .string()
+      .optional()
+      .transform((val, ctx) => {
+        if (!val || val === '') return undefined // Missing → server calculates
+        const num = Number(val)
+        if (isNaN(num) || num < 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '지급액은 0 이상이어야 합니다',
+          })
+          return z.NEVER
+        }
+        if (!Number.isInteger(num)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '지급액은 정수여야 합니다',
+          })
+          return z.NEVER
+        }
+        return val
+      }),
+    notes: z.string().optional().nullable(),
+  })
+  .superRefine((data, ctx) => {
+    if ((data.status ?? 'work') === 'work') {
+      if (Number(data.workHours) <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['workHours'],
+          message: '근무시간은 0보다 커야 합니다',
+        })
+      }
+      if (Number(data.hourlyRate) <= 0) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['hourlyRate'],
+          message: '시급은 0보다 커야 합니다',
+        })
+      }
+    }
+  })
 
 export type AttendanceFormData = z.infer<typeof attendanceSchema>
 

@@ -3,12 +3,18 @@
 import { useState, useEffect } from 'react'
 import { deleteAttendance, updateAttendance } from './actions'
 import { formatDate, formatCurrency } from '@/lib/utils/format'
+import {
+  ATTENDANCE_STATUSES,
+  ATTENDANCE_STATUS_LABELS,
+  type AttendanceStatus,
+} from '@/lib/utils/validation'
 
 interface AttendanceRecord {
   id: string
   storeId: string | null
   employeeId: string
   workDate: string
+  status: string
   workHours: string
   hourlyRate: string
   totalPay: string
@@ -30,15 +36,19 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
 
   const [editData, setEditData] = useState({
     workDate: record.workDate,
+    status: (record.status as AttendanceStatus) || 'work',
     workHours: record.workHours,
     hourlyRate: record.hourlyRate,
     totalPay: record.totalPay,
     notes: record.notes || '',
   })
 
+  const editIsWork = editData.status === 'work'
+  const isWork = record.status === 'work'
+
   // Auto-calculate totalPay when workHours or hourlyRate changes
   useEffect(() => {
-    if (isEditing) {
+    if (isEditing && editIsWork) {
       const hours = Number(editData.workHours)
       const rate = Number(editData.hourlyRate)
       if (hours > 0 && rate > 0) {
@@ -46,7 +56,7 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
         setEditData((prev) => ({ ...prev, totalPay: String(calculated) }))
       }
     }
-  }, [editData.workHours, editData.hourlyRate, isEditing])
+  }, [editData.workHours, editData.hourlyRate, isEditing, editIsWork])
 
   const handleDelete = async () => {
     if (
@@ -73,9 +83,10 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
       const formData = new FormData()
       formData.append('employeeId', record.employeeId) // Required but not changed
       formData.append('workDate', editData.workDate)
-      formData.append('workHours', editData.workHours)
-      formData.append('hourlyRate', editData.hourlyRate)
-      formData.append('totalPay', editData.totalPay)
+      formData.append('status', editData.status)
+      formData.append('workHours', editIsWork ? editData.workHours : '0')
+      formData.append('hourlyRate', editData.hourlyRate || '0')
+      formData.append('totalPay', editIsWork ? editData.totalPay : '0')
       formData.append('notes', editData.notes)
 
       const result = await updateAttendance(record.id, formData)
@@ -94,6 +105,7 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
   const handleCancel = () => {
     setEditData({
       workDate: record.workDate,
+      status: (record.status as AttendanceStatus) || 'work',
       workHours: record.workHours,
       hourlyRate: record.hourlyRate,
       totalPay: record.totalPay,
@@ -135,50 +147,75 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
           </div>
           <div>
             <label className="mb-1 block text-xs font-bold text-brutal-black">
-              근무시간
+              근무 상태
             </label>
-            <input
-              type="number"
-              min="0.5"
-              max="24"
-              step="0.5"
-              value={editData.workHours}
+            <select
+              value={editData.status}
               onChange={(e) =>
-                setEditData({ ...editData, workHours: e.target.value })
+                setEditData({
+                  ...editData,
+                  status: e.target.value as AttendanceStatus,
+                })
               }
               className={inputClass}
-            />
+            >
+              {ATTENDANCE_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {ATTENDANCE_STATUS_LABELS[s]}
+                </option>
+              ))}
+            </select>
           </div>
-          <div>
-            <label className="mb-1 block text-xs font-bold text-brutal-black">
-              시급 (원)
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="10"
-              value={editData.hourlyRate}
-              onChange={(e) =>
-                setEditData({ ...editData, hourlyRate: e.target.value })
-              }
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-bold text-brutal-black">
-              지급액 (원)
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={editData.totalPay}
-              onChange={(e) =>
-                setEditData({ ...editData, totalPay: e.target.value })
-              }
-              className={inputClass}
-            />
-          </div>
+          {editIsWork && (
+            <>
+              <div>
+                <label className="mb-1 block text-xs font-bold text-brutal-black">
+                  근무시간
+                </label>
+                <input
+                  type="number"
+                  min="0.5"
+                  max="24"
+                  step="0.5"
+                  value={editData.workHours}
+                  onChange={(e) =>
+                    setEditData({ ...editData, workHours: e.target.value })
+                  }
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-bold text-brutal-black">
+                  시급 (원)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="10"
+                  value={editData.hourlyRate}
+                  onChange={(e) =>
+                    setEditData({ ...editData, hourlyRate: e.target.value })
+                  }
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-bold text-brutal-black">
+                  지급액 (원)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={editData.totalPay}
+                  onChange={(e) =>
+                    setEditData({ ...editData, totalPay: e.target.value })
+                  }
+                  className={inputClass}
+                />
+              </div>
+            </>
+          )}
           <div>
             <label className="mb-1 block text-xs font-bold text-brutal-black">
               비고
@@ -226,6 +263,16 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
           <span className="font-bold text-brutal-black">
             {formatDate(new Date(record.workDate), 'yy-MM-dd(EEE)')}
           </span>
+          {!isWork && (
+            <span
+              className={`inline-block border-2 border-brutal-black px-2 py-0.5 text-xs font-bold text-brutal-black ${
+                record.status === 'holiday' ? 'bg-brutal-blue' : 'bg-brutal-red'
+              }`}
+            >
+              {ATTENDANCE_STATUS_LABELS[record.status as AttendanceStatus] ??
+                record.status}
+            </span>
+          )}
         </div>
         <span className="font-bold text-brutal-black">👤 {displayName}</span>
       </div>
@@ -243,24 +290,32 @@ export default function AttendanceCard({ record }: AttendanceCardProps) {
         </div>
 
         {/* Info Grid */}
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-brutal-black/70">
-              근무시간
-            </p>
-            <p className="font-medium text-brutal-black">
-              {Number(record.workHours)}시간
-            </p>
+        {isWork ? (
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-brutal-black/70">
+                근무시간
+              </p>
+              <p className="font-medium text-brutal-black">
+                {Number(record.workHours)}시간
+              </p>
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-brutal-black/70">
+                시급
+              </p>
+              <p className="font-medium text-brutal-black">
+                {formatCurrency(Number(record.hourlyRate))}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-brutal-black/70">
-              시급
-            </p>
-            <p className="font-medium text-brutal-black">
-              {formatCurrency(Number(record.hourlyRate))}
-            </p>
-          </div>
-        </div>
+        ) : (
+          <p className="text-sm font-medium text-brutal-black/70">
+            {ATTENDANCE_STATUS_LABELS[record.status as AttendanceStatus] ??
+              record.status}{' '}
+            (근무 없음)
+          </p>
+        )}
 
         {/* Notes */}
         {record.notes && (

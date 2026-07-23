@@ -1,0 +1,1 @@
+ALTER TABLE "attendance_records" ADD COLUMN "status" varchar(20) DEFAULT 'work' NOT NULL;
